@@ -1,0 +1,55 @@
+//PUT test2
+{
+  "mappings": {
+      "properties": {
+        "id" : {
+          "type": "text",
+          "term_vector": "with_positions_offsets",
+          "analyzer": "underscore_analyzer",
+          "fielddata": true
+        },
+        "text": {
+          "type": "text",
+          "term_vector": "with_positions_offsets",
+          "analyzer": "wikipage_analyzer",
+          "fielddata": true
+        },
+        "lines": {
+          "type": "text",
+          "term_vector": "with_positions_offsets",
+          "analyzer": "wikipage_analyzer",
+          "fielddata": true
+        }
+      }
+  },
+  "settings": {
+    "analysis": {
+      "char_filter": {
+        "nfkc_normalizer": {
+          "type": "icu_normalizer",
+          "name": "nfkc"
+        }
+      },
+      "analyzer": {
+        "underscore_analyzer": {
+          "tokenizer": "underscore_tokenizer",
+          "char_filter":  [ "nfkc_normalizer" ]
+        },
+        "wikipage_analyzer": {
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "icu_normalizer"
+          ]
+        }
+      },
+      "tokenizer": {
+        "underscore_tokenizer": {
+          "type": "pattern",
+          "pattern": "_"
+        }
+      }
+    }
+  }
+}
+

@@ -1,4 +1,3 @@
-# this thread executor wrapped ** , it takes in a func and a list of parameters repeated in the func
 import concurrent.futures
 from tqdm import tqdm
 
@@ -26,7 +25,13 @@ def thread_exe(func, pieces, thd_num, description):
 #     print("done")
 
 
-
-
-
+def iter_baskets_contiguous(items, bunch_size):
+    item_count = len(items)
+    bunch_number_floor = len(items) // bunch_size
+    bunch_number_celling = bunch_number_floor + 1
+    for i in range(bunch_number_celling):
+        start = i * bunch_size
+        stop = (i + 1) * bunch_size
+        stop = item_count if stop > item_count else stop
+        yield [items[j] for j in range(start, stop)]
 

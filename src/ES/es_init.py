@@ -1,8 +1,6 @@
 # elastic search
 from utils.file_loader import *
-from utils.thread_executor import thread_exe
 import config
-from tqdm import tqdm
 from elasticsearch import Elasticsearch
 import elasticsearch.helpers as ESH
 
@@ -25,18 +23,21 @@ def init_wikipages():
 
 
 def add_wiki_bunch(file):
-    bunch_size = 200
+    bunch_size = 2000
     json_rows = read_json_rows(file)
-    iters = iter_baskets_contiguous(json_rows, bunch_size)
-    for piece in tqdm(iters, total=100, desc="bulk indexing", position=1):
+    clean_rows = [json.dumps(parse_pages_checks(row)) for row in json_rows]
+    iters = iter_baskets_contiguous(clean_rows, bunch_size)
+    for piece in iters:
         ESH.bulk(es, piece, index=config.WIKIPAGE_INDEX)
 
 
-def add_evids():
-    pass
+def test_indexing():
+    f = config.WIKI_PAGE_PATH / "wiki-001.jsonl"
+    add_wiki_bunch(f)
 
 
 if __name__ == '__main__':
     init_index()
     init_wikipages()
+    # test_indexing()
     #  pass

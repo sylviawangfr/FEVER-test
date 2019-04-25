@@ -30,7 +30,8 @@ ES_INIT_LOG_PATH = LOG_PATH / "es_init"
 ELASTIC_HOST = "localhost"
 ELASTIC_PORT = "9200"
 WIKIPAGE_MAPPING = PRO_ROOT / "src" / "ES" / "wikipage_mapping.json"
-WIKIPAGE_INDEX = "wikipages"
+# WIKIPAGE_INDEX = "wikipages"
+WIKIPAGE_INDEX = "wikipages_tmp"
 
 if __name__ == '__main__':
     print("PRO_ROOT", PRO_ROOT)

@@ -23,7 +23,7 @@ def search_doc(phrases):
         id = hit['_source']['id']
         lines = hit['highlight']['lines'][0]
         lines = lines.replace("</em> <em>", " ")
-        doc_dic = {'score': score, 'id': id, 'lines': lines}
+        doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
         r_list.append(doc_dic)
 
     return r_list
@@ -66,10 +66,38 @@ def search_and_merge(phrases):
     return result
 
 
+def merge_result(result):
+    merged = []
+    for i in result:
+        score, ph, id, lines = i.values()
+        if not has_doc_id(id, merged):
+            merged.append(i)
+        else:
+            ph_set = set(ph)
+            for m in merged:
+                m_set = set(m.get("phrases"))
+                if m_set.issubset(ph_set) and id == m.get("id"):
+                    merged.remove(m)
+                    merged.append(i)
+    return merged
+
+def has_doc_id(id, merged_list):
+    for i in merged_list:
+        if i.get("id") == id:
+            return True
+    return False
+
+
+def has_subset_merged(phs, merged_list):
+    for i in merged_list:
+        if set(i.get("phrases") == set(phs)):
+            return True
+    return False
+
+
 def isSubset(subset, big_set):
     sub = set(subset)
-    big = set(big_set)
-    for i in big:
+    for i in big_set:
         if sub.issubset(i):
             return True
         else:
@@ -81,7 +109,24 @@ def connect_search_entity(subset1, sebset2):
     return []
 
 
+def test():
+    result1 = search_and_merge(['Colin Kaepernick', 'a starting quarterback', 'the 49ers', '63rd season', 'the National Football League'])
+    print("search nouns:")
+    for i in result1:
+        print(i)
+    result2 = search_and_merge(['Colin Kaepernick', 'the 49ers 63rd season', 'the National Football League'])
+    print("search entities:")
+    for i in result2:
+        print(i)
+    result = result1 + result2
+
+    merged = merge_result(result)
+    print("merged:")
+    for i in merged:
+        print(i)
+
+
+
 if __name__ == '__main__':
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
-    for s in search_and_merge(['Colin Kaepernick', 'a starting quarterback', 'the 49ers', '63rd season', 'the National Football League']):
-        print(s)
+    test()

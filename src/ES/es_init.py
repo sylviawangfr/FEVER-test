@@ -38,6 +38,6 @@ def test_indexing():
 
 if __name__ == '__main__':
     init_index()
-    init_wikipages()
+    # init_wikipages()
     # test_indexing()
     #  pass

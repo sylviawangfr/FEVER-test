@@ -32,7 +32,7 @@ def search_doc(phrases):
 # in case there is no co-existing all phrases in one doc:
 # search in pairs and merge
 
-def search_and_merge(phrases):
+def search_subsets(phrases):
     l = len(phrases)
     result = []
     phrase_set = set(phrases)
@@ -66,6 +66,11 @@ def search_and_merge(phrases):
     return result
 
 
+def search_and_merge(entities, nouns):
+    result = search_doc(entities) + search_doc(nouns)
+    return merge_result(result)
+
+
 def merge_result(result):
     merged = []
     for i in result:
@@ -81,16 +86,10 @@ def merge_result(result):
                     merged.append(i)
     return merged
 
+
 def has_doc_id(id, merged_list):
     for i in merged_list:
         if i.get("id") == id:
-            return True
-    return False
-
-
-def has_subset_merged(phs, merged_list):
-    for i in merged_list:
-        if set(i.get("phrases") == set(phs)):
             return True
     return False
 
@@ -110,11 +109,11 @@ def connect_search_entity(subset1, sebset2):
 
 
 def test():
-    result1 = search_and_merge(['Colin Kaepernick', 'a starting quarterback', 'the 49ers', '63rd season', 'the National Football League'])
+    result1 = search_subsets(['Colin Kaepernick', 'a starting quarterback', 'the 49ers', '63rd season', 'the National Football League'])
     print("search nouns:")
     for i in result1:
         print(i)
-    result2 = search_and_merge(['Colin Kaepernick', 'the 49ers 63rd season', 'the National Football League'])
+    result2 = search_subsets(['Colin Kaepernick', 'the 49ers 63rd season', 'the National Football League'])
     print("search entities:")
     for i in result2:
         print(i)

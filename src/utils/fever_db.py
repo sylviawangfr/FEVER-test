@@ -59,6 +59,18 @@ def create_sent_db(save_path):
     c.execute("CREATE INDEX doc_id_index ON sentences(doc_id);")
 
 
+def create_doc_retr_db(save_path):
+    conn = sqlite3.connect(save_path)
+    c = conn.cursor()
+    c.execute("CREATE TABLE doc_retr (claim_id PRIMARY KEY, score, phrases, id, lines_json);")
+    c.execute("CREATE INDEX claim_id_index ON doc_retr(claim_id);")
+
+
+def save_doc_retr(cursor, items):
+    cursor.executemany("INSERT INTO doc_retr VALUES (?,?,?,?,?)", items)
+
+
+
 def insert_many(cursor, items):
     cursor.executemany("INSERT INTO documents VALUES (?,?,?)", items)
 

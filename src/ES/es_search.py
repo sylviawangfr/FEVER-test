@@ -67,7 +67,8 @@ def search_subsets(phrases):
 
 
 def search_and_merge(entities, nouns):
-    result = search_doc(entities) + search_doc(nouns)
+    ents_list = [i[0] for i in entities]
+    result = search_subsets(ents_list) + search_subsets(nouns)
     return merge_result(result)
 
 

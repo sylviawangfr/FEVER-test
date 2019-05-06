@@ -20,6 +20,7 @@ def init_wikipages():
     # process wikipedia dump file to ES
     thread_number = 5
     thread_exe(add_wiki_bunch, config.WIKI_PAGE_PATH.iterdir(), thread_number, "indexing wiki pages")
+    print("indexed all wiki docs in ES")
 
 
 def add_wiki_bunch(file):
@@ -38,6 +39,6 @@ def test_indexing():
 
 if __name__ == '__main__':
     init_index()
-    # init_wikipages()
+    init_wikipages()
     # test_indexing()
     #  pass

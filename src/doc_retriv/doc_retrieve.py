@@ -2,7 +2,7 @@ from utils.tokenizer import *
 from ES.es_search import search_and_merge
 from utils.fever_db import *
 from utils.spcl import *
-from utils.c_scorer import fever_doc_only
+from utils.c_scorer import *
 
 
 def retrieve_docs(claim):
@@ -20,16 +20,16 @@ def retrieve_docs(claim):
 
 
 def get_doc_ids_and_fever_score(in_file, top_k=5):
-    d_list = read_json_rows(in_file)[:1000]
+    d_list = read_json_rows(in_file)[:500]
     for i, item in enumerate(spcl(d_list)):
         claim = item.get('claim')
+        print(claim)
         docs = retrieve_docs(claim)
         item['predicted_docids'] = [j.get('id') for j in docs][:top_k]
 
     print(fever_doc_only(d_list, d_list))
-
-
-
+    eval_mode = {'check_doc_id_correct': True, 'standard': False}
+    print(fever_score(d_list, d_list, mode=eval_mode, error_analysis_file=config.PRO_ROOT / 'log/test.log'))
 
 
 def save_retrs(records):

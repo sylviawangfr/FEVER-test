@@ -1,5 +1,6 @@
 from elasticsearch import Elasticsearch as es
 from elasticsearch_dsl import Search, Q
+from elasticsearch_dsl.query import MultiMatch
 import config
 import itertools
 from utils.tokenizer import *
@@ -11,12 +12,13 @@ client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
 def search_doc(phrases):
     search = Search(using=client, index=config.WIKIPAGE_INDEX)
     must = []
-    should = []
+    # should = []
     for ph in phrases:
-        must.append({'match_phrase': {'lines': ph}})
-        should.append({'match_phrase': {'id': {'query': ph, 'boost': 2}}})
+        # must.append({'match_phrase': {'lines': ph}})
+        # should.append({'match_phrase': {'id': {'query': ph, 'boost': 2}}})
+        must.append({'multi_match': {'query': ph, 'fields': ['id^2', 'lines']}})
 
-    search = search.query(Q('bool', must=must, should=should)). \
+    search = search.query(Q('bool', must=must)). \
                  highlight('lines', number_of_fragments=0). \
                  sort({'_score': {"order": "desc"}}). \
                  source(include=['id'])[0:5]
@@ -27,8 +29,11 @@ def search_doc(phrases):
     for hit in response['hits']['hits']:
         score = hit['_score']
         id = hit['_source']['id']
-        lines = hit['highlight']['lines'][0]
-        lines = lines.replace("</em> <em>", " ")
+        if 'highlight' in hit:
+            lines = hit['highlight']['lines'][0]
+            lines = lines.replace("</em> <em>", " ")
+        else:
+            lines = ""
         doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
         r_list.append(doc_dic)
 
@@ -84,8 +89,10 @@ def search_and_merge(entities, nouns):
     print("done with r4")
     result5 = search_single_entity(ents_list)
     print("done with r5")
+    result6 = search_single_entity(nouns)
+    print("done with r6")
 
-    return merge_result(result1 + result3 + result2 + result4 + result5)
+    return merge_result(result1 + result3 + result2 + result4 + result5 + result6)
 
 
 def merge_result(result):
@@ -136,17 +143,17 @@ def search_single_entity(phrases):
 
 
 def test():
-    claim = "Nicholas Brody is a character on Homeland"
-    nouns, entities = split_claim(claim)
+    claim = "Hot Right Now is mistakenly attributed to DJ Fresh."
+    nouns, entities = split_claim_spacy(claim)
     ents = [i[0] for i in entities]
 
     #
-    # print("search nouns:", nouns)
+    print("search nouns:", nouns)
     # result1, c1 = search_subsets(nouns)
     # for i in result1:
     #     print(i)
     #
-    # print("search entities:", ents)
+    print("search entities:", ents)
     # result2, c2 = search_subsets(ents)
     # for i in result2:
     #     print(i)

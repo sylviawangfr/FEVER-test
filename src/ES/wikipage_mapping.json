@@ -37,18 +37,29 @@
         "underscore_filter": {
           "type": "mapping",
           "mappings": ["_=>\\u0020"]
+        },
+        "stopwords_filter": {
+           "type": "mapping",
+          "mappings": ["-LRB- => (",
+                      "-RRB- => )",
+                      "-LSB- => [",
+                      "-RSB- => ]",
+                      "-LCB- => {",
+                      "-RCB- => }",
+                      "-COLON- => :"
+                      ]
         }
       },
       "analyzer": {
         "underscore_analyzer": {
-          "tokenizer": "standard",
-          "char_filter":  [ "nfkc_normalizer",  "underscore_filter"],
-          "filter":["lowercase", "stemmer_filter"]
+          "char_filter":  ["nfkc_normalizer",  "underscore_filter", "stopwords_filter"],
+          "filter":["lowercase", "stemmer_filter"],
+          "tokenizer": "standard"
         },
         "wikipage_analyzer": {
           "tokenizer": "standard",
           "filter": ["lowercase", "stemmer_filter"],
-          "char_filter":["nfkc_normalizer"]
+          "char_filter":["nfkc_normalizer", "stopwords_filter"]
         }
       }
     }

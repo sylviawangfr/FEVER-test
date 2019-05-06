@@ -6,7 +6,7 @@ from utils.c_scorer import *
 
 
 def retrieve_docs(claim):
-    nouns, entities = split_claim(claim)
+    nouns, entities = split_claim_spacy(claim)
 
     # ['Colin Kaepernick', 'a starting quarterback', 'the 49ers', '63rd season', 'the National Football League']
     # [('Colin Kaepernick', 'PERSON'), ('the 49ers 63rd season', 'DATE'), ('the National Football League', 'ORG')]

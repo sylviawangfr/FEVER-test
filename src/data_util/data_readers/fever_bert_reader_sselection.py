@@ -1,4 +1,4 @@
-# This is created for building data from bert tokenizer.
+# This is created for building data from bert tokenizers.
 
 # This file is created on 25 Nov 2018 08:39, modified from fever_bert_reader to read paired sentence claim data to be
 # feeded into verification model.

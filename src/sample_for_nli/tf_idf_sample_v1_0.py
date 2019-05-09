@@ -19,7 +19,7 @@ class DrQaTokenizer:
     def create_instance(self):
         path_stanford_corenlp_full_2017_06_09 = \
             str(config.PRO_ROOT / 'dep_packages/stanford-corenlp-full-2017-06-09/*')
-        print("Load tokenizer:", path_stanford_corenlp_full_2017_06_09)
+        print("Load tokenizers:", path_stanford_corenlp_full_2017_06_09)
         drqa_yixin.tokenizers.set_default('corenlp_classpath', path_stanford_corenlp_full_2017_06_09)
         _tok = CoreNLPTokenizer(annotators=['pos', 'lemma'])
         self.instance = _tok

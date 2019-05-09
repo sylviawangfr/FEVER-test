@@ -1,4 +1,4 @@
-# This is created for building data from bert tokenizer.
+# This is created for building data from bert tokenizers.
 
 import itertools
 from typing import Dict, List, Tuple

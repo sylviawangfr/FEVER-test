@@ -4,7 +4,7 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-"""Base tokenizer/tokens classes and utilities."""
+"""Base tokenizers/tokens classes and utilities."""
 
 import copy
 
@@ -126,7 +126,7 @@ class Tokens(object):
 
 
 class Tokenizer(object):
-    """Base tokenizer class.
+    """Base tokenizers class.
     Tokenizers implement tokenize, which should return a Tokens class.
     """
     def tokenize(self, text):

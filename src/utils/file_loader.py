@@ -2,6 +2,7 @@ import json
 import config
 from utils.text_clean import *
 from utils.common import *
+from pathlib import Path
 
 
 def read_json_rows(file):
@@ -164,6 +165,24 @@ def parse_pages_checks(item):
     this_item['lines'] = string_lines
 
     return this_item
+
+def save_jsonl(d_list, filename):
+    with open(filename, encoding='utf-8', mode='w') as out_f:
+        for item in d_list:
+            out_f.write(json.dumps(item) + '\n')
+
+
+def save_intermidiate_results(d_list, out_filename: Path, last_loaded_path=None):
+    if not out_filename.parent.exists():
+        out_filename.parent.mkdir(exist_ok=False)
+
+    with open(out_filename, encoding='utf-8', mode='w') as out_f:
+        for item in d_list:
+            out_f.write(json.dumps(item) + '\n')
+
+    if last_loaded_path is not None:
+        with open(out_filename.parent / "log_info.txt", encoding='utf-8', mode='a') as out_f:
+            out_f.write(last_loaded_path)
 
 
 if __name__ == '__main__':

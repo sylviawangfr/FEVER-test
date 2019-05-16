@@ -1,4 +1,3 @@
-import itertools
 from typing import Dict
 
 from overrides import overrides
@@ -12,7 +11,7 @@ from allennlp.data.instance import Instance
 from allennlp.data import Token
 
 from data_util.customized_field import IdField
-from data_util.exvocab import ExVocabulary, load_vocab_embeddings, build_vocab_embeddings
+from data_util.data_preperation.exvocab import ExVocabulary, load_vocab_embeddings, build_vocab_embeddings
 
 import config
 from sample_for_nli.tf_idf_sample_v1_0 import select_sent_for_eval, sample_v1_0
@@ -141,8 +140,8 @@ if __name__ == '__main__':
     #
     # for in_file in (config.DATA_ROOT / "snli").iterdir():
     #     nli_path_list.append(in_file)
-    #
-    # build_fever_vocab_with_embeddings_and_save()
+
+    build_fever_vocab_with_embeddings_and_save()
 
     # build_vocab_embeddings(vocab, config.DATA_ROOT / "embeddings/glove.840B.300d.txt",
     #                        embd_dim=300, saved_path=config.DATA_ROOT / "vocab_cache" / "nli")

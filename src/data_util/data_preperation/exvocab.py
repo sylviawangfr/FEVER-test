@@ -424,7 +424,7 @@ class ExVocabulary:
 
         if vocabulary_directory:
             params.assert_empty("Vocabulary - from files")
-            return Vocabulary.from_files(vocabulary_directory)
+            return ExVocabulary.from_files(vocabulary_directory)
 
         min_count = params.pop("min_count", None)
         max_vocab_size = params.pop_int("max_vocab_size", None)

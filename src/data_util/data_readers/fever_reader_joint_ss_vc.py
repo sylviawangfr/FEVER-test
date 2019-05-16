@@ -1,32 +1,22 @@
-import itertools
 from typing import Dict, List, Tuple
-import json
 
 from overrides import overrides
 import logging
-import torch.tensor
 import numpy as np
 import random
 
-from wn_featurizer.additional_feature import encode_num_in_ltokens
 from allennlp.data.fields import MetadataField
 
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 
-from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer, ELMoTokenCharactersIndexer
+from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.fields import Field, TextField, LabelField, ArrayField
 from allennlp.data.instance import Instance
 from allennlp.data import Token
 
 from data_util.customized_field import IdField
-from data_util.exvocab import ExVocabulary, read_normal_embedding_file, load_vocab_embeddings, build_vocab_embeddings
 
 # from pathlib import Path
-from pathlib import Path
-import config
-from sample_for_nli.tf_idf_sample_v1_0 import select_sent_for_eval, sample_v1_0
-
-from wn_featurizer import wn_persistent_api
 
 from data_util.paragraph_span import ParagraphSpan
 

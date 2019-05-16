@@ -3,7 +3,7 @@ from elasticsearch_dsl import Search, Q
 from elasticsearch_dsl.query import MultiMatch
 import config
 import itertools
-from utils.tokenizer import *
+from utils.tokenizer_simple import *
 
 client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
 
@@ -14,6 +14,8 @@ def search_doc(phrases):
     must = []
     # should = []
     for ph in phrases:
+        if ph.startswith('the ') and ph.startswith("a "):
+            ph = ph.split(' ', 1)[1]
         # must.append({'match_phrase': {'lines': ph}})
         # should.append({'match_phrase': {'id': {'query': ph, 'boost': 2}}})
         must.append({'multi_match': {'query': ph, 'fields': ['id^2', 'lines']}})
@@ -145,6 +147,8 @@ def search_single_entity(phrases):
 def test():
     claim = "Hot Right Now is mistakenly attributed to DJ Fresh."
     nouns, entities = split_claim_spacy(claim)
+    cap_phrases = split_claim_regex(claim)
+
     ents = [i[0] for i in entities]
 
     #

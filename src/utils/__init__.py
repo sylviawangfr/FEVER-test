@@ -21,5 +21,5 @@ def get_adv_print_func(filename=None, verbose=False):
 
 
 if __name__ == '__main__':
-    log_print = get_adv_print_func(config.PRO_ROOT / 'log/test.log')
+    log_print = get_adv_print_func(config.PRO_ROOT / 'log/test1.log')
     log_print("hi")

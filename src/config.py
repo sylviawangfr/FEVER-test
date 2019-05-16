@@ -17,7 +17,7 @@ FEVER_DEV_JSONL = DATA_ROOT / "fever" / "shared_task_dev.jsonl"
 FEVER_DEV_UNLABELED_JSONL = DATA_ROOT / "fever" / "shared_task_dev_public.jsonl"
 
 T_FEVER_TRAIN_JSONL = DATA_ROOT / "tokenized_fever" / "train.jsonl"
-T_FEVER_DEV_JSONL = DATA_ROOT / "tokenized_fever" / "shared_task_dev.jsonl"
+T_FEVER_DEV_JSONL = DATA_ROOT / "tokenized_fever" / "dev.jsonl"
 
 T_FEVER_DT_JSONL = DATA_ROOT / "tokenized_fever" / "dev_train.jsonl"
 
@@ -32,6 +32,10 @@ ELASTIC_PORT = "9200"
 WIKIPAGE_MAPPING = PRO_ROOT / "src" / "ES" / "wikipage_mapping.json"
 # WIKIPAGE_INDEX = "wikipages"
 WIKIPAGE_INDEX = "wikipages_tmp"
+
+
+DOC_RETRV_DEV = RESULT_PATH / "dev_doc_retrieve.jsonl"
+S_TFIDF_RETRV_DEV = RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
 
 if __name__ == '__main__':
     print("PRO_ROOT", PRO_ROOT)

@@ -24,14 +24,25 @@ def retrieve_docs(claim):
     return result
 
 
+def retri_doc_and_update_item(item):
+    claim = item.get('claim')
+    docs = retrieve_docs(claim)
+    item['predicted_docids'] = [j.get('id') for j in docs][:10]
+    return item
+
+
 def get_doc_ids_and_fever_score(in_file, out_file, top_k=10):
-    d_list = read_json_rows(in_file)
-    cursor = get_cursor()
-    for i, item in enumerate(spcl(d_list)):
-        claim = item.get('claim')
-        print(claim)
-        docs = retrieve_docs(claim)
-        item['predicted_docids'] = [j.get('id') for j in docs][:top_k]
+    d_list = read_json_rows(in_file)[0:10]
+    retri_list = []
+    # cursor = get_cursor()
+    thread_number = 5
+    thread_exe(retri_doc_and_update_item, iter(d_list), thread_number, "query wiki pages")
+    # for i, item in enumerate(spcl(d_list)):
+    #     claim = item.get('claim')
+    #     print(claim)
+    #     docs = retrieve_docs(claim)
+    #     item['predicted_docids'] = [j.get('id') for j in docs][:top_k]
+
         # {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
         # pre_evis = []
         # for j in docs:

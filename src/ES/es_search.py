@@ -78,21 +78,21 @@ def search_subsets(phrases):
 
 
 def search_and_merge(entities, nouns):
-    print("entities:", entities)
-    print("nouns:", nouns)
+    # print("entities:", entities)
+    # print("nouns:", nouns)
     ents_list = [i[0] for i in entities]
     result1, not_covered1 = search_subsets(ents_list)
-    print("done with r1")
+    # print("done with r1")
     result2, not_covered2 = search_subsets(nouns)
-    print("done with r2")
+    # print("done with r2")
     result3 = search_single_entity(not_covered1)
-    print("done with r3")
+    # print("done with r3")
     result4 = search_single_entity(not_covered2)
-    print("done with r4")
+    # print("done with r4")
     result5 = search_single_entity(ents_list)
-    print("done with r5")
+    # print("done with r5")
     result6 = search_single_entity(nouns)
-    print("done with r6")
+    # print("done with r6")
 
     return merge_result(result1 + result3 + result2 + result4 + result5 + result6)
 

@@ -881,8 +881,11 @@ def train_fever_for_plot():
     sample_prob_decay = 0.1
     experiment_name = f"simple_nn_startkp_f{keep_neg_sample_prob}_de_f{sample_prob_decay}"
 
-    dev_upstream_file = config.RESULT_PATH / "doc_retri/cn_util_Jul17_docretri.singularize/dev.jsonl"
-    train_upstream_file = config.RESULT_PATH / "doc_retri/cn_util_Jul17_docretri.singularize/train.jsonl"
+    # dev_upstream_file = config.RESULT_PATH / "doc_retri/cn_util_Jul17_docretri.singularize/dev.jsonl"
+    # train_upstream_file = config.RESULT_PATH / "doc_retri/cn_util_Jul17_docretri.singularize/train.jsonl"
+    dev_upstream_file = config.S_TFIDF_RETRV_DEV
+    train_upstream_file = config.S_TFIDF_RETRV_TRAIN
+
 
     # Prepare Data
     token_indexers = {

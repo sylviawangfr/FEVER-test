@@ -114,14 +114,16 @@ def build_fever_vocab_with_embeddings_and_save():
 
     # Sampled Training set
     input_file = config.T_FEVER_TRAIN_JSONL
-    additional_file = config.RESULT_PATH / "sent_retri/2018_07_05_17:17:50_r/train.jsonl"
+    # additional_file = config.RESULT_PATH / "sent_retri/2018_07_05_17:17:50_r/train.jsonl"
+    additional_file = config.S_TFIDF_RETRV_TRAIN
     for _ in range(resample_time):
         sampled_d_list = sample_v1_0(input_file, additional_file, tokenized=True)
         d_list.extend(sampled_d_list)
 
     # Dev set
     input_file = config.T_FEVER_DEV_JSONL
-    additional_file = config.RESULT_PATH / "sent_retri/2018_07_05_17:17:50_r/dev.jsonl"
+    # additional_file = config.RESULT_PATH / "sent_retri/2018_07_05_17:17:50_r/dev.jsonl"
+    additional_file =  config.S_TFIDF_RETRV_DEV
     dev_d_list = select_sent_for_eval(input_file, additional_file, tokenized=True)
 
     d_list.extend(dev_d_list)

@@ -25,7 +25,7 @@ def retrieve_docs(claim):
 
 
 def get_doc_ids_and_fever_score(in_file, out_file, top_k=10):
-    d_list = read_json_rows(in_file)[:1000]
+    d_list = read_json_rows(in_file)
     cursor = get_cursor()
     for i, item in enumerate(spcl(d_list)):
         claim = item.get('claim')
@@ -60,4 +60,5 @@ def save_retrs(records):
 if __name__ == '__main__':
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)
+    get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
     # retrieve_docs("Telemundo is a English-language television network.")

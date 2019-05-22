@@ -44,6 +44,14 @@ def tokenized_claim_list(in_list):
 
     return in_list
 
+def tokenize_docids(in_file, out_file):
+    tok = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
+    d_list = load_jsonl(in_file)
+    for item in tqdm(d_list):
+        item['word'] = ' '.join(easy_tokenize(item['claim'], tok))
+
+    save_jsonl(d_list, out_file)
+
 
 if __name__ == '__main__':
     tokenized_claim(config.FEVER_DEV_JSONL, config.DATA_ROOT / "tokenized_fever/dev.jsonl")

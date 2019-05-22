@@ -33,7 +33,8 @@ WIKIPAGE_MAPPING = PRO_ROOT / "src" / "ES" / "wikipage_mapping.json"
 # WIKIPAGE_INDEX = "wikipages"
 WIKIPAGE_INDEX = "wikipages_tmp"
 
-
+DOC_RETRV_TRAIN = RESULT_PATH / "train_doc_retrieve.jsonl"
+S_TFIDF_RETRV_TRAIN = RESULT_PATH / "train_s_tfidf_retrieve.jsonl"
 DOC_RETRV_DEV = RESULT_PATH / "dev_doc_retrieve.jsonl"
 S_TFIDF_RETRV_DEV = RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
 

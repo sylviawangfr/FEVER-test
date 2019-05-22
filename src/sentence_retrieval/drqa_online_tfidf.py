@@ -230,6 +230,7 @@ if __name__ == '__main__':
     doc_num = 10
 
     dev_doc_file = str(config.DOC_RETRV_DEV)
+    # dev_doc_file = str(config.DOC_RETRV_TRAIN)
     dev_doc_list = read_json_rows(dev_doc_file)
 
     for item in dev_doc_list:
@@ -238,6 +239,7 @@ if __name__ == '__main__':
     script(
         in_path=dev_doc_list,
         out_path=str(config.S_TFIDF_RETRV_DEV)
+        # out_path=str(config.S_TFIDF_RETRV_TRAIN)
     )
 
     # 16783 0.8392339233923393 document = 5 upstream

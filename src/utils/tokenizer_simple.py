@@ -11,8 +11,8 @@ def split_claim_spacy(text):
     doc_noun = nlp_eng_spacy(text)
     nouns = [chunk.text for chunk in doc_noun.noun_chunks]
     ents = ([(ent.text, ent.label_) for ent in doc_noun.ents])
-    print(nouns)
-    print(ents)
+    # print(nouns)
+    # print(ents)
     return nouns, ents
 
 

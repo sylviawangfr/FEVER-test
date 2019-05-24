@@ -2,17 +2,15 @@ import json
 import random
 import copy
 
-# from nli.mesim_wn_v1_0 import get_actual_data
-from sample_for_nli.tf_idf_sample_v1_0 import select_sent_for_eval
 from sentence_retrieval.nn_postprocess_ablation import score_converter_scaled
 from utils import fever_db, check_sentences
 import config
-import drqa_yixin.tokenizers
-from drqa_yixin.tokenizers import CoreNLPTokenizer
+
 from tqdm import tqdm
-from utils import c_scorer, text_clean, common
+from utils import c_scorer, common
 from collections import Counter
 import numpy as np
+from data_util.data_preperation.tokenize_fever import easy_tokenize
 
 
 def load_data(file):
@@ -133,7 +131,7 @@ def sample_additional_data_for_item_v1_0(item, additional_data_dictionary):
 
 
 def adv_sample_v1_0(input_file, additional_file, tokenized=False):
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
     d_list = load_data(input_file)
 
     if isinstance(additional_file, list):

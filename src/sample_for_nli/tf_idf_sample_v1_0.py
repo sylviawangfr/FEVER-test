@@ -181,7 +181,7 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
 
 
 def sample_v1_0(input_file, additional_file, tokenized=False):
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
     d_list = load_data(input_file)
 
     if isinstance(additional_file, list):
@@ -238,7 +238,7 @@ def select_sent_for_eval(input_file, additional_file, tokenized=False):
     :param input_file: This should be the file with 5 sentences selected.
     :return:
     """
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
 
     if isinstance(additional_file, list):
         additional_d_list = additional_file

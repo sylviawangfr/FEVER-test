@@ -183,7 +183,7 @@ def sample_additional_data_for_item_v1_0(item, additional_data_dictionary):
 
 
 def adv_sample_v1_0(input_file, additional_file, tokenized=False):
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
     d_list = load_data(input_file)
 
     if isinstance(additional_file, list):

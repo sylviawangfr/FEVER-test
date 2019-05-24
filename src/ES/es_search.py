@@ -10,36 +10,39 @@ client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
 
 # ES match_phrase on entities
 def search_doc(phrases):
-    search = Search(using=client, index=config.WIKIPAGE_INDEX)
-    must = []
+    try:
+        search = Search(using=client, index=config.WIKIPAGE_INDEX)
+        must = []
     # should = []
-    for ph in phrases:
-        if ph.startswith('the ') and ph.startswith("a "):
-            ph = ph.split(' ', 1)[1]
+        for ph in phrases:
+            if ph.startswith('the ') and ph.startswith("a "):
+                ph = ph.split(' ', 1)[1]
         # must.append({'match_phrase': {'lines': ph}})
         # should.append({'match_phrase': {'id': {'query': ph, 'boost': 2}}})
-        must.append({'multi_match': {'query': ph, 'fields': ['id^2', 'lines']}})
+            must.append({'multi_match': {'query': ph, 'fields': ['id^2', 'lines']}})
 
-    search = search.query(Q('bool', must=must)). \
+        search = search.query(Q('bool', must=must)). \
                  highlight('lines', number_of_fragments=0). \
                  sort({'_score': {"order": "desc"}}). \
                  source(include=['id'])[0:5]
 
-    response = search.execute()
-    r_list = []
+        response = search.execute()
+        r_list = []
 
-    for hit in response['hits']['hits']:
-        score = hit['_score']
-        id = hit['_source']['id']
-        if 'highlight' in hit:
-            lines = hit['highlight']['lines'][0]
-            lines = lines.replace("</em> <em>", " ")
-        else:
-            lines = ""
-        doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
-        r_list.append(doc_dic)
+        for hit in response['hits']['hits']:
+            score = hit['_score']
+            id = hit['_source']['id']
+            if 'highlight' in hit:
+                lines = hit['highlight']['lines'][0]
+                lines = lines.replace("</em> <em>", " ")
+            else:
+                lines = ""
+            doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
+            r_list.append(doc_dic)
 
-    return r_list
+        return r_list
+    except:
+        return []
 
 
 # in case there is no co-existing all phrases in one doc:
@@ -57,19 +60,19 @@ def search_subsets(phrases):
             sub_set = itertools.combinations(phrases, i)
             for s in sub_set:
                 if isSubset(s, searched_subsets):
-                    print("skip ", s)
+                    # print("skip ", s)
                     continue
 
                 r = search_doc(list(s))
                 if len(r) > 0:
-                    print("has hits ", s)
+                    # print("has hits ", s)
                     covered_set = covered_set | set(s)
                     searched_subsets.append(s)
                     result = result + r
                     if phrase_set == covered_set:
                         return result, set([])
-                else:
-                    print("no hits ", s)
+                # else:
+                    # print("no hits ", s)
 
     not_covered = set(phrases) - covered_set
     # need to search those entities without any hits as well, for example e = phrases - covered_set
@@ -137,10 +140,10 @@ def search_single_entity(phrases):
     for s in sub_set:
         r = search_doc(s)
         if len(r) > 0:
-            print("has hits ", s)
+            # print("has hits ", s)
             result = result + r
-        else:
-            print("no hits ", s)
+        # else:
+        #     print("no hits ", s)
     return result
 
 
@@ -152,12 +155,12 @@ def test():
     ents = [i[0] for i in entities]
 
     #
-    print("search nouns:", nouns)
+    # print("search nouns:", nouns)
     # result1, c1 = search_subsets(nouns)
     # for i in result1:
     #     print(i)
     #
-    print("search entities:", ents)
+    # print("search entities:", ents)
     # result2, c2 = search_subsets(ents)
     # for i in result2:
     #     print(i)
@@ -167,21 +170,21 @@ def test():
     # for i in result3:
     #     print(i)
 
-    print("search single entites:", ents)
+    # print("search single entites:", ents)
     result4 = search_single_entity(ents)
     for i in result4:
         print(i)
 
     result = result4
 
-    print("all results:")
-    for i in result:
-        print(i)
+    # print("all results:")
+    # for i in result:
+    #     print(i)
 
     merged = merge_result(result)
-    print("merged:")
-    for i in merged:
-        print(i)
+    # print("merged:")
+    # for i in merged:
+    #     print(i)
 
 
 if __name__ == '__main__':

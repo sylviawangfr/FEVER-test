@@ -26,7 +26,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
                                     This file need to contain *"predicted_docids"* field.
     :return:
     """
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
     d_list = load_jsonl(tokenized_data_file)
 
     if not isinstance(additional_data_file, list):
@@ -110,7 +110,7 @@ def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=Fa
                                     This file need to contain *"predicted_docids"* field.
     :return:
     """
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
     d_list = tokenized_data_file
 
     additional_d_list = additional_data_file
@@ -189,7 +189,7 @@ def get_additional_list(tokenized_data_file, additional_data_file,
                                     This file need to contain *"predicted_docids"* field.
     :return:
     """
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
     d_list = load_jsonl(tokenized_data_file)
 
     additional_d_list = load_jsonl(additional_data_file)

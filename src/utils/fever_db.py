@@ -11,7 +11,7 @@ import re
 def get_cursor(save_path=str(config.FEVER_DB)):
     conn = sqlite3.connect(save_path)
     cursor = conn.cursor()
-    return cursor
+    return cursor, conn
 
 
 def get_evidence(cursor, doc_id, line_num):

@@ -14,10 +14,97 @@ from log_util import save_tool
 
 from flint import torch_util
 import torch.optim as optim
+import torch.nn.functional as F
 from tqdm import tqdm
 
-from sample_for_nli.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval
+from neural_modules import biDafAttn
+from sample_for_nli.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval, convert_evidence2scoring_format
 from utils import c_scorer
+
+
+class ESIM(nn.Module):
+    # This is ESIM sequence matching model
+    # lstm
+    def __init__(self, rnn_size_in=(1024 + 300, 1024 + 300), rnn_size_out=(300, 300), max_l=100,
+                 mlp_d=300, num_of_class=3, drop_r=0.5, activation_type='relu'):
+
+        super(ESIM, self).__init__()
+        self.dropout_layer = nn.Dropout(drop_r)
+
+        self.lstm_1 = nn.LSTM(input_size=rnn_size_in[0], hidden_size=rnn_size_out[0],
+                              num_layers=1, bidirectional=True, batch_first=True)
+
+        self.lstm_2 = nn.LSTM(input_size=rnn_size_in[1], hidden_size=rnn_size_out[1],
+                              num_layers=1, bidirectional=True, batch_first=True)
+
+        self.projection = nn.Linear(rnn_size_out[0] * 2 * 4, rnn_size_out[0])
+
+        self.max_l = max_l
+        self.bidaf = biDafAttn(300)
+
+        self.mlp_1 = nn.Linear(rnn_size_out[1] * 2 * 4, mlp_d)
+        self.sm = nn.Linear(mlp_d, num_of_class)
+
+        if activation_type == 'relu':
+            activation = nn.ReLU()
+        elif activation_type == 'tanh':
+            activation = nn.Tanh()
+        else:
+            raise ValueError("Not a valid activation!")
+
+        self.classifier = nn.Sequential(*[nn.Dropout(drop_r), self.mlp_1, activation, nn.Dropout(drop_r), self.sm])
+
+    def count_params(self):
+        total_c = 0
+        for param in self.parameters():
+            if len(param.size()) == 2:
+                d1, d2 = param.size()[0], param.size()[1]
+                total_c += d1 * d2
+        print("Total count:", total_c)
+
+    def display(self):
+        for name, param in self.named_parameters():
+            print(name, param.data.size())
+
+    def forward(self, layer1_s1, layer2_s1, l1, layer1_s2, layer2_s2, l2):  # [B, T]
+
+        p_s1 = self.dropout_layer(layer1_s1)
+        p_s2 = self.dropout_layer(layer1_s2)
+
+        s1_layer1_out = torch_util.auto_rnn(self.lstm_1, p_s1, l1)
+        s2_layer1_out = torch_util.auto_rnn(self.lstm_1, p_s2, l2)
+
+        S = self.bidaf.similarity(s1_layer1_out, l1, s2_layer1_out, l2)
+        s1_att, s2_att = self.bidaf.get_both_tile(S, s1_layer1_out, s2_layer1_out)
+
+        s1_coattentioned = torch.cat([s1_layer1_out, s1_att, s1_layer1_out - s1_att,
+                                      s1_layer1_out * s1_att], dim=2)
+
+        s2_coattentioned = torch.cat([s2_layer1_out, s2_att, s2_layer1_out - s2_att,
+                                      s2_layer1_out * s2_att], dim=2)
+
+        p_s1_coattentioned = F.relu(self.projection(s1_coattentioned))
+        p_s2_coattentioned = F.relu(self.projection(s2_coattentioned))
+
+        s1_coatt_features = torch.cat([p_s1_coattentioned, layer2_s1], dim=2)
+        s2_coatt_features = torch.cat([p_s2_coattentioned, layer2_s2], dim=2)
+
+        s1_coatt_features = self.dropout_layer(s1_coatt_features)
+        s2_coatt_features = self.dropout_layer(s2_coatt_features)
+
+        s1_layer2_out = torch_util.auto_rnn(self.lstm_2, s1_coatt_features, l1)
+        s2_layer2_out = torch_util.auto_rnn(self.lstm_2, s2_coatt_features, l2)
+
+        s1_lay2_maxout = torch_util.max_along_time(s1_layer2_out, l1)
+        s2_lay2_maxout = torch_util.max_along_time(s2_layer2_out, l2)
+
+        s1_lay2_avgout = torch_util.avg_along_time(s1_layer2_out, l1)
+        s2_lay2_avgout = torch_util.avg_along_time(s2_layer2_out, l2)
+
+        features = torch.cat([s1_lay2_maxout, s2_lay2_maxout,
+                              s1_lay2_avgout, s2_lay2_avgout], dim=1)
+
+        return self.classifier(features)
 
 
 class Model(nn.Module):

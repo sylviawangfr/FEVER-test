@@ -27,36 +27,25 @@ def retrieve_docs(claim):
 def retri_doc_and_update_item(item):
     claim = item.get('claim')
     docs = retrieve_docs(claim)
+    if len(docs) < 1:
+        print("failed claim:", item.get('id'))
+
     item['predicted_docids'] = [j.get('id') for j in docs][:10]
     return item
 
 
 def get_doc_ids_and_fever_score(in_file, out_file, top_k=10):
-    d_list = read_json_rows(in_file)[0:10]
+    d_list = read_json_rows(in_file)
     retri_list = []
     # cursor = get_cursor()
-    thread_number = 5
+    thread_number = 8
     thread_exe(retri_doc_and_update_item, iter(d_list), thread_number, "query wiki pages")
-    # for i, item in enumerate(spcl(d_list)):
-    #     claim = item.get('claim')
-    #     print(claim)
-    #     docs = retrieve_docs(claim)
-    #     item['predicted_docids'] = [j.get('id') for j in docs][:top_k]
-
-        # {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
-        # pre_evis = []
-        # for j in docs:
-        #     doc_id = j.get('id')
-        #     # no highlight returned
-        #     texts, ids = get_all_sent_by_doc_id(cursor, doc_id, False)
-        #     pre_evis.extend([[doc_id, s.split('(-.-)')[1]] for s in ids])
-        # item['predicted_sentences'] = pre_evis
-
+    save_intermidiate_results(d_list, out_file)
     print(fever_doc_only(d_list, d_list))
     eval_mode = {'check_doc_id_correct': True, 'standard': False}
     out_fname = config.LOG_PATH / f"{utils.get_current_time_str()}_analyze_doc_retri.log"
     print(fever_score(d_list, d_list, mode=eval_mode, error_analysis_file=out_fname))
-    save_intermidiate_results(d_list, out_file)
+
 
 
 
@@ -70,6 +59,6 @@ def save_retrs(records):
 
 if __name__ == '__main__':
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
-    get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)
+    # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)
     get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
     # retrieve_docs("Telemundo is a English-language television network.")

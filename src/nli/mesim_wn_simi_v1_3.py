@@ -11,6 +11,7 @@ from allennlp.modules import Embedding, Elmo
 
 from data_util.data_readers.fever_reader_with_wn_simi import WNSIMIReader
 from data_util.data_readers.fever_reader_with_wn_simi_doc import WNDocSIMIReader
+from sample_for_nli.tf_idf_sample_v1_0 import *
 from neural_modules.ema import EMA
 from sample_for_nli.adv_sampler_v01 import get_adv_sampled_data
 from sentence_retrieval.nn_postprocess_ablation import score_converter_scaled
@@ -22,9 +23,9 @@ import os
 import config
 
 from data_util.data_preperation.exvocab import load_vocab_embeddings
-# from simi_sampler_nli_v0.simi_sampler import paired_selection_score_dict, threshold_sampler, \
-#     select_sent_with_prob_for_eval, adv_simi_sample_with_prob_v1_0, adv_simi_sample_with_prob_v1_1, \
-#     paired_selection_score_dict_for_doc, adv_simi_sample_with_prob_v1_0_with_doc, select_sent_with_prob_doc_for_eval
+from simi_sampler_nli_v0.simi_sampler import paired_selection_score_dict, threshold_sampler, \
+    select_sent_with_prob_for_eval, adv_simi_sample_with_prob_v1_0, adv_simi_sample_with_prob_v1_1, \
+    paired_selection_score_dict_for_doc, adv_simi_sample_with_prob_v1_0_with_doc, select_sent_with_prob_doc_for_eval
 from utils import common
 
 from log_util import save_tool
@@ -446,127 +447,127 @@ def hidden_eval(model, data_iter, dev_data_list, with_logits=False, with_probs=F
     return dev_data_list
 
 
-def hidden_eval_fever():
-    batch_size = 64
-    lazy = True
-
-    SAVE_PATH = "/home/easonnie/projects/FunEver/saved_models/07-18-21:07:28_m_esim_wn_elmo_sample_fixed/i(57000)_epoch(8)_dev(0.5755075507550755)_loss(1.7175163737963839)_seed(12)"
-
-    dev_upstream_file = config.RESULT_PATH / "sent_retri/2018_07_05_17:17:50_r/dev.jsonl"
-
-    # Prepare Data
-    token_indexers = {
-        'tokens': SingleIdTokenIndexer(namespace='tokens'),  # This is the raw tokens
-        'elmo_chars': ELMoTokenCharactersIndexer(namespace='elmo_characters')  # This is the elmo_characters
-    }
-
-    p_dict = wn_persistent_api.persistence_load()
-
-    dev_fever_data_reader = WNReader(token_indexers=token_indexers, lazy=lazy, wn_p_dict=p_dict, max_l=360)
-
-    complete_upstream_dev_data = get_actual_data(config.T_FEVER_DEV_JSONL, dev_upstream_file)
-    dev_instances = dev_fever_data_reader.read(complete_upstream_dev_data)
-    # Load Vocabulary
-    biterator = BasicIterator(batch_size=batch_size)
-    # dev_biterator = BasicIterator(batch_size=batch_size * 2)
-
-    vocab, weight_dict = load_vocab_embeddings(config.DATA_ROOT / "vocab_cache" / "nli_basic")
-    vocab.change_token_with_index_to_namespace('hidden', -2, namespace='labels')
-
-    print(vocab.get_token_to_index_vocabulary('labels'))
-    print(vocab.get_vocab_size('tokens'))
-
-    biterator.index_with(vocab)
-
-    # Build Model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu", index=0)
-    device_num = -1 if device.type == 'cpu' else 0
-
-    model = Model(rnn_size_in=(1024 + 300 + dev_fever_data_reader.wn_feature_size,
-                               1024 + 300),
-                  weight=weight_dict['glove.840B.300d'],
-                  vocab_size=vocab.get_vocab_size('tokens'),
-                  embedding_dim=300, max_l=300)
-
-    print("Model Max length:", model.max_l)
-    model.load_state_dict(torch.load(SAVE_PATH))
-    model.display()
-    model.to(device)
-
-    eval_iter = biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
-    builded_dev_data = hidden_eval(model, eval_iter, complete_upstream_dev_data)
-
-    eval_mode = {'check_sent_id_correct': True, 'standard': True}
-
-    for item in builded_dev_data:
-        del item['label']
-
-    print(c_scorer.fever_score(builded_dev_data, common.load_jsonl(config.T_FEVER_DEV_JSONL), mode=eval_mode))
-
-
-def hidden_eval_fever_adv_v1():
-    batch_size = 64
-    lazy = True
-    dev_prob_threshold = 0.5
-
-    SAVE_PATH = "/home/easonnie/projects/FunEver/saved_models/07-20-22:28:24_mesim_wn_450_adv_sample_v1_|t_prob:0.35|top_k:8/i(46000)_epoch(7)_dev(0.6405140514051405)_loss(1.0761665150348825)_seed(12)"
-
-    dev_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
-                                               "sent_retri_nn/2018_07_20_15:17:59_r/dev_sent.jsonl")
-
-    # Prepare Data
-    token_indexers = {
-        'tokens': SingleIdTokenIndexer(namespace='tokens'),  # This is the raw tokens
-        'elmo_chars': ELMoTokenCharactersIndexer(namespace='elmo_characters')  # This is the elmo_characters
-    }
-
-    p_dict = wn_persistent_api.persistence_load()
-
-    upstream_dev_list = score_converter_scaled(config.T_FEVER_DEV_JSONL, dev_upstream_sent_list,
-                                               scale_prob=dev_prob_threshold,
-                                               delete_prob=False)
-
-    dev_fever_data_reader = WNReader(token_indexers=token_indexers, lazy=lazy, wn_p_dict=p_dict, max_l=360)
-
-    complete_upstream_dev_data = get_actual_data(config.T_FEVER_DEV_JSONL, upstream_dev_list)
-    dev_instances = dev_fever_data_reader.read(complete_upstream_dev_data)
-
-    # Load Vocabulary
-    biterator = BasicIterator(batch_size=batch_size)
-
-    vocab, weight_dict = load_vocab_embeddings(config.DATA_ROOT / "vocab_cache" / "nli_basic")
-    vocab.change_token_with_index_to_namespace('hidden', -2, namespace='labels')
-
-    print(vocab.get_token_to_index_vocabulary('labels'))
-    print(vocab.get_vocab_size('tokens'))
-
-    biterator.index_with(vocab)
-
-    # Build Model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu", index=0)
-    device_num = -1 if device.type == 'cpu' else 0
-
-    model = Model(rnn_size_in=(1024 + 300 + dev_fever_data_reader.wn_feature_size,
-                               1024 + 450),
-                  rnn_size_out=(450, 450),
-                  weight=weight_dict['glove.840B.300d'],
-                  vocab_size=vocab.get_vocab_size('tokens'),
-                  mlp_d=900,
-                  embedding_dim=300, max_l=300)
-
-    print("Model Max length:", model.max_l)
-    model.load_state_dict(torch.load(SAVE_PATH))
-    model.display()
-    model.to(device)
-
-    eval_iter = biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
-    builded_dev_data = hidden_eval(model, eval_iter, complete_upstream_dev_data)
-
-    eval_mode = {'check_sent_id_correct': True, 'standard': True}
-
-    common.save_jsonl(builded_dev_data, config.RESULT_PATH / "nli_results" / "pipeline_results_1.jsonl")
-    c_scorer.delete_label(builded_dev_data)
-    print(c_scorer.fever_score(builded_dev_data, common.load_jsonl(config.FEVER_DEV_JSONL), mode=eval_mode))
+# def hidden_eval_fever():
+#     batch_size = 64
+#     lazy = True
+#
+#     SAVE_PATH = "/home/easonnie/projects/FunEver/saved_models/07-18-21:07:28_m_esim_wn_elmo_sample_fixed/i(57000)_epoch(8)_dev(0.5755075507550755)_loss(1.7175163737963839)_seed(12)"
+#
+#     dev_upstream_file = config.RESULT_PATH / "sent_retri/2018_07_05_17:17:50_r/dev.jsonl"
+#
+#     # Prepare Data
+#     token_indexers = {
+#         'tokens': SingleIdTokenIndexer(namespace='tokens'),  # This is the raw tokens
+#         'elmo_chars': ELMoTokenCharactersIndexer(namespace='elmo_characters')  # This is the elmo_characters
+#     }
+#
+#     p_dict = wn_persistent_api.persistence_load()
+#
+#     dev_fever_data_reader = WNReader(token_indexers=token_indexers, lazy=lazy, wn_p_dict=p_dict, max_l=360)
+#
+#     complete_upstream_dev_data = get_actual_data(config.T_FEVER_DEV_JSONL, dev_upstream_file)
+#     dev_instances = dev_fever_data_reader.read(complete_upstream_dev_data)
+#     # Load Vocabulary
+#     biterator = BasicIterator(batch_size=batch_size)
+#     # dev_biterator = BasicIterator(batch_size=batch_size * 2)
+#
+#     vocab, weight_dict = load_vocab_embeddings(config.DATA_ROOT / "vocab_cache" / "nli_basic")
+#     vocab.change_token_with_index_to_namespace('hidden', -2, namespace='labels')
+#
+#     print(vocab.get_token_to_index_vocabulary('labels'))
+#     print(vocab.get_vocab_size('tokens'))
+#
+#     biterator.index_with(vocab)
+#
+#     # Build Model
+#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu", index=0)
+#     device_num = -1 if device.type == 'cpu' else 0
+#
+#     model = Model(rnn_size_in=(1024 + 300 + dev_fever_data_reader.wn_feature_size,
+#                                1024 + 300),
+#                   weight=weight_dict['glove.840B.300d'],
+#                   vocab_size=vocab.get_vocab_size('tokens'),
+#                   embedding_dim=300, max_l=300)
+#
+#     print("Model Max length:", model.max_l)
+#     model.load_state_dict(torch.load(SAVE_PATH))
+#     model.display()
+#     model.to(device)
+#
+#     eval_iter = biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
+#     builded_dev_data = hidden_eval(model, eval_iter, complete_upstream_dev_data)
+#
+#     eval_mode = {'check_sent_id_correct': True, 'standard': True}
+#
+#     for item in builded_dev_data:
+#         del item['label']
+#
+#     print(c_scorer.fever_score(builded_dev_data, common.load_jsonl(config.T_FEVER_DEV_JSONL), mode=eval_mode))
+#
+#
+# def hidden_eval_fever_adv_v1():
+#     batch_size = 64
+#     lazy = True
+#     dev_prob_threshold = 0.5
+#
+#     SAVE_PATH = "/home/easonnie/projects/FunEver/saved_models/07-20-22:28:24_mesim_wn_450_adv_sample_v1_|t_prob:0.35|top_k:8/i(46000)_epoch(7)_dev(0.6405140514051405)_loss(1.0761665150348825)_seed(12)"
+#
+#     dev_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
+#                                                "sent_retri_nn/2018_07_20_15:17:59_r/dev_sent.jsonl")
+#
+#     # Prepare Data
+#     token_indexers = {
+#         'tokens': SingleIdTokenIndexer(namespace='tokens'),  # This is the raw tokens
+#         'elmo_chars': ELMoTokenCharactersIndexer(namespace='elmo_characters')  # This is the elmo_characters
+#     }
+#
+#     p_dict = wn_persistent_api.persistence_load()
+#
+#     upstream_dev_list = score_converter_scaled(config.T_FEVER_DEV_JSONL, dev_upstream_sent_list,
+#                                                scale_prob=dev_prob_threshold,
+#                                                delete_prob=False)
+#
+#     dev_fever_data_reader = WNReader(token_indexers=token_indexers, lazy=lazy, wn_p_dict=p_dict, max_l=360)
+#
+#     complete_upstream_dev_data = get_actual_data(config.T_FEVER_DEV_JSONL, upstream_dev_list)
+#     dev_instances = dev_fever_data_reader.read(complete_upstream_dev_data)
+#
+#     # Load Vocabulary
+#     biterator = BasicIterator(batch_size=batch_size)
+#
+#     vocab, weight_dict = load_vocab_embeddings(config.DATA_ROOT / "vocab_cache" / "nli_basic")
+#     vocab.change_token_with_index_to_namespace('hidden', -2, namespace='labels')
+#
+#     print(vocab.get_token_to_index_vocabulary('labels'))
+#     print(vocab.get_vocab_size('tokens'))
+#
+#     biterator.index_with(vocab)
+#
+#     # Build Model
+#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu", index=0)
+#     device_num = -1 if device.type == 'cpu' else 0
+#
+#     model = Model(rnn_size_in=(1024 + 300 + dev_fever_data_reader.wn_feature_size,
+#                                1024 + 450),
+#                   rnn_size_out=(450, 450),
+#                   weight=weight_dict['glove.840B.300d'],
+#                   vocab_size=vocab.get_vocab_size('tokens'),
+#                   mlp_d=900,
+#                   embedding_dim=300, max_l=300)
+#
+#     print("Model Max length:", model.max_l)
+#     model.load_state_dict(torch.load(SAVE_PATH))
+#     model.display()
+#     model.to(device)
+#
+#     eval_iter = biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
+#     builded_dev_data = hidden_eval(model, eval_iter, complete_upstream_dev_data)
+#
+#     eval_mode = {'check_sent_id_correct': True, 'standard': True}
+#
+#     common.save_jsonl(builded_dev_data, config.RESULT_PATH / "nli_results" / "pipeline_results_1.jsonl")
+#     c_scorer.delete_label(builded_dev_data)
+#     print(c_scorer.fever_score(builded_dev_data, common.load_jsonl(config.FEVER_DEV_JSONL), mode=eval_mode))
 
 
 def train_fever():

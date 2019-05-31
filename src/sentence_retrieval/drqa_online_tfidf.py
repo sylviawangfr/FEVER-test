@@ -2,7 +2,8 @@ from collections import Counter
 import numpy as np
 
 from sentence_retrieval.sent_tfidf import OnlineTfidfDocRanker
-from utils import fever_db, check_sentences
+from utils import check_sentences
+from utils.sqlite_queue import SQLiteUtil
 from data_util.tokenizers.spacy_tokenizer import *
 from utils import c_scorer
 import utils
@@ -131,7 +132,7 @@ def tf_idf_select_sentence():
     save_intermidiate_results(d_list, out_filename=out_fname, last_loaded_path=loaded_path)
 
 
-def predict_sentences_and_update_item(item):
+def predict_sentences_and_update_item(one_conn: SQLiteUtil, item):
     p_docids = item['predicted_docids']
     # cleaned_claim = ' '.join(easy_tokenize(item['claim']))
     # print(cleaned_claim)
@@ -139,13 +140,11 @@ def predict_sentences_and_update_item(item):
 
     current_sent_list = []
     current_id_list = []
-    db_cursor ,conn = fever_db.get_cursor()
+
     for doc_id in p_docids:
-        r_list, id_list = fever_db.get_all_sent_by_doc_id(db_cursor, doc_id)
+        r_list, id_list = fever_db.get_all_sent_by_doc_id_mutithread(one_conn, doc_id)
         current_sent_list.extend(r_list)
         current_id_list.extend(id_list)
-
-    conn.close()
 
     Args = namedtuple('Args', 'ngram hash_size num_workers')
 
@@ -186,7 +185,8 @@ def script(in_path, out_path):
     res_list = []
 
     # the sqlite3 DB do not support multi-thread at the moment, need to refactor fever.db
-    thread_number = 2
+    one_conn = SQLiteUtil(str(config.FEVER_DB))
+    thread_number = 20
     thread_exe(lambda i: res_list.append(predict_sentences_and_update_item(i)), iter(d_list), thread_number, "tfidf predict sentences")
 
     eval_mode = {'check_sent_id_correct': True, 'standard': False}

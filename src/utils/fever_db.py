@@ -5,6 +5,7 @@ from tqdm import tqdm
 import config
 import json
 import re
+from utils.sqlite_queue import *
 
 
 # Write some standard API for query information
@@ -17,7 +18,7 @@ def get_cursor(save_path=str(config.FEVER_DB)):
 def get_evidence(cursor, doc_id, line_num):
     key = f'{doc_id}(-.-){line_num}'
     # print("SELECT * FROM sentences WHERE id = \"%s\"" % key)
-    cursor.execute("SELECT * FROM sentences WHERE id=?", (key,))
+    cursor.execute("SELECT * FROM sentences WHERE id=?", (normalize(key),))
     fetched_data = cursor.fetchone()
     if fetched_data is not None:
         _id, text, h_links, doc_id = fetched_data
@@ -27,7 +28,7 @@ def get_evidence(cursor, doc_id, line_num):
 
 
 def get_all_sent_by_doc_id(cursor, doc_id, with_h_links=False):
-    cursor.execute("SELECT * FROM sentences WHERE doc_id=?", (doc_id, ))
+    cursor.execute("SELECT * FROM sentences WHERE doc_id=?", (normalize(doc_id), ))
     fetched_data = cursor.fetchall()
     r_list = []
     id_list = []
@@ -43,6 +44,36 @@ def get_all_sent_by_doc_id(cursor, doc_id, with_h_links=False):
         return r_list, id_list, h_links_list
     else:
         return r_list, id_list
+
+
+def get_all_sent_by_doc_id_mutithread(sqlite_queue: SQLiteUtil, doc_id, with_h_links=False):
+    sql = "SELECT * FROM sentences WHERE doc_id=?"
+    fetched_data = sqlite_queue.execute_query(sql, (normalize(doc_id), ))
+    r_list = []
+    id_list = []
+    h_links_list = []
+    for id, text, h_links, doc_id in fetched_data:
+        # print(id, text, h_li
+        # nks, doc_id)
+        r_list.append(text)
+        id_list.append(id)
+        h_links_list.append(json.loads(h_links))
+
+    if with_h_links:
+        return r_list, id_list, h_links_list
+    else:
+        return r_list, id_list
+
+
+def get_evidence_multithread(sqlite_queue, doc_id, line_num):
+    key = f'{doc_id}(-.-){line_num}'
+    sql = "SELECT * FROM sentences WHERE id=?"
+    fetched_data = sqlite_queue.execute_query(sql, (normalize(key), ))
+    if len(fetched_data) > 0:
+        _id, text, h_links, doc_id = fetched_data[0]
+    else:
+        _id, text, h_links, doc_id = None, None, None, None
+    return _id, text, h_links
 # API Ends
 
 

@@ -22,7 +22,7 @@ from data_util.data_readers.fever_sselection_reader import SSelectorReader
 from neural_modules.ema import EMA, load_ema_to_model, save_ema_to_file
 from sentence_retrieval.sampler_for_nmodel import get_full_list, post_filter, get_additional_list, \
     get_full_list_from_list_d
-from data_util.exvocab import load_vocab_embeddings
+from data_util.data_preperation.exvocab import load_vocab_embeddings
 
 from log_util import save_tool
 import utils

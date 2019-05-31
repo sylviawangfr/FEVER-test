@@ -4,6 +4,7 @@ from utils import text_clean, fever_db
 import config
 import json
 from data_util.tokenizers import spacy_tokenizer
+import datetime
 
 
 def thread_exe(func, pieces, thd_num, description):
@@ -11,6 +12,10 @@ def thread_exe(func, pieces, thd_num, description):
         to_be_done = {executor.submit(func, param): param for param in pieces}
         for t in tqdm(concurrent.futures.as_completed(to_be_done), total=len(list(pieces)), desc=description, position=0):
             to_be_done[t]
+
+
+def get_current_time_str():
+    return str(datetime.now().strftime('%Y_%m_%d_%H:%M:%S'))
 
 
 # def wait_delay(d):
@@ -90,4 +95,4 @@ def doc_id_to_tokenized_text(doc_id, including_lemmas=False):
     if including_lemmas:
         return tokenize_doc_id(doc_id, tokenizer_spacy)
     else:
-        return tokenize_doc_id(doc_id, tokenizer_spacy)[0]
+        return ' '.join(tokenize_doc_id(doc_id, tokenizer_spacy)[0])

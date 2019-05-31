@@ -6,16 +6,22 @@ Neural sentence selector aimed to fine-select sentence for NLI models since NLI 
 
 import json
 
-from nn_doc_retrieval.disabuigation_training import trucate_item
 from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 from utils import fever_db, common, c_scorer
-from utils.common import load_jsonl
+from utils.file_loader import read_json_rows
 from tqdm import tqdm
 import config
-from utils.tokenize_fever import easy_tokenize
+from data_util.data_preperation.tokenize_fever import easy_tokenize
 import utils.check_sentences
 import itertools
 import numpy as np
+
+
+def get_full_list_multithread(tokenized_data_file, additional_data_file, pred=False, top_k=None):
+    pass
+
+
+
 
 
 def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=None):
@@ -27,10 +33,10 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
     :return:
     """
     cursor, conn = fever_db.get_cursor()
-    d_list = load_jsonl(tokenized_data_file)
+    d_list = read_json_rows(tokenized_data_file)
 
     if not isinstance(additional_data_file, list):
-        additional_d_list = load_jsonl(additional_data_file)
+        additional_d_list = read_json_rows(additional_data_file)
     else:
         additional_d_list = additional_data_file
 
@@ -101,6 +107,10 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
 
     return full_data_list
 
+def trucate_item(d_list, top_k=None):
+    for item in d_list:
+        if top_k is not None and len(item['predicted_docids']) > top_k:
+            item['predicted_docids'] = item['predicted_docids'][:top_k]
 
 def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=False, top_k=None):
     """
@@ -190,9 +200,9 @@ def get_additional_list(tokenized_data_file, additional_data_file,
     :return:
     """
     cursor, conn = fever_db.get_cursor()
-    d_list = load_jsonl(tokenized_data_file)
+    d_list = read_json_rows(tokenized_data_file)
 
-    additional_d_list = load_jsonl(additional_data_file)
+    additional_d_list = read_json_rows(additional_data_file)
     additional_data_dict = dict()
 
     for add_item in additional_d_list:
@@ -350,7 +360,8 @@ if __name__ == '__main__':
     #                           pred=True)
     # full_list = get_full_list(config.T_FEVER_TRAIN_JSONL,
     # config.RESULT_PATH / "doc_retri/2018_07_04_21:56:49_r/train.jsonl")
-    train_upstream_file = config.RESULT_PATH / "doc_retri/2018_07_04_21:56:49_r/train.jsonl"
+    # train_upstream_file = config.RESULT_PATH / "doc_retri/2018_07_04_21:56:49_r/train.jsonl"
+    train_upstream_file = config.DOC_RETRV_TRAIN
     complete_upstream_train_data = get_full_list(config.T_FEVER_TRAIN_JSONL, train_upstream_file, pred=False)
     filtered_train_data = post_filter(complete_upstream_train_data, keep_prob=0.5, seed=12)
 

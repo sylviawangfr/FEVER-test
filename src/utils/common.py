@@ -15,7 +15,7 @@ def thread_exe(func, pieces, thd_num, description):
 
 
 def get_current_time_str():
-    return str(datetime.now().strftime('%Y_%m_%d_%H:%M:%S'))
+    return str(datetime.datetime.now().strftime('%Y_%m_%d_%H:%M:%S'))
 
 
 # def wait_delay(d):

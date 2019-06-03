@@ -186,8 +186,8 @@ def script(in_path, out_path):
 
     # the sqlite3 DB do not support multi-thread at the moment, need to refactor fever.db
     one_conn = SQLiteUtil(str(config.FEVER_DB))
-    thread_number = 20
-    thread_exe(lambda i: res_list.append(predict_sentences_and_update_item(i)), iter(d_list), thread_number, "tfidf predict sentences")
+    thread_number = 1
+    thread_exe(lambda i: res_list.append(predict_sentences_and_update_item(one_conn, i)), iter(d_list), thread_number, "tfidf predict sentences")
 
     eval_mode = {'check_sent_id_correct': True, 'standard': False}
     print(c_scorer.fever_score(res_list, res_list, mode=eval_mode, verbose=False))
@@ -211,26 +211,16 @@ if __name__ == '__main__':
     # check_acc(in_path)
     # d_list = load_data(in_path)
     # if_idf_select_sentence()
+    print(str(config.RESULT_PATH / "tfidf_") + get_current_time_str() + ".jsonl")
 
-    # script(
-    #     in_path='/Users/Eason/RA/FunEver/results/doc_retri/docretri.pageview/dev.jsonl',
-    #     out_path='/Users/Eason/RA/FunEver/results/sent_retri/docretri.pageview.tf_idf/dev.jsonl'
-    # )
+    doc_num = 10
 
-    # script(
-    #     in_path=common.load_jsonl('/Users/Eason/RA/FunEver/results/doc_retri/docretri.pageview/dev.jsonl'),
-    #     out_path='/Users/Eason/RA/FunEver/results/sent_retri/docretri.pageview.tf_idf/dev_0.jsonl'
-    # )
-
-
-    # doc_num = 10
-    #
-    # doc_file = str(config.DOC_RETRV_TRAIN)
-    # # dev_doc_file = str(config.DOC_RETRV_TRAIN)
-    # doc_list = read_json_rows(doc_file)
-    # # print("doc len:", len(doc_list))
-    # pre_list = read_json_rows(str(config.S_TFIDF_RETRV_TRAIN))
-    # # print("pre len:", len(pre_list))
+    doc_file = str(config.DOC_RETRV_DEV)
+    # dev_doc_file = str(config.DOC_RETRV_TRAIN)
+    doc_list = read_json_rows(doc_file)
+    # print("doc len:", len(doc_list))
+    pre_list = read_json_rows(str(config.S_TFIDF_RETRV_DEV))
+    # print("pre len:", len(pre_list))
     #
     # docid = [i['id'] for i in doc_list]
     # preid = [j['id'] for j in pre_list]
@@ -252,11 +242,20 @@ if __name__ == '__main__':
     # for item in doc_list:
     #     item['predicted_docids'] = item['predicted_docids'][:doc_num]
     #
-    # script(
-    #     in_path=doc_list,
-    #     out_path=str(config.S_TFIDF_RETRV_TRAIN)
-    #     # out_path=str(config.S_TFIDF_RETRV_TRAIN)
-    # )
+    script(
+        in_path=doc_list,
+        out_path=str(config.RESULT_PATH / "tfidf_") + get_current_time_str() + ".jsonl"
+        # out_path=str(config.S_TFIDF_RETRV_TRAIN)
+    )
+
+    # tfidf
+    # predict
+    # sentences: 19998
+    # it[47:35, 7.26
+    # it / s]
+    # check_sent_id_correct_hits
+    # 14041
+    # 0.7021202120212021
 
     # 16783 0.8392339233923393 document = 5 upstream
     # 16752 0.8376837683768377 document = 10 upstream

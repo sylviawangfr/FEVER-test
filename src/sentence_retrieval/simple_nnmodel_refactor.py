@@ -630,7 +630,7 @@ def train_fever_v2():
             out = model(batch)
             out.to(device)
             y = batch['selection_label']
-            y.cuda()
+            y = y.cuda()
 
             criterion.to(device)
             loss = criterion(out, y)

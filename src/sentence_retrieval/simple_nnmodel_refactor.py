@@ -628,7 +628,7 @@ def train_fever_v2():
         for i, batch in tqdm(enumerate(train_iter)):
             model.train()
             out = model(batch)
-            out.cuda()
+            out.to(device)
             y = batch['selection_label']
             y.cuda()
 

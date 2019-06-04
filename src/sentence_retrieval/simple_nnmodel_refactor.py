@@ -573,6 +573,7 @@ def train_fever_v2():
     # exit(0)
     # Build Model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu", index=0)
+    print("device: ", device.type)
     device_num = -1 if device.type == 'cpu' else 0
 
     model = Model(weight=weight_dict['glove.840B.300d'],

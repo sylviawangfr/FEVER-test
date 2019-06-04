@@ -631,6 +631,7 @@ def train_fever_v2():
             out.to(device)
             y = batch['selection_label']
             if device == 'cuda':
+                print("is cuda")
                 y = y.cuda()
 
             criterion.to(device)

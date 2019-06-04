@@ -628,8 +628,9 @@ def train_fever_v2():
             out = model(batch)
             y = batch['selection_label']
 
+            criterion.to(device)
+            model.to(device)
             loss = criterion(out, y)
-            loss.to(device)
 
             # No decay
             optimizer.zero_grad()

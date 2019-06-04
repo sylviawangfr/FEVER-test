@@ -601,7 +601,6 @@ def train_fever_v2():
     start_lr = 0.0002
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=start_lr)
     criterion = nn.CrossEntropyLoss()
-    criterion.to(device)
 
     dev_actual_list = read_json_rows(config.T_FEVER_DEV_JSONL)
 
@@ -630,6 +629,7 @@ def train_fever_v2():
             y = batch['selection_label']
 
             loss = criterion(out, y)
+            loss.to(device)
 
             # No decay
             optimizer.zero_grad()

@@ -83,7 +83,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
                                     This file need to contain *"predicted_docids"* field.
     :return:
     """
-    d_list = read_json_rows(tokenized_data_file)[0:100]
+    d_list = read_json_rows(tokenized_data_file)
 
     if not isinstance(additional_data_file, list):
         additional_d_list = read_json_rows(additional_data_file)
@@ -102,7 +102,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
     full_data_list = []
     # for item in tqdm(d_list):
     #     full_data_list.extend(sample_single_item(item, additional_data_dict,pred))
-    thread_exe(lambda i: full_data_list.extend(sample_single_item(i, additional_data_dict,pred)), iter(d_list), 1, "get sample data")
+    thread_exe(lambda i: full_data_list.extend(sample_single_item(i, additional_data_dict,pred)), iter(d_list), 100, "get sample data")
 
     return full_data_list
 
@@ -133,8 +133,11 @@ def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=Fa
         additional_data_dict[add_item['id']] = add_item
 
     full_data_list = []
-    for item in tqdm(d_list):
-        full_data_list.extend(sample_single_item(item, additional_data_dict, pred))
+    thread_exe(lambda i: full_data_list.extend(sample_single_item(i, additional_data_dict, pred)), iter(d_list), 100,
+               "get sample data")
+
+    # for item in tqdm(d_list):
+    #     full_data_list.extend(sample_single_item(item, additional_data_dict, pred))
 
     return full_data_list
 
@@ -213,6 +216,7 @@ def get_additional_list(tokenized_data_file, additional_data_file,
             sent_item['query'] = item['claim']
             full_data_list.append(sent_item)
 
+    conn.close()
     return full_data_list
 
 

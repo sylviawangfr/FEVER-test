@@ -18,7 +18,7 @@ import os
 import config
 from data_util.data_readers.fever_sselection_reader import SSelectorReader
 from neural_modules.ema import EMA, load_ema_to_model, save_ema_to_file
-from sentence_retrieval.sampler_for_nmodel_refactor import get_full_list, post_filter, get_additional_list, \
+from sentence_retrieval.sampler_for_nmodel_refactor import get_full_list, post_filter, \
     get_full_list_from_list_d
 from data_util.data_preperation.exvocab import load_vocab_embeddings
 from utils.file_loader import read_json_rows
@@ -264,7 +264,7 @@ def eval_for_remaining():
     # SAVE_RESULT_TARGET_FOLDER.mkdir()
 
     incoming_data_file = config.RESULT_PATH / "sent_retri_nn/remaining_training_cache/dev_s.jsonl"
-    incoming_data = common.load_jsonl(incoming_data_file)
+    incoming_data = read_json_rows(incoming_data_file)
     SAVE_RESULT_TARGET_FOLDER = config.RESULT_PATH / "sent_retri_nn/remaining_training_cache"
 
     # out_file_name = "dev_sent.jsonl"
@@ -790,8 +790,8 @@ def eval_and_save_v2(model_path, is_ema, saving_dir, save_train_data=True, prob_
     model.display()
     model.to(device)
 
-    dev_actual_list = common.load_jsonl(config.T_FEVER_DEV_JSONL)
-    train_actual_list = common.load_jsonl(config.T_FEVER_TRAIN_JSONL)
+    dev_actual_list = read_json_rows(config.T_FEVER_DEV_JSONL)
+    train_actual_list = read_json_rows(config.T_FEVER_TRAIN_JSONL)
 
     eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1)
     train_iter = biterator(train_instances, shuffle=False, num_epochs=1)
@@ -829,7 +829,7 @@ def eval_and_save_v2(model_path, is_ema, saving_dir, save_train_data=True, prob_
         print("Build Train Data")
         train_results_list = score_converter_v1(config.T_FEVER_TRAIN_JSONL, complete_upstream_train_data,
                                                 sent_retri_top_k=5,
-                                                sent_retri_scal_prob=prob_threshold)
+                                                sent_retri_scal_prob=prob_thresholds)
 
         # This is only a wrapper for the simi_sampler
 
@@ -858,7 +858,7 @@ def score_converter_v0(org_data_file, full_sent_list):
         :param full_sent_list: append full_sent_score list to evidence of original data file
         :return:
         """
-    d_list = common.load_jsonl(org_data_file)
+    d_list = read_json_rows(org_data_file)
     augmented_dict = dict()
     print("Build selected sentences file:", len(full_sent_list))
     for sent_item in tqdm(full_sent_list):

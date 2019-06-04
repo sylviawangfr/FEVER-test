@@ -628,9 +628,9 @@ def train_fever_v2():
         for i, batch in tqdm(enumerate(train_iter)):
             model.train()
             out = model(batch)
-            out.to(device)
             y = batch['selection_label']
-            y = y.cuda()
+            if device == 'cuda':
+                y = y.cuda()
 
             criterion.to(device)
             loss = criterion(out, y)

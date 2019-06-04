@@ -623,15 +623,15 @@ def train_fever_v2():
 
         sampled_train_instances = train_fever_data_reader.read(filtered_train_data)
 
-        train_iter = biterator(sampled_train_instances, shuffle=True, num_epochs=1) #, cuda_device=device_num
+        train_iter = biterator(sampled_train_instances, shuffle=True, num_epochs=1, cuda_device=device_num) #, cuda_device=device_num
         for i, batch in tqdm(enumerate(train_iter)):
-            model.to(device)
+
             model.train()
             out = model(batch)
             y = batch['selection_label']
+            y.cuda()
 
             criterion.to(device)
-
             loss = criterion(out, y)
 
             # No decay

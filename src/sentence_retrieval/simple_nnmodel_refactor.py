@@ -13,16 +13,15 @@ from allennlp.data.token_indexers import SingleIdTokenIndexer, ELMoTokenCharacte
 from allennlp.modules import Embedding, Elmo
 from pathlib import Path
 from torch import nn
-import numpy as np
-
 import os
 
 import config
 from data_util.data_readers.fever_sselection_reader import SSelectorReader
 from neural_modules.ema import EMA, load_ema_to_model, save_ema_to_file
-from sentence_retrieval.sampler_for_nmodel import get_full_list, post_filter, get_additional_list, \
+from sentence_retrieval.sampler_for_nmodel_refactor import get_full_list, post_filter, get_additional_list, \
     get_full_list_from_list_d
 from data_util.data_preperation.exvocab import load_vocab_embeddings
+from utils.file_loader import read_json_rows
 
 from log_util import save_tool
 import utils
@@ -314,7 +313,7 @@ def eval_for_remaining():
     model.display()
     model.to(device)
 
-    eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
+    eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1) #, cuda_device=device_num
     complete_upstream_dev_data = hidden_eval(model, eval_iter, incoming_data)
 
     common.save_jsonl(complete_upstream_dev_data, SAVE_RESULT_TARGET_FOLDER / out_file_name)
@@ -434,7 +433,7 @@ def train_fever_v1():
         print("Sampled_length:", len(filtered_train_data))
         sampled_train_instances = train_fever_data_reader.read(filtered_train_data)
 
-        train_iter = biterator(sampled_train_instances, shuffle=True, num_epochs=1, cuda_device=device_num)
+        train_iter = biterator(sampled_train_instances, shuffle=True, num_epochs=1) #, cuda_device=device_num
         for i, batch in tqdm(enumerate(train_iter)):
             model.train()
             out = model(batch)
@@ -454,7 +453,7 @@ def train_fever_v1():
                 mod = 8000
 
             if iteration % mod == 0:
-                eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
+                eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1) #, cuda_device=device_num
                 complete_upstream_dev_data = hidden_eval(model, eval_iter, complete_upstream_dev_data)
 
                 dev_results_list = score_converter_v0(config.T_FEVER_DEV_JSONL, complete_upstream_dev_data)
@@ -484,7 +483,7 @@ def train_fever_v1():
                     torch.save(model.state_dict(), save_path)
 
         print("Epoch Evaluation...")
-        eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
+        eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1) #, cuda_device=device_num
         complete_upstream_dev_data = hidden_eval(model, eval_iter, complete_upstream_dev_data)
 
         dev_results_list = score_converter_v0(config.T_FEVER_DEV_JSONL, complete_upstream_dev_data)
@@ -526,8 +525,11 @@ def train_fever_v2():
     experiment_name = f"simple_nn_remain_{keep_neg_sample_prob}"
     # sample_prob_decay = 0.05
 
-    dev_upstream_file = config.RESULT_PATH / "doc_retri/std_upstream_data_using_pageview/dev_doc.jsonl"
-    train_upstream_file = config.RESULT_PATH / "doc_retri/std_upstream_data_using_pageview/train_doc.jsonl"
+    # dev_upstream_file = config.RESULT_PATH / "doc_retri/std_upstream_data_using_pageview/dev_doc.jsonl"
+    # train_upstream_file = config.RESULT_PATH / "doc_retri/std_upstream_data_using_pageview/train_doc.jsonl"
+
+    dev_upstream_file = config.DOC_RETRV_DEV
+    train_upstream_file = config.DOC_RETRV_TRAIN
 
     # Prepare Data
     token_indexers = {
@@ -595,7 +597,7 @@ def train_fever_v2():
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=start_lr)
     criterion = nn.CrossEntropyLoss()
 
-    dev_actual_list = common.load_jsonl(config.T_FEVER_DEV_JSONL)
+    dev_actual_list = read_json_rows(config.T_FEVER_DEV_JSONL)
 
     for i_epoch in range(num_epoch):
         print("Resampling...")
@@ -615,7 +617,7 @@ def train_fever_v2():
 
         sampled_train_instances = train_fever_data_reader.read(filtered_train_data)
 
-        train_iter = biterator(sampled_train_instances, shuffle=True, num_epochs=1, cuda_device=device_num)
+        train_iter = biterator(sampled_train_instances, shuffle=True, num_epochs=1) #, cuda_device=device_num
         for i, batch in tqdm(enumerate(train_iter)):
             model.train()
             out = model(batch)
@@ -638,7 +640,7 @@ def train_fever_v2():
                 mod = 8000
 
             if iteration % mod == 0:
-                eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
+                eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1) #, cuda_device=device_num
 
                 load_ema_to_model(cloned_empty_model, ema)
 
@@ -679,7 +681,7 @@ def train_fever_v2():
                     # torch.save(model.state_dict(), save_path)
 
         print("Epoch Evaluation...")
-        eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
+        eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1) #, cuda_device=device_num
 
         load_ema_to_model(cloned_empty_model, ema)
         # complete_upstream_dev_data = hidden_eval(model, eval_iter, complete_upstream_dev_data)
@@ -945,7 +947,7 @@ def pipeline_first_sent_selection(org_t_file, upstream_in_file, model_save_path,
     model.display()
     model.to(device)
 
-    eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
+    eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1) #, cuda_device=device_num
     dev_sent_full_list = hidden_eval(model, eval_iter, complete_upstream_dev_data)
 
     return dev_sent_full_list
@@ -1001,7 +1003,7 @@ def pipeline_first_sent_selection_list(org_t_file, upstream_in_file, model_save_
     model.display()
     model.to(device)
 
-    eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1, cuda_device=device_num)
+    eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1) #, cuda_device=device_num
     dev_sent_full_list = hidden_eval(model, eval_iter, complete_upstream_dev_data)
 
     return dev_sent_full_list
@@ -1034,12 +1036,12 @@ def ana_neg_pos_portion():
 
 if __name__ == "__main__":
     # ana_neg_pos_portion()
-    # train_fever_v2()
+    train_fever_v2()
 
-    eval_and_save_v2(
-        "/home/easonnie/projects/FunEver/saved_models/10-03-20:29:07_simple_nn_remain_1/i(56000)_epoch(1)_(tra_score:0.7957295729572957|raw_acc:1.0|pr:0.86442769276928|rec:0.6935943594359436|f1:0.769645296093697)_ema",
-        True,
-        "/home/easonnie/projects/FunEver/results/sent_retri_nn/balanced_sentence_selection_results",
-        False,
-        [0.1, 0.08, 0.06, 0.04, 0.02]
-    )
+    # eval_and_save_v2(
+    #     "/home/easonnie/projects/FunEver/saved_models/10-03-20:29:07_simple_nn_remain_1/i(56000)_epoch(1)_(tra_score:0.7957295729572957|raw_acc:1.0|pr:0.86442769276928|rec:0.6935943594359436|f1:0.769645296093697)_ema",
+    #     True,
+    #     "/home/easonnie/projects/FunEver/results/sent_retri_nn/balanced_sentence_selection_results",
+    #     False,
+    #     [0.1, 0.08, 0.06, 0.04, 0.02]
+    # )

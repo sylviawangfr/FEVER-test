@@ -83,7 +83,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
                                     This file need to contain *"predicted_docids"* field.
     :return:
     """
-    d_list = read_json_rows(tokenized_data_file)
+    d_list = read_json_rows(tokenized_data_file)[0:100]
 
     if not isinstance(additional_data_file, list):
         additional_d_list = read_json_rows(additional_data_file)
@@ -102,7 +102,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
     full_data_list = []
     # for item in tqdm(d_list):
     #     full_data_list.extend(sample_single_item(item, additional_data_dict,pred))
-    thread_exe(lambda i: full_data_list.extend(sample_single_item(i, additional_data_dict,pred)), iter(d_list), 2, "get sample data")
+    thread_exe(lambda i: full_data_list.extend(sample_single_item(i, additional_data_dict,pred)), iter(d_list), 1, "get sample data")
 
     return full_data_list
 

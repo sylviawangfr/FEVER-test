@@ -12,7 +12,7 @@ from typing import Dict, List, Tuple
 from tqdm import tqdm
 
 from data_util.data_preperation.tokenize_fever import easy_tokenize
-
+from utils.file_loader import read_json_rows
 
 def load_data(file):
     d_list = []
@@ -100,7 +100,7 @@ def threshold_sampler(org_data_file, full_sent_list, prob_threshold=0.5, logist_
     """
     Providing samples to the Training set by a probability threshold on the upstream selected sentences.
     """
-    d_list = common.load_jsonl(org_data_file)
+    d_list = read_json_rows(org_data_file)
     augmented_dict = dict()
     print("Build selected sentences file:", len(full_sent_list))
     for sent_item in tqdm(full_sent_list):
@@ -139,7 +139,7 @@ def threshold_sampler_insure_unique(org_data_file, full_sent_list, prob_threshol
     """
     Providing samples to the Training set by a probability threshold on the upstream selected sentences.
     """
-    d_list = common.load_jsonl(org_data_file)
+    d_list = read_json_rows(org_data_file)
     augmented_dict: Dict[int, Dict[str, Dict]] = dict()
     print("Build selected sentences file:", len(full_sent_list))
     for sent_item in tqdm(full_sent_list):
@@ -231,7 +231,7 @@ def threshold_sampler_insure_unique_merge(org_data_file, full_sent_list, prob_th
     Providing samples to the Training set by a probability threshold on the upstream selected sentences.
     """
     if not isinstance(org_data_file, list):
-        d_list = common.load_jsonl(org_data_file)
+        d_list = read_json_rows(org_data_file)
     else:
         d_list = org_data_file
     augmented_dict: Dict[int, Dict[str, Dict]] = dict()

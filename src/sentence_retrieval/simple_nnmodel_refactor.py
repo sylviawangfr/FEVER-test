@@ -626,9 +626,9 @@ def train_fever_v2():
 
         train_iter = biterator(sampled_train_instances, shuffle=True, num_epochs=1) #, cuda_device=device_num
         for i, batch in tqdm(enumerate(train_iter)):
-            batch.cuda()
             model.train()
             out = model(batch)
+            out.cuda()
             y = batch['selection_label']
             y.cuda()
 

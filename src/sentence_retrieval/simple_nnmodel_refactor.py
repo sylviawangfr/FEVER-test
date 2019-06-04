@@ -633,6 +633,8 @@ def train_fever_v2():
             if device == 'cuda':
                 print("is cuda")
                 y = y.cuda()
+            else:
+                print("is not cuda:", device)
 
             criterion.to(device)
             loss = criterion(out, y)

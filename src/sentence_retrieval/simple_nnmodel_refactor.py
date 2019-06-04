@@ -630,11 +630,9 @@ def train_fever_v2():
             out = model(batch)
             out.to(device)
             y = batch['selection_label']
-            if device == 'cuda':
-                print("is cuda")
+            if device.type == 'cuda':
                 y = y.cuda()
-            else:
-                print("is not cuda:", device)
+
 
             criterion.to(device)
             loss = criterion(out, y)

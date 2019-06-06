@@ -5,6 +5,8 @@ import config
 import itertools
 from utils.tokenizer_simple import *
 from utils.common import thread_exe
+from utils.text_clean import *
+import json
 
 client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
 
@@ -24,6 +26,46 @@ def get_all_doc_ids(max_ind=None):
         print(e)
     finally:
         return id_list
+
+
+
+def get_evidence_es(doc_id, line_num):
+    key = f'{doc_id}(-.-){line_num}'
+    # cursor.execute("SELECT * FROM sentences WHERE id=?", (normalize(key),))
+    search = Search(using=client, index=config.FEVER_SEN_INDEX)
+    key = normalize(key)
+    search = search.query("match", id=key)
+    _id, text, h_links, doc_id = None, None, None, None
+    try:
+        search.execute()
+        hit = next(search.scan())
+        _id = hit.id
+        text = hit.text
+        h_links = hit.h_links
+    except Exception as e:
+        print(e)
+    finally:
+        return _id, text, h_links
+
+
+
+def get_all_sent_by_doc_id_es(doc_id, with_h_links=False):
+    r_list = []
+    id_list = []
+    h_links_list = []
+    search = Search(using=client, index=config.FEVER_SEN_INDEX)
+    doc_id = normalize(doc_id)
+    search = search.query("match", doc_id=doc_id)
+    for hit in search.scan():
+        r_list.append(hit.text)
+        id_list.append(hit.id)
+        h_links_list.append(json.loads(hit.h_links))
+
+    if with_h_links:
+        return r_list, id_list, h_links_list
+    else:
+        return r_list, id_list
+
 
 
 # ES match_phrase on entities
@@ -208,4 +250,7 @@ def test():
 if __name__ == '__main__':
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     # test()
-    get_all_doc_ids()
+    # get_all_doc_ids()
+    get_all_sent_by_doc_id_es("Andre_Markgraaff")
+    get_evidence_es("Andre_Markgraaff", 13)
+

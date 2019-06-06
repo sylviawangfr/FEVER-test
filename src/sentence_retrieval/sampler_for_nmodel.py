@@ -17,13 +17,6 @@ import itertools
 import numpy as np
 
 
-def get_full_list_multithread(tokenized_data_file, additional_data_file, pred=False, top_k=None):
-    pass
-
-
-
-
-
 def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=None):
     """
     This method will select all the sentence from upstream doc retrieval and label the correct evident as true
@@ -32,7 +25,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
                                     This file need to contain *"predicted_docids"* field.
     :return:
     """
-    cursor, conn = fever_db.get_cursor()
+
     d_list = read_json_rows(tokenized_data_file)
 
     if not isinstance(additional_data_file, list):
@@ -51,6 +44,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
 
     full_data_list = []
 
+    cursor, conn = fever_db.get_cursor()
     for item in tqdm(d_list):
         doc_ids = additional_data_dict[item['id']]["predicted_docids"]
 
@@ -105,6 +99,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
 
             full_data_list.append(sent_item)
 
+    conn.close()
     return full_data_list
 
 def trucate_item(d_list, top_k=None):
@@ -120,7 +115,7 @@ def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=Fa
                                     This file need to contain *"predicted_docids"* field.
     :return:
     """
-    cursor, conn = fever_db.get_cursor()
+
     d_list = tokenized_data_file
 
     additional_d_list = additional_data_file
@@ -136,6 +131,7 @@ def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=Fa
 
     full_data_list = []
 
+    cursor, conn = fever_db.get_cursor()
     for item in tqdm(d_list):
         doc_ids = additional_data_dict[item['id']]["predicted_docids"]
 
@@ -186,6 +182,7 @@ def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=Fa
             sent_item['query'] = item['claim']
             full_data_list.append(sent_item)
 
+    conn.close()
     return full_data_list
 
 

@@ -83,8 +83,8 @@ def test_indexing():
 
 
 if __name__ == '__main__':
-    init_index()
-    init_wikipages()
+    # init_index()
+    # init_wikipages()
     # test_indexing()
     init_fever_sentence_index()
     build_sentences_records()

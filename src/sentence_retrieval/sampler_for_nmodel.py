@@ -45,6 +45,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
     full_data_list = []
 
     cursor, conn = fever_db.get_cursor()
+    err_log_f = config.LOG_PATH / f"{utils.get_current_time_str()}_analyze_sample.log"
     for item in tqdm(d_list):
         doc_ids = additional_data_dict[item['id']]["predicted_docids"]
 
@@ -79,8 +80,10 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
                     r_list.append(cur_r_list[i])
                     id_list.append(cur_id_list[i])
 
-        assert len(id_list) == len(set(id_list))  # check duplicate
-        assert len(r_list) == len(id_list)
+        # assert len(id_list) == len(set(id_list))  # check duplicate
+        # assert len(r_list) == len(id_list)
+        if not (len(id_list) == len(set(id_list)) or len(r_list) == len(id_list)):
+            utils.get_adv_print_func(err_log_f)
 
         zipped_s_id_list = list(zip(r_list, id_list))
         # Sort using id

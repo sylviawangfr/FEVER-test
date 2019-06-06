@@ -35,6 +35,7 @@ from neural_modules import activation as actf
 from utils import c_scorer
 from simi_sampler_nli_v0.simi_sampler import threshold_sampler_insure_unique
 from allennlp.modules import ScalarMix
+from utils.file_loader import read_json_rows
 
 
 class ESIM(nn.Module):
@@ -306,30 +307,30 @@ def train_fever_ema_v1(resume_model=None):
     print("Train prob threshold:", train_prob_threshold)
     print("Train sample top k:", train_sample_top_k)
 
-    dev_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
-                                               "sent_retri_nn/balanced_sentence_selection_results/dev_sent_pred_scores.jsonl")
+    dev_upstream_sent_list = read_json_rows(config.RESULT_PATH /
+                                               "2019_03_06_17/dev_sent_score_2_shared_task_dev.jsonl")
 
-    train_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
-                                                 "sent_retri_nn/balanced_sentence_selection_results/train_sent_scores.jsonl")
+    # train_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
+    #                                              "sent_retri_nn/balanced_sentence_selection_results/train_sent_scores.jsonl")
     # Prepare Data
     # 22 Nov 2018 03:16
     # Remove this because everything can be handled by Bert Servant.
 
     print("Building Prob Dicts...")
-    train_sent_list = common.load_jsonl(
-        config.RESULT_PATH / "sent_retri_nn/balanced_sentence_selection_results/train_sent_scores.jsonl")
+    # train_sent_list = common.load_jsonl(
+    #     config.RESULT_PATH / "sent_retri_nn/balanced_sentence_selection_results/train_sent_scores.jsonl")
 
-    dev_sent_list = common.load_jsonl(config.RESULT_PATH /
-                                      "sent_retri_nn/balanced_sentence_selection_results/dev_sent_pred_scores.jsonl")
+    dev_sent_list = read_json_rows(config.RESULT_PATH /
+                                               "2019_03_06_17/dev_sent_score_2_shared_task_dev.jsonl")
 
-    selection_dict = paired_selection_score_dict(train_sent_list)
-    selection_dict = paired_selection_score_dict(dev_sent_list, selection_dict)
+    # selection_dict = paired_selection_score_dict(train_sent_list)
+    selection_dict = paired_selection_score_dict(dev_sent_list)
 
     upstream_dev_list = threshold_sampler_insure_unique(config.T_FEVER_DEV_JSONL, dev_upstream_sent_list,
                                                         prob_threshold=dev_prob_threshold, top_n=5)
 
     dev_fever_data_reader = BertReader(bert_servant, lazy=lazy, max_l=60)
-    train_fever_data_reader = BertReader(bert_servant, lazy=lazy, max_l=60)
+    # train_fever_data_reader = BertReader(bert_servant, lazy=lazy, max_l=60)
 
     complete_upstream_dev_data = select_sent_with_prob_for_eval(config.T_FEVER_DEV_JSONL, upstream_dev_list,
                                                                 selection_dict, tokenized=True)
@@ -383,17 +384,18 @@ def train_fever_ema_v1(resume_model=None):
         print("Resampling...")
         # Resampling
         train_data_with_candidate_sample_list = \
-            threshold_sampler_insure_unique(config.T_FEVER_TRAIN_JSONL, train_upstream_sent_list,
+            threshold_sampler_insure_unique(config.T_FEVER_DEV_JSONL, dev_upstream_sent_list,
                                             train_prob_threshold,
                                             top_n=train_sample_top_k)
 
-        complete_upstream_train_data = adv_simi_sample_with_prob_v1_1(config.T_FEVER_TRAIN_JSONL,
+        complete_upstream_train_data = adv_simi_sample_with_prob_v1_1(config.T_FEVER_DEV_JSONL,
                                                                       train_data_with_candidate_sample_list,
                                                                       selection_dict,
                                                                       tokenized=True)
         random.shuffle(complete_upstream_train_data)
         print("Sample data length:", len(complete_upstream_train_data))
-        sampled_train_instances = train_fever_data_reader.read(complete_upstream_train_data)
+        # sampled_train_instances = train_fever_data_reader.read(complete_upstream_train_data)
+        sampled_train_instances = dev_fever_data_reader.read(complete_upstream_train_data)
 
         train_iter = biterator(sampled_train_instances, shuffle=True, num_epochs=1)
         for i, batch in tqdm(enumerate(train_iter)):
@@ -740,6 +742,7 @@ if __name__ == "__main__":
     # spectrum_eval_manual_check()
     # train_fever_ema_v1()
     # train_fever_ema_v1_runtest()
-    eval_m_on_sselection(
-        "/home/easonnie/projects/FunEver/saved_models/11-23-23:45:19_bert_nsmn_ema_lr1|t_prob:0.02|top_k:8/i(104000)_epoch(15)_dev(0.6736173617361736)_lacc(0.7110711071107111)_seed(12)"
-    )
+    # eval_m_on_sselection(
+    #     "/home/easonnie/projects/FunEver/saved_models/11-23-23:45:19_bert_nsmn_ema_lr1|t_prob:0.02|top_k:8/i(104000)_epoch(15)_dev(0.6736173617361736)_lacc(0.7110711071107111)_seed(12)"
+    # )
+    train_fever_ema_v1()

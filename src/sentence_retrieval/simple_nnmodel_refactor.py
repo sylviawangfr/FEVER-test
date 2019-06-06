@@ -24,7 +24,7 @@ from data_util.data_preperation.exvocab import load_vocab_embeddings
 from utils.file_loader import read_json_rows
 
 from log_util import save_tool
-import utils
+
 
 from flint import torch_util
 import torch.optim as optim

@@ -1,6 +1,6 @@
 # This file is created on 22 Nov 2018 11:38.
 # The original goal of this file is for bert-as-feature with NSMN on FEVER for NAACL-2019.
-# The code is modified from: /home/easonnie/projects/FunEver/src/nli/mesim_wn_simi_v1_2.py
+
 
 import torch
 import numpy as np
@@ -22,6 +22,7 @@ from sentence_retrieval.sampler_for_nmodel import get_full_list
 from simi_sampler_nli_v0.simi_sampler import paired_selection_score_dict, \
     select_sent_with_prob_for_eval, adv_simi_sample_with_prob_v1_1
 from utils import common
+from utils.file_loader import read_json_rows, save_jsonl
 
 from log_util import save_tool
 
@@ -306,20 +307,20 @@ def train_fever_ema_v1(resume_model=None):
     print("Train prob threshold:", train_prob_threshold)
     print("Train sample top k:", train_sample_top_k)
 
-    dev_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
+    dev_upstream_sent_list = read_json_rows(config.RESULT_PATH /
                                                "sent_retri_nn/balanced_sentence_selection_results/dev_sent_pred_scores.jsonl")
 
-    train_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
+    train_upstream_sent_list = read_json_rows(config.RESULT_PATH /
                                                  "sent_retri_nn/balanced_sentence_selection_results/train_sent_scores.jsonl")
     # Prepare Data
     # 22 Nov 2018 03:16
     # Remove this because everything can be handled by Bert Servant.
 
     print("Building Prob Dicts...")
-    train_sent_list = common.load_jsonl(
+    train_sent_list = read_json_rows(
         config.RESULT_PATH / "sent_retri_nn/balanced_sentence_selection_results/train_sent_scores.jsonl")
 
-    dev_sent_list = common.load_jsonl(config.RESULT_PATH /
+    dev_sent_list = read_json_rows(config.RESULT_PATH /
                                       "sent_retri_nn/balanced_sentence_selection_results/dev_sent_pred_scores.jsonl")
 
     selection_dict = paired_selection_score_dict(train_sent_list)
@@ -425,7 +426,7 @@ def train_fever_ema_v1(resume_model=None):
 
                 eval_mode = {'check_sent_id_correct': True, 'standard': True}
                 strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(complete_upstream_dev_data,
-                                                                            common.load_jsonl(config.T_FEVER_DEV_JSONL),
+                                                                            read_json_rows(config.T_FEVER_DEV_JSONL),
                                                                             mode=eval_mode,
                                                                             verbose=False)
                 print("Fever Score(Strict/Acc./Precision/Recall/F1):", strict_score, acc_score, pr, rec, f1)
@@ -439,7 +440,7 @@ def train_fever_ema_v1(resume_model=None):
                 #
                 # eval_mode = {'check_sent_id_correct': True, 'standard': True}
                 # strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(complete_upstream_dev_data,
-                #                                                             common.load_jsonl(config.T_FEVER_DEV_JSONL),
+                #                                                             read_json_rows(config.T_FEVER_DEV_JSONL),
                 #                                                             mode=eval_mode,
                 #                                                             verbose=False)
                 # print("Fever Score EMA(Strict/Acc./Precision/Recall/F1):", strict_score, acc_score, pr, rec, f1)
@@ -549,9 +550,9 @@ def eval_m_on_sselection(model_path):
     batch_size = 32
     lazy = True
     top_k_doc = 5
-    save_file_name = "/home/easonnie/projects/FunEver/results/sent_retri_nn/bert_verification_for_selection_probing_11_25_2018/dev_sent_scores.txt"
+    save_file_name = str(config.RESULT_PATH / "sent_retri_nn/bert_for_selection_probing/dev_sent_scores.txt")
 
-    dev_upstream_file = config.RESULT_PATH / "doc_retri/std_upstream_data_using_pageview/dev_doc.jsonl"
+    dev_upstream_file = config.DOC_RETRV_DEV
     complete_upstream_dev_data = get_full_list(config.T_FEVER_DEV_JSONL, dev_upstream_file, pred=True,
                                                top_k=top_k_doc)
 
@@ -559,14 +560,10 @@ def eval_m_on_sselection(model_path):
 
     bert_type_name = "bert-large-uncased"
     bert_servant = BertServant(bert_type_name=bert_type_name)
-    # train_upstream_file = config.RESULT_PATH / "doc_retri/std_upstream_data_using_pageview/train_doc.jsonl"
 
-    # train_fever_data_reader = SSelectorReader(token_indexers=token_indexers, lazy=lazy, max_l=180)
-    # dev_fever_data_reader = SSelectorReader(token_indexers=token_indexers, lazy=False)
     dev_fever_data_reader = BertSSReader(bert_servant, lazy=lazy, max_l=80)
 
     print("Dev size:", len(complete_upstream_dev_data))
-    # dev_instances = dev_fever_data_reader.read(complete_upstream_dev_data)
     if debug is not None:
         complete_upstream_dev_data = complete_upstream_dev_data[:debug]
 
@@ -610,7 +607,7 @@ def eval_m_on_sselection(model_path):
     eval_iter = biterator(dev_instances, shuffle=False, num_epochs=1)
     dev_scored_data = hidden_eval_on_sselection(model, eval_iter, complete_upstream_dev_data)
 
-    common.save_jsonl(dev_scored_data, save_file_name)
+    save_jsonl(dev_scored_data, save_file_name)
 
 
 def train_fever_ema_v1_runtest(resume_model=None):
@@ -636,20 +633,20 @@ def train_fever_ema_v1_runtest(resume_model=None):
     print("Train prob threshold:", train_prob_threshold)
     print("Train sample top k:", train_sample_top_k)
 
-    dev_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
+    dev_upstream_sent_list = read_json_rows(config.RESULT_PATH /
                                                "sent_retri_nn/balanced_sentence_selection_results/dev_sent_pred_scores.jsonl")
 
-    train_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
+    train_upstream_sent_list = read_json_rows(config.RESULT_PATH /
                                                  "sent_retri_nn/balanced_sentence_selection_results/train_sent_scores.jsonl")
     # Prepare Data
     # 22 Nov 2018 03:16
     # Remove this because everything can be handled by Bert Servant.
 
     print("Building Prob Dicts...")
-    train_sent_list = common.load_jsonl(
+    train_sent_list = read_json_rows(
         config.RESULT_PATH / "sent_retri_nn/balanced_sentence_selection_results/train_sent_scores.jsonl")
 
-    dev_sent_list = common.load_jsonl(config.RESULT_PATH /
+    dev_sent_list = read_json_rows(config.RESULT_PATH /
                                       "sent_retri_nn/balanced_sentence_selection_results/dev_sent_pred_scores.jsonl")
 
     selection_dict = paired_selection_score_dict(train_sent_list)
@@ -700,20 +697,11 @@ def train_fever_ema_v1_runtest(resume_model=None):
     with open(os.path.join(file_path_prefix, script_name), 'w') as out_f, open(__file__, 'r') as it:
         out_f.write(it.read())
         out_f.flush()
-    # Save source code end.
-
-    # best_dev = -1
-    # iteration = 0
-
-    # start_lr = 0.0001
-    # optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=start_lr)
-    # criterion = nn.CrossEntropyLoss()
 
     for i_epoch in range(num_epoch):
         dev_iter = biterator(dev_instances, shuffle=False, num_epochs=1)
         for i, batch in enumerate(dev_iter):
             out = model(batch)
-
 
 
 def append_hidden_label(d_list):

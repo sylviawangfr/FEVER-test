@@ -1,0 +1,67 @@
+{
+  "mappings": {
+      "properties": {
+        "id" : {
+          "type": "keyword"
+        },
+        "text": {
+          "type": "text",
+          "term_vector": "with_positions_offsets",
+          "analyzer": "wikipage_analyzer",
+          "fielddata": true
+        },
+        "h_links": {
+          "type": "text",
+          "term_vector": "with_positions_offsets",
+          "analyzer": "wikipage_analyzer",
+          "fielddata": true
+        },
+        "doc_id": {
+          "type": "keyword"
+        }
+      }
+  },
+  "settings": {
+    "analysis": {
+      "filter" : {
+            "stemmer_filter" : {
+                "type" : "stemmer",
+                "name" : "possessive_english"
+            }
+        },
+      "char_filter": {
+        "nfkc_normalizer": {
+          "type": "icu_normalizer",
+          "name": "nfkc"
+        },
+        "underscore_filter": {
+          "type": "mapping",
+          "mappings": ["_=>\\u0020"]
+        },
+        "stopwords_filter": {
+           "type": "mapping",
+          "mappings": ["-LRB- => (",
+                      "-RRB- => )",
+                      "-LSB- => [",
+                      "-RSB- => ]",
+                      "-LCB- => {",
+                      "-RCB- => }",
+                      "-COLON- => :"
+                      ]
+        }
+      },
+      "analyzer": {
+        "underscore_analyzer": {
+          "char_filter":  ["nfkc_normalizer",  "underscore_filter", "stopwords_filter"],
+          "filter":["lowercase", "stemmer_filter"],
+          "tokenizer": "standard"
+        },
+        "wikipage_analyzer": {
+          "tokenizer": "standard",
+          "filter": ["lowercase", "stemmer_filter"],
+          "char_filter":["nfkc_normalizer", "stopwords_filter"]
+        }
+      }
+    }
+  }
+}

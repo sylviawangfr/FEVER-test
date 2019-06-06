@@ -4,8 +4,26 @@ from elasticsearch_dsl.query import MultiMatch
 import config
 import itertools
 from utils.tokenizer_simple import *
+from utils.common import thread_exe
 
 client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
+
+def get_all_doc_ids(max_ind=None):
+    id_list = []
+    search = Search(using=client, index=config.WIKIPAGE_INDEX)
+    must = []
+    must.append({'regexp': {'text': '.+'}})
+    must.append({'regexp': {'lines': '.+'}})
+
+    search = search.query(Q('bool', must=must)). \
+                 source(include=['id'])
+    try:
+        search.execute()
+        thread_exe(lambda hit: id_list.append(hit.id), search.scan(), 100, "get doc ids")
+    except Exception as e:
+        print(e)
+    finally:
+        return id_list
 
 
 # ES match_phrase on entities
@@ -189,4 +207,5 @@ def test():
 
 if __name__ == '__main__':
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
-    test()
+    # test()
+    get_all_doc_ids()

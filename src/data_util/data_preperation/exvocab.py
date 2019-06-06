@@ -20,8 +20,10 @@ from allennlp.common.checks import ConfigurationError
 from allennlp.common.file_utils import cached_path
 from allennlp.common.tqdm import Tqdm
 from allennlp.data import instance as adi  # pylint: disable=unused-import
+from allennlp.data import Vocabulary
 
 from enum import Enum
+from overrides import overrides
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -156,7 +158,7 @@ def _read_pretrained_words(embeddings_filename: str) -> Set[str]:
     return words
 
 
-class ExVocabulary:
+class ExVocabulary(Vocabulary):
     def __init__(self,
                  counter: Dict[str, Dict[str, int]] = None,
                  min_count: Dict[str, int] = None,
@@ -299,6 +301,7 @@ class ExVocabulary:
 
         return vocab
 
+    @overrides
     def set_from_file(self,
                       filename: str,
                       namespace: str = "tokens"):

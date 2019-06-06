@@ -47,16 +47,6 @@ def get_doc_ids_and_fever_score(in_file, out_file, top_k=10):
     print(fever_score(d_list, d_list, mode=eval_mode, error_analysis_file=out_fname))
 
 
-
-
-def save_retrs(records):
-    conn = sqlite3.connect(str(config.FEVER_DB))
-    c = conn.cursor()
-    save_doc_retr(c, records)
-    conn.commit()
-    conn.close()
-
-
 if __name__ == '__main__':
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)

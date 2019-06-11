@@ -52,7 +52,12 @@ def tokenize_docids(in_file, out_file):
 
     save_jsonl(d_list, out_file)
 
+def test_spacy(text):
+    tok = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
+    print(tok.tokenize(text_clean.normalize(text)).words())
+
 
 if __name__ == '__main__':
-    tokenized_claim(config.FEVER_DEV_JSONL, config.DATA_ROOT / "tokenized_fever/dev.jsonl")
-    tokenized_claim(config.FEVER_TRAIN_JSONL, config.DATA_ROOT / "tokenized_fever/train.jsonl")
+    test_spacy("Hourglass is performed by an Australian singer-songwriter.")
+    # tokenized_claim(config.FEVER_DEV_JSONL, config.DATA_ROOT / "tokenized_fever/dev.jsonl")
+    # tokenized_claim(config.FEVER_TRAIN_JSONL, config.DATA_ROOT / "tokenized_fever/train.jsonl")

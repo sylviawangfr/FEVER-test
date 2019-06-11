@@ -3,6 +3,8 @@ from pytorch_pretrained_bert import BertTokenizer, BertModel
 from typing import List
 import flint.torch_util as torch_util
 from allennlp.modules import ScalarMix
+import config
+from pathlib import Path
 
 
 def symbol_convert(token):
@@ -40,7 +42,14 @@ class BertServant(object):
 
         self.bert_tokenizer = BertTokenizer.from_pretrained(self.bert_type_name)
 
-        self.bert_model: BertModel = BertModel.from_pretrained(self.bert_type_name)
+        # self.bert_model: BertModel = BertModel.from_pretrained(self.bert_type_name)
+        s = str(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz")
+        my_file = Path(s)
+        if my_file.is_file():
+            print("yes")
+
+
+        self.bert_model: BertModel = BertModel.from_pretrained(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz")
         self.bert_model.eval()
 
     def tokenize(self, text: str, modify_from_corenlp=False) -> List[str]:

@@ -532,7 +532,7 @@ def sample_additional_data_for_item_v1_1(item, additional_data_dictionary):
 
 
 def adv_simi_sample_with_prob_v1_0(input_file, additional_file, prob_dict_file, tokenized=False):
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
     d_list = load_data(input_file)
 
     if isinstance(additional_file, list):
@@ -600,6 +600,7 @@ def adv_simi_sample_with_prob_v1_0(input_file, additional_file, prob_dict_file, 
     cursor.close()
 
     print(count)
+    conn.close()
     return sampled_data_list
 
 
@@ -609,7 +610,7 @@ def adv_simi_sample_with_prob_v1_0_with_doc(input_file, additional_file,
                                             prob_dict_file,
                                             prob_doc_dict_file,
                                             tokenized=False):
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
     d_list = load_data(input_file)
 
     if isinstance(additional_file, list):
@@ -683,13 +684,13 @@ def adv_simi_sample_with_prob_v1_0_with_doc(input_file, additional_file,
             sampled_data_list.append(new_item)
 
     cursor.close()
-
+    conn.close()
     print(count)
     return sampled_data_list
 
 
 def adv_simi_sample_with_prob_v1_1(input_file, additional_file, prob_dict_file, tokenized=False):
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
     d_list = load_data(input_file)
 
     if isinstance(additional_file, list):
@@ -732,7 +733,7 @@ def adv_simi_sample_with_prob_v1_1(input_file, additional_file, prob_dict_file, 
                     prob = 0.5
                 else:
                     prob = prob_dict_file[ssid]['prob']
-                    assert item['claim'] == prob_dict_file[ssid]['claim']
+                    # assert item['claim'] == prob_dict_file[ssid]['claim']
 
                 evidence_text_list_with_prob.append((text, prob))
 
@@ -755,7 +756,7 @@ def adv_simi_sample_with_prob_v1_1(input_file, additional_file, prob_dict_file, 
             sampled_data_list.append(new_item)
 
     cursor.close()
-
+    conn.close()
     print(count)
     return sampled_data_list
 
@@ -802,7 +803,7 @@ def select_sent_with_prob_for_eval(input_file, additional_file, prob_dict_file, 
     :param input_file: This should be the file with 5 sentences selected.
     :return:
     """
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
 
     if isinstance(additional_file, list):
         additional_d_list = additional_file
@@ -844,7 +845,9 @@ def select_sent_with_prob_for_eval(input_file, additional_file, prob_dict_file, 
                 prob = 0.5
             else:
                 prob = prob_dict_file[ssid]['prob']
-                assert item['claim'] == prob_dict_file[ssid]['claim']
+                # assert item['claim'] == prob_dict_file[ssid]['claim']
+                # if not item['claim'] == prob_dict_file[ssid]['claim']:
+                #     print(item)
 
             evidence_text_list_with_prob.append((text, prob))
 
@@ -859,6 +862,7 @@ def select_sent_with_prob_for_eval(input_file, additional_file, prob_dict_file, 
         # This change need to be saved.
         # item['predicted_label'] = additional_data_dict[item['id']]['label']
 
+    conn.close()
     return d_list
 
 
@@ -870,7 +874,7 @@ def select_sent_with_prob_for_eval_list(input_file, additional_file, prob_dict_f
     :param input_file: This should be the file with 5 sentences selected.
     :return:
     """
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
 
     if isinstance(additional_file, list):
         additional_d_list = additional_file
@@ -927,6 +931,7 @@ def select_sent_with_prob_for_eval_list(input_file, additional_file, prob_dict_f
         # This change need to be saved.
         # item['predicted_label'] = additional_data_dict[item['id']]['label']
 
+    conn.close()
     return d_list
 
 
@@ -941,7 +946,7 @@ def select_sent_with_prob_doc_for_eval(input_file, additional_file,
     :param input_file: This should be the file with 5 sentences selected.
     :return:
     """
-    cursor = fever_db.get_cursor()
+    cursor, conn = fever_db.get_cursor()
 
     if isinstance(additional_file, list):
         additional_d_list = additional_file
@@ -1007,6 +1012,7 @@ def select_sent_with_prob_doc_for_eval(input_file, additional_file,
         # This change need to be saved.
         # item['predicted_label'] = additional_data_dict[item['id']]['label']
 
+    conn.close()
     return d_list
 
 

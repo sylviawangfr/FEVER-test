@@ -43,7 +43,7 @@ from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
 
 from sentence_retrieval.sampler_for_nmodel import get_full_list
 import config
-from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, save_file
+from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, save_file, save_intermidiate_results
 from sentence_retrieval.simple_nnmodel_refactor import score_converter_v1
 from typing import Dict
 from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
@@ -378,9 +378,12 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, pred=False, mode='dev')
     result['loss'] = loss
 
     logger.info("***** Eval results *****")
+    pred_log = ''
     for key in sorted(result.keys()):
+        pred_log = pred_log + key + ":" + str(result[key]) + "\n"
         logger.info("  %s = %s", key, str(result[key]))
 
+    save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}__ss_pred.log")
 
     orginal_file = config.FEVER_DEV_JSONL if mode == 'dev' else config.FEVER_TRAIN_JSONL
     original_list = read_json_rows(orginal_file)[4:5]
@@ -429,7 +432,6 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
     return d_list
 
 
-
 def ss_f1_score_and_save(actual_list, upstream_eval_list, prob_thresholds=0.5, top_n = 5, save_data=True, mode = 'dev'):
     if not isinstance(prob_thresholds, list):
         prob_thresholds = [prob_thresholds]
@@ -453,9 +455,11 @@ def ss_f1_score_and_save(actual_list, upstream_eval_list, prob_thresholds=0.5, t
 
     if save_data:
         time = get_current_time_str()
-        output_eval_file = config.RESULT_PATH / "bert_finetuning" / f"ss_eval_{time}_{mode}.txt"
-        output_ss_file = config.RESULT_PATH / "bert_finetuning" / f"ss_{time}_{mode}.jsonl"
-        save_jsonl(actual_list, output_ss_file)
+        output_eval_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_eval_{mode}.txt"
+        output_items_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_items_{mode}.jsonl"
+        output_ss_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_scores_{mode}.txt"
+        save_intermidiate_results(upstream_eval_list, output_ss_file)
+        save_jsonl(actual_list, output_items_file)
         save_file(f"{mode}:(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/ \nStrict score:{strict_score}", output_eval_file)
 
 
@@ -707,7 +711,7 @@ def fever_finetuning(taskname):
 
 
 if __name__ == "__main__":
-    fever_finetuning('ss')
+    # fever_finetuning('ss')
     # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
-    # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/test_ss_2019_06_12_18:24:27",
-    #                  config.PRO_ROOT / "saved_models/bert_finetuning/test_ss_2019_06_12_18:24:27")
+    eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55",
+                     config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55")

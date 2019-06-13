@@ -26,7 +26,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
     :return:
     """
 
-    d_list = read_json_rows(tokenized_data_file)[0:1000]
+    d_list = read_json_rows(tokenized_data_file)[4:5]
 
     if not isinstance(additional_data_file, list):
         additional_d_list = read_json_rows(additional_data_file)

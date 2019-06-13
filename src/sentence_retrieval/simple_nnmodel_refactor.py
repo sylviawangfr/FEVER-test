@@ -35,6 +35,7 @@ from neural_modules import biDafAttn
 from sample_for_nli.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval, convert_evidence2scoring_format
 from utils import c_scorer, common
 from simi_sampler_nli_v0 import simi_sampler
+from utils.file_loader import save_jsonl
 
 
 class ESIM(nn.Module):
@@ -320,7 +321,7 @@ def eval_for_remaining():
     eval_iter = dev_biterator(dev_instances, shuffle=False, num_epochs=1) #, cuda_device=device_num
     complete_upstream_dev_data = hidden_eval(model, eval_iter, incoming_data)
 
-    common.save_jsonl(complete_upstream_dev_data, SAVE_RESULT_TARGET_FOLDER / out_file_name)
+    save_jsonl(complete_upstream_dev_data, SAVE_RESULT_TARGET_FOLDER / out_file_name)
 
     total = 0
     hit = 0
@@ -812,8 +813,8 @@ def eval_and_save_v2(model_path, is_ema, saving_dir, save_train_data=True, prob_
 
     if save_train_data:
         complete_upstream_train_data = hidden_eval(model, train_iter, complete_upstream_train_data)
-        common.save_jsonl(complete_upstream_train_data, Path(str(saving_dir)) / "train_sent_scores.jsonl")
-        common.save_jsonl(complete_upstream_dev_data, Path(str(saving_dir)) / "dev_sent_pred_scores.jsonl")
+        save_jsonl(complete_upstream_train_data, Path(str(saving_dir)) / "train_sent_scores.jsonl")
+        save_jsonl(complete_upstream_dev_data, Path(str(saving_dir)) / "dev_sent_pred_scores.jsonl")
 
     if not isinstance(prob_thresholds, list):
         prob_thresholds = [prob_thresholds]

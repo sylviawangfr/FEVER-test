@@ -163,13 +163,21 @@ def parse_pages_checks(item):
     string_lines = lines_to_items(page_id, lines)
 
     this_item['lines'] = string_lines
-
     return this_item
+
 
 def save_jsonl(d_list, filename):
     with open(filename, encoding='utf-8', mode='w') as out_f:
         for item in d_list:
             out_f.write(json.dumps(item) + '\n')
+
+
+def save_file(text, out_filename):
+    if not out_filename.parent.exists():
+        out_filename.parent.mkdir(exist_ok=False)
+
+    with open(out_filename, encoding='utf-8', mode='w') as out_f:
+        out_f.write(text)
 
 
 def save_intermidiate_results(d_list, out_filename: Path, last_loaded_path=None):
@@ -184,6 +192,9 @@ def save_intermidiate_results(d_list, out_filename: Path, last_loaded_path=None)
         with open(out_filename.parent / "log_info.txt", encoding='utf-8', mode='a') as out_f:
             out_f.write(last_loaded_path)
 
+
+def get_current_time_str():
+    return str(datetime.datetime.now().strftime('%Y_%m_%d_%H:%M:%S'))
 
 if __name__ == '__main__':
     pass

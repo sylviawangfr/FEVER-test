@@ -379,9 +379,10 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
     total = len(predictions)
 
     log_print("Total:", total)
-    # print("Total:", total)
+    print("Total:", total)
+    print("Correct:", correct)
     log_print("Strict:", strict)
-    # print("Strict:", strict)
+    print("Strict:", strict)
 
     for k, v in mode.items():
         if k.endswith('_hits'):
@@ -394,7 +395,10 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
     pr = (macro_precision / macro_precision_hits) if macro_precision_hits > 0 else 1.0
     rec = (macro_recall / macro_recall_hits) if macro_recall_hits > 0 else 0.0
 
-    f1 = 2.0 * pr * rec / (pr + rec)
+    if pr + rec == 0:
+        f1 = 0
+    else:
+        f1 = 2.0 * pr * rec / (pr + rec)
 
     return strict_score, acc_score, pr, rec, f1
 

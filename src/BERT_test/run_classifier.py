@@ -386,7 +386,7 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, pred=False, mode='dev')
     save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}__ss_pred.log")
 
     orginal_file = config.FEVER_DEV_JSONL if mode == 'dev' else config.FEVER_TRAIN_JSONL
-    original_list = read_json_rows(orginal_file)[4:5]
+    original_list = read_json_rows(orginal_file)
     ss_f1_score_and_save(original_list, dev_list)
 
 

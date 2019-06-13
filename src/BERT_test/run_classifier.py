@@ -711,7 +711,7 @@ def fever_finetuning(taskname):
 
 
 if __name__ == "__main__":
-    # fever_finetuning('ss')
+    fever_finetuning('ss')
     # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
-    eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55",
-                     config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55")
+    # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55",
+    #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55")

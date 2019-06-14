@@ -487,7 +487,6 @@ def fever_finetuning(taskname):
     loss_scale = 0
     server_ip = None
     server_port = None
-    do_train = True
     do_eval = True
 
     if server_ip and server_port:
@@ -531,10 +530,7 @@ def fever_finetuning(taskname):
     if n_gpu > 0:
         torch.cuda.manual_seed_all(seed)
 
-    if not do_train and not do_eval:
-        raise ValueError("At least one of `do_train` or `do_eval` must be True.")
-
-    if os.path.exists(output_dir) and os.listdir(output_dir) and do_train:
+    if os.path.exists(output_dir) and os.listdir(output_dir):
         raise ValueError("Output directory ({}) already exists and is not empty.".format(output_dir))
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -575,111 +571,106 @@ def fever_finetuning(taskname):
     # get train data
     train_examples = None
     num_train_optimization_steps = None
-    if do_train:
-        train_examples = processor.get_train_examples("")
-        num_train_optimization_steps = int(
-            len(train_examples) / train_batch_size / gradient_accumulation_steps) * num_train_epochs
-        if local_rank != -1:
-            num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size()
+    train_examples = processor.get_train_examples("")
+    num_train_optimization_steps = int(
+        len(train_examples) / train_batch_size / gradient_accumulation_steps) * num_train_epochs
+    if local_rank != -1:
+        num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size()
 
     # Prepare optimizer
-    if do_train:
-        param_optimizer = list(model.named_parameters())
-        no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
-        optimizer_grouped_parameters = [
-            {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
-            {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
-        ]
-        if fp16:
-            try:
-                from apex.optimizers import FP16_Optimizer
-                from apex.optimizers import FusedAdam
-            except ImportError:
-                raise ImportError(
-                    "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
+    param_optimizer = list(model.named_parameters())
+    no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
+    optimizer_grouped_parameters = [
+        {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
+    ]
+    if fp16:
+        try:
+            from apex.optimizers import FP16_Optimizer
+            from apex.optimizers import FusedAdam
+        except ImportError:
+            raise ImportError(
+                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
 
-            optimizer = FusedAdam(optimizer_grouped_parameters,
-                                  lr=learning_rate,
-                                  bias_correction=False,
-                                  max_grad_norm=1.0)
-            if loss_scale == 0:
-                optimizer = FP16_Optimizer(optimizer, dynamic_loss_scale=True)
-            else:
-                optimizer = FP16_Optimizer(optimizer, static_loss_scale=loss_scale)
-            warmup_linear = WarmupLinearSchedule(warmup=warmup_proportion,
-                                                 t_total=num_train_optimization_steps)
-
+        optimizer = FusedAdam(optimizer_grouped_parameters,
+                              lr=learning_rate,
+                              bias_correction=False,
+                              max_grad_norm=1.0)
+        if loss_scale == 0:
+            optimizer = FP16_Optimizer(optimizer, dynamic_loss_scale=True)
         else:
-            optimizer = BertAdam(optimizer_grouped_parameters,
-                                 lr=learning_rate,
-                                 warmup=warmup_proportion,
-                                 t_total=num_train_optimization_steps)
+            optimizer = FP16_Optimizer(optimizer, static_loss_scale=loss_scale)
+        warmup_linear = WarmupLinearSchedule(warmup=warmup_proportion,
+                                             t_total=num_train_optimization_steps)
+
+    else:
+        optimizer = BertAdam(optimizer_grouped_parameters,
+                             lr=learning_rate,
+                             warmup=warmup_proportion,
+                             t_total=num_train_optimization_steps)
 
     global_step = 0
     nb_tr_steps = 0
     tr_loss = 0
 
+    train_features = convert_examples_to_features(
+        train_examples, label_list, max_seq_length, tokenizer)
+    logger.info("***** Running training *****")
+    logger.info("  Num examples = %d", len(train_examples))
+    logger.info("  Batch size = %d", train_batch_size)
+    logger.info("  Num steps = %d", num_train_optimization_steps)
+    all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
+    all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
+    all_segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long)
 
+    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
 
-    if do_train:
-        train_features = convert_examples_to_features(
-            train_examples, label_list, max_seq_length, tokenizer)
-        logger.info("***** Running training *****")
-        logger.info("  Num examples = %d", len(train_examples))
-        logger.info("  Batch size = %d", train_batch_size)
-        logger.info("  Num steps = %d", num_train_optimization_steps)
-        all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
-        all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
-        all_segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long)
+    train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
+    if local_rank == -1:
+        train_sampler = RandomSampler(train_data)
+    else:
+        train_sampler = DistributedSampler(train_data)
+    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
 
-        all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
+    model.train()
+    for _ in trange(int(num_train_epochs), desc="Epoch"):
+        tr_loss = 0
+        nb_tr_examples, nb_tr_steps = 0, 0
+        for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
+            batch = tuple(t.to(device) for t in batch)
+            input_ids, input_mask, segment_ids, label_ids = batch
 
-        train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
-        if local_rank == -1:
-            train_sampler = RandomSampler(train_data)
-        else:
-            train_sampler = DistributedSampler(train_data)
-        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
+            # define a new function to compute loss values for both output_modes
+            logits = model(input_ids, segment_ids, input_mask, labels=None)
 
-        model.train()
-        for _ in trange(int(num_train_epochs), desc="Epoch"):
-            tr_loss = 0
-            nb_tr_examples, nb_tr_steps = 0, 0
-            for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
-                batch = tuple(t.to(device) for t in batch)
-                input_ids, input_mask, segment_ids, label_ids = batch
+            loss_fct = CrossEntropyLoss()
+            loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
 
-                # define a new function to compute loss values for both output_modes
-                logits = model(input_ids, segment_ids, input_mask, labels=None)
+            if n_gpu > 1:
+                loss = loss.mean()  # mean() to average on multi-gpu.
+            if gradient_accumulation_steps > 1:
+                loss = loss / gradient_accumulation_steps
 
-                loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
+            if fp16:
+                optimizer.backward(loss)
+            else:
+                loss.backward()
 
-                if n_gpu > 1:
-                    loss = loss.mean()  # mean() to average on multi-gpu.
-                if gradient_accumulation_steps > 1:
-                    loss = loss / gradient_accumulation_steps
-
+            tr_loss += loss.item()
+            nb_tr_examples += input_ids.size(0)
+            nb_tr_steps += 1
+            if (step + 1) % gradient_accumulation_steps == 0:
                 if fp16:
-                    optimizer.backward(loss)
-                else:
-                    loss.backward()
+                    # modify learning rate with special warm up BERT uses
+                    # if fp16 is False, BertAdam is used that handles this automatically
+                    lr_this_step = learning_rate * warmup_linear.get_lr(global_step, warmup_proportion)
+                    for param_group in optimizer.param_groups:
+                        param_group['lr'] = lr_this_step
+                optimizer.step()
+                optimizer.zero_grad()
+                global_step += 1
 
-                tr_loss += loss.item()
-                nb_tr_examples += input_ids.size(0)
-                nb_tr_steps += 1
-                if (step + 1) % gradient_accumulation_steps == 0:
-                    if fp16:
-                        # modify learning rate with special warm up BERT uses
-                        # if fp16 is False, BertAdam is used that handles this automatically
-                        lr_this_step = learning_rate * warmup_linear.get_lr(global_step, warmup_proportion)
-                        for param_group in optimizer.param_groups:
-                            param_group['lr'] = lr_this_step
-                    optimizer.step()
-                    optimizer.zero_grad()
-                    global_step += 1
-
-    if do_train and (local_rank == -1 or torch.distributed.get_rank() == 0):
+    if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
 

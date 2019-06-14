@@ -8,7 +8,7 @@ import json
 
 from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 from utils import fever_db, common, c_scorer
-from utils.file_loader import read_json_rows
+from utils.file_loader import read_json_rows, get_current_time_str
 from tqdm import tqdm
 import config
 from data_util.data_preperation.tokenize_fever import easy_tokenize
@@ -26,7 +26,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
     :return:
     """
 
-    d_list = read_json_rows(tokenized_data_file)
+    d_list = read_json_rows(tokenized_data_file)[4:6]
 
     if not isinstance(additional_data_file, list):
         additional_d_list = read_json_rows(additional_data_file)
@@ -102,13 +102,16 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
 
             full_data_list.append(sent_item)
 
+    cursor.close()
     conn.close()
     return full_data_list
+
 
 def trucate_item(d_list, top_k=None):
     for item in d_list:
         if top_k is not None and len(item['predicted_docids']) > top_k:
             item['predicted_docids'] = item['predicted_docids'][:top_k]
+
 
 def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=False, top_k=None):
     """
@@ -354,7 +357,97 @@ def post_filter(d_list, keep_prob=0.75, seed=12):
 #     fever_db.get_all_sent_by_doc_id(cursor, doc_id)
 
 
+def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=10):
+    """
+    This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
+    :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
+
+    :return:
+    """
+
+    if not isinstance(tfidf_ss_data_file, list):
+        d_list = read_json_rows(tfidf_ss_data_file)
+    else:
+        d_list = tfidf_ss_data_file
+
+    full_sample_list = []
+
+    cursor, conn = fever_db.get_cursor()
+    err_log_f = config.LOG_PATH / f"{get_current_time_str()}_analyze_sample.log"
+    for item in tqdm(d_list):
+        predicted_evidence = item["predicted_evidence"]
+        ground_truth = item['evidence']
+        if not pred:
+            if ground_truth is not None and len(ground_truth) > 0:
+                e_list = utils.check_sentences.check_and_clean_evidence(item)
+                all_evidence_set = set(itertools.chain.from_iterable([evids.evidences_list for evids in e_list]))
+            else:
+                all_evidence_set = None
+            # print(all_evidence_set)
+            r_list = []
+            id_list = []
+
+            if all_evidence_set is not None:
+                for doc_id, ln in all_evidence_set:
+                    _, text, _ = fever_db.get_evidence(cursor, doc_id, ln)
+                    r_list.append(text)
+                    id_list.append(doc_id + '(-.-)' + str(ln))
+
+        else:            # If pred, then reset to not containing ground truth evidence.
+            all_evidence_set = None
+            r_list = []
+            id_list = []
+
+        num_envs = 0 if all_evidence_set is None else len(all_evidence_set)
+        for pred_item in predicted_evidence:
+            doc_id, ln = pred_item.split(c_scorer.SENT_LINE)[0], int(pred_item.split(c_scorer.SENT_LINE)[1])
+            tmp_id = doc_id + '(-.-)' + str(ln)
+            if not tmp_id in id_list:
+                _, text, _ = fever_db.get_evidence(cursor, doc_id, ln)
+                r_list.append(text)
+                id_list.append(tmp_id)
+                num_envs += num_envs
+            if num_envs == top_k:
+                break
+
+        # assert len(id_list) == len(set(id_list))  # check duplicate
+        # assert len(r_list) == len(id_list)
+        if not (len(id_list) == len(set(id_list)) or len(r_list) == len(id_list)):
+            utils.get_adv_print_func(err_log_f)
+
+        zipped_s_id_list = list(zip(r_list, id_list))
+        # Sort using id
+        # sorted(evidences_set, key=lambda x: (x[0], x[1]))
+        zipped_s_id_list = sorted(zipped_s_id_list, key=lambda x: (x[1][0], x[1][1]))
+
+        all_sent_list = convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
+                                                  id_tokenized=True)
+        cur_id = item['id']
+        for i, sent_item in enumerate(all_sent_list):
+            sent_item['selection_id'] = str(cur_id) + "<##>" + str(sent_item['sid'])
+            sent_item['query'] = item['claim']
+
+            if 'label' in item.keys():
+                sent_item['claim_label'] = item['label']
+
+            full_sample_list.append(sent_item)
+
+    cursor.close()
+    conn.close()
+    return full_sample_list
+
+
 if __name__ == '__main__':
+    additional_file = config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
+    full_list = get_tfidf_sample_list_for_nn(additional_file)
+    count_hit = 0
+    for item in full_list:
+        # print(item)
+        if item['selection_label'] == 'true':
+            count_hit += 1
+
+    print(count_hit, len(full_list), count_hit / len(full_list))
+
     # full_list = get_full_list(config.T_FEVER_DEV_JSONL,
     #                           config.RESULT_PATH / "doc_retri/2018_07_04_21:56:49_r/dev.jsonl",
     #                           pred=True)

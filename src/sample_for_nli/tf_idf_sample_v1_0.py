@@ -1,32 +1,13 @@
-import json
 import random
 import copy
-
+import itertools
 from utils import fever_db, check_sentences
-import config
-# import drqa_yixin.tokenizers
-# from drqa_yixin.tokenizers import CoreNLPTokenizer
-from tqdm import tqdm
+
 from utils import c_scorer, text_clean, common
 from collections import Counter
 import numpy as np
-
-
-class DrQaTokenizer:
-    def __init__(self):
-        self.instance = None
-
-    def create_instance(self):
-        path_stanford_corenlp_full_2017_06_09 = \
-            str(config.PRO_ROOT / 'dep_packages/stanford-corenlp-full-2017-06-09/*')
-        print("Load tokenizers:", path_stanford_corenlp_full_2017_06_09)
-        drqa_yixin.tokenizers.set_default('corenlp_classpath', path_stanford_corenlp_full_2017_06_09)
-        _tok = CoreNLPTokenizer(annotators=['pos', 'lemma'])
-        self.instance = _tok
-
-    def clean(self):
-        self.instance = None
-
+from utils.file_loader import *
+import utils
 
 tok = DrQaTokenizer()
 tok.clean()
@@ -279,7 +260,13 @@ def select_sent_for_eval(input_file, additional_file, tokenized=False):
         # This change need to be saved.
         # item['predicted_label'] = additional_data_dict[item['id']]['label']
 
+    cursor.close()
+    conn.close()
     return d_list
+
+
+
+
 
 # This method might be useful in the future.
 # def select_ground_truth_re_sent_for_eval(input_file, tokenized=False):
@@ -346,6 +333,21 @@ def save_jsonl(d_list, filename):
             out_f.write(json.dumps(item) + '\n')
 
 
+def eval_sample_length():
+    sampled_d_list = select_sent_for_eval(config.T_FEVER_DEV_JSONL, config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl", tokenized=True)
+    count = Counter()
+    length_list = []
+    for item in sampled_d_list:
+        length_list.extend([len(item['evid'].split(' '))])
+
+    count.update(length_list)
+    print(count.most_common())
+    print(sorted(list(count.most_common()), key=lambda x: -x[0]))
+    print(np.max(length_list))
+    print(np.mean(length_list))
+    print(np.std(length_list))
+
+
 if __name__ == '__main__':
     # input_file = config.FEVER_DEV_JSONL
     # additional_file = config.RESULT_PATH / "sent_retri/2018_07_05_17:17:50_r/dev.jsonl"
@@ -360,28 +362,18 @@ if __name__ == '__main__':
 
     # print(len(sampled_d_list))
     # save_jsonl(sampled_d_list, "/Users/Eason/RA/FunEver/results/tmp/utest_sampled_data/t_dev_1.jsonl")
-    input_file = config.T_FEVER_DEV_JSONL
     # input_file = config.T_FEVER_TRAIN_JSONL
     # input_file = config.FEVER_DEV_JSONL
-    additional_file = config.RESULT_PATH / "sent_retri/2018_07_05_17:17:50_r/dev.jsonl"
+    additional_file = config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
+
     # additional_file = config.RESULT_PATH / "sent_retri/2018_07_05_17:17:50_r/train.jsonl"
     # sampled_d_list = sample_v1_0(input_file, additional_file, tokenized=True)
-    sampled_d_list = select_sent_for_eval(input_file, additional_file, tokenized=True)
+    # sampled_d_list = select_sent_for_eval(input_file, additional_file, tokenized=True)
 
     # for item in sampled_d_list:
     #     print(item[''])
 
-    count = Counter()
-    length_list = []
-    for item in sampled_d_list:
-        length_list.extend([len(item['evid'].split(' '))])
 
-    count.update(length_list)
-    print(count.most_common())
-    print(sorted(list(count.most_common()), key=lambda x: -x[0]))
-    print(np.max(length_list))
-    print(np.mean(length_list))
-    print(np.std(length_list))
 
     # print(count.max())
 

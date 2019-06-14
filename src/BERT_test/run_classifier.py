@@ -17,12 +17,8 @@
 
 from __future__ import absolute_import, division, print_function
 
-import argparse
-import csv
-import logging
 import os
 import random
-import sys
 
 import numpy as np
 import torch
@@ -33,7 +29,6 @@ from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 
 from torch.nn import CrossEntropyLoss, MSELoss
-from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import matthews_corrcoef, f1_score
 
 from pytorch_pretrained_bert.file_utils import PYTORCH_PRETRAINED_BERT_CACHE, WEIGHTS_NAME, CONFIG_NAME
@@ -41,120 +36,16 @@ from pytorch_pretrained_bert.modeling import BertForSequenceClassification, Bert
 from pytorch_pretrained_bert.tokenization import BertTokenizer
 from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
 
-from sentence_retrieval.sampler_for_nmodel import get_full_list
-import config
 from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, save_file, save_intermidiate_results
 from typing import Dict
-from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 from utils import c_scorer
-from utils.text_clean import *
-from BERT_test.sampler_bert_nli import *
+from BERT_test.bert_data_processor import *
+from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
+
+
 logger = logging.getLogger(__name__)
 
 
-class InputExample(object):
-    """A single training/test example for simple sequence classification."""
-
-    def __init__(self, guid, text_a, text_b=None, label=None):
-        """Constructs a InputExample.
-
-        Args:
-            guid: Unique id for the example.
-            text_a: string. The untokenized text of the first sequence. For single
-            sequence tasks, only this sequence must be specified.
-            text_b: (Optional) string. The untokenized text of the second sequence.
-            Only must be specified for sequence pair tasks.
-            label: (Optional) string. The label of the example. This should be
-            specified for train and dev examples, but not for test examples.
-        """
-        self.guid = guid
-        self.text_a = text_a
-        self.text_b = text_b
-        self.label = label
-
-
-class InputFeatures(object):
-    """A single set of features of data."""
-
-    def __init__(self, input_ids, input_mask, segment_ids, label_id):
-        self.input_ids = input_ids
-        self.input_mask = input_mask
-        self.segment_ids = segment_ids
-        self.label_id = label_id
-
-
-class DataProcessor(object):
-    """Base class for data converters for sequence classification data sets."""
-
-    def get_train_examples(self, data_dir):
-        """Gets a collection of `InputExample`s for the train set."""
-        raise NotImplementedError()
-
-    def get_dev_examples(self, data_dir):
-        """Gets a collection of `InputExample`s for the dev set."""
-        raise NotImplementedError()
-
-    def get_labels(self):
-        """Gets the list of labels for this data set."""
-        raise NotImplementedError()
-
-
-class FeverSSProcessor(DataProcessor):
-    """Processor for the MultiNLI data set (GLUE version)."""
-
-    def get_train_examples(self, data_dir):
-        train_list = get_full_list(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
-        return self._create_examples(train_list)
-
-    def get_dev_examples(self, data_dir, pred = False):
-        """See base class."""
-        dev_list = get_full_list(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV, pred=pred)
-        return self._create_examples(dev_list), dev_list
-
-    def get_labels(self):
-        """See base class."""
-        return ["true", "false"]
-
-    def _create_examples(self, lines):
-        """Creates examples for the training and dev sets."""
-        examples = []
-
-        for (i, line) in enumerate(lines):
-            guid = line['selection_id']
-            text_a = convert_brc(line['text'])
-            text_b = convert_brc(line['query'])
-            label = line['selection_label']
-            examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-        return examples
-
-
-class FeverNliProcessor(DataProcessor):
-
-    def get_train_examples(self, data_dir):
-        train_list = get_nli_sampled_data(config.FEVER_TRAIN_JSONL, data_dir)
-        return self._create_examples(train_list)
-
-    def get_dev_examples(self, data_dir, pred = False):
-        """See base class."""
-        dev_list = get_nli_sampled_data(config.FEVER_DEV_JSONL, data_dir)
-        return self._create_examples(dev_list)
-
-    def get_labels(self):
-        """See base class."""
-        return ["SUPPORTS", "REFUTES", "NOT ENOUGH INFO"]
-
-    def _create_examples(self, lines):
-        """Creates examples for the training and dev sets."""
-        examples = []
-        for (i, line) in enumerate(lines):
-            guid = line['id']
-            text_a = line['evid']
-            text_b = line['claim']
-            label = line['label']
-            examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-        return examples
 
 
 def convert_examples_to_features(examples, label_list, max_seq_length,
@@ -374,7 +265,7 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, pred=False, mode='dev')
     save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}__ss_pred.log")
 
     orginal_file = config.FEVER_DEV_JSONL if mode == 'dev' else config.FEVER_TRAIN_JSONL
-    original_list = read_json_rows(orginal_file)
+    original_list = read_json_rows(orginal_file)[4:6]
     ss_f1_score_and_save(original_list, dev_list)
 
 
@@ -386,8 +277,6 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
         selection_id = sent_item['selection_id']  # The id for the current one selection.
         org_id = int(selection_id.split('<##>')[0])
         remain_str = selection_id.split('<##>')[1]
-        # doc_id = remain_str.split(c_scorer.SENT_LINE)[0]
-        # ln = int(remain_str.split(c_scorer.SENT_LINE)[1])
         if org_id in augmented_dict:
             if remain_str not in augmented_dict[org_id]:
                 augmented_dict[org_id][remain_str] = sent_item
@@ -483,7 +372,7 @@ def fever_finetuning(taskname):
     local_rank = -1
     seed = 42
     gradient_accumulation_steps = 4
-    fp16 = True
+    fp16 = False
     loss_scale = 0
     server_ip = None
     server_port = None

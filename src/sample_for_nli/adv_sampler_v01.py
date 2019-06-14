@@ -213,11 +213,11 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
     return ' '.join(current_evidence_text)
 
 
-def get_adv_sampled_data(org_data_file, full_sent_list, threshold_prob=0.5, top_n=8):
+def get_adv_sampled_data(org_data_file, full_sent_list, threshold_prob=0.5, top_n=8, tokenized=True):
     data_with_candidate_sample_list = \
         threshold_sampler(org_data_file, full_sent_list, threshold_prob, top_n=top_n)
 
-    sampled_data = adv_sample_v1_0(org_data_file, data_with_candidate_sample_list, tokenized=True)
+    sampled_data = adv_sample_v1_0(org_data_file, data_with_candidate_sample_list, tokenized=tokenized)
 
     return sampled_data
 

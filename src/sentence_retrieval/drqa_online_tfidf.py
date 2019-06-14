@@ -10,6 +10,7 @@ import utils
 from collections import namedtuple
 from utils.file_loader import *
 import tqdm
+from utils.fever_db import *
 
 
 tok = SpacyTokenizer(annotators={'pos', 'lemma'})
@@ -132,7 +133,7 @@ def tf_idf_select_sentence():
     save_intermidiate_results(d_list, out_filename=out_fname, last_loaded_path=loaded_path)
 
 
-def predict_sentences_and_update_item(one_conn: SQLiteUtil, item):
+def predict_sentences_and_update_item(cursor, item, top_n=10):
     p_docids = item['predicted_docids']
     # cleaned_claim = ' '.join(easy_tokenize(item['claim']))
     # print(cleaned_claim)
@@ -142,7 +143,7 @@ def predict_sentences_and_update_item(one_conn: SQLiteUtil, item):
     current_id_list = []
 
     for doc_id in p_docids:
-        r_list, id_list = fever_db.get_all_sent_by_doc_id_mutithread(one_conn, doc_id)
+        r_list, id_list = fever_db.get_all_sent_by_doc_id(cursor, doc_id)
         current_sent_list.extend(r_list)
         current_id_list.extend(id_list)
 
@@ -153,7 +154,7 @@ def predict_sentences_and_update_item(one_conn: SQLiteUtil, item):
     ranker = OnlineTfidfDocRanker(args, args.hash_size, args.ngram,
                                   current_sent_list)
 
-    selected_index, selected_score = ranker.closest_docs(cleaned_claim, k=5)
+    selected_index, selected_score = ranker.closest_docs(cleaned_claim, k=top_n)
 
     selected_sent_id = []
     for ind in selected_index:
@@ -184,11 +185,12 @@ def script(in_path, out_path):
 
     res_list = []
 
-    # the sqlite3 DB do not support multi-thread at the moment, need to refactor fever.db
-    one_conn = SQLiteUtil(str(config.FEVER_DB))
-    thread_number = 1
-    thread_exe(lambda i: res_list.append(predict_sentences_and_update_item(one_conn, i)), iter(d_list), thread_number, "tfidf predict sentences")
+    cursor, one_conn = get_cursor(str(config.FEVER_DB))
+    for i in tqdm(d_list):
+        res_list.append(predict_sentences_and_update_item(cursor, i, top_n=10))
 
+    cursor.close()
+    one_conn.close()
     eval_mode = {'check_sent_id_correct': True, 'standard': False}
     print(c_scorer.fever_score(res_list, res_list, mode=eval_mode, verbose=False))
 
@@ -211,15 +213,25 @@ if __name__ == '__main__':
     # check_acc(in_path)
     # d_list = load_data(in_path)
     # if_idf_select_sentence()
-    print(str(config.RESULT_PATH / "tfidf_") + get_current_time_str() + ".jsonl")
+    # print(str(config.RESULT_PATH / "tfidf_") + get_current_time_str() + ".jsonl")
 
     doc_num = 10
 
-    doc_file = str(config.DOC_RETRV_DEV)
+    dev_doc_file = str(config.DOC_RETRV_DEV)
+    train_doc_file = str(config.DOC_RETRV_TRAIN)
+    time = get_current_time_str()
+    script(
+        in_path=dev_doc_file,
+        out_path=str(config.RESULT_PATH / "tfidf/dev_") + time + ".jsonl"
+    )
+
+    script(
+        in_path=train_doc_file,
+        out_path=str(config.RESULT_PATH / "tfidf/train_") + time + ".jsonl"
+    )
     # dev_doc_file = str(config.DOC_RETRV_TRAIN)
-    doc_list = read_json_rows(doc_file)
     # print("doc len:", len(doc_list))
-    pre_list = read_json_rows(str(config.S_TFIDF_RETRV_DEV))
+    # pre_list = read_json_rows(str(config.S_TFIDF_RETRV_DEV))
     # print("pre len:", len(pre_list))
     #
     # docid = [i['id'] for i in doc_list]
@@ -242,11 +254,7 @@ if __name__ == '__main__':
     # for item in doc_list:
     #     item['predicted_docids'] = item['predicted_docids'][:doc_num]
     #
-    script(
-        in_path=doc_list,
-        out_path=str(config.RESULT_PATH / "tfidf_") + get_current_time_str() + ".jsonl"
-        # out_path=str(config.S_TFIDF_RETRV_TRAIN)
-    )
+
 
     # tfidf
     # predict

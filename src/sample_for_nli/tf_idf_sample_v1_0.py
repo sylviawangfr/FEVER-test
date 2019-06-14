@@ -8,9 +8,9 @@ from collections import Counter
 import numpy as np
 from utils.file_loader import *
 import utils
+from data_util.tokenizers import SpacyTokenizer
 
-tok = DrQaTokenizer()
-tok.clean()
+tok = SpacyTokenizer()
 
 random.seed = 12
 

@@ -357,7 +357,7 @@ def post_filter(d_list, keep_prob=0.75, seed=12):
 #     fever_db.get_all_sent_by_doc_id(cursor, doc_id)
 
 
-def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=10):
+def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=5):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
     :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
@@ -366,7 +366,7 @@ def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=10):
     """
 
     if not isinstance(tfidf_ss_data_file, list):
-        d_list = read_json_rows(tfidf_ss_data_file)
+        d_list = read_json_rows(tfidf_ss_data_file)[0:1000]
     else:
         d_list = tfidf_ss_data_file
 
@@ -375,7 +375,7 @@ def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=10):
     cursor, conn = fever_db.get_cursor()
     err_log_f = config.LOG_PATH / f"{get_current_time_str()}_analyze_sample.log"
     for item in tqdm(d_list):
-        predicted_evidence = item["predicted_evidence"]
+        predicted_evidence = item["predicted_sentids"]
         ground_truth = item['evidence']
         if not pred:
             if ground_truth is not None and len(ground_truth) > 0:

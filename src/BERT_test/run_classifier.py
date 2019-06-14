@@ -552,7 +552,7 @@ def fever_finetuning(taskname):
     cache_dir = cache_dir if cache_dir else os.path.join(str(PYTORCH_PRETRAINED_BERT_CACHE),
                                                                    'distributed_{}'.format(local_rank))
     model = BertForSequenceClassification.from_pretrained(pretrained_model_name_or_path,
-                                                          # cache_dir=cache_dir,
+                                                          cache_dir=cache_dir,
                                                           num_labels=num_labels)
     if fp16:
         model.half()

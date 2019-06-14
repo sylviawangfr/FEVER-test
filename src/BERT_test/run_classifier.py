@@ -44,11 +44,11 @@ from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
 from sentence_retrieval.sampler_for_nmodel import get_full_list
 import config
 from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, save_file, save_intermidiate_results
-from sentence_retrieval.simple_nnmodel_refactor import score_converter_v1
 from typing import Dict
 from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 from utils import c_scorer
 from utils.text_clean import *
+from BERT_test.sampler_bert_nli import *
 logger = logging.getLogger(__name__)
 
 
@@ -98,18 +98,6 @@ class DataProcessor(object):
         """Gets the list of labels for this data set."""
         raise NotImplementedError()
 
-    @classmethod
-    def _read_tsv(cls, input_file, quotechar=None):
-        """Reads a tab separated value file."""
-        with open(input_file, "r", encoding="utf-8") as f:
-            reader = csv.reader(f, delimiter="\t", quotechar=quotechar)
-            lines = []
-            for line in reader:
-                if sys.version_info[0] == 2:
-                    line = list(unicode(cell, 'utf-8') for cell in line)
-                lines.append(line)
-            return lines
-
 
 class FeverSSProcessor(DataProcessor):
     """Processor for the MultiNLI data set (GLUE version)."""
@@ -118,16 +106,16 @@ class FeverSSProcessor(DataProcessor):
         train_list = get_full_list(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
         return self._create_examples(train_list)
 
-    def get_dev_examples(self, data_dir):
+    def get_dev_examples(self, data_dir, pred = False):
         """See base class."""
-        dev_list = get_full_list(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV, pred=False)
+        dev_list = get_full_list(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV, pred=pred)
         return self._create_examples(dev_list), dev_list
 
     def get_labels(self):
         """See base class."""
         return ["true", "false"]
 
-    def _create_examples(self, lines, pred=False):
+    def _create_examples(self, lines):
         """Creates examples for the training and dev sets."""
         examples = []
 
@@ -144,26 +132,26 @@ class FeverSSProcessor(DataProcessor):
 class FeverNliProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
-        train_list = get_full_list(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
+        train_list = get_nli_sampled_data(config.FEVER_TRAIN_JSONL, data_dir)
         return self._create_examples(train_list)
 
-    def get_dev_examples(self, data_dir):
+    def get_dev_examples(self, data_dir, pred = False):
         """See base class."""
-        dev_list = get_full_list(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV, pred=True)
+        dev_list = get_nli_sampled_data(config.FEVER_DEV_JSONL, data_dir)
         return self._create_examples(dev_list)
 
     def get_labels(self):
         """See base class."""
         return ["SUPPORTS", "REFUTES", "NOT ENOUGH INFO"]
 
-    def _create_examples(self, lines, pred=False):
+    def _create_examples(self, lines):
         """Creates examples for the training and dev sets."""
         examples = []
         for (i, line) in enumerate(lines):
-            guid = line['selection_id']
-            text_a = line['text']
-            text_b = line['query']
-            label = line['selection_label']
+            guid = line['id']
+            text_a = line['evid']
+            text_b = line['claim']
+            label = line['label']
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
@@ -494,7 +482,7 @@ def fever_finetuning(taskname):
     # local_rank for distributed training on gpus
     local_rank = -1
     seed = 42
-    gradient_accumulation_steps = 1
+    gradient_accumulation_steps = 4
     fp16 = False
     loss_scale = 0
     server_ip = None
@@ -564,20 +552,11 @@ def fever_finetuning(taskname):
     tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=do_lower_case)
     # tokenizer = BertTokenizer.from_pretrained(bert_model)
 
-    train_examples = None
-    num_train_optimization_steps = None
-    if do_train:
-        train_examples = processor.get_train_examples("")
-        num_train_optimization_steps = int(
-            len(train_examples) / train_batch_size / gradient_accumulation_steps) * num_train_epochs
-        if local_rank != -1:
-            num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size()
-
     # Prepare model
     cache_dir = cache_dir if cache_dir else os.path.join(str(PYTORCH_PRETRAINED_BERT_CACHE),
                                                                    'distributed_{}'.format(local_rank))
     model = BertForSequenceClassification.from_pretrained(pretrained_model_name_or_path,
-                                                          cache_dir=cache_dir,
+                                                          # cache_dir=cache_dir,
                                                           num_labels=num_labels)
     if fp16:
         model.half()
@@ -592,6 +571,16 @@ def fever_finetuning(taskname):
         model = DDP(model)
     elif n_gpu > 1:
         model = torch.nn.DataParallel(model)
+
+    # get train data
+    train_examples = None
+    num_train_optimization_steps = None
+    if do_train:
+        train_examples = processor.get_train_examples("")
+        num_train_optimization_steps = int(
+            len(train_examples) / train_batch_size / gradient_accumulation_steps) * num_train_epochs
+        if local_rank != -1:
+            num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size()
 
     # Prepare optimizer
     if do_train:
@@ -629,6 +618,9 @@ def fever_finetuning(taskname):
     global_step = 0
     nb_tr_steps = 0
     tr_loss = 0
+
+
+
     if do_train:
         train_features = convert_examples_to_features(
             train_examples, label_list, max_seq_length, tokenizer)

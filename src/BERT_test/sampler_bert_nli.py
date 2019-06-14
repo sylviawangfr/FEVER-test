@@ -45,13 +45,10 @@ def threshold_sampler(org_data_file, full_sent_list, prob_threshold=0.5, logist_
 
         item['scored_sentids'] = cur_predicted_sentids
         item['predicted_sentids'] = [sid for sid, _ in item['scored_sentids']][:top_n]
-        # item['predicted_evidence'] = convert_evidence2scoring_format(item['predicted_sentids'])
-        # item['predicted_label'] = item['label']  # give ground truth label
-
     return d_list
 
 
-def sample_additional_data_for_item_v1_0(item, additional_data_dictionary):
+def sample_additional_data_for_item(item, additional_data_dictionary):
     res_sentids_list = []
     flags = []
 
@@ -65,7 +62,6 @@ def sample_additional_data_for_item_v1_0(item, additional_data_dictionary):
         # print(len(additional_data))
 
         for evidences in e_list:
-            # print(evidences)
             new_evidences = copy.deepcopy(evidences)
             n_e = len(evidences)
             if n_e < 5:
@@ -121,7 +117,7 @@ def sample_additional_data_for_item_v1_0(item, additional_data_dictionary):
     return res_sentids_list, flags
 
 
-def adv_sample_v1_0(input_file, additional_file, tokenized=False):
+def nli_sample(input_file, additional_file):
     cursor, conn = fever_db.get_cursor()
     d_list = read_json_rows(input_file)
 
@@ -138,39 +134,23 @@ def adv_sample_v1_0(input_file, additional_file, tokenized=False):
 
     for item in tqdm(d_list):
         # e_list = check_sentences.check_and_clean_evidence(item)
-        sampled_e_list, flags = sample_additional_data_for_item_v1_0(item, additional_data_dict)
-        # print(flags)
+        sampled_e_list, flags = sample_additional_data_for_item(item, additional_data_dict)
         for i, (sampled_evidence, flag) in enumerate(zip(sampled_e_list, flags)):
             # Do not copy, might change in the future for error analysis
             # new_item = copy.deepcopy(item)
             new_item = dict()
-            # print(new_item['claim'])
-            # print(e_list)
-            # print(sampled_evidence)
-            # print(flag)
             evidence_text = evidence_list_to_text(cursor, sampled_evidence,
-                                                  contain_head=True, id_tokenized=tokenized)
+                                                  contain_head=True, id_tokenized=False)
 
             new_item['id'] = str(item['id']) + '#' + str(i)
-
-            if tokenized:
-                new_item['claim'] = item['claim']
-            else:
-                new_item['claim'] = ' '.join(easy_tokenize(item['claim']))
-
+            new_item['claim'] = item['claim']
             new_item['evid'] = evidence_text
-
             new_item['verifiable'] = item['verifiable']
             new_item['label'] = item['label']
-
-            # print("C:", new_item['claim'])
-            # print("E:", new_item['evid'])
-            # print("L:", new_item['label'])
-            # print()
             sampled_data_list.append(new_item)
 
     cursor.close()
-
+    conn.close()
     return sampled_data_list
 
 
@@ -204,11 +184,11 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
     return ' '.join(current_evidence_text)
 
 
-def get_adv_sampled_data(org_data_file, full_sent_list, threshold_prob=0.5, top_n=8):
+def get_nli_sampled_data(org_data_file, full_sent_list, threshold_prob=0.5, top_n=8, pred= False):
     data_with_candidate_sample_list = \
         threshold_sampler(org_data_file, full_sent_list, threshold_prob, top_n=top_n)
 
-    sampled_data = adv_sample_v1_0(org_data_file, data_with_candidate_sample_list, tokenized=True)
+    sampled_data = nli_sample(org_data_file, data_with_candidate_sample_list)
 
     return sampled_data
 
@@ -238,7 +218,7 @@ if __name__ == '__main__':
                                                scale_prob=0.5,
                                                delete_prob=False)
 
-    complete_upstream_dev_data = adv_sample_v1_0(config.T_FEVER_DEV_JSONL, upstream_dev_list,
+    complete_upstream_dev_data = nli_sample(config.T_FEVER_DEV_JSONL, upstream_dev_list,
                                                  tokenized=True)
 
     count = Counter()

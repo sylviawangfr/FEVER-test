@@ -7,7 +7,7 @@ from utils import fever_db, check_sentences
 import config
 
 from tqdm import tqdm
-from utils import c_scorer, common
+from utils import c_scorer, common, file_loader
 from collections import Counter
 import numpy as np
 from data_util.data_preperation.tokenize_fever import easy_tokenize
@@ -27,7 +27,14 @@ def threshold_sampler(org_data_file, full_sent_list, prob_threshold=0.5, logist_
     """
     Providing samples to the Training set by a probability threshold on the upstream selected sentences.
     """
-    d_list = common.load_jsonl(org_data_file)
+    if not isinstance(full_sent_list, list):
+        full_sent_list = load_data(full_sent_list)
+
+    if isinstance(org_data_file, list):
+        d_list = org_data_file[4:5]
+    else:
+        d_list = load_data(org_data_file)[4:5]
+
     augmented_dict = dict()
     print("Build selected sentences file:", len(full_sent_list))
     for sent_item in tqdm(full_sent_list):
@@ -135,9 +142,9 @@ def adv_sample_v1_0(input_file, additional_file, tokenized=False):
     d_list = load_data(input_file)
 
     if isinstance(additional_file, list):
-        additional_d_list = additional_file
+        additional_d_list = additional_file[4:5]
     else:
-        additional_d_list = load_data(additional_file)
+        additional_d_list = load_data(additional_file)[4:5]
     additional_data_dict = dict()
 
     for add_item in additional_d_list:
@@ -240,8 +247,9 @@ if __name__ == '__main__':
     #                                         config.RESULT_PATH / "sent_retri_nn/2018_07_20_15-17-59_r/dev_sent.jsonl"),
     #                                     threshold_prob=0.35,
     #                                     top_n=8)
-    dev_upstream_sent_list = common.load_jsonl(config.RESULT_PATH /
-                                               "sent_retri_nn/2018_07_20_15-17-59_r/dev_sent.jsonl")
+    dev_upstream_sent_list = file_loader.read_json_rows(config.RESULT_PATH /
+                                               "bert_finetuning/2019_06_13_17:44:54/ss_items_dev.jsonl")
+    sample = get_adv_sampled_data(config.FEVER_DEV_JSONL, dev_upstream_sent_list)
 
     upstream_dev_list = score_converter_scaled(config.T_FEVER_DEV_JSONL, dev_upstream_sent_list,
                                                scale_prob=0.5,

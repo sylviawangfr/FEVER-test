@@ -110,8 +110,8 @@ class FeverNliProcessor(DataProcessor):
         examples = []
         for (i, line) in enumerate(lines):
             guid = line['id']
-            text_a = line['evid']
-            text_b = line['claim']
+            text_a = convert_brc(line['evid'])
+            text_b = convert_brc(line['claim'])
             label = line['label']
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))

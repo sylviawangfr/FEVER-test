@@ -26,7 +26,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
     :return:
     """
 
-    d_list = read_json_rows(tokenized_data_file)[4:6]
+    d_list = read_json_rows(tokenized_data_file)
 
     if not isinstance(additional_data_file, list):
         additional_d_list = read_json_rows(additional_data_file)
@@ -366,14 +366,16 @@ def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=5):
     """
 
     if not isinstance(tfidf_ss_data_file, list):
-        d_list = read_json_rows(tfidf_ss_data_file)[0:1000]
+        d_list = read_json_rows(tfidf_ss_data_file)
     else:
         d_list = tfidf_ss_data_file
 
+    d_list = d_list
     full_sample_list = []
 
     cursor, conn = fever_db.get_cursor()
     err_log_f = config.LOG_PATH / f"{get_current_time_str()}_analyze_sample.log"
+    count_truth = []
     for item in tqdm(d_list):
         predicted_evidence = item["predicted_sentids"]
         ground_truth = item['evidence']
@@ -399,7 +401,10 @@ def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=5):
             id_list = []
 
         num_envs = 0 if all_evidence_set is None else len(all_evidence_set)
+        count_truth.append(num_envs)
         for pred_item in predicted_evidence:
+            if num_envs >= top_k:
+                break
             doc_id, ln = pred_item.split(c_scorer.SENT_LINE)[0], int(pred_item.split(c_scorer.SENT_LINE)[1])
             tmp_id = doc_id + '(-.-)' + str(ln)
             if not tmp_id in id_list:
@@ -407,8 +412,7 @@ def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=5):
                 r_list.append(text)
                 id_list.append(tmp_id)
                 num_envs += num_envs
-            if num_envs == top_k:
-                break
+
 
         # assert len(id_list) == len(set(id_list))  # check duplicate
         # assert len(r_list) == len(id_list)
@@ -434,19 +438,25 @@ def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=5):
 
     cursor.close()
     conn.close()
+    count_truth_examples(full_sample_list)
+    print(np.sum(count_truth))
     return full_sample_list
 
 
-if __name__ == '__main__':
-    additional_file = config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
-    full_list = get_tfidf_sample_list_for_nn(additional_file)
+def count_truth_examples(sample_list):
     count_hit = 0
-    for item in full_list:
+    for item in sample_list:
         # print(item)
         if item['selection_label'] == 'true':
             count_hit += 1
 
-    print(count_hit, len(full_list), count_hit / len(full_list))
+    print("Truth count/total count:", count_hit, len(sample_list), count_hit / len(sample_list))
+
+
+if __name__ == '__main__':
+    additional_file = config.RESULT_PATH / "tfidf/dev_2019_06_15_15:48:58.jsonl"
+    full_list = get_tfidf_sample_list_for_nn(additional_file)
+    count_truth_examples(full_list)
 
     # full_list = get_full_list(config.T_FEVER_DEV_JSONL,
     #                           config.RESULT_PATH / "doc_retri/2018_07_04_21:56:49_r/dev.jsonl",

@@ -2,6 +2,7 @@ from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 from utils import common, c_scorer
 import config
 from tqdm import tqdm
+from utils.file_loader import read_json_rows
 
 
 def score_converter_scaled(org_data_file, full_sent_list, scale_prob=0.5, delete_prob=True):
@@ -12,7 +13,7 @@ def score_converter_scaled(org_data_file, full_sent_list, scale_prob=0.5, delete
     :param scale_prob:  0.5
     :return:
     """
-    d_list = common.load_jsonl(org_data_file)
+    d_list = read_json_rows(org_data_file)
     augmented_dict = dict()
     print("Build selected sentences file:", len(full_sent_list))
     for sent_item in tqdm(full_sent_list):

@@ -7,6 +7,7 @@ import config
 from utils.text_clean import *
 import sample_for_nli.adv_sampler_v01 as nn_sampler
 import sample_for_nli.tf_idf_sample_v1_0 as tfidf_sampler
+from sentence_retrieval.sampler_for_nmodel import get_tfidf_sample_list_for_nn
 
 logger = logging.getLogger(__name__)
 
@@ -61,13 +62,13 @@ class DataProcessor(object):
 class FeverSSProcessor(DataProcessor):
     """Processor for the MultiNLI data set (GLUE version)."""
 
-    def get_train_examples(self, data_dir):
-        train_list = get_full_list(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
+    def get_train_examples(self, data_dir, pred = False):
+        train_list = get_tfidf_sample_list_for_nn(data_dir, pred=pred)
         return self._create_examples(train_list)
 
     def get_dev_examples(self, data_dir, pred = False):
         """See base class."""
-        dev_list = get_full_list(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV, pred=pred)
+        dev_list = get_tfidf_sample_list_for_nn(data_dir, pred=pred)
         return self._create_examples(dev_list), dev_list
 
     def get_labels(self):

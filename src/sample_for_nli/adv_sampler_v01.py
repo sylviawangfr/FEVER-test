@@ -31,9 +31,9 @@ def threshold_sampler(org_data_file, full_sent_list, prob_threshold=0.5, logist_
         full_sent_list = load_data(full_sent_list)
 
     if isinstance(org_data_file, list):
-        d_list = org_data_file[4:5]
+        d_list = org_data_file
     else:
-        d_list = load_data(org_data_file)[4:5]
+        d_list = load_data(org_data_file)
 
     augmented_dict = dict()
     print("Build selected sentences file:", len(full_sent_list))
@@ -142,9 +142,9 @@ def adv_sample_v1_0(input_file, additional_file, tokenized=False):
     d_list = load_data(input_file)
 
     if isinstance(additional_file, list):
-        additional_d_list = additional_file[4:5]
+        additional_d_list = additional_file
     else:
-        additional_d_list = load_data(additional_file)[4:5]
+        additional_d_list = load_data(additional_file)
     additional_data_dict = dict()
 
     for add_item in additional_d_list:
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     #                                     threshold_prob=0.35,
     #                                     top_n=8)
     dev_upstream_sent_list = file_loader.read_json_rows(config.RESULT_PATH /
-                                               "bert_finetuning/2019_06_13_17:44:54/ss_items_dev.jsonl")
+                                               "bert_finetuning/2019_06_13_17:44:54/ss_scores_dev.txt")
     sample = get_adv_sampled_data(config.FEVER_DEV_JSONL, dev_upstream_sent_list)
 
     upstream_dev_list = score_converter_scaled(config.T_FEVER_DEV_JSONL, dev_upstream_sent_list,

@@ -371,7 +371,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
     # local_rank for distributed training on gpus
     local_rank = -1
     seed = 42
-    gradient_accumulation_steps = 4
+    gradient_accumulation_steps = 8
     fp16 = True
     loss_scale = 0
     server_ip = None
@@ -531,6 +531,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
 
             # define a new function to compute loss values for both output_modes
             logits = model(input_ids, segment_ids, input_mask, labels=None)
+
 
             loss_fct = CrossEntropyLoss()
             loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))

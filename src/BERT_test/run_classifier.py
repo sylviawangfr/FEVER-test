@@ -372,7 +372,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
     local_rank = -1
     seed = 42
     gradient_accumulation_steps = 4
-    fp16 = False
+    fp16 = True
     loss_scale = 0
     server_ip = None
     server_port = None

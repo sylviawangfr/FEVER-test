@@ -357,7 +357,7 @@ def post_filter(d_list, keep_prob=0.75, seed=12):
 #     fever_db.get_all_sent_by_doc_id(cursor, doc_id)
 
 
-def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=5):
+def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
     :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
@@ -411,7 +411,7 @@ def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=5):
                 _, text, _ = fever_db.get_evidence(cursor, doc_id, ln)
                 r_list.append(text)
                 id_list.append(tmp_id)
-                num_envs += num_envs
+                num_envs = num_envs + 1
 
 
         # assert len(id_list) == len(set(id_list))  # check duplicate

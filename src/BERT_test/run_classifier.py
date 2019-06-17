@@ -371,7 +371,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
     # local_rank for distributed training on gpus
     local_rank = -1
     seed = 42
-    gradient_accumulation_steps = 4
+    gradient_accumulation_steps = 1
     fp16 = True
     loss_scale = 0
     server_ip = None

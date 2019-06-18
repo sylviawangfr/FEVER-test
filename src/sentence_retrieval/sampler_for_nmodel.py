@@ -370,7 +370,7 @@ def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
     else:
         d_list = tfidf_ss_data_file
 
-    d_list = d_list[0:1000]
+    d_list = d_list[0:100]
     full_sample_list = []
 
     cursor, conn = fever_db.get_cursor()

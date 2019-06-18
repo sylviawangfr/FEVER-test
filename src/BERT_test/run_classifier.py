@@ -355,7 +355,6 @@ def eval_nli_and_save(pred=False):
     pass
 
 
-
 def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
     bert_model = "bert-large-uncased"
     pretrained_model_name_or_path = config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz"
@@ -530,8 +529,11 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
             input_ids, input_mask, segment_ids, label_ids = batch
 
             # define a new function to compute loss values for both output_modes
-            logits = model(input_ids, segment_ids, input_mask, labels=None)
-
+            try:
+                logits = model(input_ids, segment_ids, input_mask, labels=None)
+            except:
+                print(torch.cuda.current_device())
+                print(torch.cuda.cudaStatus)
 
             loss_fct = CrossEntropyLoss()
             loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))

@@ -531,36 +531,37 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
             # define a new function to compute loss values for both output_modes
             try:
                 logits = model(input_ids, segment_ids, input_mask, labels=None)
+
+                loss_fct = CrossEntropyLoss()
+                loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
+
+                if n_gpu > 1:
+                    loss = loss.mean()  # mean() to average on multi-gpu.
+                if gradient_accumulation_steps > 1:
+                    loss = loss / gradient_accumulation_steps
+
+                if fp16:
+                    optimizer.backward(loss)
+                else:
+                    loss.backward()
+
+                tr_loss += loss.item()
+                nb_tr_examples += input_ids.size(0)
+                nb_tr_steps += 1
+                if (step + 1) % gradient_accumulation_steps == 0:
+                    if fp16:
+                        # modify learning rate with special warm up BERT uses
+                        # if fp16 is False, BertAdam is used that handles this automatically
+                        lr_this_step = learning_rate * warmup_linear.get_lr(global_step, warmup_proportion)
+                        for param_group in optimizer.param_groups:
+                            param_group['lr'] = lr_this_step
+                    optimizer.step()
+                    optimizer.zero_grad()
+                    global_step += 1
+
             except:
                 print(torch.cuda.current_device())
                 print(torch.cuda.cudaStatus)
-
-            loss_fct = CrossEntropyLoss()
-            loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
-
-            if n_gpu > 1:
-                loss = loss.mean()  # mean() to average on multi-gpu.
-            if gradient_accumulation_steps > 1:
-                loss = loss / gradient_accumulation_steps
-
-            if fp16:
-                optimizer.backward(loss)
-            else:
-                loss.backward()
-
-            tr_loss += loss.item()
-            nb_tr_examples += input_ids.size(0)
-            nb_tr_steps += 1
-            if (step + 1) % gradient_accumulation_steps == 0:
-                if fp16:
-                    # modify learning rate with special warm up BERT uses
-                    # if fp16 is False, BertAdam is used that handles this automatically
-                    lr_this_step = learning_rate * warmup_linear.get_lr(global_step, warmup_proportion)
-                    for param_group in optimizer.param_groups:
-                        param_group['lr'] = lr_this_step
-                optimizer.step()
-                optimizer.zero_grad()
-                global_step += 1
 
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer

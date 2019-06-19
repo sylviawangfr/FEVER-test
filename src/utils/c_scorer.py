@@ -2,6 +2,8 @@ import six
 import utils
 from collections import Counter
 import numpy as np
+from utils.file_loader import save_intermidiate_results, get_current_time_str
+import config
 
 SENT_LINE = '<SENT_LINE>'
 
@@ -10,7 +12,7 @@ This is customized scoring module
 """
 
 
-def fever_doc_only(predictions, actual=None, max_evidence=5):
+def fever_doc_only(predictions, actual=None, max_evidence=5, analysis_log=None):
     '''
     This method is used to only evaluate document retrieval
     '''
@@ -22,6 +24,7 @@ def fever_doc_only(predictions, actual=None, max_evidence=5):
     doc_id_hits = 0
 
     evidence_number_list = []
+    error_list = []
 
     for idx, instance in enumerate(predictions):
         macro_prec = doc_macro_precision(instance, max_evidence)
@@ -34,6 +37,8 @@ def fever_doc_only(predictions, actual=None, max_evidence=5):
 
         if check_doc_id_correct(instance, actual[idx], max_evidence):
             doc_id_hits += 1
+        else:
+            error_list.append(instance)
         evidence_number_list.append(len(instance['predicted_docids'][:max_evidence]))
 
     evidence_number_counter = Counter(evidence_number_list)
@@ -54,6 +59,8 @@ def fever_doc_only(predictions, actual=None, max_evidence=5):
 
     print("oracle_score, pr, rec, f1")
     print(oracle_score, pr, rec, f1)
+    save_intermidiate_results(error_list, analysis_log)
+
     return oracle_score, pr, rec, f1
 
 

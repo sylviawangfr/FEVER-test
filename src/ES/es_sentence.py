@@ -3,8 +3,11 @@ from utils.file_loader import *
 import config
 from elasticsearch import Elasticsearch
 import elasticsearch.helpers as ESH
+from elasticsearch_dsl import Search, Q
 
 es = Elasticsearch([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
+
+
 def init_index():
     # delete index if exists
     if es.indices.exists(config.WIKIPAGE_INDEX):
@@ -45,6 +48,63 @@ def add_wiki_bunch(file):
 def test_indexing():
     f = config.WIKI_PAGE_PATH / "wiki-001.jsonl"
     add_wiki_bunch(f)
+    
+
+def get_all_doc_ids(max_ind=None):
+    id_list = []
+    search = Search(using=es, index=config.WIKIPAGE_INDEX)
+    must = []
+    must.append({'regexp': {'text': '.+'}})
+    must.append({'regexp': {'lines': '.+'}})
+
+    search = search.query(Q('bool', must=must)). \
+                 source(include=['id'])
+    try:
+        search.execute()
+        thread_exe(lambda hit: id_list.append(hit.id), search.scan(), 100, "get doc ids")
+    except Exception as e:
+        print(e)
+    finally:
+        return id_list
+
+
+def get_evidence_es(doc_id, line_num):
+    key = f'{doc_id}(-.-){line_num}'
+    # cursor.execute("SELECT * FROM sentences WHERE id=?", (normalize(key),))
+    search = Search(using=es, index=config.FEVER_SEN_INDEX)
+    key = normalize(key)
+    search = search.query("match", id=key)
+    _id, text, h_links, doc_id = None, None, None, None
+    try:
+        search.execute()
+        hit = next(search.scan())
+        _id = hit.id
+        text = hit.text
+        h_links = hit.h_links
+    except Exception as e:
+        print(e)
+    finally:
+        return _id, text, h_links
+
+
+
+def get_all_sent_by_doc_id_es(doc_id, with_h_links=False):
+    r_list = []
+    id_list = []
+    h_links_list = []
+    search = Search(using=es, index=config.FEVER_SEN_INDEX)
+    doc_id = normalize(doc_id)
+    search = search.query("match", doc_id=doc_id)
+    for hit in search.scan():
+        r_list.append(hit.text)
+        id_list.append(hit.id)
+        h_links_list.append(json.loads(hit.h_links))
+
+    if with_h_links:
+        return r_list, id_list, h_links_list
+    else:
+        return r_list, id_list
+
 
 
 if __name__ == '__main__':

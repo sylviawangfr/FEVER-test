@@ -27,8 +27,12 @@
             "stemmer_filter" : {
                 "type" : "stemmer",
                 "name" : "possessive_english"
-            }
-        },
+            },
+            "light_english_stemmer": {
+              "type":       "stemmer",
+              "language":   "light_english"
+        }
+      },
       "char_filter": {
         "nfkc_normalizer": {
           "type": "icu_normalizer",
@@ -53,12 +57,12 @@
       "analyzer": {
         "underscore_analyzer": {
           "char_filter":  ["nfkc_normalizer",  "underscore_filter", "stopwords_filter"],
-          "filter":["lowercase", "stemmer_filter"],
+          "filter":["lowercase", "light_english_stemmer","stemmer_filter"],
           "tokenizer": "standard"
         },
         "wikipage_analyzer": {
           "tokenizer": "standard",
-          "filter": ["lowercase", "stemmer_filter"],
+          "filter": ["lowercase", "light_english_stemmer", "stemmer_filter"],
           "char_filter":["nfkc_normalizer", "stopwords_filter"]
         }
       }

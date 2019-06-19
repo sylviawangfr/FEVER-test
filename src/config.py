@@ -15,6 +15,7 @@ FEVER_DB = DATA_ROOT / "fever.db"
 FEVER_TRAIN_JSONL = DATA_ROOT / "fever" / "train.jsonl"
 FEVER_DEV_JSONL = DATA_ROOT / "fever" / "shared_task_dev.jsonl"
 FEVER_DEV_UNLABELED_JSONL = DATA_ROOT / "fever" / "shared_task_dev_public.jsonl"
+FEVER_TEST_JSONL = DATA_ROOT / "fever" / "shared_task_test.jsonl"
 
 T_FEVER_TRAIN_JSONL = DATA_ROOT / "tokenized_fever" / "train.jsonl"
 T_FEVER_DEV_JSONL = DATA_ROOT / "tokenized_fever" / "dev.jsonl"

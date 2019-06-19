@@ -1,71 +1,10 @@
 from elasticsearch import Elasticsearch as es
 from elasticsearch_dsl import Search, Q
-from elasticsearch_dsl.query import MultiMatch
 import config
 import itertools
 from utils.tokenizer_simple import *
-from utils.common import thread_exe
-from utils.text_clean import *
-import json
 
 client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
-
-def get_all_doc_ids(max_ind=None):
-    id_list = []
-    search = Search(using=client, index=config.WIKIPAGE_INDEX)
-    must = []
-    must.append({'regexp': {'text': '.+'}})
-    must.append({'regexp': {'lines': '.+'}})
-
-    search = search.query(Q('bool', must=must)). \
-                 source(include=['id'])
-    try:
-        search.execute()
-        thread_exe(lambda hit: id_list.append(hit.id), search.scan(), 100, "get doc ids")
-    except Exception as e:
-        print(e)
-    finally:
-        return id_list
-
-
-
-def get_evidence_es(doc_id, line_num):
-    key = f'{doc_id}(-.-){line_num}'
-    # cursor.execute("SELECT * FROM sentences WHERE id=?", (normalize(key),))
-    search = Search(using=client, index=config.FEVER_SEN_INDEX)
-    key = normalize(key)
-    search = search.query("match", id=key)
-    _id, text, h_links, doc_id = None, None, None, None
-    try:
-        search.execute()
-        hit = next(search.scan())
-        _id = hit.id
-        text = hit.text
-        h_links = hit.h_links
-    except Exception as e:
-        print(e)
-    finally:
-        return _id, text, h_links
-
-
-
-def get_all_sent_by_doc_id_es(doc_id, with_h_links=False):
-    r_list = []
-    id_list = []
-    h_links_list = []
-    search = Search(using=client, index=config.FEVER_SEN_INDEX)
-    doc_id = normalize(doc_id)
-    search = search.query("match", doc_id=doc_id)
-    for hit in search.scan():
-        r_list.append(hit.text)
-        id_list.append(hit.id)
-        h_links_list.append(json.loads(hit.h_links))
-
-    if with_h_links:
-        return r_list, id_list, h_links_list
-    else:
-        return r_list, id_list
-
 
 
 # ES match_phrase on entities
@@ -75,7 +14,7 @@ def search_doc(phrases):
         must = []
     # should = []
         for ph in phrases:
-            if ph.startswith('the ') and ph.startswith("a "):
+            if ph.startswith('the ') or ph.startswith("a ") or ph.startswith('The ') or ph.startswith('A '):
                 ph = ph.split(' ', 1)[1]
         # must.append({'match_phrase': {'lines': ph}})
         # should.append({'match_phrase': {'id': {'query': ph, 'boost': 2}}})
@@ -170,7 +109,8 @@ def merge_result(result):
             ph_set = set(ph)
             for m in merged:
                 m_set = set(m.get("phrases"))
-                if m_set.issubset(ph_set) and id == m.get("id"):
+                # m_set.issubset(ph_set) and
+                if id == m.get("id") and score > m.get("score"):
                     merged.remove(m)
                     merged.append(i)
     return merged
@@ -207,8 +147,7 @@ def search_single_entity(phrases):
     return result
 
 
-def test():
-    claim = "Hot Right Now is mistakenly attributed to DJ Fresh."
+def test_search_claim(claim):
     nouns, entities = split_claim_spacy(claim)
     cap_phrases = split_claim_regex(claim)
 
@@ -248,9 +187,9 @@ def test():
 
 
 if __name__ == '__main__':
-    # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
-    # test()
+    print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
+    test_search_claim("Hot Right Now is mistakenly attributed to DJ Fresh.")
     # get_all_doc_ids()
-    get_all_sent_by_doc_id_es("Andre_Markgraaff")
-    get_evidence_es("Andre_Markgraaff", 13)
+    # get_all_sent_by_doc_id_es("Andre_Markgraaff")
+    # get_evidence_es("Andre_Markgraaff", 13)
 

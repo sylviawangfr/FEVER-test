@@ -21,21 +21,20 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import torch
 from sklearn.utils.extmath import softmax
-from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
+from torch.utils.data import (DataLoader, SequentialSampler,
                               TensorDataset)
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
-from torch.nn import CrossEntropyLoss, MSELoss
-from sklearn.metrics import matthews_corrcoef, f1_score
+from torch.nn import CrossEntropyLoss
+from sklearn.metrics import f1_score
 
-from pytorch_pretrained_bert.modeling import BertForSequenceClassification, BertConfig
+from pytorch_pretrained_bert.modeling import BertForSequenceClassification
 from pytorch_pretrained_bert.tokenization import BertTokenizer
 
 from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, save_file, save_intermidiate_results
 from typing import Dict
 from utils import c_scorer
 from BERT_test.bert_data_processor import *
-from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 
 
 logger = logging.getLogger(__name__)

@@ -59,16 +59,6 @@ def compute_metrics(preds, labels):
     return {"acc": acc_and_f1(preds, labels)}
 
 
-def nli_eval_score(actual_list, upstream_eval_list, save_data=True, mode='dev'):
-    acc, f1 , acc_and_f1 = compute_metrics(actual_list, upstream_eval_list)
-    print(f"{mode}:(acc/f1/acc_and_f1):{acc}/{f1}/{acc_and_f1}")
-
-    if save_data:
-        time = get_current_time_str()
-        output_nli_file = config.RESULT_PATH / "bert_finetuning" / time / f"nli_eval_{mode}.txt"
-        save_file(f"{mode}:(acc/f1/acc_and_f1):{acc}/{f1}/{acc_and_f1}", output_nli_file)
-
-
 def nli_eval_fever_score(predicted_list, mode='dev'):
     if mode == 'dev':
         actual_list = read_json_rows(config.FEVER_DEV_JSONL)
@@ -105,9 +95,9 @@ def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fa
     processor = FeverNliProcessor()
 
     if mode == 'dev':
-        eval_examples, eval_list = processor.get_dev_examples(upstream_data, pred=pred)
+        eval_examples, eval_list = processor.get_dev_examples(upstream_data)
     else:
-        eval_examples, eval_list = processor.get_train_examples(upstream_data, pred=pred)
+        eval_examples, eval_list = processor.get_test_examples(upstream_data)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), sequence_length, tokenizer)
@@ -160,13 +150,13 @@ def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fa
     scores = preds[:, 0].tolist()
     preds = np.argmax(preds, axis=1)
 
-    for i in range(len()):
+    for i in range(len(eval_list)):
         # Matching id
         eval_list[i]['score'] = scores[i]
         eval_list[i]['prob'] = probs[i]
         eval_list[i]['predicted_label'] = preds
     # fever score and saving
-    result = compute_metrics("nli", preds, all_label_ids.numpy())
+    result = compute_metrics(preds, all_label_ids.numpy())
     loss = None
 
     result['eval_loss'] = eval_loss
@@ -179,8 +169,9 @@ def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fa
         logger.info("  %s = %s", key, str(result[key]))
 
     save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}_nli_pred.log")
-
-    nli_eval_score(eval_list, eval_list)
+    time = get_current_time_str()
+    output_nli_file = config.RESULT_PATH / "bert_finetuning" / time / f"nli_eval_{mode}.txt"
+    save_file(f"{mode}:(acc/f1/acc_and_f1) \n {pred_log}", output_nli_file)
 
     # not for training, but for test set predict
     if pred:
@@ -204,9 +195,9 @@ def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fa
                 item["predicted_label"] = augmented_dict[int(item['id'])]
         nli_eval_fever_score(upstream_data)
 
+    print("Done with nli evaluation")
 
 if __name__ == "__main__":
-    pass
-    # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
-    # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55",
-    #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55")
+    eval_nli_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/nli_2019_06_20_16:58:19",
+                      config.PRO_ROOT / "saved_models/bert_finetuning/nli_2019_06_20_16:58:19",
+                      config.RESULT_PATH / "tfidf/dev_2019_06_15_15:48:58.jsonl", pred=False, mode='dev')

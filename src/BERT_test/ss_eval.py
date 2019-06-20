@@ -54,7 +54,7 @@ def acc_and_f1(preds, labels):
     }
 
 
-def compute_metrics(task_name, preds, labels):
+def compute_metrics(preds, labels):
     assert len(preds) == len(labels)
     return {"acc": acc_and_f1(preds, labels)}
 
@@ -132,7 +132,7 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fal
         dev_list[i]['prob'] = probs[i]
 
     # fever score and saving
-    result = compute_metrics("ss", preds, all_label_ids.numpy())
+    result = compute_metrics(preds, all_label_ids.numpy())
     loss = None
 
     result['eval_loss'] = eval_loss

@@ -456,7 +456,6 @@ def count_truth_examples(sample_list):
 if __name__ == '__main__':
     additional_file = config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl"
     full_list = get_tfidf_sample_list_for_nn(additional_file)
-    count_truth_examples(full_list)
 
     # full_list = get_full_list(config.T_FEVER_DEV_JSONL,
     #                           config.RESULT_PATH / "doc_retri/2018_07_04_21:56:49_r/dev.jsonl",

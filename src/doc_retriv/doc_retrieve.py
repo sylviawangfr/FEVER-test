@@ -50,7 +50,7 @@ def get_doc_ids_and_fever_score(in_file, out_file, top_k=10):
 if __name__ == '__main__':
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"{get_current_time_str()}_dev_doc_retrive.jsonl")
-    get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
+    # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
     get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)
     # print(retrieve_docs("Brian Wilson was part of the Beach Boys."))
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST / get_current_time_str())

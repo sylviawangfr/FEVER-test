@@ -172,9 +172,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
         model = torch.nn.DataParallel(model)
 
     # get train data
-    train_examples = None
-    num_train_optimization_steps = None
-    train_examples = processor.get_train_examples(upstream_train_data, pred=False)
+    train_examples = processor.get_train_examples(upstream_train_data)
     num_train_optimization_steps = int(
         len(train_examples) / train_batch_size / gradient_accumulation_steps) * num_train_epochs
     if local_rank != -1:
@@ -307,7 +305,8 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
 
 
 if __name__ == "__main__":
-    fever_finetuning('ss', config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl", config.RESULT_PATH / "tfidf/dev_2019_06_15_15:48:58.jsonl")
+    fever_finetuning('nli', config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl",
+                     config.RESULT_PATH / "tfidf/dev_2019_06_15_15:48:58.jsonl")
     # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
     # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55",
     #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55", )

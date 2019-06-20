@@ -62,9 +62,9 @@ class DataProcessor(object):
 class FeverSSProcessor(DataProcessor):
     """Processor for the MultiNLI data set (GLUE version)."""
 
-    def get_train_examples(self, data_dir, pred = False):
+    def get_train_examples(self, data_dir):
         sampler = self._get_sampler('tfidf')
-        train_list = sampler(data_dir, pred=pred)
+        train_list = sampler(data_dir, pred=False)
         return self._create_examples(train_list)
 
     def get_dev_examples(self, data_dir, pred = False):
@@ -81,7 +81,7 @@ class FeverSSProcessor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return ["true", "false"]
+        return ["SUPPORTS", "REFUTES"]
 
     def _create_examples(self, lines):
         """Creates examples for the training and dev sets."""
@@ -108,18 +108,25 @@ class FeverSSProcessor(DataProcessor):
 class FeverNliProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir, sampler='nn'):
-        sampler_fun = self.get_sampler(sampler)
+        sampler_fun = self._get_sampler(sampler)
         train_list = sampler_fun(config.FEVER_TRAIN_JSONL, data_dir, tokenized=True)
         return self._create_examples(train_list)
 
-    def get_dev_examples(self, data_dir, pred = False, sampler='nn'):
+    def get_dev_examples(self, data_dir, sampler='nn'):
         """See base class."""
-        dev_list = self.get_sampler(config.FEVER_DEV_JSONL, data_dir, tokenized=True)
+        sampler_fun = self._get_sampler(sampler)
+        dev_list = sampler_fun(config.FEVER_DEV_JSONL, data_dir, tokenized=True)
+        return self._create_examples(dev_list), dev_list
+
+    def get_test_examples(self, data_dir, sampler='nn'):
+        """See base class."""
+        sampler_fun = self._get_sampler(sampler)
+        dev_list = sampler_fun(config.FEVER_TEST_JSONL, data_dir, tokenized=True)
         return self._create_examples(dev_list), dev_list
 
     def get_labels(self):
         """See base class."""
-        return ["SUPPORTS", "REFUTES", "NOT ENOUGH INFO"]
+        return ["SUPPORTS", "REFUTES"]
 
     def _create_examples(self, lines):
         """Creates examples for the training and dev sets."""
@@ -128,7 +135,10 @@ class FeverNliProcessor(DataProcessor):
             guid = line['id']
             text_a = convert_brc(line['evid'])
             text_b = convert_brc(line['claim'])
-            label = line['label']
+            if not line['label'] == 'NOT ENOUGH INFO':
+                label = line['label']
+            else:
+                label = 'REFUTES'
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
@@ -136,7 +146,7 @@ class FeverNliProcessor(DataProcessor):
     def _get_sampler(self, s):
         processors = {
             "tfidf": tfidf_sampler.sample_v1_0,
-            "nn": nn_sampler.get_adv_sampled_data
+            "nn": nn_sampler.adv_sample_v1_0
         }
         return processors[s]
 

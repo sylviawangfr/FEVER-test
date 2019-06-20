@@ -63,10 +63,37 @@ def compute_metrics(preds, labels):
 def nli_eval_score(actual_list, upstream_eval_list, save_data=True, mode='dev'):
     acc, f1 , acc_and_f1 = compute_metrics(actual_list, upstream_eval_list)
     print(f"{mode}:(acc/f1/acc_and_f1):{acc}/{f1}/{acc_and_f1}")
+
     if save_data:
         time = get_current_time_str()
         output_nli_file = config.RESULT_PATH / "bert_finetuning" / time / f"nli_eval_{mode}.txt"
         save_file(f"{mode}:(acc/f1/acc_and_f1):{acc}/{f1}/{acc_and_f1}", output_nli_file)
+
+
+def nli_eval_fever_score(predicted_list, mode='dev'):
+    if mode == 'dev':
+        actual_list = read_json_rows(config.FEVER_DEV_JSONL)
+        eval_mode = {'check_sent_id_correct': False, 'standard': True}
+    else:
+        actual_list = read_json_rows(config.FEVER_TEST_JSONL)
+        eval_mode = {'check_sent_id_correct': False, 'standard': True}
+
+    strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(predicted_list,
+                                                                actual_list,
+                                                                mode=eval_mode, verbose=False)
+    tracking_score = strict_score
+    print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
+    print("Strict score:", strict_score)
+    print(f"Eval Tracking score:", f"{tracking_score}")
+
+    time = get_current_time_str()
+    output_eval_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_eval_{mode}.txt"
+    output_items_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_items_{mode}.jsonl"
+    output_ss_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_scores_{mode}.txt"
+    save_intermidiate_results(predicted_list, output_ss_file)
+    save_jsonl(actual_list, output_items_file)
+    save_file(f"{mode}:(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/ \nStrict score:{strict_score}",
+              output_eval_file)
 
 
 def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=False, mode='dev'):
@@ -159,29 +186,24 @@ def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fa
     # not for training, but for test set predict
     if pred:
         augmented_dict: Dict[int, str] = dict()
-        for evids_item in tqdm(upstream_data):
+        for evids_item in tqdm(eval_list):
             evids_id = evids_item['id']  # The id for the current one selection.
             org_id = int(evids_id.split('<#>')[0])
             remain_index = evids_id.split('<#>')[1]
             #assert remain_index == 0
             if org_id in augmented_dict:
-                if remain_index not in augmented_dict[org_id]:
-                    augmented_dict[org_id] =
-                else:
-                    print("Exist")
+                augmented_dict[org_id] = evids_item["predicted_label"]
             else:
-                augmented_dict[org_id] = {remain_index: evids_item}
+                print("Exist:", evids_item)
+
 
          #todo:verify Dict len
         for item in upstream_data:
             if int(item['id']) not in augmented_dict:
                 print("not found this example:\n", item)
             else:
-                item["predicted_label"] = augmented_dict[int(item['id'])]['']
-
-
-def nli_eval_score_and_save(upstream_data_list, pred_list):
-
+                item["predicted_label"] = augmented_dict[int(item['id'])]
+        nli_eval_fever_score(upstream_data)
 
 
 if __name__ == "__main__":

@@ -72,7 +72,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
     bert_model = "bert-large-uncased"
     pretrained_model_name_or_path = config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz"
     cache_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning"
-    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / get_current_time_str()
+    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"{taskname}_{get_current_time_str()}"
     max_seq_length = 128
     if taskname == 'nli':
         max_seq_length = 300
@@ -283,6 +283,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
 
         # If we save using the predefined names, we can load using `from_pretrained`
+        print("save model to: ", output_dir)
         output_model_file = os.path.join(output_dir, WEIGHTS_NAME)
         output_config_file = os.path.join(output_dir, CONFIG_NAME)
 

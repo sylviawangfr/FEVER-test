@@ -202,8 +202,8 @@ def ss_f1_score_and_save(actual_list, upstream_eval_list, prob_thresholds=0.5, t
                                               prob_threshold=scal_prob, top_n = top_n)
 
         eval_mode = {'check_sent_id_correct': True, 'standard': False}
-        for a, b in zip(actual_list, results_list):
-            b['predicted_label'] = a['label']
+        # for a, b in zip(actual_list, results_list):
+        #     b['predicted_label'] = a['label']
         strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(results_list,
                                                                     actual_list,
                                                                     mode=eval_mode, verbose=False)
@@ -234,7 +234,8 @@ def softmax_test(z):
 
 
 if __name__ == "__main__":
-    pass
+    # pass
     # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
-    # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55",
-    #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55", )
+    eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
+                     config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
+                     config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")

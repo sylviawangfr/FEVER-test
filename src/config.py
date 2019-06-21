@@ -39,6 +39,7 @@ DOC_RETRV_TRAIN = RESULT_PATH / "train_doc_retrieve.jsonl"
 S_TFIDF_RETRV_TRAIN = RESULT_PATH / "train_s_tfidf_retrieve.jsonl"
 DOC_RETRV_DEV = RESULT_PATH / "dev_doc_retrieve.jsonl"
 S_TFIDF_RETRV_DEV = RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
+DOC_RETRV_TEST = RESULT_PATH / "test_doc_retrieve.jsonl"
 
 if __name__ == '__main__':
     print("PRO_ROOT", PRO_ROOT)

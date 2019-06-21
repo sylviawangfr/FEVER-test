@@ -4,7 +4,8 @@ import config
 import itertools
 from utils.tokenizer_simple import *
 
-client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
+client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT,
+              'timeout': 60, 'max_retries': 5, 'retry_on_timeout': True}])
 
 
 # ES match_phrase on entities
@@ -14,11 +15,11 @@ def search_doc(phrases):
         must = []
     # should = []
         for ph in phrases:
-            if ph.startswith('the ') or ph.startswith("a ") or ph.startswith('The ') or ph.startswith('A '):
+            if ph.lower().startswith('the ') or ph.lower().startswith("a ") or ph.lower().startswith("an "):
                 ph = ph.split(' ', 1)[1]
         # must.append({'match_phrase': {'lines': ph}})
         # should.append({'match_phrase': {'id': {'query': ph, 'boost': 2}}})
-            must.append({'multi_match': {'query': ph, 'fields': ['id^2', 'lines']}})
+            must.append({'multi_match': {'query': ph, "type": "phrase", 'fields': ['id^2', 'lines']}})
 
         search = search.query(Q('bool', must=must)). \
                  highlight('lines', number_of_fragments=0). \
@@ -55,7 +56,8 @@ def search_subsets(phrases):
     searched_subsets = []
 
     if l > 1:
-        for i in reversed(range(2, l + 1)):
+        l = 5 if l > 4 else l
+        for i in reversed(range(2, l)):
             sub_set = itertools.combinations(phrases, i)
             for s in sub_set:
                 if isSubset(s, searched_subsets):
@@ -82,8 +84,8 @@ def search_subsets(phrases):
 def search_and_merge(entities, nouns):
     # print("entities:", entities)
     # print("nouns:", nouns)
-    ents_list = [i[0] for i in entities]
-    result1, not_covered1 = search_subsets(ents_list)
+
+    result1, not_covered1 = search_subsets(entities)
     # print("done with r1")
     result2, not_covered2 = search_subsets(nouns)
     # print("done with r2")
@@ -91,7 +93,7 @@ def search_and_merge(entities, nouns):
     # print("done with r3")
     result4 = search_single_entity(not_covered2)
     # print("done with r4")
-    result5 = search_single_entity(ents_list)
+    result5 = search_single_entity(entities)
     # print("done with r5")
     result6 = search_single_entity(nouns)
     # print("done with r6")
@@ -109,11 +111,26 @@ def merge_result(result):
             ph_set = set(ph)
             for m in merged:
                 m_set = set(m.get("phrases"))
-                # m_set.issubset(ph_set) and
+                # has_phrase_covered(m_set, ph_set) and
                 if id == m.get("id") and score > m.get("score"):
                     merged.remove(m)
                     merged.append(i)
     return merged
+
+
+def has_phrase_covered(phrase_set1, phrase_set2):
+    covered = True
+    for i in phrase_set1:
+        covered = False
+        for j in phrase_set2:
+
+            if i in j:
+                covered = True
+                break
+        if not covered:
+            return covered
+    return covered
+
 
 
 def has_doc_id(id, merged_list):
@@ -187,8 +204,9 @@ def test_search_claim(claim):
 
 
 if __name__ == '__main__':
-    print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
-    test_search_claim("Hot Right Now is mistakenly attributed to DJ Fresh.")
+    print(has_phrase_covered(['a c', 'b', 'c'], ['a b c', 'c d']))
+    # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
+    # test_search_claim("Lisa Kudrow was in Romy and Michele's High School Reunion (1997), The Opposite of Sex (1998), Analyze This (1999) and its sequel Analyze That (2002), Dr. Dolittle 2 (2001), Wonderland (2003), Happy Endings (2005), P.S. I Love You (2007), Bandslam (2008), Hotel for Dogs (2009), Easy A (2010), Neighbors (2014), its sequel Neighbors 2: Sorority Rising (2016) and The Girl on the Train (2016).")
     # get_all_doc_ids()
     # get_all_sent_by_doc_id_es("Andre_Markgraaff")
     # get_evidence_es("Andre_Markgraaff", 13)

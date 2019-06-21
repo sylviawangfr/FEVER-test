@@ -68,9 +68,9 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fal
     eval_batch_size = 8
 
     if mode == 'dev':
-        eval_examples, dev_list = processor.get_dev_examples(upstream_data, pred=pred)
+        eval_examples, eval_list = processor.get_dev_examples(upstream_data, pred=pred)
     else:
-        eval_examples, dev_list = processor.get_train_examples(upstream_data, pred=pred)
+        eval_examples, eval_list = processor.get_test_examples(upstream_data, pred=pred)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)
@@ -106,8 +106,6 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fal
         # create eval loss and other metric required by the task
         loss_fct = CrossEntropyLoss()
         tmp_eval_loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
-
-
         eval_loss += tmp_eval_loss.mean().item()
         nb_eval_steps += 1
         if len(preds) == 0:
@@ -125,11 +123,11 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fal
     scores = preds[:, 0].tolist()
     preds = np.argmax(preds, axis=1)
 
-    for i in range(len(dev_list)):
-        assert str(eval_examples[i].guid) == str(dev_list[i]['selection_id'])
+    for i in range(len(eval_list)):
+        assert str(eval_examples[i].guid) == str(eval_list[i]['selection_id'])
         # Matching id
-        dev_list[i]['score'] = scores[i]
-        dev_list[i]['prob'] = probs[i]
+        eval_list[i]['score'] = scores[i]
+        eval_list[i]['prob'] = probs[i]
 
     # fever score and saving
     result = compute_metrics(preds, all_label_ids.numpy())
@@ -139,16 +137,17 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fal
     result['loss'] = loss
 
     logger.info("***** Eval results *****")
-    pred_log = ''
-    for key in sorted(result.keys()):
-        pred_log = pred_log + key + ":" + str(result[key]) + "\n"
-        logger.info("  %s = %s", key, str(result[key]))
+    if mode == 'dev':
+        pred_log = ''
+        for key in sorted(result.keys()):
+            pred_log = pred_log + key + ":" + str(result[key]) + "\n"
+            logger.info("  %s = %s", key, str(result[key]))
 
-    save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}_ss_pred.log")
+        save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}_ss_pred.log")
 
-    orginal_file = config.FEVER_DEV_JSONL if mode == 'dev' else config.FEVER_TRAIN_JSONL
+    orginal_file = config.FEVER_DEV_JSONL if mode == 'dev' else config.FEVER_TEST_JSONL
     original_list = read_json_rows(orginal_file)
-    ss_f1_score_and_save(original_list, dev_list)
+    ss_f1_score_and_save(original_list, eval_list)
 
 
 def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5):
@@ -191,12 +190,12 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
     return d_list
 
 
-def ss_f1_score_and_save(actual_list, upstream_eval_list, prob_thresholds=0.5, top_n = 5, save_data=True, mode = 'dev'):
+def ss_f1_score_and_save(actual_list, upstream_eval_list, prob_thresholds=0.5, top_n=5, save_data=True, mode='dev'):
     if not isinstance(prob_thresholds, list):
         prob_thresholds = [prob_thresholds]
 
     for scal_prob in prob_thresholds:
-        print("Eval Dev Data prob_threshold:", scal_prob)
+        print("Eval Data prob_threshold:", scal_prob)
 
         results_list = ss_score_converter(actual_list, upstream_eval_list,
                                               prob_threshold=scal_prob, top_n = top_n)

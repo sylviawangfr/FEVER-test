@@ -9,6 +9,8 @@ def get_current_time_str():
 def get_adv_print_func(filename=None, verbose=False):
     file = None
     if filename is not None:
+        if not filename.parent.exists():
+            filename.parent.mkdir(exist_ok=False)
         file = open(filename, encoding='utf-8', mode='w')
 
     def the_function(*args, **kwargs):

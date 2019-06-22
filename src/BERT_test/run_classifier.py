@@ -18,6 +18,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import sys
 import random
 
 import numpy as np
@@ -273,6 +274,9 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data, sampler=N
                     global_step += 1
 
             except:
+                print("exception happened: ")
+                e = sys.exc_info()[0]
+                print("Error: %s" % e)
                 print(torch.cuda.current_device())
                 print(torch.cuda.cudaStatus)
 

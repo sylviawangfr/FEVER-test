@@ -26,7 +26,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
     :return:
     """
 
-    d_list = read_json_rows(tokenized_data_file)
+    d_list = read_json_rows(tokenized_data_file)[2:3]
 
     if not isinstance(additional_data_file, list):
         additional_d_list = read_json_rows(additional_data_file)
@@ -357,7 +357,7 @@ def post_filter(d_list, keep_prob=0.75, seed=12):
 #     fever_db.get_all_sent_by_doc_id(cursor, doc_id)
 
 
-def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
+def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=8):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
     :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
@@ -450,7 +450,7 @@ def count_truth_examples(sample_list):
         if item['selection_label'] == 'true':
             count_hit += 1
 
-    print("Truth count/total count:", count_hit, len(sample_list), count_hit / len(sample_list))
+    print(f"Truth count/total count: , {count_hit}/{len(sample_list)}/{count_hit / len(sample_list)}")
 
 
 if __name__ == '__main__':

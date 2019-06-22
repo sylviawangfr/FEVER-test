@@ -372,7 +372,7 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
                 if check_doc_id_correct(instance, actual[idx]):
                     mode['check_doc_id_correct_hits'] += 1
                 else:
-                    # error_count += 1
+                    error_count += 1
                     log_print(instance)
 
             if 'check_sent_id_correct' in mode and mode['check_sent_id_correct']:
@@ -385,11 +385,12 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
     log_print("Error count:", error_count)
     total = len(predictions)
 
-    log_print("Total:", total)
     print("Total:", total)
     print("Correct:", correct)
-    log_print("Strict:", strict)
     print("Strict:", strict)
+    log_print("Total:", total)
+    log_print("Correct:", correct)
+    log_print("Strict:", strict)
 
     for k, v in mode.items():
         if k.endswith('_hits'):
@@ -408,119 +409,6 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
         f1 = 2.0 * pr * rec / (pr + rec)
 
     return strict_score, acc_score, pr, rec, f1
-
-
-def fever_score_analysis(predictions, actual=None, max_evidence=5, mode=None,
-                         error_analysis_file=None,
-                         verbose=False):
-    '''
-    This is a important function for different scoring.
-    Pass in different parameter in mode for specific score.
-
-    :param verbose:
-    :param predictions:
-    :param actual:
-    :param max_evidence:
-    :param mode:
-    :return:
-    '''
-    error_list = []
-
-    log_print = utils.get_adv_print_func(error_analysis_file, verbose=verbose)
-
-    correct = 0
-    strict = 0
-    error_count = 0
-
-    macro_precision = 0
-    macro_precision_hits = 0
-
-    macro_recall = 0
-    macro_recall_hits = 0
-
-    # ana_f = None
-    # if error_analysis_file is not None:
-    #     ana_f = open(error_analysis_file, mode='w')
-
-    if mode is not None:
-        key_list = []
-        for key in mode.keys():
-            key_list.append(key)
-
-        for key in key_list:
-            mode[key + '_hits'] = 0
-
-    for idx, instance in enumerate(predictions):
-        if mode['standard']:
-            assert 'predicted_evidence' in instance.keys(), 'evidence must be provided for the prediction'
-
-            # If it's a blind test set, we need to copy in the values from the actual data
-            if 'evidence' not in instance or 'label' not in instance:
-                assert actual is not None, 'in blind evaluation mode, actual data must be provided'
-                assert len(actual) == len(predictions), 'actual data and predicted data length must match'
-                assert 'evidence' in actual[idx].keys(), 'evidence must be provided for the actual evidence'
-                instance['evidence'] = actual[idx]['evidence']
-                instance['label'] = actual[idx]['label']
-
-            assert 'evidence' in instance.keys(), 'gold evidence must be provided'
-
-            if is_correct_label(instance):
-                correct += 1.0
-
-                if is_strictly_correct(instance, max_evidence):
-                    strict += 1.0
-                else:
-                    error_list.append(instance)
-
-                # if not is_strictly_correct(instance, max_evidence):
-                #     is_strictly_correct(instance, max_evidence)
-                # print(instance)
-
-            macro_prec = evidence_macro_precision(instance, max_evidence)
-            macro_precision += macro_prec[0]
-            macro_precision_hits += macro_prec[1]
-
-            macro_rec = evidence_macro_recall(instance, max_evidence)
-            macro_recall += macro_rec[0]
-            macro_recall_hits += macro_rec[1]
-
-        if mode is not None:
-            if 'check_doc_id_correct' in mode and mode['check_doc_id_correct']:
-                if check_doc_id_correct(instance):
-                    mode['check_doc_id_correct_hits'] += 1
-                else:
-                    # error_count += 1
-                    log_print(instance)
-
-            if 'check_sent_id_correct' in mode and mode['check_sent_id_correct']:
-                if check_sent_correct(instance):
-                    mode['check_sent_id_correct_hits'] += 1
-                else:
-                    # error_count += 1
-                    log_print(instance)
-
-    log_print("Error count:", error_count)
-    total = len(predictions)
-
-    log_print("Total:", total)
-    print("Total:", total)
-    log_print("Strict:", strict)
-    print("Strict:", strict)
-
-    for k, v in mode.items():
-        if k.endswith('_hits'):
-            log_print(k, v, v / total)
-            print(k, v, v / total)
-
-    strict_score = strict / total
-    acc_score = correct / total
-
-    pr = (macro_precision / macro_precision_hits) if macro_precision_hits > 0 else 1.0
-    rec = (macro_recall / macro_recall_hits) if macro_recall_hits > 0 else 0.0
-
-    f1 = 2.0 * pr * rec / (pr + rec)
-
-    return strict_score, acc_score, pr, rec, f1, error_list
 
 
 def delete_label(d_list):

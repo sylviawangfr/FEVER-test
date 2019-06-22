@@ -115,6 +115,8 @@ def merge_result(result):
                 if id == m.get("id") and score > m.get("score"):
                     merged.remove(m)
                     merged.append(i)
+
+    merged.sort(key=lambda x: x.get('score'), reverse=True)
     return merged
 
 
@@ -167,44 +169,14 @@ def search_single_entity(phrases):
 def test_search_claim(claim):
     nouns, entities = split_claim_spacy(claim)
     cap_phrases = split_claim_regex(claim)
-
     ents = [i[0] for i in entities]
-
-    #
-    # print("search nouns:", nouns)
-    # result1, c1 = search_subsets(nouns)
-    # for i in result1:
-    #     print(i)
-    #
-    # print("search entities:", ents)
-    # result2, c2 = search_subsets(ents)
-    # for i in result2:
-    #     print(i)
-    #
-    # print("search single nouns:", nouns)
-    # result3 = search_single_entity(nouns)
-    # for i in result3:
-    #     print(i)
-
-    # print("search single entites:", ents)
-    result4 = search_single_entity(ents)
-    for i in result4:
-        print(i)
-
-    result = result4
-
-    # print("all results:")
-    # for i in result:
-    #     print(i)
-
-    merged = merge_result(result)
-    # print("merged:")
-    # for i in merged:
-    #     print(i)
+    nouns = list(set(nouns) | set(cap_phrases))
+    first = search_and_merge(entities, nouns)
 
 
 if __name__ == '__main__':
-    print(has_phrase_covered(['a c', 'b', 'c'], ['a b c', 'c d']))
+    test_search_claim("Fox 2000 Pictures released the film Soul Food.")
+    # print(has_phrase_covered(['a c', 'b', 'c'], ['a b c', 'c d']))
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     # test_search_claim("Lisa Kudrow was in Romy and Michele's High School Reunion (1997), The Opposite of Sex (1998), Analyze This (1999) and its sequel Analyze That (2002), Dr. Dolittle 2 (2001), Wonderland (2003), Happy Endings (2005), P.S. I Love You (2007), Bandslam (2008), Hotel for Dogs (2009), Easy A (2010), Neighbors (2014), its sequel Neighbors 2: Sorority Rising (2016) and The Girl on the Train (2016).")
     # get_all_doc_ids()

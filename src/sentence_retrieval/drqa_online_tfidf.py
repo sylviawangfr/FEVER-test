@@ -169,7 +169,7 @@ def predict_sentences_and_update_item(cursor, item, top_n=10):
     return item
 
 
-def script(in_path, out_path):
+def tfidf_sentense_selection(in_path, out_path, top_n=10, log_file=None):
     # print(in_path)
     # print(out_path)
 
@@ -192,12 +192,12 @@ def script(in_path, out_path):
     cursor.close()
     one_conn.close()
     eval_mode = {'check_sent_id_correct': True, 'standard': False}
-    print(c_scorer.fever_score(res_list, res_list, mode=eval_mode, verbose=False))
+    print(c_scorer.fever_score(res_list, res_list, max_evidence=top_n, mode=eval_mode, error_analysis_file=log_file, verbose=False))
 
     out_fname = Path(out_path)
     print("predict len:", len(res_list))
     save_intermidiate_results(res_list, out_filename=out_fname, last_loaded_path=None)
-
+    return res_list
 
 def check_acc(in_path):
     d_list = read_json_rows(in_path)
@@ -220,14 +220,16 @@ if __name__ == '__main__':
     dev_doc_file = str(config.DOC_RETRV_DEV)
     train_doc_file = str(config.DOC_RETRV_TRAIN)
     time = get_current_time_str()
-    script(
+    tfidf_sentense_selection(
         in_path=dev_doc_file,
-        out_path=str(config.RESULT_PATH / "tfidf/dev_") + time + ".jsonl"
+        out_path=str(config.RESULT_PATH / f"tfidf/{time}/dev_ss_tfidf.jsonl"),
+        log_file=str(config.LOG_PATH / f"{time}/dev_ss_tfidf.log")
     )
 
-    script(
+    tfidf_sentense_selection(
         in_path=train_doc_file,
-        out_path=str(config.RESULT_PATH / "tfidf/train_") + time + ".jsonl"
+        out_path=str(config.RESULT_PATH / f"tfidf/{time}/train_ss_tfidf.jsonl"),
+        log_file=str(config.LOG_PATH / f"{time}/train_ss_tfidf.log")
     )
     # dev_doc_file = str(config.DOC_RETRV_TRAIN)
     # print("doc len:", len(doc_list))

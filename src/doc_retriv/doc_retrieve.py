@@ -17,7 +17,6 @@ def retrieve_docs(claim):
     # ['Colin Kaepernick', 'a starting quarterback', 'the 49ers', '63rd season', 'the National Football League']
     # [('Colin Kaepernick', 'PERSON'), ('the 49ers 63rd season', 'DATE'), ('the National Football League', 'ORG')]
     result = search_and_merge(ents_list, nouns)
-    result.sort(key=lambda x: x.get('score'), reverse=True)
     if len(result) > 10:
         result = result[:10]
     # reshape = [x.update({'claim_id': claim}) for x in result]
@@ -36,7 +35,7 @@ def retri_doc_and_update_item(item):
     return item
 
 
-def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True):
+def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file=None):
     d_list = read_json_rows(in_file)[0:1000]
     retri_list = []
     # cursor = get_cursor()
@@ -45,16 +44,17 @@ def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True):
     thread_exe(retri_doc_and_update_item, iter(d_list), thread_number, "query wiki pages")
     save_intermidiate_results(d_list, out_file)
     if eval:
-        eval_doc_preds(d_list, top_k)
+        eval_doc_preds(d_list, top_k, log_file)
     return d_list
 
 
-def eval_doc_preds(doc_list, top_k):
+def eval_doc_preds(doc_list, top_k, log_file):
     print(fever_doc_only(doc_list, doc_list, max_evidence=top_k,
                          analysis_log=config.LOG_PATH / f"{get_current_time_str()}_doc_retri_no_hits.jsonl"))
     eval_mode = {'check_doc_id_correct': True, 'standard': False}
-    out_fname = config.LOG_PATH / f"{utils.get_current_time_str()}_analyze_doc_retri.log"
-    print(fever_score(doc_list, doc_list, mode=eval_mode, error_analysis_file=out_fname))
+    if log_file is None:
+        log_file = config.LOG_PATH / f"{utils.get_current_time_str()}_analyze_doc_retri.log"
+    print(fever_score(doc_list, doc_list, mode=eval_mode, error_analysis_file=log_file))
 
 
 if __name__ == '__main__':

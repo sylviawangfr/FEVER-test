@@ -146,8 +146,75 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fal
         save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}_ss_pred.log")
 
     orginal_file = config.FEVER_DEV_JSONL if mode == 'dev' else config.FEVER_TEST_JSONL
-    original_list = read_json_rows(orginal_file)
+    original_list = read_json_rows(orginal_file)[0:5]
     ss_f1_score_and_save(original_list, eval_list)
+
+
+def pred_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, original_data, mode='test'):
+    model = BertForSequenceClassification.from_pretrained(saved_model, num_labels=2)
+    tokenizer = BertTokenizer.from_pretrained(saved_tokenizer_model, do_lower_case=True)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    processor = FeverSSProcessor()
+    eval_batch_size = 8
+    if mode == 'test':
+        eval_examples, eval_list = processor.get_test_examples(upstream_data, pred=True)
+    else:
+        eval_examples, eval_list = processor.get_dev_examples(upstream_data, pred=True)
+
+    eval_features = convert_examples_to_features(
+        eval_examples, processor.get_labels(), 128, tokenizer)
+
+    logger.info("***** Running evaluation *****")
+    logger.info("  Num examples = %d", len(eval_examples))
+    logger.info("  Batch size = %d", eval_batch_size)
+    all_input_ids = torch.tensor([f.input_ids for f in eval_features], dtype=torch.long)
+    all_input_mask = torch.tensor([f.input_mask for f in eval_features], dtype=torch.long)
+    all_segment_ids = torch.tensor([f.segment_ids for f in eval_features], dtype=torch.long)
+    # all_label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
+    all_label_ids = torch.tensor([-1] * len(eval_features), dtype=torch.long)
+
+    eval_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
+    # Run prediction for full data
+    eval_sampler = SequentialSampler(eval_data)
+    eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=eval_batch_size)
+
+    model.eval()
+    eval_loss = 0
+    nb_eval_steps = 0
+    preds = []
+    num_labels = len(processor.get_labels())
+
+    for input_ids, input_mask, segment_ids, label_ids in tqdm(eval_dataloader, desc="Evaluating"):
+        input_ids = input_ids.to(device)
+        input_mask = input_mask.to(device)
+        segment_ids = segment_ids.to(device)
+        # label_ids = label_ids.to(device)
+
+        with torch.no_grad():
+            logits = model(input_ids, segment_ids, input_mask, labels=None)
+
+        if len(preds) == 0:
+            preds.append(logits.detach().cpu().numpy())
+        else:
+            preds[0] = np.append(
+                preds[0], logits.detach().cpu().numpy(), axis=0)
+
+    preds = preds[0]
+    probs = softmax(preds)
+    probs = probs[:, 0].tolist()
+    scores = preds[:, 0].tolist()
+    # preds = np.argmax(preds, axis=1)
+
+    for i in range(len(eval_list)):
+        assert str(eval_examples[i].guid) == str(eval_list[i]['selection_id'])
+        # Matching id
+        eval_list[i]['score'] = scores[i]
+        eval_list[i]['prob'] = probs[i]
+
+    results_list = ss_score_converter(original_data, eval_list, prob_threshold=0.5, top_n=5)
+    output_items_file = config.RESULT_PATH / "bert_finetuning" / f"ss_pred_items_{mode}_{get_current_time_str()}.jsonl"
+    save_intermidiate_results(results_list, output_items_file)
 
 
 def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5):
@@ -235,6 +302,16 @@ def softmax_test(z):
 if __name__ == "__main__":
     # pass
     # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
+    upstream_data1 = read_json_rows(config.RESULT_PATH / "dev_doc_retrieve.jsonl")[0:5]
+    upstream_data2 = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:5]
+    # pred_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
+    #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
+    #                  upstream_data, upstream_data, mode='dev')
+
     eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
                      config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
-                     config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+                     upstream_data2, pred=False, mode='dev')
+
+    eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
+                     config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
+                     upstream_data1, pred=True, mode='dev')

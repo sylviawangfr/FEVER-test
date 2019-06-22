@@ -69,8 +69,12 @@ class FeverSSProcessor(DataProcessor):
 
     def get_dev_examples(self, data_dir, pred = False):
         """See base class."""
-        sampler = self._get_sampler('tfidf')
-        dev_list = sampler(data_dir, pred=pred)
+        if not pred:
+            sampler = self._get_sampler('tfidf')
+            dev_list = sampler(data_dir, pred=pred)
+        else:
+            sampler = self._get_sampler('doc')
+            dev_list = sampler(config.FEVER_DEV_JSONL, data_dir, pred=pred)
         return self._create_examples(dev_list), dev_list
 
     def get_test_examples(self, data_dir, pred=True):
@@ -81,7 +85,7 @@ class FeverSSProcessor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return ["SUPPORTS", "REFUTES"]
+        return ["true", "false"]
 
     def _create_examples(self, lines):
         """Creates examples for the training and dev sets."""
@@ -218,7 +222,6 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
         assert len(segment_ids) == max_seq_length
 
         label_id = label_map[example.label]
-
 
         if ex_index < 5:
             logger.info("*** Example ***")

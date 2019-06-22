@@ -146,7 +146,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
     processor = processors[task_name]()
 
     label_list = processor.get_labels()
-    num_labels = len(label_list)
+    num_labels = 2
 
     tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=do_lower_case)
     # tokenizer = BertTokenizer.from_pretrained(bert_model)

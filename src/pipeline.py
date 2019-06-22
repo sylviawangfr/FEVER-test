@@ -35,5 +35,6 @@ def doc_retriv():
                              config.LOG_PATH / f"{time}/train_ss_retrive_tfidf.log")
     print("done with tfidf ss for train")
 
-
+if __name__ == "__main__":
+    doc_retriv()
 

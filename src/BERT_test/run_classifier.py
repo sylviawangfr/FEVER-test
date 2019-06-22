@@ -68,7 +68,7 @@ def compute_metrics(task_name, preds, labels):
         raise KeyError(task_name)
 
 
-def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
+def fever_finetuning(taskname, upstream_train_data, upstream_dev_data, sampler=None):
     bert_model = "bert-large-uncased"
     pretrained_model_name_or_path = config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz"
     cache_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning"
@@ -172,7 +172,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
         model = torch.nn.DataParallel(model)
 
     # get train data
-    train_examples = processor.get_train_examples(upstream_train_data)
+    train_examples = processor.get_train_examples(upstream_train_data, sampler)
     num_train_optimization_steps = int(
         len(train_examples) / train_batch_size / gradient_accumulation_steps) * num_train_epochs
     if local_rank != -1:
@@ -306,7 +306,7 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data):
 
 if __name__ == "__main__":
     fever_finetuning('nli', config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl",
-                     config.RESULT_PATH / "tfidf/dev_2019_06_15_15:48:58.jsonl")
+                     config.RESULT_PATH / "tfidf/dev_2019_06_15_15:48:58.jsonl", sampler='tfidf')
     # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
     # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55",
     #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55", )

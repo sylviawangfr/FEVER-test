@@ -146,7 +146,7 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fal
         save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}_ss_pred.log")
 
     orginal_file = config.FEVER_DEV_JSONL if mode == 'dev' else config.FEVER_TEST_JSONL
-    original_list = read_json_rows(orginal_file)[0:5]
+    original_list = read_json_rows(orginal_file)
     ss_f1_score_and_save(original_list, eval_list)
 
 
@@ -302,8 +302,8 @@ def softmax_test(z):
 if __name__ == "__main__":
     # pass
     # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
-    upstream_data1 = read_json_rows(config.RESULT_PATH / "dev_doc_retrieve.jsonl")[0:5]
-    upstream_data2 = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:5]
+    upstream_data1 = read_json_rows(config.RESULT_PATH / "dev_doc_retrieve.jsonl")
+    upstream_data2 = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
     # pred_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
     #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
     #                  upstream_data, upstream_data, mode='dev')

@@ -48,6 +48,8 @@ def acc_and_f1(preds, labels):
     acc = simple_accuracy(preds, labels)
     f1 = f1_score(y_true=labels, y_pred=preds)
     return {
+        "total": len(preds),
+        "correct_hit": (preds==labels).tolist().count(True),
         "acc": acc,
         "f1": f1,
         "acc_and_f1": (acc + f1) / 2,
@@ -94,10 +96,15 @@ def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fa
     sequence_length = 300
     processor = FeverNliProcessor()
 
-    if mode == 'dev':
-        eval_examples, eval_list = processor.get_dev_examples(upstream_data)
+    if pred:
+        sampler = 'nn'
     else:
-        eval_examples, eval_list = processor.get_test_examples(upstream_data)
+        sampler = 'tfidf'
+
+    if mode == 'dev':
+        eval_examples, eval_list = processor.get_dev_examples(upstream_data, sampler)
+    else:
+        eval_examples, eval_list = processor.get_test_examples(upstream_data, sampler)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), sequence_length, tokenizer)

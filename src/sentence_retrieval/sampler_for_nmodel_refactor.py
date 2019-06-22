@@ -83,7 +83,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
                                     This file need to contain *"predicted_docids"* field.
     :return:
     """
-    d_list = read_json_rows(tokenized_data_file)[0:5]
+    d_list = read_json_rows(tokenized_data_file)
 
     if not isinstance(additional_data_file, list):
         additional_d_list = read_json_rows(additional_data_file)

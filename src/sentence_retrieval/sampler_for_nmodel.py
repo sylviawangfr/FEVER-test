@@ -26,7 +26,7 @@ def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=N
     :return:
     """
 
-    d_list = read_json_rows(tokenized_data_file)[0:5]
+    d_list = read_json_rows(tokenized_data_file)
 
     if not isinstance(additional_data_file, list):
         additional_d_list = read_json_rows(additional_data_file)
@@ -370,7 +370,7 @@ def get_tfidf_sample_list_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
     else:
         d_list = tfidf_ss_data_file
 
-    d_list = d_list[0:5]
+    d_list = d_list
     full_sample_list = []
 
     cursor, conn = fever_db.get_cursor()

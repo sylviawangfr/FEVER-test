@@ -35,7 +35,7 @@ def doc_retriv():
     #                                              log_file=config.LOG_PATH / f"{time}/dev_ss_retrive_tfidf.log")
     # print("done with tfidf ss for dev")
     print("tfidf ss retrieving for train...")
-    doc_retriv_train_list = config.RESULT_PATH / f"{time}/train_doc_retrive.jsonl"
+    doc_retriv_train_list = str(config.RESULT_PATH / f"{time}/train_doc_retrive.jsonl")
     tfidf_ss_train_list = tfidf_sentense_selection(doc_retriv_train_list,
                                                    config.RESULT_PATH / f"{time}/train_ss_retrive_tfidf.jsonl",
                                                    top_n=10,

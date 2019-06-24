@@ -36,7 +36,7 @@ def retri_doc_and_update_item(item):
 
 
 def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file=None):
-    d_list = read_json_rows(in_file)[10000:20000]
+    d_list = read_json_rows(in_file)
     thread_number = 10
     print("total items: ", len(d_list))
     thread_exe(retri_doc_and_update_item, iter(d_list), thread_number, "query wiki pages")

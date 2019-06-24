@@ -7,6 +7,8 @@ from elasticsearch_dsl import Search, Q
 import sys
 
 client = Elasticsearch([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT, 'timeout': 300, 'max_retries': 10, 'retry_on_timeout': True}])
+
+
 def init_index():
     # delete index if exists
     if client.indices.exists(config.WIKIPAGE_INDEX):
@@ -20,7 +22,6 @@ def init_index():
         except:
             print("exception happened: ")
             e = sys.exc_info()[0]
-            print(e)
 
 
 def init_fever_sentence_index():
@@ -90,7 +91,7 @@ def test_indexing():
 
 if __name__ == '__main__':
     init_index()
-    # init_wikipages()
+    init_wikipages()
 
     # init_fever_sentence_index()
     # build_sentences_records()

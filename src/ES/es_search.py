@@ -171,12 +171,45 @@ def test_search_claim(claim):
     cap_phrases = split_claim_regex(claim)
     ents = [i[0] for i in entities]
     nouns = list(set(nouns) | set(cap_phrases))
-    first = search_and_merge(entities, nouns)
+    first = search_and_merge(ents, nouns)
     print(first)
 
 
+def test_search_id(text):
+    try:
+        search = Search(using=client, index=config.WIKIPAGE_INDEX)
+        must = []
+        if text.lower().startswith('the ') or text.lower().startswith("a ") or text.lower().startswith("an "):
+            text = text.split(' ', 1)[1]
+        # must.append({'match_phrase': {'lines': ph}})
+        # should.append({'match_phrase': {'id': {'query': ph, 'boost': 2}}})
+        must.append({'multi_match': {'query': text, "type": "phrase", 'fields': ['id^2']}})
+
+        search = search.query(Q('bool', must=must)). \
+                 highlight('lines', number_of_fragments=0). \
+                 sort({'_score': {"order": "desc"}}). \
+                 source(include=['id'])[0:5]
+
+        response = search.execute()
+        r_list = []
+
+        for hit in response['hits']['hits']:
+            score = hit['_score']
+            id = hit['_source']['id']
+            if 'highlight' in hit:
+                lines = hit['highlight']['lines'][0]
+                lines = lines.replace("</em> <em>", " ")
+            else:
+                lines = ""
+            doc_dic = {'score': score, 'phrases': text, 'id': id, 'lines': lines}
+            r_list.append(doc_dic)
+
+        return r_list
+    except:
+        return []
+
 if __name__ == '__main__':
-    test_search_claim("Trouble with the Curve")
+    print(test_search_id("Trouble with the Curve"))
     # print(has_phrase_covered(['a c', 'b', 'c'], ['a b c', 'c d']))
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     # test_search_claim("Lisa Kudrow was in Romy and Michele's High School Reunion (1997), The Opposite of Sex (1998), Analyze This (1999) and its sequel Analyze That (2002), Dr. Dolittle 2 (2001), Wonderland (2003), Happy Endings (2005), P.S. I Love You (2007), Bandslam (2008), Hotel for Dogs (2009), Easy A (2010), Neighbors (2014), its sequel Neighbors 2: Sorority Rising (2016) and The Girl on the Train (2016).")

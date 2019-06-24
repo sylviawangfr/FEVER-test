@@ -57,7 +57,7 @@ def eval_doc_preds(doc_list, top_k, log_file):
 
 if __name__ == '__main__':
     # i = retrieve_docs("A German-American fashion model starred in The Host.")
-    j = retrieve_docs("Trouble with the Curve is a television show.")
+    j = retrieve_docs("Trouble with the Curve")
     print(j)
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     # get_doc_ids_and_fever_score(config.LOG_PATH / "test.jsonl", config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl")

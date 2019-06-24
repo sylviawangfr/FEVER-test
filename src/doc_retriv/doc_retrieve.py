@@ -36,7 +36,7 @@ def retri_doc_and_update_item(item):
 
 
 def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file=None):
-    d_list = read_json_rows(in_file)
+    d_list = read_json_rows(in_file)[0:1000]
     thread_number = 10
     print("total items: ", len(d_list))
     thread_exe(retri_doc_and_update_item, iter(d_list), thread_number, "query wiki pages")
@@ -57,11 +57,12 @@ def eval_doc_preds(doc_list, top_k, log_file):
 
 if __name__ == '__main__':
     # i = retrieve_docs("A German-American fashion model starred in The Host.")
+    # j = retrieve_docs("Trouble with the Curve is a television show.")
 
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     # get_doc_ids_and_fever_score(config.LOG_PATH / "test.jsonl", config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl")
     get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL,
-                                config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl")
+                                config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl", top_k=10)
     #
     # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
     # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)

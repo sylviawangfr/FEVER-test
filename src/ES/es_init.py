@@ -4,6 +4,7 @@ import config
 from elasticsearch import Elasticsearch
 import elasticsearch.helpers as ESH
 from elasticsearch_dsl import Search, Q
+import sys
 
 client = Elasticsearch([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT, 'timeout': 300, 'max_retries': 10, 'retry_on_timeout': True}])
 def init_index():
@@ -13,8 +14,13 @@ def init_index():
     else:
         print("Creating elasticsearch index for wiki pages...")
         wiki_mapping = read_json(config.WIKIPAGE_MAPPING)
-        client.indices.create(index=config.WIKIPAGE_INDEX, ignore=400, body=wiki_mapping)
-        print("ES index for wiki pages has been created successfully")
+        try:
+            client.indices.create(index=config.WIKIPAGE_INDEX, ignore=400, body=wiki_mapping)
+            print("ES index for wiki pages has been created successfully")
+        except:
+            print("exception happened: ")
+            e = sys.exc_info()[0]
+            print(e)
 
 
 def init_fever_sentence_index():

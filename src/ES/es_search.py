@@ -172,10 +172,11 @@ def test_search_claim(claim):
     ents = [i[0] for i in entities]
     nouns = list(set(nouns) | set(cap_phrases))
     first = search_and_merge(entities, nouns)
+    print(first)
 
 
 if __name__ == '__main__':
-    test_search_claim("Fox 2000 Pictures released the film Soul Food.")
+    test_search_claim("Trouble with the Curve")
     # print(has_phrase_covered(['a c', 'b', 'c'], ['a b c', 'c d']))
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     # test_search_claim("Lisa Kudrow was in Romy and Michele's High School Reunion (1997), The Opposite of Sex (1998), Analyze This (1999) and its sequel Analyze That (2002), Dr. Dolittle 2 (2001), Wonderland (2003), Happy Endings (2005), P.S. I Love You (2007), Bandslam (2008), Hotel for Dogs (2009), Easy A (2010), Neighbors (2014), its sequel Neighbors 2: Sorority Rising (2016) and The Girl on the Train (2016).")

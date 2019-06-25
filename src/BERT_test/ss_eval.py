@@ -25,7 +25,6 @@ from torch.utils.data import (DataLoader, SequentialSampler,
 from tqdm import tqdm
 
 from torch.nn import CrossEntropyLoss
-from sklearn.metrics import f1_score
 
 from pytorch_pretrained_bert.modeling import BertForSequenceClassification
 from pytorch_pretrained_bert.tokenization import BertTokenizer
@@ -37,6 +36,7 @@ from BERT_test.bert_data_processor import *
 from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 import config
 import utils.common_types as bert_para
+from BERT_test.eval_util import compute_metrics
 
 
 logger = logging.getLogger(__name__)
@@ -275,8 +275,8 @@ def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_da
             print(f"Eval Tracking score:", f"{tracking_score}")
 
     if save_data:
-        save_intermidiate_results(results_list, paras.get_eval_item_file('ss'))
-        save_intermidiate_results(upstream_eval_list, paras.get_eval_data_file('ss'))
+        save_intermidiate_results(results_list, paras.get_eval_data_file('ss'))
+        save_intermidiate_results(upstream_eval_list, paras.get_eval_item_file('ss'))
 
 
 def softmax_test(z):

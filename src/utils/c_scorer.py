@@ -379,7 +379,7 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
                 if check_sent_correct(instance, actual[idx]):
                     mode['check_sent_id_correct_hits'] += 1
                 else:
-                    # error_count += 1
+                    error_count += 1
                     log_print(instance)
 
     log_print("Error count:", error_count)
@@ -388,6 +388,7 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
     print("Total:", total)
     print("Correct:", correct)
     print("Strict:", strict)
+    print("Error count:", error_count)
     log_print("Total:", total)
     log_print("Correct:", correct)
     log_print("Strict:", strict)

@@ -290,18 +290,20 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
         paras = bert_para.BERT_para()
-        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:1000]
-        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:100]
+        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:100]
         paras.pred = False
         paras.mode = 'dev'
         paras.BERT_model = output_dir
         paras.BERT_tokenizer = output_dir
         paras.output_folder = output_folder
+        paras.prob_thresholds = 0.5
+        paras.top_n = 5
         eval_ss_and_save(paras)
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:1000]
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:10000]
     ss_finetuning(train_data, output_folder="test_refactor", sampler='ss_tfidf')
 
     paras = bert_para.BERT_para()

@@ -10,6 +10,6 @@ export PYTHONPATH=$PYTHONPATH:$DIR_TMP/dep_packages/DrQA
 echo PYTHONPATH=$PYTHONPATH
 
 #download spacy model for multiple languages
-python -m spacy download en_core_web_sm
+#python -m spacy download en_core_web_sm
 
 #install elasticsearch if not exists

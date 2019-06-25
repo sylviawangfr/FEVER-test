@@ -11,10 +11,10 @@ from allennlp.modules import Embedding, Elmo
 
 from data_util.data_readers.fever_reader_with_wn_simi import WNSIMIReader
 from data_util.data_readers.fever_reader_with_wn_simi_doc import WNDocSIMIReader
-from sample_for_nli.tf_idf_sample_v1_0 import *
+from sample_for_nli_esim.tf_idf_sample_v1_0 import *
 from neural_modules.ema import EMA
-from sample_for_nli.adv_sampler_v01 import get_adv_sampled_data
-from sentence_retrieval.nn_postprocess_ablation import score_converter_scaled
+from sample_for_nli_esim.adv_sampler_v01 import get_adv_sampled_data
+from sentence_retrieval_esim.nn_postprocess_ablation import score_converter_scaled
 from torch import nn
 import copy
 from neural_modules.ema import load_ema_to_model, save_ema_to_file
@@ -23,7 +23,7 @@ import os
 import config
 
 from data_util.data_preperation.exvocab import load_vocab_embeddings
-from simi_sampler_nli_v0.simi_sampler import paired_selection_score_dict, threshold_sampler, \
+from simi_sampler_nli_esim.simi_sampler import paired_selection_score_dict, threshold_sampler, \
     select_sent_with_prob_for_eval, adv_simi_sample_with_prob_v1_0, adv_simi_sample_with_prob_v1_1, \
     paired_selection_score_dict_for_doc, adv_simi_sample_with_prob_v1_0_with_doc, select_sent_with_prob_doc_for_eval
 from utils import common

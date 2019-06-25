@@ -5,7 +5,7 @@ import utils.common
 from tqdm import tqdm
 from utils import c_scorer, check_sentences
 import config
-from simi_sampler_nli_v0 import simi_sampler
+from simi_sampler_nli_esim import simi_sampler
 
 
 if __name__ == '__main__':

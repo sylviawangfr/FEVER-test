@@ -18,8 +18,8 @@ import random
 import config
 
 from data_util.data_preperation.exvocab import ExVocabulary
-from sentence_retrieval.sampler_for_nmodel import get_full_list
-from simi_sampler_nli_v0.simi_sampler import paired_selection_score_dict, \
+from sentence_retrieval_esim.sampler_for_nmodel import get_full_list
+from simi_sampler_nli_esim.simi_sampler import paired_selection_score_dict, \
     select_sent_with_prob_for_eval, adv_simi_sample_with_prob_v1_1
 from utils import common
 from utils.file_loader import read_json_rows, save_jsonl
@@ -34,7 +34,7 @@ from tqdm import tqdm
 from neural_modules import biDafAttn
 from neural_modules import activation as actf
 from utils import c_scorer
-from simi_sampler_nli_v0.simi_sampler import threshold_sampler_insure_unique
+from simi_sampler_nli_esim.simi_sampler import threshold_sampler_insure_unique
 from allennlp.modules import ScalarMix
 
 

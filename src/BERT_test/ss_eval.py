@@ -33,7 +33,7 @@ from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, 
 from typing import Dict
 from utils import c_scorer
 from BERT_test.bert_data_processor import *
-from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
+from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 import config
 import utils.common_types as bert_para
 from BERT_test.eval_util import compute_metrics

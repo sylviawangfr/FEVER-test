@@ -14,7 +14,7 @@ from data_util.customized_field import IdField
 from data_util.data_preperation.exvocab import ExVocabulary, load_vocab_embeddings, build_vocab_embeddings
 
 import config
-from sample_for_nli.tf_idf_sample_v1_0 import select_sent_for_eval, sample_v1_0
+from sample_for_nli_esim.tf_idf_sample_v1_0 import select_sent_for_eval, sample_v1_0
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 

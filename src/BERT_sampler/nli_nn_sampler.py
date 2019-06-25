@@ -2,7 +2,7 @@ import json
 import random
 import copy
 
-from sentence_retrieval.nn_postprocess_ablation import score_converter_scaled
+from sentence_retrieval_esim.nn_postprocess_ablation import score_converter_scaled
 from utils import fever_db, check_sentences
 import config
 

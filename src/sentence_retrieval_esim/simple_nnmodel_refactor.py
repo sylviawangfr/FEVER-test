@@ -18,7 +18,7 @@ import os
 import config
 from data_util.data_readers.fever_sselection_reader import SSelectorReader
 from neural_modules.ema import EMA, load_ema_to_model, save_ema_to_file
-from sentence_retrieval.sampler_for_nmodel import get_full_list, post_filter, \
+from sentence_retrieval_esim.sampler_for_nmodel import get_full_list, post_filter, \
     get_full_list_from_list_d
 from data_util.data_preperation.exvocab import load_vocab_embeddings
 from utils.file_loader import read_json_rows
@@ -32,9 +32,9 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from neural_modules import biDafAttn
-from sample_for_nli.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval, convert_evidence2scoring_format
+from sample_for_nli_esim.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval, convert_evidence2scoring_format
 from utils import c_scorer, common
-from simi_sampler_nli_v0 import simi_sampler
+from simi_sampler_nli_esim import simi_sampler
 from utils.file_loader import save_jsonl
 
 

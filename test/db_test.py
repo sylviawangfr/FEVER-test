@@ -3,7 +3,7 @@ from utils.fever_db import *
 from utils.sqlite_queue import *
 from utils.file_loader import read_json_rows
 from utils.common import thread_exe
-from sentence_retrieval.sampler_for_nmodel_refactor import sample_single_item
+from sentence_retrieval_esim.sampler_for_nmodel_refactor import sample_single_item
 from ES.es_search import *
 
 

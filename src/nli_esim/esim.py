@@ -18,7 +18,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from neural_modules import biDafAttn
-from sample_for_nli.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval, convert_evidence2scoring_format
+from sample_for_nli_esim.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval, convert_evidence2scoring_format
 from utils import c_scorer
 
 

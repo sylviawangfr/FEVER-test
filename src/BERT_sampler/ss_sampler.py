@@ -6,7 +6,7 @@ Neural sentence selector aimed to fine-select sentence for NLI models since NLI 
 
 import json
 
-from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
+from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 from utils import fever_db, common, c_scorer
 from utils.file_loader import read_json_rows, get_current_time_str
 from tqdm import tqdm

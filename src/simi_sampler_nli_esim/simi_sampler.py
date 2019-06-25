@@ -2,8 +2,8 @@ import json
 import random
 import copy
 
-from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
-from sample_for_nli.adv_sampler_v01 import adv_sample_v1_0
+from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
+from sample_for_nli_esim.adv_sampler_v01 import adv_sample_v1_0
 from utils import fever_db, check_sentences
 import config
 from utils import c_scorer, common

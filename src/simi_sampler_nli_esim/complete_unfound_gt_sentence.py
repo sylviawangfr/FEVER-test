@@ -5,7 +5,7 @@ import utils.common
 from tqdm import tqdm
 from utils import c_scorer, check_sentences, fever_db, common
 import config
-from simi_sampler_nli_v0 import simi_sampler
+from simi_sampler_nli_esim import simi_sampler
 from data_util.data_preperation.tokenize_fever import easy_tokenize
 
 # utils.common.load_jsonl(

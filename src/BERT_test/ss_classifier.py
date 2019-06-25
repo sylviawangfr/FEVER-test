@@ -41,6 +41,8 @@ from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, 
 from BERT_test.bert_data_processor import *
 from BERT_test.nli_eval import eval_nli_and_save
 from BERT_test.ss_eval import eval_ss_and_save
+import config
+import utils.common_types as bert_para
 
 logger = logging.getLogger(__name__)
 
@@ -69,14 +71,12 @@ def compute_metrics(task_name, preds, labels):
         raise KeyError(task_name)
 
 
-def fever_finetuning(taskname, upstream_train_data, upstream_dev_data, sampler=None):
+def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=None):
     bert_model = "bert-large-uncased"
     pretrained_model_name_or_path = config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz"
     cache_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning"
-    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"{taskname}_{get_current_time_str()}"
+    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"ss_{output_folder}"
     max_seq_length = 128
-    if taskname == 'nli':
-        max_seq_length = 300
     do_lower_case = True
     train_batch_size = 32
     learning_rate = 5e-5
@@ -87,11 +87,12 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data, sampler=N
     local_rank = -1
     seed = 42
     gradient_accumulation_steps = 8
-    fp16 = True
     loss_scale = 0
     server_ip = None
     server_port = None
     do_eval = True
+    processor = FeverSSProcessor()
+    fp16 = True if torch.cuda.is_available() else False
 
     if server_ip and server_port:
         # Distant debugging - see https://code.visualstudio.com/docs/python/debugging#_attach-to-a-local-script
@@ -99,11 +100,6 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data, sampler=N
         print("Waiting for debugger attach")
         ptvsd.enable_attach(address=(server_ip, server_port), redirect_output=True)
         ptvsd.wait_for_attach()
-
-    processors = {
-        "ss": FeverSSProcessor,
-        "nli": FeverNliProcessor,
-    }
 
     if local_rank == -1:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -139,18 +135,10 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data, sampler=N
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    task_name = taskname.lower()
-
-    if task_name not in processors:
-        raise ValueError("Task not found: %s" % (task_name))
-
-    processor = processors[task_name]()
-
     label_list = processor.get_labels()
-    num_labels = 2
+    num_labels = len(label_list)
 
     tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=do_lower_case)
-    # tokenizer = BertTokenizer.from_pretrained(bert_model)
 
     # Prepare model
     cache_dir = cache_dir if cache_dir else os.path.join(str(PYTORCH_PRETRAINED_BERT_CACHE),
@@ -301,16 +289,22 @@ def fever_finetuning(taskname, upstream_train_data, upstream_dev_data, sampler=N
     # model.to(device)
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
-        if taskname == 'ss':
-            eval_ss_and_save(output_dir, output_dir, upstream_dev_data, pred=False, mode='dev')
-        if taskname == 'nli':
-            eval_nli_and_save(output_dir, output_dir, upstream_dev_data, pred=False, mode='dev')
-
+        paras = bert_para.BERT_para()
+        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:1000]
+        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+        paras.pred = False
+        paras.mode = 'dev'
+        paras.BERT_model = output_dir
+        paras.BERT_tokenizer = output_dir
+        paras.output_folder = output_folder
+        eval_ss_and_save(paras)
 
 
 if __name__ == "__main__":
-    fever_finetuning('nli', config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl",
-                     config.RESULT_PATH / "tfidf/dev_2019_06_15_15:48:58.jsonl", sampler='tfidf')
-    # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
-    # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55",
-    #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_13_17:07:55", )
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:1000]
+    ss_finetuning(train_data, output_folder="test_refactor", sampler='ss_tfidf')
+
+    paras = bert_para.BERT_para()
+    paras.output_folder = "test_refactor"
+
+

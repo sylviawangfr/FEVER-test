@@ -35,42 +35,25 @@ from typing import Dict
 from utils import c_scorer
 from BERT_test.bert_data_processor import *
 from sample_for_nli.tf_idf_sample_v1_0 import convert_evidence2scoring_format
+import config
+import utils.common_types as bert_para
 
 
 logger = logging.getLogger(__name__)
 
 
-def simple_accuracy(preds, labels):
-    return (preds == labels).mean()
-
-
-def acc_and_f1(preds, labels):
-    acc = simple_accuracy(preds, labels)
-    f1 = f1_score(y_true=labels, y_pred=preds)
-    return {
-        "acc": acc,
-        "f1": f1,
-        "acc_and_f1": (acc + f1) / 2,
-    }
-
-
-def compute_metrics(preds, labels):
-    assert len(preds) == len(labels)
-    return {"acc": acc_and_f1(preds, labels)}
-
-
-def eval_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=False, mode='dev'):
-    model = BertForSequenceClassification.from_pretrained(saved_model, num_labels=2)
-    tokenizer = BertTokenizer.from_pretrained(saved_tokenizer_model, do_lower_case=True)
+def eval_ss_and_save(paras : bert_para.BERT_para):
+    model = BertForSequenceClassification.from_pretrained(paras.BERT_model, num_labels=2)
+    tokenizer = BertTokenizer.from_pretrained(paras.BERT_tokenizer, do_lower_case=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     processor = FeverSSProcessor()
     eval_batch_size = 8
 
-    if mode == 'dev':
-        eval_examples, eval_list = processor.get_dev_examples(upstream_data, pred=pred)
+    if paras.mode == 'dev':
+        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, pred=paras.pred)
     else:
-        eval_examples, eval_list = processor.get_test_examples(upstream_data, pred=pred)
+        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, pred=paras.pred)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)
@@ -137,30 +120,28 @@ def eval_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fal
     result['loss'] = loss
 
     logger.info("***** Eval results *****")
-    if mode == 'dev':
+    if paras.mode == 'dev':
         pred_log = ''
         for key in sorted(result.keys()):
             pred_log = pred_log + key + ":" + str(result[key]) + "\n"
             logger.info("  %s = %s", key, str(result[key]))
+            print(f"{key}:{result[key]}")
+        save_file(pred_log, paras.get_eval_log_file('ss'))
 
-        save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}_ss_pred.log")
-
-    orginal_file = config.FEVER_DEV_JSONL if mode == 'dev' else config.FEVER_TEST_JSONL
-    original_list = read_json_rows(orginal_file)
-    ss_f1_score_and_save(original_list, eval_list)
+    ss_f1_score_and_save(paras, eval_list)
 
 
-def pred_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, original_data, mode='test'):
-    model = BertForSequenceClassification.from_pretrained(saved_model, num_labels=2)
-    tokenizer = BertTokenizer.from_pretrained(saved_tokenizer_model, do_lower_case=True)
+def pred_ss_and_save(paras : bert_para.BERT_para):
+    model = BertForSequenceClassification.from_pretrained(paras.BERT_model, num_labels=2)
+    tokenizer = BertTokenizer.from_pretrained(paras.BERT_tokenizer, do_lower_case=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     processor = FeverSSProcessor()
     eval_batch_size = 8
-    if mode == 'test':
-        eval_examples, eval_list = processor.get_test_examples(upstream_data, pred=True)
+    if paras.mode == 'test':
+        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, pred=True)
     else:
-        eval_examples, eval_list = processor.get_dev_examples(upstream_data, pred=True)
+        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, pred=True)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)
@@ -171,8 +152,10 @@ def pred_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, original
     all_input_ids = torch.tensor([f.input_ids for f in eval_features], dtype=torch.long)
     all_input_mask = torch.tensor([f.input_mask for f in eval_features], dtype=torch.long)
     all_segment_ids = torch.tensor([f.segment_ids for f in eval_features], dtype=torch.long)
-    # all_label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
-    all_label_ids = torch.tensor([-1] * len(eval_features), dtype=torch.long)
+    if paras.mode is 'dev':
+        all_label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
+    else:
+        all_label_ids = torch.tensor([-1] * len(eval_features), dtype=torch.long)
 
     eval_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
     # Run prediction for full data
@@ -204,7 +187,17 @@ def pred_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, original
     probs = softmax(preds)
     probs = probs[:, 0].tolist()
     scores = preds[:, 0].tolist()
-    # preds = np.argmax(preds, axis=1)
+    preds = np.argmax(preds, axis=1)
+    if paras.mode is 'dev':
+        logger.info("***** Eval results *****")
+        result = compute_metrics(preds, all_label_ids.numpy())
+        result['eval_loss'] = eval_loss
+        pred_log = ''
+        for key in sorted(result.keys()):
+            pred_log = pred_log + key + ":" + str(result[key]) + "\n"
+            logger.info("  %s = %s", key, str(result[key]))
+            print(f"{key}:{result[key]}")
+        save_file(pred_log, paras.get_eval_log_file('pred_ss'))
 
     for i in range(len(eval_list)):
         assert str(eval_examples[i].guid) == str(eval_list[i]['selection_id'])
@@ -212,9 +205,8 @@ def pred_ss_and_save(saved_model, saved_tokenizer_model, upstream_data, original
         eval_list[i]['score'] = scores[i]
         eval_list[i]['prob'] = probs[i]
 
-    results_list = ss_score_converter(original_data, eval_list, prob_threshold=0.5, top_n=5)
-    output_items_file = config.RESULT_PATH / "bert_finetuning" / f"ss_pred_items_{mode}_{get_current_time_str()}.jsonl"
-    save_intermidiate_results(results_list, output_items_file)
+    # results_list = ss_score_converter(paras.original_data, eval_list, paras.prob_thresholds, paras.top_n)
+    ss_f1_score_and_save(paras, eval_list)
 
 
 def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5):
@@ -257,35 +249,34 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
     return d_list
 
 
-def ss_f1_score_and_save(actual_list, upstream_eval_list, prob_thresholds=0.5, top_n=5, save_data=True, mode='dev'):
-    if not isinstance(prob_thresholds, list):
-        prob_thresholds = [prob_thresholds]
+def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_data=True):
+    if not isinstance(paras.prob_thresholds, list):
+        prob_thresholds = [paras.prob_thresholds]
+    else:
+        prob_thresholds = paras.prob_thresholds
 
     for scal_prob in prob_thresholds:
         print("Eval Data prob_threshold:", scal_prob)
 
-        results_list = ss_score_converter(actual_list, upstream_eval_list,
-                                              prob_threshold=scal_prob, top_n = top_n)
+        results_list = ss_score_converter(paras.original_data, upstream_eval_list,
+                                          prob_threshold=scal_prob,
+                                          top_n = paras.top_n)
 
-        eval_mode = {'check_sent_id_correct': True, 'standard': False}
-        # for a, b in zip(actual_list, results_list):
-        #     b['predicted_label'] = a['label']
-        strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(results_list,
-                                                                    actual_list,
-                                                                    mode=eval_mode, verbose=False)
-        tracking_score = strict_score
-        print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
-        print("Strict score:", strict_score)
-        print(f"Eval Tracking score:", f"{tracking_score}")
+        if paras.mode is 'dev':
+            eval_mode = {'check_sent_id_correct': True, 'standard': False}
+            strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(results_list,
+                                                                    paras.original_data,
+                                                                    mode=eval_mode,
+                                                                    error_analysis_file=paras.get_f1_log_file(f'{scal_prob}_ss'),
+                                                                    verbose=False)
+            tracking_score = strict_score
+            print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
+            print("Strict score:", strict_score)
+            print(f"Eval Tracking score:", f"{tracking_score}")
 
     if save_data:
-        time = get_current_time_str()
-        output_eval_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_eval_{mode}.txt"
-        output_items_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_items_{mode}.jsonl"
-        output_ss_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_scores_{mode}.txt"
-        save_intermidiate_results(upstream_eval_list, output_ss_file)
-        save_jsonl(actual_list, output_items_file)
-        save_file(f"{mode}:(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/ \nStrict score:{strict_score}", output_eval_file)
+        save_intermidiate_results(results_list, paras.get_eval_item_file('ss'))
+        save_intermidiate_results(upstream_eval_list, paras.get_eval_data_file('ss'))
 
 
 def softmax_test(z):
@@ -300,18 +291,19 @@ def softmax_test(z):
 
 
 if __name__ == "__main__":
-    # pass
-    # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz", "bert-large-uncased")
-    # upstream_data1 = read_json_rows(config.RESULT_PATH / "dev_doc_retrieve.jsonl")
-    upstream_data2 = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
-    # pred_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
-    #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
-    #                  upstream_data, upstream_data, mode='dev')
+    paras = bert_para.BERT_para()
+    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:1]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:1]
+    paras.pred = False
+    paras.mode = 'dev'
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41"
+    paras.output_folder = "test_refactor"
 
-    eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
-                     config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
-                     upstream_data2, pred=False, mode='dev')
+    # eval_ss_and_save(paras)
 
-    # eval_ss_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
-    #                  config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41",
-    #                  upstream_data1, pred=True, mode='dev')
+    paras.pred = True
+    # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:3]
+    pred_ss_and_save(paras)
+

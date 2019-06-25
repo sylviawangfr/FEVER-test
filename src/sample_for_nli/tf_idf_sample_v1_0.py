@@ -163,7 +163,10 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
 
 def sample_v1_0(input_file, additional_file, tokenized=False):
     cursor, conn = fever_db.get_cursor()
-    d_list = load_data(input_file)
+    if not isinstance(additional_file, list):
+        d_list = load_data(input_file)
+    else:
+        d_list = input_file
 
     if isinstance(additional_file, list):
         additional_d_list = additional_file

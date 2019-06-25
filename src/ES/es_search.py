@@ -3,6 +3,7 @@ from elasticsearch_dsl import Search, Q
 import config
 import itertools
 from utils.tokenizer_simple import *
+from utils.file_loader import *
 
 client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT,
               'timeout': 60, 'max_retries': 5, 'retry_on_timeout': True}])
@@ -209,6 +210,7 @@ def test_search_id(text):
         return []
 
 if __name__ == '__main__':
+    t = read_json(config.PRO_ROOT / "src/ES/wikipage_mapping.json")
     print(test_search_id("Trouble with the Curve"))
     # print(has_phrase_covered(['a c', 'b', 'c'], ['a b c', 'c d']))
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))

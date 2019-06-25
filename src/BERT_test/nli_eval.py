@@ -26,7 +26,6 @@ from torch.utils.data import (DataLoader, SequentialSampler,
 from tqdm import tqdm
 
 from torch.nn import CrossEntropyLoss
-from sklearn.metrics import f1_score
 
 from pytorch_pretrained_bert.modeling import BertForSequenceClassification
 from pytorch_pretrained_bert.tokenization import BertTokenizer
@@ -35,76 +34,51 @@ from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, 
 from typing import Dict
 from utils import c_scorer
 from BERT_test.bert_data_processor import *
+import config
+import utils.common_types as bert_para
+from BERT_test.eval_util import compute_metrics
 
 
 logger = logging.getLogger(__name__)
 
 
-def simple_accuracy(preds, labels):
-    return (preds == labels).mean()
-
-
-def acc_and_f1(preds, labels):
-    acc = simple_accuracy(preds, labels)
-    f1 = f1_score(y_true=labels, y_pred=preds)
-    return {
-        "total": len(preds),
-        "correct_hit": (preds==labels).tolist().count(True),
-        "acc": acc,
-        "f1": f1,
-        "acc_and_f1": (acc + f1) / 2,
-    }
-
-
-def compute_metrics(preds, labels):
-    assert len(preds) == len(labels)
-    return {"acc": acc_and_f1(preds, labels)}
-
-
-def nli_eval_fever_score(predicted_list, mode='dev'):
-    if mode == 'dev':
-        actual_list = read_json_rows(config.FEVER_DEV_JSONL)
+def nli_eval_fever_score(paras : bert_para.BERT_para, predicted_list):
+    if paras.mode == 'dev':
         eval_mode = {'check_sent_id_correct': False, 'standard': True}
     else:
-        actual_list = read_json_rows(config.FEVER_TEST_JSONL)
         eval_mode = {'check_sent_id_correct': False, 'standard': True}
 
     strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(predicted_list,
-                                                                actual_list,
-                                                                mode=eval_mode, verbose=False)
+                                                                paras.original_data,
+                                                                mode=eval_mode,
+                                                                error_analysis_file=paras.get_f1_log_file('nli'),
+                                                                verbose=False)
     tracking_score = strict_score
     print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
     print("Strict score:", strict_score)
     print(f"Eval Tracking score:", f"{tracking_score}")
 
-    time = get_current_time_str()
-    output_eval_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_eval_{mode}.txt"
-    output_items_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_items_{mode}.jsonl"
-    output_ss_file = config.RESULT_PATH / "bert_finetuning" / time / f"ss_scores_{mode}.txt"
-    save_intermidiate_results(predicted_list, output_ss_file)
-    save_jsonl(actual_list, output_items_file)
-    save_file(f"{mode}:(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/ \nStrict score:{strict_score}",
-              output_eval_file)
+    save_intermidiate_results(predicted_list, paras.get_eval_data_file('nli'))
 
 
-def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=False, mode='dev'):
-    model = BertForSequenceClassification.from_pretrained(saved_model, num_labels=2)
-    tokenizer = BertTokenizer.from_pretrained(saved_tokenizer_model, do_lower_case=True)
+def eval_nli_and_save(paras : bert_para.BERT_para):
+    model = BertForSequenceClassification.from_pretrained(paras.BERT_model, num_labels=3)
+    tokenizer = BertTokenizer.from_pretrained(paras.BERT_tokenizer, do_lower_case=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     eval_batch_size = 8
     sequence_length = 300
     processor = FeverNliProcessor()
 
-    if pred:
-        sampler = 'nn'
+    if paras.pred:
+        sampler = 'nli_nn'
     else:
-        sampler = 'tfidf'
+        sampler = 'nli_tfidf'
 
-    if mode == 'dev':
-        eval_examples, eval_list = processor.get_dev_examples(upstream_data, sampler)
+    if paras.mode == 'dev':
+        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, sampler)
     else:
-        eval_examples, eval_list = processor.get_test_examples(upstream_data, sampler)
+        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, sampler)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), sequence_length, tokenizer)
@@ -161,9 +135,9 @@ def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fa
         # Matching id
         eval_list[i]['score'] = scores[i]
         eval_list[i]['prob'] = probs[i]
-        eval_list[i]['predicted_label'] = preds
+        eval_list[i]['predicted_label'] = preds[i]
     # fever score and saving
-    result = compute_metrics(preds, all_label_ids.numpy())
+    result = compute_metrics(preds, all_label_ids.numpy(), average='macro')
     loss = None
 
     result['eval_loss'] = eval_loss
@@ -174,37 +148,52 @@ def eval_nli_and_save(saved_model, saved_tokenizer_model, upstream_data, pred=Fa
     for key in sorted(result.keys()):
         pred_log = pred_log + key + ":" + str(result[key]) + "\n"
         logger.info("  %s = %s", key, str(result[key]))
-
-    save_file(pred_log, config.LOG_PATH / f"{get_current_time_str()}_nli_pred.log")
-    time = get_current_time_str()
-    output_nli_file = config.RESULT_PATH / "bert_finetuning" / time / f"nli_eval_{mode}.txt"
-    save_file(f"{mode}:(acc/f1/acc_and_f1) \n {pred_log}", output_nli_file)
+        print(key, str(result[key]))
+    save_file(pred_log, paras.get_eval_log_file(sampler))
 
     # not for training, but for test set predict
-    if pred:
-        augmented_dict: Dict[int, str] = dict()
+    if paras.pred:
+        id2label = {
+            0: "SUPPORTS",
+            1: "REFUTES",
+            2: "NOT ENOUGH INFO"
+        }
+        augmented_dict: Dict[int, Dict[str,str]] = dict()
         for evids_item in tqdm(eval_list):
             evids_id = evids_item['id']  # The id for the current one selection.
-            org_id = int(evids_id.split('<#>')[0])
-            remain_index = evids_id.split('<#>')[1]
+            org_id = int(evids_id.split('#')[0])
+            remain_index = evids_id.split('#')[1]
+            evids_item['id'] = org_id
             #assert remain_index == 0
-            if org_id in augmented_dict:
-                augmented_dict[org_id] = evids_item["predicted_label"]
+            if not org_id in augmented_dict:
+                aug_i = {'predicted_label': str(evids_item["predicted_label"]), 'predicted_evidence': evids_item["predicted_evidence"]}
+                augmented_dict[org_id] = aug_i
             else:
                 print("Exist:", evids_item)
 
 
          #todo:verify Dict len
-        for item in upstream_data:
+        for item in paras.upstream_data:
             if int(item['id']) not in augmented_dict:
                 print("not found this example:\n", item)
             else:
-                item["predicted_label"] = augmented_dict[int(item['id'])]
-        nli_eval_fever_score(upstream_data)
+                item["predicted_label"] = id2label[int(augmented_dict[int(item['id'])]['predicted_label'])]
+                item["predicted_evidence"] = augmented_dict[int(item['id'])]["predicted_evidence"]
+
+        nli_eval_fever_score(paras, paras.upstream_data)
 
     print("Done with nli evaluation")
 
+
 if __name__ == "__main__":
-    eval_nli_and_save(config.PRO_ROOT / "saved_models/bert_finetuning/nli_2019_06_20_16:58:19",
-                      config.PRO_ROOT / "saved_models/bert_finetuning/nli_2019_06_20_16:58:19",
-                      config.RESULT_PATH / "tfidf/dev_2019_06_15_15:48:58.jsonl", pred=False, mode='dev')
+    paras = bert_para.BERT_para()
+    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:3]
+    paras.pred = True
+    paras.mode = 'dev'
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    paras.output_folder = "test_refactor"
+
+    eval_nli_and_save(paras)
+

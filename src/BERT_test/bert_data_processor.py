@@ -1,13 +1,12 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-from sentence_retrieval.sampler_for_nmodel import get_full_list
-import config
-
 from utils.text_clean import *
-import sample_for_nli.adv_sampler_v01 as nn_sampler
-import sample_for_nli.tf_idf_sample_v1_0 as tfidf_sampler
-import sentence_retrieval.sampler_for_nmodel as ss_sampler
+import BERT_sampler.nli_nn_sampler as nli_nn_sampler
+import BERT_sampler.nli_tfidf_sampler as nli_tfidf_sampler
+import BERT_sampler.ss_sampler as ss_sampler
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +45,11 @@ class InputFeatures(object):
 class DataProcessor(object):
     """Base class for data converters for sequence classification data sets."""
 
-    def get_train_examples(self, data_dir):
+    def get_train_examples(self, original_data, upstream_data):
         """Gets a collection of `InputExample`s for the train set."""
         raise NotImplementedError()
 
-    def get_dev_examples(self, data_dir):
+    def get_dev_examples(self, original_data, upstream_data):
         """Gets a collection of `InputExample`s for the dev set."""
         raise NotImplementedError()
 
@@ -62,25 +61,21 @@ class DataProcessor(object):
 class FeverSSProcessor(DataProcessor):
     """Processor for the MultiNLI data set (GLUE version)."""
 
-    def get_train_examples(self, data_dir):
-        sampler = self._get_sampler('tfidf')
-        train_list = sampler(data_dir, pred=False)
+    def get_train_examples(self, upstream_data, sampler='ss_tfidf'):
+        sampler = get_sampler(sampler)
+        train_list = sampler(upstream_data, pred=False)
         return self._create_examples(train_list)
 
-    def get_dev_examples(self, data_dir, pred = False):
+    def get_dev_examples(self, upstream_data, sampler='ss_tfidf', pred=False):
         """See base class."""
-        if not pred:
-            sampler = self._get_sampler('tfidf')
-            dev_list = sampler(data_dir, pred=pred)
-        else:
-            sampler = self._get_sampler('doc')
-            dev_list = sampler(config.FEVER_DEV_JSONL, data_dir, pred=pred)
+        sampler = get_sampler(sampler)
+        dev_list = sampler(upstream_data, pred=pred)
         return self._create_examples(dev_list), dev_list
 
-    def get_test_examples(self, data_dir, pred=True):
+    def get_test_examples(self, upstream_data, sampler='ss_full', pred=True):
         """See base class."""
-        sampler = self._get_sampler('doc')
-        test_list = sampler(config.FEVER_TEST_JSONL, data_dir, pred=pred, top_k=10)
+        sampler = get_sampler(sampler)
+        test_list = sampler(upstream_data, pred=pred, top_k=10)
         return self._create_examples(test_list), test_list
 
     def get_labels(self):
@@ -100,37 +95,29 @@ class FeverSSProcessor(DataProcessor):
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
 
-    def _get_sampler(self, s):
-        processors = {
-            "tfidf": ss_sampler.get_tfidf_sample_list_for_nn,
-            "doc": ss_sampler.get_full_list
-        }
-        return processors[s]
-
-
 
 class FeverNliProcessor(DataProcessor):
 
-    def get_train_examples(self, data_dir, sampler='nn'):
-        sampler_fun = self._get_sampler(sampler)
-        train_list = sampler_fun(config.FEVER_TRAIN_JSONL, data_dir, tokenized=True)
+    def get_train_examples(self,upstream_data, sampler='nli_nn'):
+        sampler_fun = get_sampler(sampler)
+        train_list = sampler_fun(upstream_data, tokenized=True)
         return self._create_examples(train_list)
 
-    def get_dev_examples(self, data_dir, sampler='nn'):
+    def get_dev_examples(self, upstream_data, sampler='nli_nn'):
         """See base class."""
-        sampler_fun = self._get_sampler(sampler)
-        dev_list = sampler_fun(config.FEVER_DEV_JSONL, data_dir, tokenized=True)
+        sampler_fun = get_sampler(sampler)
+        dev_list = sampler_fun(upstream_data, tokenized=True)
         return self._create_examples(dev_list), dev_list
 
-    def get_test_examples(self, data_dir, sampler='nn'):
+    def get_test_examples(self, upstream_data, sampler='nli_nn'):
         """See base class."""
-        sampler_fun = self._get_sampler(sampler)
-        dev_list = sampler_fun(config.FEVER_TEST_JSONL, data_dir, tokenized=True)
+        sampler_fun = get_sampler(sampler)
+        dev_list = sampler_fun(upstream_data, tokenized=True)
         return self._create_examples(dev_list), dev_list
 
     def get_labels(self):
         """See base class."""
-        return ["SUPPORTS", "REFUTES"]
+        return ["SUPPORTS", "REFUTES", "NOT ENOUGH INFO"]
 
     def _create_examples(self, lines):
         """Creates examples for the training and dev sets."""
@@ -139,20 +126,20 @@ class FeverNliProcessor(DataProcessor):
             guid = line['id']
             text_a = convert_brc(line['evid'])
             text_b = convert_brc(line['claim'])
-            if not line['label'] == 'NOT ENOUGH INFO':
-                label = line['label']
-            else:
-                label = 'REFUTES'
+            label = line['label']
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
 
-    def _get_sampler(self, s):
-        processors = {
-            "tfidf": tfidf_sampler.sample_v1_0,
-            "nn": nn_sampler.adv_sample_v1_0
-        }
-        return processors[s]
+
+def get_sampler(s):
+    processors = {
+        "ss_tfidf": ss_sampler.get_tfidf_sample_for_nn,
+        "ss_full": ss_sampler.get_full_list_sample_for_nn,
+        "nli_tfidf": nli_tfidf_sampler.get_sample_data,
+        "nli_nn": nli_nn_sampler.get_sample_data
+    }
+    return processors[s]
 
 
 def convert_examples_to_features(examples, label_list, max_seq_length,
@@ -257,3 +244,5 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
             tokens_a.pop()
         else:
             tokens_b.pop()
+
+

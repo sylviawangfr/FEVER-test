@@ -15,6 +15,7 @@ from data_util.data_preperation.tokenize_fever import easy_tokenize
 import utils.check_sentences
 import itertools
 import numpy as np
+from collections import Counter
 
 
 def get_full_list_sample_for_nn(doc_retrieve_data, pred=False, top_k=None):
@@ -238,7 +239,7 @@ def post_filter(d_list, keep_prob=0.75, seed=12):
 #     fever_db.get_all_sent_by_doc_id(cursor, doc_id)
 
 
-def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=4):
+def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
     :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
@@ -333,9 +334,27 @@ def count_truth_examples(sample_list):
     print(f"Truth count/total count: , {count_hit}/{len(sample_list)}/{count_hit / len(sample_list)}")
 
 
+def eval_sample_length(upstream_data):
+    samples = get_tfidf_sample_for_nn(upstream_data, pred=False, top_k=3)
+    count = Counter()
+    length_list = []
+    for item in samples:
+        length_list.extend([len(item['text'].split(' '))])
+
+    count.update(length_list)
+    print(count.most_common())
+    print(sorted(list(count.most_common()), key=lambda x: -x[0]))
+    print(np.max(length_list))
+    print(np.mean(length_list))
+    print(np.std(length_list))
+
+
+
 if __name__ == '__main__':
-    tfidf_upstram_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
-    sample_tfidf = get_tfidf_sample_for_nn(tfidf_upstram_data, pred=False, top_k=5)
+    tfidf_upstram_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:1000]
+    eval_sample_length(tfidf_upstram_data)
+
+    sample_tfidf = get_tfidf_sample_for_nn(tfidf_upstram_data, pred=False, top_k=3)
 
     dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:3]
     complete_upstream_train_data = get_full_list_sample_for_nn(dev_upstream_data, pred=False)

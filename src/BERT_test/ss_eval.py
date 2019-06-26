@@ -298,9 +298,9 @@ if __name__ == "__main__":
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
     paras.pred = False
     paras.mode = 'dev'
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_test_refactor"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_test_refactor"
-    paras.output_folder = "test_refactor"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/ss_test_refactor_s4"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/ss_test_refactor_s4"
+    paras.output_folder = "test_refactor_s4"
 
     # eval_ss_and_save(paras)
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]

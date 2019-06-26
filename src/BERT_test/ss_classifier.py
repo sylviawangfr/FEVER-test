@@ -304,9 +304,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
 if __name__ == "__main__":
     train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:10000]
-    ss_finetuning(train_data, output_folder="test_refactor", sampler='ss_tfidf')
+    ss_finetuning(train_data, output_folder="test_refactor_s4", sampler='ss_tfidf')
 
-    paras = bert_para.BERT_para()
-    paras.output_folder = "test_refactor_s4"
 
 

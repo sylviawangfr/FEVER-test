@@ -7,7 +7,6 @@ import BERT_sampler.nli_tfidf_sampler as nli_tfidf_sampler
 import BERT_sampler.ss_sampler as ss_sampler
 
 
-
 logger = logging.getLogger(__name__)
 
 

@@ -307,6 +307,6 @@ if __name__ == "__main__":
     ss_finetuning(train_data, output_folder="test_refactor", sampler='ss_tfidf')
 
     paras = bert_para.BERT_para()
-    paras.output_folder = "test_refactor"
+    paras.output_folder = "test_refactor_s4"
 
 

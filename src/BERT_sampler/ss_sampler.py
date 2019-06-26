@@ -185,82 +185,6 @@ def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=Fa
     return full_data_list
 
 
-def get_additional_list(tokenized_data_file, additional_data_file,
-                        item_key='prioritized_docids_aside', top_k=6):
-    """
-    This method will select all the sentence from upstream doc retrieval and label the correct evident as true
-    :param item_key: The item that specify the additional prioritized document ids.
-    :param tokenized_data_file: Remember this is tokenized data with original format containing 'evidence'
-    :param additional_data_file:    This is the data after document retrieval.
-                                    This file need to contain *"predicted_docids"* field.
-    :return:
-    """
-    cursor, conn = fever_db.get_cursor()
-    d_list = read_json_rows(tokenized_data_file)
-
-    additional_d_list = read_json_rows(additional_data_file)
-    additional_data_dict = dict()
-
-    for add_item in additional_d_list:
-        additional_data_dict[int(add_item['id'])] = add_item
-
-    full_data_list = []
-
-    for item in tqdm(d_list):
-        doc_ids_p_list = additional_data_dict[int(item['id'])][item_key]
-        doc_ids = list(set([k for k, v in sorted(doc_ids_p_list, key=lambda x: (-x[1], x[0]))][:top_k]))
-
-        # if not pred:
-        #     if item['evidence'] is not None:
-        #         e_list = utils.check_sentences.check_and_clean_evidence(item)
-        #         all_evidence_set = set(itertools.chain.from_iterable([evids.evidences_list for evids in e_list]))
-        #     else:
-        #         all_evidence_set = None
-        #     # print(all_evidence_set)
-        #     r_list = []
-        #     id_list = []
-        #
-        #     if all_evidence_set is not None:
-        #         for doc_id, ln in all_evidence_set:
-        #             _, text, _ = fever_db.get_evidence(cursor, doc_id, ln)
-        #             r_list.append(text)
-        #             id_list.append(doc_id + '(-.-)' + str(ln))
-        #
-        # else:            # If pred, then reset to not containing ground truth evidence.
-
-        all_evidence_set = None
-        r_list = []
-        id_list = []
-
-        for doc_id in doc_ids:
-            cur_r_list, cur_id_list = fever_db.get_all_sent_by_doc_id(cursor, doc_id, with_h_links=False)
-            # Merging to data list and removing duplicate
-            for i in range(len(cur_r_list)):
-                if cur_id_list[i] in id_list:
-                    continue
-                else:
-                    r_list.append(cur_r_list[i])
-                    id_list.append(cur_id_list[i])
-
-        assert len(id_list) == len(set(id_list))  # check duplicate
-        assert len(r_list) == len(id_list)
-
-        zipped_s_id_list = list(zip(r_list, id_list))
-        # Sort using id
-        # sorted(evidences_set, key=lambda x: (x[0], x[1]))
-        zipped_s_id_list = sorted(zipped_s_id_list, key=lambda x: (x[1][0], x[1][1]))
-
-        all_sent_list = convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
-                                                  id_tokenized=True)
-        cur_id = item['id']
-        for i, sent_item in enumerate(all_sent_list):
-            sent_item['selection_id'] = str(cur_id) + "<##>" + str(sent_item['sid'])
-            # selection_id is '[item_id<##>[doc_id]<SENT_LINE>[line_number]'
-            sent_item['query'] = item['claim']
-            full_data_list.append(sent_item)
-
-    return full_data_list
-
 
 def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True, id_tokenized=True):
     sent_list = []
@@ -314,7 +238,7 @@ def post_filter(d_list, keep_prob=0.75, seed=12):
 #     fever_db.get_all_sent_by_doc_id(cursor, doc_id)
 
 
-def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=8):
+def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=4):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
     :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
@@ -327,7 +251,6 @@ def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=8):
     else:
         d_list = tfidf_ss_data_file
 
-    d_list = d_list
     full_sample_list = []
 
     cursor, conn = fever_db.get_cursor()
@@ -411,15 +334,9 @@ def count_truth_examples(sample_list):
 
 
 if __name__ == '__main__':
-    # additional_file = config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl"
-    # full_list = get_tfidf_sample_for_nn(additional_file)
+    tfidf_upstram_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
+    sample_tfidf = get_tfidf_sample_for_nn(tfidf_upstram_data, pred=False, top_k=5)
 
-    # full_list = get_full_list(config.T_FEVER_DEV_JSONL,
-    #                           config.RESULT_PATH / "doc_retri/2018_07_04_21:56:49_r/dev.jsonl",
-    #                           pred=True)
-    # full_list = get_full_list(config.T_FEVER_TRAIN_JSONL,
-    # config.RESULT_PATH / "doc_retri/2018_07_04_21:56:49_r/train.jsonl")
-    # train_upstream_file = config.RESULT_PATH / "doc_retri/2018_07_04_21:56:49_r/train.jsonl"
     dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:3]
     complete_upstream_train_data = get_full_list_sample_for_nn(dev_upstream_data, pred=False)
     filtered_train_data = post_filter(complete_upstream_train_data, keep_prob=0.5, seed=12)
@@ -435,15 +352,3 @@ if __name__ == '__main__':
 
     print(count_hit, len(full_list), count_hit / len(full_list))
 
-    # d_list = navie_results_builder_for_sanity_check(config.T_FEVER_DEV_JSONL, full_list)
-    # # d_list = navie_results_builder_for_sanity_check(config.T_FEVER_TRAIN_JSONL, full_list)
-    # eval_mode = {'check_sent_id_correct': True, 'standard': True}
-    # print(c_scorer.fever_score(d_list, config.T_FEVER_DEV_JSONL, mode=eval_mode, verbose=False))
-    #
-    # total = len(d_list)
-    # hit = eval_mode['check_sent_id_correct_hits']
-    # tracking_score = hit / total
-    # print("Tracking:", tracking_score)
-
-    # for item in full_list:
-    #     print(item)

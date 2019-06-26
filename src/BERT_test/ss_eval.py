@@ -175,6 +175,8 @@ def pred_ss_and_save(paras : bert_para.BERT_para):
         # label_ids = label_ids.to(device)
 
         with torch.no_grad():
+            # if `labels` is `None`:
+            #    Outputs the classification logits of shape [batch_size, num_labels].
             logits = model(input_ids, segment_ids, input_mask, labels=None)
 
         if len(preds) == 0:
@@ -292,18 +294,16 @@ def softmax_test(z):
 
 if __name__ == "__main__":
     paras = bert_para.BERT_para()
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:1]
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:1]
+    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[2:5]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
     paras.pred = False
     paras.mode = 'dev'
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/2019_06_18_11:10:41"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_test_refactor"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_test_refactor"
     paras.output_folder = "test_refactor"
 
     # eval_ss_and_save(paras)
-
-    paras.pred = True
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:3]
-    pred_ss_and_save(paras)
+    eval_ss_and_save(paras)
 

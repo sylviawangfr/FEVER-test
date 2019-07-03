@@ -292,8 +292,8 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
         paras = bert_para.BERT_para()
-        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:1]
-        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:1]
+        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
         paras.pred = False
         paras.mode = 'dev'
         paras.BERT_model = output_dir
@@ -304,7 +304,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:3]
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")
     nli_finetuning(train_data, output_folder="nli_first_train", sampler='nli_tfidf')
 
 

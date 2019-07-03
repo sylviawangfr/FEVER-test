@@ -233,6 +233,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
 
             # define a new function to compute loss values for both output_modes
             try:
+                print('input_ids: ', len(input_ids))
                 logits = model(input_ids, segment_ids, input_mask, labels=None)
 
                 loss_fct = CrossEntropyLoss()

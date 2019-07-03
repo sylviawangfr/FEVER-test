@@ -96,6 +96,7 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
         if contain_head and cur_head != doc_id:
             cur_head = doc_id
 
+            doc_id = normalize(doc_id)
             if not id_tokenized:
                 doc_id_natural_format = fever_db.convert_brc(doc_id).replace('_', ' ')
                 t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format))

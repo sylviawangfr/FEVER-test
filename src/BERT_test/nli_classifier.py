@@ -69,11 +69,11 @@ def compute_metrics(task_name, preds, labels):
         raise KeyError(task_name)
 
 
-def nli_finetuning(taskname, upstream_train_data, output_folder='fine_tunning', sampler=None):
+def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=None):
     bert_model = "bert-large-uncased"
     pretrained_model_name_or_path = config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz"
     cache_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning"
-    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"{taskname}_{output_folder}"
+    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"nli_{output_folder}"
     max_seq_length = 300
     do_lower_case = True
     train_batch_size = 32
@@ -134,13 +134,12 @@ def nli_finetuning(taskname, upstream_train_data, output_folder='fine_tunning', 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    task_name = taskname.lower()
+    task_name = 'nli'
 
     label_list = processor.get_labels()
     num_labels = len(label_list)
 
     tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=do_lower_case)
-    # tokenizer = BertTokenizer.from_pretrained(bert_model)
 
     # Prepare model
     cache_dir = cache_dir if cache_dir else os.path.join(str(PYTORCH_PRETRAINED_BERT_CACHE),
@@ -263,12 +262,13 @@ def nli_finetuning(taskname, upstream_train_data, output_folder='fine_tunning', 
                     optimizer.zero_grad()
                     global_step += 1
 
-            except:
+            except Exception as e:
                 print("exception happened: ")
-                e = sys.exc_info()[0]
+                # e = sys.exc_info()[0]
                 print("Error: %s" % e)
                 print(torch.cuda.current_device())
-                print(torch.cuda.cudaStatus)
+                raise e
+
 
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
@@ -304,7 +304,7 @@ def nli_finetuning(taskname, upstream_train_data, output_folder='fine_tunning', 
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")
-    nli_finetuning('nli', train_data, output_folder="nli_first_train", sampler='nli_tfidf')
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:10000]
+    nli_finetuning(train_data, output_folder="nli_first_train", sampler='nli_tfidf')
 
 

@@ -12,6 +12,7 @@ class BERT_para(object):
     mode='dev'
     top_n = 5
     prob_thresholds = 0.5
+    sample_n = 5
 
     def get_f1_log_file(self, task):
         return config.LOG_PATH / f"{self.output_folder}/f1_analyze_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.log"

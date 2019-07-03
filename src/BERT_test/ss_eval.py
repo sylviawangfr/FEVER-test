@@ -51,9 +51,9 @@ def eval_ss_and_save(paras : bert_para.BERT_para):
     eval_batch_size = 8
 
     if paras.mode == 'dev':
-        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, pred=paras.pred)
+        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, pred=paras.pred, top_k=paras.sample_n)
     else:
-        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, pred=paras.pred)
+        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, pred=paras.pred, top_k=paras.sample_n)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)
@@ -298,9 +298,10 @@ if __name__ == "__main__":
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
     paras.pred = False
     paras.mode = 'dev'
-    paras.BERT_model = config.PRO_ROOT / "saved_models/ss_test_refactor_s4"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/ss_test_refactor_s4"
-    paras.output_folder = "test_refactor_s4"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/ss_test_refactor_s5"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/ss_test_refactor_s5"
+    paras.output_folder = "test_refactor_s5_" + get_current_time_str()
+    paras.sample_n = 5
 
     # eval_ss_and_save(paras)
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]

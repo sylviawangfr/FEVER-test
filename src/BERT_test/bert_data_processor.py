@@ -60,21 +60,21 @@ class DataProcessor(object):
 class FeverSSProcessor(DataProcessor):
     """Processor for the MultiNLI data set (GLUE version)."""
 
-    def get_train_examples(self, upstream_data, sampler='ss_tfidf'):
+    def get_train_examples(self, upstream_data, sampler='ss_tfidf', top_k=3):
         sampler = get_sampler(sampler)
-        train_list = sampler(upstream_data, pred=False)
+        train_list = sampler(upstream_data, pred=False, top_k=top_k)
         return self._create_examples(train_list)
 
-    def get_dev_examples(self, upstream_data, sampler='ss_tfidf', pred=False):
+    def get_dev_examples(self, upstream_data, sampler='ss_tfidf', pred=False, top_k=3):
         """See base class."""
         sampler = get_sampler(sampler)
-        dev_list = sampler(upstream_data, pred=pred)
+        dev_list = sampler(upstream_data, pred=pred, top_k=top_k)
         return self._create_examples(dev_list), dev_list
 
-    def get_test_examples(self, upstream_data, sampler='ss_full', pred=True):
+    def get_test_examples(self, upstream_data, sampler='ss_full', pred=True, top_k=5):
         """See base class."""
         sampler = get_sampler(sampler)
-        test_list = sampler(upstream_data, pred=pred, top_k=10)
+        test_list = sampler(upstream_data, pred=pred, top_k=top_k)
         return self._create_examples(test_list), test_list
 
     def get_labels(self):

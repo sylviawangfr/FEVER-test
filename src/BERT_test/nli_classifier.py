@@ -230,10 +230,9 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
         for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
             batch = tuple(t.to(device) for t in batch)
             input_ids, input_mask, segment_ids, label_ids = batch
-
+            print('input_ids: ', len(input_ids))
             # define a new function to compute loss values for both output_modes
             try:
-                print('input_ids: ', len(input_ids))
                 logits = model(input_ids, segment_ids, input_mask, labels=None)
 
                 loss_fct = CrossEntropyLoss()

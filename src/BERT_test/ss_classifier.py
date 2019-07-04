@@ -77,10 +77,11 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
     cache_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning"
     output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"ss_{output_folder}"
     max_seq_length = 128
-    do_lower_case = True
+    do_lower_case = False
     train_batch_size = 32
-    learning_rate = 5e-5
-    num_train_epochs = 3.0
+    # learning_rate = 5e-5
+    learning_rate = 5e-7
+    num_train_epochs = 20.0
     # Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10%% of training.
     warmup_proportion = 0.1
     # local_rank for distributed training on gpus
@@ -202,6 +203,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
     global_step = 0
     nb_tr_steps = 0
     tr_loss = 0
+    mean_loss = 0
 
     train_features = convert_examples_to_features(
         train_examples, label_list, max_seq_length, tokenizer)
@@ -223,51 +225,55 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
     train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
 
     model.train()
-    for _ in trange(int(num_train_epochs), desc="Epoch"):
+    for epoch in range(int(num_train_epochs)):
         tr_loss = 0
         nb_tr_examples, nb_tr_steps = 0, 0
-        for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
-            batch = tuple(t.to(device) for t in batch)
-            input_ids, input_mask, segment_ids, label_ids = batch
+        with tqdm(total=len(train_dataloader), desc=f"Epoch {epoch}") as pbar:
+            for step, batch in enumerate(train_dataloader):
+                batch = tuple(t.to(device) for t in batch)
+                input_ids, input_mask, segment_ids, label_ids = batch
 
-            # define a new function to compute loss values for both output_modes
-            try:
-                logits = model(input_ids, segment_ids, input_mask, labels=None)
+                # define a new function to compute loss values for both output_modes
+                try:
+                    logits = model(input_ids, segment_ids, input_mask, labels=None)
 
-                loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
+                    loss_fct = CrossEntropyLoss()
+                    loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
 
-                if n_gpu > 1:
-                    loss = loss.mean()  # mean() to average on multi-gpu.
-                if gradient_accumulation_steps > 1:
-                    loss = loss / gradient_accumulation_steps
+                    if n_gpu > 1:
+                        loss = loss.mean()  # mean() to average on multi-gpu.
+                    if gradient_accumulation_steps > 1:
+                        loss = loss / gradient_accumulation_steps
 
-                if fp16:
-                    optimizer.backward(loss)
-                else:
-                    loss.backward()
-
-                tr_loss += loss.item()
-                nb_tr_examples += input_ids.size(0)
-                nb_tr_steps += 1
-                if (step + 1) % gradient_accumulation_steps == 0:
                     if fp16:
-                        # modify learning rate with special warm up BERT uses
-                        # if fp16 is False, BertAdam is used that handles this automatically
-                        lr_this_step = learning_rate * warmup_linear.get_lr(global_step, warmup_proportion)
-                        for param_group in optimizer.param_groups:
-                            param_group['lr'] = lr_this_step
-                    optimizer.step()
-                    optimizer.zero_grad()
-                    global_step += 1
+                        optimizer.backward(loss)
+                    else:
+                        loss.backward()
 
-            except:
-                print("exception happened: ")
-                e = sys.exc_info()[0]
-                print("Error: %s" % e)
-                print(torch.cuda.current_device())
-                print(torch.cuda.cudaStatus)
+                    tr_loss += loss.item()
+                    nb_tr_examples += input_ids.size(0)
+                    nb_tr_steps += 1
+                    mean_loss = tr_loss * gradient_accumulation_steps / nb_tr_steps
+                    pbar.set_postfix_str(f"Loss: {mean_loss:.5f}")
+                    if (step + 1) % gradient_accumulation_steps == 0:
+                        if fp16:
+                            # modify learning rate with special warm up BERT uses
+                            # if fp16 is False, BertAdam is used that handles this automatically
+                            lr_this_step = learning_rate * warmup_linear.get_lr(global_step, warmup_proportion)
+                            for param_group in optimizer.param_groups:
+                                param_group['lr'] = lr_this_step
+                        optimizer.step()
+                        optimizer.zero_grad()
+                        global_step += 1
 
+                except:
+                    print("exception happened: ")
+                    e = sys.exc_info()[0]
+                    print("Error: %s" % e)
+                    print(torch.cuda.current_device())
+                    print(torch.cuda.cudaStatus)
+                    raise e
+        print(f"Loss: {mean_loss:.5f}")
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -280,13 +286,6 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
         torch.save(model_to_save.state_dict(), output_model_file)
         model_to_save.config.to_json_file(output_config_file)
         tokenizer.save_vocabulary(output_dir)
-
-        # Load a trained model and vocabulary that you have fine-tuned
-        # model = BertForSequenceClassification.from_pretrained(output_dir, num_labels=num_labels)
-        # tokenizer = BertTokenizer.from_pretrained(output_dir, do_lower_case=do_lower_case)
-    # else:
-        # model = BertForSequenceClassification.from_pretrained(bert_model, num_labels=num_labels)
-    # model.to(device)
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
         paras = bert_para.BERT_para()
@@ -304,8 +303,8 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:3]
-    ss_finetuning(train_data, output_folder="test_refactor_s5", sampler='ss_tfidf')
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:10]
+    ss_finetuning(train_data, output_folder="test_refactor_" + get_current_time_str(), sampler='ss_tfidf')
 
 
 

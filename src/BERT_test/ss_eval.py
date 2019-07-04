@@ -179,12 +179,17 @@ def pred_ss_and_save(paras : bert_para.BERT_para):
             #    Outputs the classification logits of shape [batch_size, num_labels].
             logits = model(input_ids, segment_ids, input_mask, labels=None)
 
+        loss_fct = CrossEntropyLoss()
+        tmp_eval_loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
+        eval_loss += tmp_eval_loss.mean().item()
+        nb_eval_steps += 1
         if len(preds) == 0:
             preds.append(logits.detach().cpu().numpy())
         else:
             preds[0] = np.append(
                 preds[0], logits.detach().cpu().numpy(), axis=0)
 
+    eval_loss = eval_loss / nb_eval_steps
     preds = preds[0]
     probs = softmax(preds)
     probs = probs[:, 0].tolist()

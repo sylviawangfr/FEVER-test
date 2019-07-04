@@ -138,13 +138,11 @@ def iter_over_db(save_path):
     print(count)
 
 
-def get_all_doc_ids(save_path, max_ind=None):
-    conn = sqlite3.connect(save_path)
-    c = conn.cursor()
-    c.execute("SELECT * from documents")
+def get_all_doc_ids(cursor, max_ind=None):
+    cursor.execute("SELECT * from documents")
     id_list = []
     count = 0
-    for pid, text, lines in tqdm(c, total=5416537):
+    for pid, text, lines in tqdm(cursor, total=5416537):
         text = text.strip()
         if len(text) > 1 and len(lines) > 0:    # len(text) > 1 will leave out some error documents
             id_list.append(pid)
@@ -157,8 +155,8 @@ def get_all_doc_ids(save_path, max_ind=None):
 
         # print(convert_brc(pid))
 
-    # print(len(id_list))
-    # print(len(set(id_list)))
+    print(len(id_list))
+    print(len(set(id_list)))
     return id_list
 
 

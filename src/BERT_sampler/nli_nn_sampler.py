@@ -7,7 +7,7 @@ from utils import fever_db, check_sentences
 import config
 
 from tqdm import tqdm
-from utils import c_scorer, common
+from utils import c_scorer, common, text_clean
 
 from data_util.data_preperation.tokenize_fever import easy_tokenize
 from utils.file_loader import read_json_rows
@@ -142,7 +142,7 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
             cur_head = doc_id
 
             if not id_tokenized:
-                doc_id_natural_format = fever_db.convert_brc(doc_id).replace('_', ' ')
+                doc_id_natural_format = text_clean.convert_brc(doc_id).replace('_', ' ')
                 t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format))
             else:
                 t_doc_id_natural_format = common.doc_id_to_tokenized_text(doc_id)

@@ -18,10 +18,11 @@ def convert_wiki_to_bert_format():
 
 
 def convert_wiki_to_bert_format_retri_doc():
-    doc_train = read_json_rows(config.DOC_RETRV_TRAIN)
-    doc_dev = read_json_rows(config.DOC_RETRV_DEV)
-    doc_test = read_json_rows(config.DOC_RETRV_TEST)
+    doc_train = read_json_rows(config.DOC_RETRV_TRAIN)[0:3]
+    doc_dev = read_json_rows(config.DOC_RETRV_DEV)[0:3]
+    doc_test = read_json_rows(config.DOC_RETRV_TEST)[0:3]
     all_docs = get_doc_ids(doc_train) | get_doc_ids(doc_dev) | get_doc_ids(doc_test)
+    all_docs.remove(None)
     wiki_data = ''
     cursor, conn = get_cursor()
     for i in tqdm(all_docs):

@@ -37,7 +37,7 @@ def retri_doc_and_update_item(item):
 
 def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file=None):
     d_list = read_json_rows(in_file)
-    thread_number = 10
+    thread_number = 5
     print("total items: ", len(d_list))
     thread_exe(retri_doc_and_update_item, iter(d_list), thread_number, "query wiki pages")
     save_intermidiate_results(d_list, out_file)
@@ -65,8 +65,8 @@ if __name__ == '__main__':
     #                             config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl", top_k=10)
     #
     # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
-    get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)
-    # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
+    # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)
+    get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
     # print(retrieve_docs("Brian Wilson was part of the Beach Boys."))
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST / get_current_time_str())
     # a_list = read_json_rows(config.DOC_RETRV_DEV)

@@ -124,7 +124,7 @@ class PregeneratedDataset(Dataset):
 
 def wiki_finetune():
     pretrained_model_name_or_path = config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz"
-    pregenerated_data = config.RESULT_PATH / 'wiki_to_bert_corpus'
+    pregenerated_data = config.RESULT_PATH / 'wiki_train'
     output_dir = config.PRO_ROOT / 'saved_models/bert_finetuning/wiki_bert'
     do_lower_case = True
     reduce_memory = True  # help="Store training data as on-disc memmaps to massively reduce memory usage")

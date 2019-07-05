@@ -81,6 +81,17 @@ def check_and_clean_evidence(item):
     return evidences_list_set
 
 
+def check_doc_id(item):
+    whole_annotators_evidences = item['evidence']
+    # print(evidences)
+    doc_id_set = set()
+    for one_annotator_evidences_list in whole_annotators_evidences:
+        for evidence in one_annotator_evidences_list:
+            docid = evidence[-2]
+            doc_id_set.add(docid)
+    return doc_id_set
+
+
 def check_evidence_in_db(cursor, doc_id, line_num):
     key = f'{doc_id}(-.-){line_num}'
     # print("SELECT * FROM sentences WHERE id = \"%s\"" % key)

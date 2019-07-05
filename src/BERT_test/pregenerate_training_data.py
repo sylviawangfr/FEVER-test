@@ -267,7 +267,7 @@ def create_instances_from_document(
 
 def main():
     train_corpus = config.RESULT_PATH / 'wiki_to_bert.txt'
-    output_dir = config.RESULT_PATH / 'wiki_to_bert_corpus'
+    output_dir = config.RESULT_PATH / 'wiki_train'
     bert_model = "bert-large-uncased"
     do_lower_case = True
     do_whole_word_mask = True

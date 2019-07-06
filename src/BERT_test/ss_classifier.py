@@ -81,7 +81,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
     train_batch_size = 32
     # learning_rate = 5e-5
     learning_rate = 5e-5
-    num_train_epochs = 20.0
+    num_train_epochs = 3
     # Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10%% of training.
     warmup_proportion = 0.1
     # local_rank for distributed training on gpus
@@ -303,7 +303,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
 if __name__ == "__main__":
     train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")
-    ss_finetuning(train_data, output_folder="test_refactor_" + get_current_time_str(), sampler='ss_tfidf')
+    ss_finetuning(train_data, output_folder="ss_3s_epoch3" + get_current_time_str(), sampler='ss_tfidf')
 
 
 

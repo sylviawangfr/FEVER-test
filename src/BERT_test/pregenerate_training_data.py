@@ -3,6 +3,7 @@ from pathlib import Path
 from tqdm import tqdm, trange
 from tempfile import TemporaryDirectory
 import shelve
+from multiprocessing import Pool
 
 from random import random, randrange, randint, shuffle, choice
 from pytorch_pretrained_bert.tokenization import BertTokenizer
@@ -265,23 +266,62 @@ def create_instances_from_document(
     return instances
 
 
-def main():
-    train_corpus = config.RESULT_PATH / 'wiki_to_bert.txt'
-    output_dir = config.RESULT_PATH / 'wiki_train'
-    bert_model = "bert-large-uncased"
-    do_lower_case = True
-    do_whole_word_mask = True
-    reduce_memory = True
-    epochs_to_generate = 3
-    max_seq_len = 128
-    short_seq_prob = 0.1
-    masked_lm_prob = 0.15
-    max_predictions_per_seq = 20
+def create_training_file(docs, vocab_list, args, epoch_num):
+    epoch_filename = args.output_dir / "epoch_{}.json".format(epoch_num)
+    num_instances = 0
+    with epoch_filename.open('w') as epoch_file:
+        for doc_idx in trange(len(docs), desc="Document"):
+            doc_instances = create_instances_from_document(
+                docs, doc_idx, max_seq_length=args.max_seq_len, short_seq_prob=args.short_seq_prob,
+                masked_lm_prob=args.masked_lm_prob, max_predictions_per_seq=args.max_predictions_per_seq,
+                whole_word_mask=args.do_whole_word_mask, vocab_list=vocab_list)
+            doc_instances = [json.dumps(instance) for instance in doc_instances]
+            for instance in doc_instances:
+                epoch_file.write(instance + '\n')
+                num_instances += 1
+    metrics_file = args.output_dir / "epoch_{}_metrics.json".format(epoch_num)
+    with metrics_file.open('w') as metrics_file:
+        metrics = {
+            "num_training_examples": num_instances,
+            "max_seq_len": args.max_seq_len
+        }
+        metrics_file.write(json.dumps(metrics))
 
-    tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=do_lower_case)
+
+def main():
+    parser = ArgumentParser()
+    parser.add_argument('--train_corpus', type=Path, default=config.RESULT_PATH / 'wiki_to_bert.txt')
+    parser.add_argument("--output_dir", type=Path, default=config.RESULT_PATH / 'wiki_train')
+    parser.add_argument("--bert_model", type=str, default="bert-large-uncased",
+                        choices=["bert-base-uncased", "bert-large-uncased", "bert-base-cased",
+                                 "bert-base-multilingual-uncased", "bert-base-chinese", "bert-base-multilingual-cased"])
+    parser.add_argument("--do_lower_case", action="store_true")
+    parser.add_argument("--do_whole_word_mask", action="store_true",
+                        help="Whether to use whole word masking rather than per-WordPiece masking.")
+    parser.add_argument("--reduce_memory", action="store_true",
+                        help="Reduce memory usage for large datasets by keeping data on disc rather than in memory")
+
+    parser.add_argument("--num_workers", type=int, default=1,
+                        help="The number of workers to use to write the files")
+    parser.add_argument("--epochs_to_generate", type=int, default=3,
+                        help="Number of epochs of data to pregenerate")
+    parser.add_argument("--max_seq_len", type=int, default=128)
+    parser.add_argument("--short_seq_prob", type=float, default=0.1,
+                        help="Probability of making a short sentence as a training example")
+    parser.add_argument("--masked_lm_prob", type=float, default=0.15,
+                        help="Probability of masking each token for the LM task")
+    parser.add_argument("--max_predictions_per_seq", type=int, default=20,
+                        help="Maximum number of tokens to mask in each sequence")
+
+    args = parser.parse_args()
+
+    if args.num_workers > 1 and args.reduce_memory:
+        raise ValueError("Cannot use multiple workers while reducing memory")
+
+    tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
     vocab_list = list(tokenizer.vocab.keys())
-    with DocumentDatabase(reduce_memory=reduce_memory) as docs:
-        with train_corpus.open() as f:
+    with DocumentDatabase(reduce_memory=args.reduce_memory) as docs:
+        with args.train_corpus.open() as f:
             doc = []
             for line in tqdm(f, desc="Loading Dataset", unit=" lines"):
                 line = line.strip()
@@ -300,27 +340,15 @@ def main():
                  "documents, blank lines can be inserted at any natural boundary, such as the ends of chapters, "
                  "sections or paragraphs.")
 
-        output_dir.mkdir(exist_ok=True)
-        for epoch in trange(epochs_to_generate, desc="Epoch"):
-            epoch_filename = output_dir / f"epoch_{epoch}.json"
-            num_instances = 0
-            with epoch_filename.open('w') as epoch_file:
-                for doc_idx in trange(len(docs), desc="Document"):
-                    doc_instances = create_instances_from_document(
-                        docs, doc_idx, max_seq_length=max_seq_len, short_seq_prob=short_seq_prob,
-                        masked_lm_prob=masked_lm_prob, max_predictions_per_seq=max_predictions_per_seq,
-                        whole_word_mask=do_whole_word_mask, vocab_list=vocab_list)
-                    doc_instances = [json.dumps(instance) for instance in doc_instances]
-                    for instance in doc_instances:
-                        epoch_file.write(instance + '\n')
-                        num_instances += 1
-            metrics_file = output_dir / f"epoch_{epoch}_metrics.json"
-            with metrics_file.open('w') as metrics_file:
-                metrics = {
-                    "num_training_examples": num_instances,
-                    "max_seq_len": max_seq_len
-                }
-                metrics_file.write(json.dumps(metrics))
+        args.output_dir.mkdir(exist_ok=True)
+
+        if args.num_workers > 1:
+            writer_workers = Pool(min(args.num_workers, args.epochs_to_generate))
+            arguments = [(docs, vocab_list, args, idx) for idx in range(args.epochs_to_generate)]
+            writer_workers.starmap(create_training_file, arguments)
+        else:
+            for epoch in trange(args.epochs_to_generate, desc="Epoch"):
+                create_training_file(docs, vocab_list, args, epoch)
 
 
 if __name__ == '__main__':

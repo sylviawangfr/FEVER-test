@@ -148,7 +148,7 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
                 t_doc_id_natural_format = common.doc_id_to_tokenized_text(doc_id)
 
             if line_num != 0:
-                current_evidence_text.append(f"{t_doc_id_natural_format} <t>")
+                current_evidence_text.append(f"{t_doc_id_natural_format}{c_scorer.SENT_DOC_TITLE}")
 
         # Important change move one line below: July 16
         current_evidence_text.append(e_text)

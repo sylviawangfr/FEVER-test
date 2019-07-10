@@ -209,7 +209,7 @@ def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True,
                 t_doc_id_natural_format = common.doc_id_to_tokenized_text(doc_id)
 
             if ln != 0 and t_doc_id_natural_format.lower() not in sent.lower():
-                cur_sent = f"{t_doc_id_natural_format} <t> " + sent
+                cur_sent = f"{t_doc_id_natural_format}{c_scorer.SENT_DOC_TITLE}" + sent
 
             sent_item['text'] = cur_sent
             sent_item['sid'] = doc_id + c_scorer.SENT_LINE + str(ln)

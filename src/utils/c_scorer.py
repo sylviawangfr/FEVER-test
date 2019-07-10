@@ -6,6 +6,7 @@ from utils.file_loader import save_intermidiate_results, get_current_time_str
 import config
 
 SENT_LINE = '<SENT_LINE>'
+SENT_DOC_TITLE = ' - '
 
 """
 This is customized scoring module

@@ -224,50 +224,54 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
     train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
 
     model.train()
-    for _ in trange(int(num_train_epochs), desc="Epoch"):
+    for epoch in range(int(num_train_epochs)):
         tr_loss = 0
         nb_tr_examples, nb_tr_steps = 0, 0
-        for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
-            batch = tuple(t.to(device) for t in batch)
-            input_ids, input_mask, segment_ids, label_ids = batch
-            # print('input_ids: ', len(input_ids))
-            # define a new function to compute loss values for both output_modes
-            try:
-                logits = model(input_ids, segment_ids, input_mask, labels=None)
+        with tqdm(total=len(train_dataloader), desc=f"Epoch {epoch}") as pbar:
+            for step, batch in enumerate(train_dataloader):
+                batch = tuple(t.to(device) for t in batch)
+                input_ids, input_mask, segment_ids, label_ids = batch
+                # print('input_ids: ', len(input_ids))
+                # define a new function to compute loss values for both output_modes
+                try:
+                    logits = model(input_ids, segment_ids, input_mask, labels=None)
 
-                loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
+                    loss_fct = CrossEntropyLoss()
+                    loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
 
-                if n_gpu > 1:
-                    loss = loss.mean()  # mean() to average on multi-gpu.
-                if gradient_accumulation_steps > 1:
-                    loss = loss / gradient_accumulation_steps
+                    if n_gpu > 1:
+                        loss = loss.mean()  # mean() to average on multi-gpu.
+                    if gradient_accumulation_steps > 1:
+                        loss = loss / gradient_accumulation_steps
 
-                if fp16:
-                    optimizer.backward(loss)
-                else:
-                    loss.backward()
-
-                tr_loss += loss.item()
-                nb_tr_examples += input_ids.size(0)
-                nb_tr_steps += 1
-                if (step + 1) % gradient_accumulation_steps == 0:
                     if fp16:
-                        # modify learning rate with special warm up BERT uses
-                        # if fp16 is False, BertAdam is used that handles this automatically
-                        lr_this_step = learning_rate * warmup_linear.get_lr(global_step, warmup_proportion)
-                        for param_group in optimizer.param_groups:
-                            param_group['lr'] = lr_this_step
-                    optimizer.step()
-                    optimizer.zero_grad()
-                    global_step += 1
+                        optimizer.backward(loss)
+                    else:
+                        loss.backward()
 
-            except Exception as e:
-                print("exception happened: ")
-                # e = sys.exc_info()[0]
-                print("Error: %s" % e)
-                print(torch.cuda.current_device())
-                raise e
+                    tr_loss += loss.item()
+                    nb_tr_examples += input_ids.size(0)
+                    nb_tr_steps += 1
+                    pbar.update(1)
+                    mean_loss = tr_loss * gradient_accumulation_steps / nb_tr_steps
+                    pbar.set_postfix_str(f"Loss: {mean_loss:.5f}")
+                    if (step + 1) % gradient_accumulation_steps == 0:
+                        if fp16:
+                            # modify learning rate with special warm up BERT uses
+                            # if fp16 is False, BertAdam is used that handles this automatically
+                            lr_this_step = learning_rate * warmup_linear.get_lr(global_step, warmup_proportion)
+                            for param_group in optimizer.param_groups:
+                                param_group['lr'] = lr_this_step
+                        optimizer.step()
+                        optimizer.zero_grad()
+                        global_step += 1
+
+                except Exception as e:
+                    print("exception happened: ")
+                    # e = sys.exc_info()[0]
+                    print("Error: %s" % e)
+                    print(torch.cuda.current_device())
+                    raise e
 
 
     if local_rank == -1 or torch.distributed.get_rank() == 0:

@@ -80,7 +80,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
     do_lower_case = False
     train_batch_size = 32
     # learning_rate = 5e-5
-    learning_rate = 5e-5
+    learning_rate = 5e-6
     num_train_epochs = 3
     # Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10%% of training.
     warmup_proportion = 0.1
@@ -93,7 +93,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
     server_port = None
     do_eval = True
     processor = FeverSSProcessor()
-    fp16 = True if torch.cuda.is_available() else False
+    fp16 = False #True if torch.cuda.is_available() else False
 
     if server_ip and server_port:
         # Distant debugging - see https://code.visualstudio.com/docs/python/debugging#_attach-to-a-local-script
@@ -215,15 +215,17 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
     all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
     all_segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long)
     all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
-    model.train()
-    for epoch in range(int(num_train_epochs)):
-        train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
-        if local_rank == -1:
-            train_sampler = RandomSampler(train_data)
-        else:
-            train_sampler = DistributedSampler(train_data)
-        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
 
+    train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
+    if local_rank == -1:
+        train_sampler = RandomSampler(train_data)
+    else:
+        train_sampler = DistributedSampler(train_data)
+    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
+
+    model.train()
+
+    for epoch in range(int(num_train_epochs)):
         tr_loss = 0
         nb_tr_examples, nb_tr_steps = 0, 0
         with tqdm(total=len(train_dataloader), desc=f"Epoch {epoch}") as pbar:
@@ -288,8 +290,8 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
         paras = bert_para.BERT_para()
-        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
-        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:5]
+        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:5]
         paras.pred = False
         paras.mode = 'dev'
         paras.BERT_model = output_dir
@@ -302,7 +304,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:1000]
     ss_finetuning(train_data, output_folder="ss_3s_epoch3" + get_current_time_str(), sampler='ss_tfidf')
 
 

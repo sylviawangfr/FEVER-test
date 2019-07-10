@@ -16,6 +16,12 @@ import utils.check_sentences
 import itertools
 import numpy as np
 from collections import Counter
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+                    datefmt='%m/%d/%Y %H:%M:%S',
+                    level=logging.INFO)
 
 
 def get_full_list_sample_for_nn(doc_retrieve_data, pred=False, top_k=None):
@@ -32,7 +38,7 @@ def get_full_list_sample_for_nn(doc_retrieve_data, pred=False, top_k=None):
         d_list = read_json_rows(doc_retrieve_data)
 
     if top_k is not None:
-        print("Upstream document number truncate to:", top_k)
+        logger.info("Upstream document number truncate to:", top_k)
         trucate_item(d_list, top_k=top_k)
 
     full_data_list = []
@@ -121,7 +127,7 @@ def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=Fa
     additional_d_list = additional_data_file
 
     if top_k is not None:
-        print("Upstream document number truncate to:", top_k)
+        logger.info("Upstream document number truncate to:", top_k)
         trucate_item(additional_d_list, top_k=top_k)
 
     additional_data_dict = dict()
@@ -320,7 +326,7 @@ def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
     cursor.close()
     conn.close()
     count_truth_examples(full_sample_list)
-    print(np.sum(count_truth))
+    logger.info(np.sum(count_truth))
     return full_sample_list
 
 
@@ -330,8 +336,7 @@ def count_truth_examples(sample_list):
         # print(item)
         if item['selection_label'] == 'true':
             count_hit += 1
-
-    print(f"Truth count/total count: , {count_hit}/{len(sample_list)}/{count_hit / len(sample_list)}")
+    logger.info(f"Truth count/total count: , {count_hit}/{len(sample_list)}/{count_hit / len(sample_list)}")
 
 
 def eval_sample_length(upstream_data):
@@ -351,10 +356,12 @@ def eval_sample_length(upstream_data):
 
 
 if __name__ == '__main__':
+    logger.info("test")
     tfidf_upstram_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:1000]
     eval_sample_length(tfidf_upstram_data)
 
     sample_tfidf = get_tfidf_sample_for_nn(tfidf_upstram_data, pred=False, top_k=3)
+    count_truth_examples(sample_tfidf)
 
     dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:3]
     complete_upstream_train_data = get_full_list_sample_for_nn(dev_upstream_data, pred=False)

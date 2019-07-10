@@ -43,6 +43,7 @@ from BERT_test.nli_eval import eval_nli_and_save
 from BERT_test.ss_eval import eval_ss_and_save
 import config
 import utils.common_types as bert_para
+from data_util.toChart import *
 
 logger = logging.getLogger(__name__)
 
@@ -224,10 +225,12 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
     train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
 
     model.train()
+    loss_for_chart = []
 
     for epoch in range(int(num_train_epochs)):
         tr_loss = 0
         nb_tr_examples, nb_tr_steps = 0, 0
+        epoch_loss = []
         with tqdm(total=len(train_dataloader), desc=f"Epoch {epoch}") as pbar:
             for step, batch in enumerate(train_dataloader):
                 batch = tuple(t.to(device) for t in batch)
@@ -256,6 +259,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
                     pbar.update(1)
                     mean_loss = tr_loss * gradient_accumulation_steps / nb_tr_steps
                     pbar.set_postfix_str(f"Loss: {mean_loss:.5f}")
+                    epoch_loss.append(mean_loss)
                     if (step + 1) % gradient_accumulation_steps == 0:
                         if fp16:
                             # modify learning rate with special warm up BERT uses
@@ -275,6 +279,8 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
                     print(torch.cuda.cudaStatus)
                     raise e
         print(f"Loss: {mean_loss:.5f}")
+        loss_for_chart.append(epoch_loss)
+    drawLoss(loss_for_chart, f"ss_{output_folder}_{learning_rate}_{get_current_time_str()}")
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self

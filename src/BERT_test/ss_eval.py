@@ -37,7 +37,7 @@ from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_form
 import config
 import utils.common_types as bert_para
 from BERT_test.eval_util import compute_metrics
-
+from data_util.toChart import *
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +76,7 @@ def eval_ss_and_save(paras : bert_para.BERT_para):
     nb_eval_steps = 0
     preds = []
     num_labels = len(processor.get_labels())
+    loss_for_chart = []
 
     for input_ids, input_mask, segment_ids, label_ids in tqdm(eval_dataloader, desc="Evaluating"):
         input_ids = input_ids.to(device)
@@ -89,6 +90,7 @@ def eval_ss_and_save(paras : bert_para.BERT_para):
         # create eval loss and other metric required by the task
         loss_fct = CrossEntropyLoss()
         tmp_eval_loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
+        loss_for_chart.append(tmp_eval_loss.mean().item())
         eval_loss += tmp_eval_loss.mean().item()
         nb_eval_steps += 1
         if len(preds) == 0:
@@ -97,6 +99,7 @@ def eval_ss_and_save(paras : bert_para.BERT_para):
             preds[0] = np.append(
                 preds[0], logits.detach().cpu().numpy(), axis=0)
 
+    drawLoss(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), f"ss_eval_{paras.output_folder}")
     eval_loss = eval_loss / nb_eval_steps
     preds = preds[0]
 
@@ -114,10 +117,8 @@ def eval_ss_and_save(paras : bert_para.BERT_para):
 
     # fever score and saving
     result = compute_metrics(preds, all_label_ids.numpy())
-    loss = None
 
     result['eval_loss'] = eval_loss
-    result['loss'] = loss
 
     logger.info("***** Eval results *****")
     if paras.mode == 'dev':

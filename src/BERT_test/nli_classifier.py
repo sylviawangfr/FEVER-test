@@ -39,8 +39,9 @@ from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
 from utils.file_loader import read_json_rows
 from BERT_test.bert_data_processor import *
 from BERT_test.nli_eval import eval_nli_and_save
-import config
 import utils.common_types as bert_para
+from data_util.toChart import *
+from utils.file_loader import get_current_time_str
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
     max_seq_length = 300
     do_lower_case = True
     train_batch_size = 32
-    learning_rate = 5e-5
+    learning_rate = 5e-6
     num_train_epochs = 3.0
     # Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10%% of training.
     warmup_proportion = 0.1
@@ -223,10 +224,12 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
         train_sampler = DistributedSampler(train_data)
     train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
 
+    loss_for_chart = []
     model.train()
     for epoch in range(int(num_train_epochs)):
         tr_loss = 0
         nb_tr_examples, nb_tr_steps = 0, 0
+        epoch_loss = []
         with tqdm(total=len(train_dataloader), desc=f"Epoch {epoch}") as pbar:
             for step, batch in enumerate(train_dataloader):
                 batch = tuple(t.to(device) for t in batch)
@@ -255,6 +258,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
                     pbar.update(1)
                     mean_loss = tr_loss * gradient_accumulation_steps / nb_tr_steps
                     pbar.set_postfix_str(f"Loss: {mean_loss:.5f}")
+                    epoch_loss.append(mean_loss)
                     if (step + 1) % gradient_accumulation_steps == 0:
                         if fp16:
                             # modify learning rate with special warm up BERT uses
@@ -272,8 +276,8 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
                     print("Error: %s" % e)
                     print(torch.cuda.current_device())
                     raise e
-
-
+        loss_for_chart.append(epoch_loss)
+    drawLoss(loss_for_chart, f"nli_{output_folder}_{learning_rate}_{get_current_time_str()}")
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -296,8 +300,8 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
         paras = bert_para.BERT_para()
-        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
-        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:500]
+        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
         paras.pred = False
         paras.mode = 'dev'
         paras.BERT_model = output_dir
@@ -308,7 +312,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")
-    nli_finetuning(train_data, output_folder="nli_first_train", sampler='nli_tfidf')
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:10000]
+    nli_finetuning(train_data, output_folder="nli_train" + get_current_time_str(), sampler='nli_tfidf')
 
 

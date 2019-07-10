@@ -2,3 +2,4 @@ elasticsearch-dsl>=6.0.0
 elasticsearch>=6.3.0
 tqdm
 pytorch_pretrained_bert
+matplotlib

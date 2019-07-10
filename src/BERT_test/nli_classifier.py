@@ -92,7 +92,8 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
     server_port = None
     do_eval = True
     processor = FeverNliProcessor()
-    fp16 = True if torch.cuda.is_available() else False
+    # fp16 = True if torch.cuda.is_available() else False
+    fp16 = False
 
     if server_ip and server_port:
         # Distant debugging - see https://code.visualstudio.com/docs/python/debugging#_attach-to-a-local-script

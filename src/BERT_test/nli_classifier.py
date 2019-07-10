@@ -278,7 +278,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
                     print(torch.cuda.current_device())
                     raise e
         loss_for_chart.append(epoch_loss)
-    drawLoss(loss_for_chart, f"nli_{output_folder}_{learning_rate}_{get_current_time_str()}")
+    drawLoss(loss_for_chart, f"loss_{output_folder}_{learning_rate}")
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -301,8 +301,8 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
         paras = bert_para.BERT_para()
-        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:500]
-        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
+        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
         paras.pred = False
         paras.mode = 'dev'
         paras.BERT_model = output_dir
@@ -313,7 +313,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:10000]
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")
     nli_finetuning(train_data, output_folder="nli_train" + get_current_time_str(), sampler='nli_tfidf')
 
 

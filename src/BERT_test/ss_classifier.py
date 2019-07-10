@@ -290,8 +290,8 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
         paras = bert_para.BERT_para()
-        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:5]
-        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:5]
+        paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:500]
+        paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
         paras.pred = False
         paras.mode = 'dev'
         paras.BERT_model = output_dir
@@ -304,7 +304,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:1000]
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:10000]
     ss_finetuning(train_data, output_folder="ss_3s_epoch3" + get_current_time_str(), sampler='ss_tfidf')
 
 

@@ -55,6 +55,16 @@ def eval_doc_preds(doc_list, top_k, log_file):
     print(fever_score(doc_list, doc_list, mode=eval_mode, error_analysis_file=log_file))
 
 
+def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
+    r_list = read_json_rows(full_retri_doc)
+    for i in r_list:
+        if i['id'] in failed_list:
+            retri_doc_and_update_item(i)
+    save_intermidiate_results(r_list, updated_file_name)
+
+
+
+
 if __name__ == '__main__':
     # i = retrieve_docs("A German-American fashion model starred in The Host.")
     # j = retrieve_docs("Trouble with the Curve")
@@ -66,8 +76,9 @@ if __name__ == '__main__':
     #
     # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
     # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)
-    get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
+    # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
     # print(retrieve_docs("Brian Wilson was part of the Beach Boys."))
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST / get_current_time_str())
     # a_list = read_json_rows(config.DOC_RETRV_DEV)
     # fever_doc_only(a_list, a_list, analysis_log=config.LOG_PATH / f"{get_current_time_str()}_doc_retri_no_hits_.jsonl")
+    rerun_failed_items(config.DOC_RETRV_TEST, [49649, 24225, 149500,202840,64863], config.RESULT_PATH / 'test_update.jsonl')

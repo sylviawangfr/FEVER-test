@@ -78,7 +78,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
     cache_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning"
     output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"ss_{output_folder}"
     max_seq_length = 128
-    do_lower_case = False
+    do_lower_case = True
     train_batch_size = 32
     # learning_rate = 5e-5
     learning_rate = 5e-6

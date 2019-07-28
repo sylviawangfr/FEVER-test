@@ -181,16 +181,16 @@ def pred_ss_and_save(paras : bert_para.BERT_para):
             logits = model(input_ids, segment_ids, input_mask, labels=None)
 
         loss_fct = CrossEntropyLoss()
-        tmp_eval_loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
-        eval_loss += tmp_eval_loss.mean().item()
-        nb_eval_steps += 1
+        # tmp_eval_loss = loss_fct(logits.view(-1, num_labels), label_ids.view(-1))
+        # eval_loss += tmp_eval_loss.mean().item()
+        # nb_eval_steps += 1
         if len(preds) == 0:
             preds.append(logits.detach().cpu().numpy())
         else:
             preds[0] = np.append(
                 preds[0], logits.detach().cpu().numpy(), axis=0)
 
-    eval_loss = eval_loss / nb_eval_steps
+    # eval_loss = eval_loss / nb_eval_steps
     preds = preds[0]
     probs = softmax(preds)
     probs = probs[:, 0].tolist()
@@ -300,17 +300,22 @@ def softmax_test(z):
 
 if __name__ == "__main__":
     paras = bert_para.BERT_para()
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[2:5]
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
-    paras.pred = False
-    paras.mode = 'dev'
-    paras.BERT_model = config.PRO_ROOT / "saved_models/ss_test_refactor_s5"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/ss_test_refactor_s5"
-    paras.output_folder = "test_refactor_s5_" + get_current_time_str()
+    # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[2:5]
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
+    # paras.pred = False
+    # paras.mode = 'dev'
+    paras.BERT_model = config.PRO_ROOT / "bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    paras.BERT_tokenizer = config.PRO_ROOT / "bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    paras.output_folder = "test_ss_" + get_current_time_str()
     paras.sample_n = 5
 
     # eval_ss_and_save(paras)
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:3]
-    eval_ss_and_save(paras)
+    # eval_ss_and_save(paras)
+    paras.mode = 'test'
+    paras.pred = True
+    paras.original_data = read_json_rows(config.FEVER_TEST_JSONL)[2:5]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / 'test_update.jsonl')[2:5]
+    pred_ss_and_save(paras)
 

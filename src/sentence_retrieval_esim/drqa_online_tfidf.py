@@ -202,12 +202,14 @@ def tfidf_sentense_selection(in_path, out_path, top_n=10, log_file=None):
 def check_acc(in_path):
     d_list = read_json_rows(in_path)
     eval_mode = {'check_sent_id_correct': True, 'standard': False}
-    print(c_scorer.fever_score(d_list, d_list, mode=eval_mode, verbose=False))
+    print(c_scorer.fever_score(d_list, d_list, mode=eval_mode,
+                               error_analysis_file=config.LOG_PATH / 'tfidf_ss_error.log',
+                               verbose=False))
 
 
 if __name__ == '__main__':
-    pass
-    # check_acc("/Users/Eason/RA/FunEver/results/sent_retri/2018_07_05_17:17:50_r/train.jsonl")
+    # pass
+    check_acc(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")
 
     # utest_check_sentence_lines()
     # check_acc(in_path)
@@ -215,22 +217,22 @@ if __name__ == '__main__':
     # if_idf_select_sentence()
     # print(str(config.RESULT_PATH / "tfidf_") + get_current_time_str() + ".jsonl")
 
-    doc_num = 10
+    # doc_num = 10
+    #
+    # dev_doc_file = str(config.DOC_RETRV_DEV)
+    # train_doc_file = str(config.DOC_RETRV_TRAIN)
+    # time = get_current_time_str()
+    # tfidf_sentense_selection(
+    #     in_path=dev_doc_file,
+    #     out_path=str(config.RESULT_PATH / f"tfidf/{time}/dev_ss_tfidf.jsonl"),
+    #     log_file=str(config.LOG_PATH / f"{time}/dev_ss_tfidf.log")
+    # )
 
-    dev_doc_file = str(config.DOC_RETRV_DEV)
-    train_doc_file = str(config.DOC_RETRV_TRAIN)
-    time = get_current_time_str()
-    tfidf_sentense_selection(
-        in_path=dev_doc_file,
-        out_path=str(config.RESULT_PATH / f"tfidf/{time}/dev_ss_tfidf.jsonl"),
-        log_file=str(config.LOG_PATH / f"{time}/dev_ss_tfidf.log")
-    )
-
-    tfidf_sentense_selection(
-        in_path=train_doc_file,
-        out_path=str(config.RESULT_PATH / f"tfidf/{time}/train_ss_tfidf.jsonl"),
-        log_file=str(config.LOG_PATH / f"{time}/train_ss_tfidf.log")
-    )
+    # tfidf_sentense_selection(
+    #     in_path=train_doc_file,
+    #     out_path=str(config.RESULT_PATH / f"tfidf/{time}/train_ss_tfidf.jsonl"),
+    #     log_file=str(config.LOG_PATH / f"{time}/train_ss_tfidf.log")
+    # )
     # dev_doc_file = str(config.DOC_RETRV_TRAIN)
     # print("doc len:", len(doc_list))
     # pre_list = read_json_rows(str(config.S_TFIDF_RETRV_DEV))

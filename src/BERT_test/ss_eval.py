@@ -310,7 +310,7 @@ if __name__ == "__main__":
     # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/ss_test_refactor_s5"
 
     # paras.output_folder = "test_ss_" + get_current_time_str()
-    paras.sample_n = 10
+    paras.sample_n = 5
 
     # eval_ss_and_save(paras)
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]

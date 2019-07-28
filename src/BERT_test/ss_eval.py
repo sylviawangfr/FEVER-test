@@ -304,8 +304,8 @@ if __name__ == "__main__":
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
     # paras.pred = False
     # paras.mode = 'dev'
-    paras.BERT_model = config.PRO_ROOT / "bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
-    paras.BERT_tokenizer = config.PRO_ROOT / "bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
     paras.output_folder = "test_ss_" + get_current_time_str()
     paras.sample_n = 5
 

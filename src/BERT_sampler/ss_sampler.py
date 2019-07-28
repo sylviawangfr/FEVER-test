@@ -38,7 +38,7 @@ def get_full_list_sample_for_nn(doc_retrieve_data, pred=False, top_k=None):
         d_list = read_json_rows(doc_retrieve_data)
 
     if top_k is not None:
-        logger.info("Upstream document number truncate to:", top_k)
+        logger.info(f"Upstream document number truncate to: {top_k}")
         trucate_item(d_list, top_k=top_k)
 
     full_data_list = []

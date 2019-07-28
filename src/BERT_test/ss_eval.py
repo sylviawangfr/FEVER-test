@@ -140,9 +140,9 @@ def pred_ss_and_save(paras : bert_para.BERT_para):
     processor = FeverSSProcessor()
     eval_batch_size = 8
     if paras.mode == 'test':
-        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, pred=True)
+        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, pred=True, top_k=10)
     else:
-        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, pred=True)
+        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, pred=True, top_k=paras.top_n)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)
@@ -306,7 +306,10 @@ if __name__ == "__main__":
     # paras.mode = 'dev'
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
-    paras.output_folder = "test_ss_" + get_current_time_str()
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/ss_test_refactor_s5"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/ss_test_refactor_s5"
+
+    # paras.output_folder = "test_ss_" + get_current_time_str()
     paras.sample_n = 10
 
     # eval_ss_and_save(paras)

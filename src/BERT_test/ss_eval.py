@@ -315,7 +315,7 @@ if __name__ == "__main__":
     # eval_ss_and_save(paras)
     paras.mode = 'test'
     paras.pred = True
-    paras.original_data = read_json_rows(config.FEVER_TEST_JSONL)[2:5]
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / 'test_update.jsonl')[2:5]
+    paras.original_data = read_json_rows(config.FEVER_TEST_JSONL)
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / 'test_update.jsonl')
     pred_ss_and_save(paras)
 

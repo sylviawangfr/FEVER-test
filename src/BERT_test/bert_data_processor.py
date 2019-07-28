@@ -71,7 +71,7 @@ class FeverSSProcessor(DataProcessor):
         dev_list = sampler(upstream_data, pred=pred, top_k=top_k)
         return self._create_examples(dev_list), dev_list
 
-    def get_test_examples(self, upstream_data, sampler='ss_full', pred=True, top_k=5):
+    def get_test_examples(self, upstream_data, sampler='ss_full', pred=True, top_k=10):
         """See base class."""
         sampler = get_sampler(sampler)
         test_list = sampler(upstream_data, pred=pred, top_k=top_k)

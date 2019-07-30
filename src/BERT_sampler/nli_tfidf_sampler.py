@@ -8,6 +8,8 @@ import numpy as np
 from utils.file_loader import *
 from data_util.tokenizers import SpacyTokenizer
 from BERT_test.eval_util import convert_evidence2scoring_format
+import functools
+import operator
 
 tok = SpacyTokenizer()
 
@@ -20,9 +22,12 @@ def easy_tokenize(text):
     return tok.tokenize(text_clean.normalize(text)).words()
 
 
-def sample_additional_data_for_item_v1_0(item):
+def sample_data_for_item(item, pred=False):
     res_sentids_list = []
     flags = []
+    if pred:
+        e_list = check_sentences.get_predicted_evidence(item)
+        return functools.reduce(operator.concat, e_list)
 
     if item['verifiable'] == "VERIFIABLE":
         assert item['label'] == 'SUPPORTS' or item['label'] == 'REFUTES'
@@ -114,7 +119,7 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
     return ' '.join(current_evidence_text)
 
 
-def get_sample_data(upstream_data, tokenized=True):
+def get_sample_data(upstream_data, tokenized=True, pred=False):
     cursor, conn = fever_db.get_cursor()
     if not isinstance(upstream_data, list):
         d_list = read_json_rows(upstream_data)
@@ -125,7 +130,7 @@ def get_sample_data(upstream_data, tokenized=True):
 
     for item in tqdm(d_list):
         # e_list = check_sentences.check_and_clean_evidence(item)
-        sampled_e_list, flags = sample_additional_data_for_item_v1_0(item)
+        sampled_e_list, flags = sample_data_for_item(item, pred=pred)
         # print(flags)
         for i, (sampled_evidence, flag) in enumerate(zip(sampled_e_list, flags)):
             new_item = dict()

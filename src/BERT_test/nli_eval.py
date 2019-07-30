@@ -46,20 +46,28 @@ logger = logging.getLogger(__name__)
 def nli_eval_fever_score(paras : bert_para.BERT_para, predicted_list):
     if paras.mode == 'dev':
         eval_mode = {'check_sent_id_correct': False, 'standard': True}
-    else:
-        eval_mode = {'check_sent_id_correct': False, 'standard': True}
 
-    strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(predicted_list,
+
+        strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(predicted_list,
                                                                 paras.original_data,
                                                                 mode=eval_mode,
                                                                 error_analysis_file=paras.get_f1_log_file('nli'),
                                                                 verbose=False)
-    tracking_score = strict_score
-    print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
-    print("Strict score:", strict_score)
-    print(f"Eval Tracking score:", f"{tracking_score}")
-
-    save_intermidiate_results(predicted_list, paras.get_eval_data_file('nli'))
+        tracking_score = strict_score
+        print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
+        print("Strict score:", strict_score)
+        print(f"Eval Tracking score:", f"{tracking_score}")
+        save_intermidiate_results(predicted_list, paras.get_eval_data_file('nli'))
+    else:
+        delete_unused_evidence(predicted_list)
+        clean_result = []
+        for i in predicted_list:
+            clean_item = {'id': i['id'],
+                          'claim': i['claim'],
+                          'predicted_evidence': i['predicted_evidence'],
+                          'predicted_label': i['predicted_label']}
+            clean_result.append(clean_item)
+        save_intermidiate_results(clean_result, paras.get_eval_data_file('nli'))
 
 
 def eval_nli_and_save(paras : bert_para.BERT_para):
@@ -125,10 +133,11 @@ def eval_nli_and_save(paras : bert_para.BERT_para):
             preds[0] = np.append(
                 preds[0], logits.detach().cpu().numpy(), axis=0)
 
-    drawLoss(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), f"nli_eval_{paras.output_folder}")
-    eval_loss = eval_loss / nb_eval_steps
-    preds = preds[0]
+    if not paras.pred:
+        drawLoss(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), f"nli_eval_{paras.output_folder}")
+        eval_loss = eval_loss / nb_eval_steps
 
+    preds = preds[0]
     probs = softmax(preds)
     probs = probs[:, 0].tolist()
     scores = preds[:, 0].tolist()
@@ -144,14 +153,16 @@ def eval_nli_and_save(paras : bert_para.BERT_para):
     result['eval_loss'] = eval_loss
 
     logger.info("***** Eval results *****")
-    pred_log = ''
-    for key in sorted(result.keys()):
-        pred_log = pred_log + key + ":" + str(result[key]) + "\n"
-        logger.info("  %s = %s", key, str(result[key]))
-        print(key, str(result[key]))
-    save_file(pred_log, paras.get_eval_log_file(sampler))
+    if not paras.pred:
+        pred_log = ''
+        for key in sorted(result.keys()):
+            pred_log = pred_log + key + ":" + str(result[key]) + "\n"
+            logger.info("  %s = %s", key, str(result[key]))
+            print(key, str(result[key]))
+        save_file(pred_log, paras.get_eval_log_file(sampler))
 
     # not for training, but for test set predict
+    # if the item has multiple evidence set
     if paras.pred:
         id2label = {
             0: "SUPPORTS",
@@ -185,15 +196,36 @@ def eval_nli_and_save(paras : bert_para.BERT_para):
     print("Done with nli evaluation")
 
 
-if __name__ == "__main__":
-    paras = bert_para.BERT_para()
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:10]
-    paras.pred = True
-    paras.mode = 'dev'
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
-    paras.output_folder = "nli_eval"
+def delete_unused_evidence(d_list):
+    for item in d_list:
+        if item['predicted_label'] == 'NOT ENOUGH INFO':
+            item['predicted_evidence'] = []
 
+
+
+if __name__ == "__main__":
+    # paras = bert_para.BERT_para()
+    # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:10]
+    # paras.pred = True
+    # paras.mode = 'dev'
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    # paras.output_folder = "nli_eval"
+    #
+    # eval_nli_and_save(paras)
+
+    paras = bert_para.BERT_para()
+    paras.pred = True
+    paras.mode = 'test'
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "test_ss_full/eval_data_ss_test_0.5_top5.jsonl")[0:50]
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "test_ss_full/eval_data_ss_test_0.5_top5.jsonl")[0:50]
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
+    paras.output_folder = 'nli_test_pred'
     eval_nli_and_save(paras)
+
+
 

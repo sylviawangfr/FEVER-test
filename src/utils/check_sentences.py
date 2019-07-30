@@ -80,6 +80,20 @@ def check_and_clean_evidence(item):
 
     return evidences_list_set
 
+def get_predicted_evidence(item):
+    whole_annotators_evidences = item['predicted_evidence']
+    # print(evidences)
+    evidences_list_set = set()
+    cleaned_one_annotator_evidences_list = []
+    for one_annotator_evidences_list in whole_annotators_evidences:
+        docid, sent_num = one_annotator_evidences_list[0], one_annotator_evidences_list[1]
+        cleaned_one_annotator_evidences_list.append((docid, sent_num))
+
+    one_annotator_evidences = Evidences(cleaned_one_annotator_evidences_list)
+    evidences_list_set.add(one_annotator_evidences)
+
+    return evidences_list_set
+
 
 def check_doc_id(item):
     whole_annotators_evidences = item['evidence']

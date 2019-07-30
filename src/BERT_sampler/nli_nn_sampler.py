@@ -14,17 +14,22 @@ from utils.file_loader import read_json_rows
 from BERT_test.eval_util import convert_evidence2scoring_format
 
 
-def sample_additional_data_for_item(item):
+
+def sample_data_for_item(item, pred=False):
     res_sentids_list = []
     flags = []
+    if pred:
+        e_set = check_sentences.get_predicted_evidence(item)
+        # return functools.reduce(operator.concat, e_list)
+        return list(e_set), None
 
     if item['verifiable'] == "VERIFIABLE":
         assert item['label'] == 'SUPPORTS' or item['label'] == 'REFUTES'
-        e_list = check_sentences.check_and_clean_evidence(item)
+        e_set = check_sentences.check_and_clean_evidence(item)
         additional_data = item['predicted_sentids']
         # print(len(additional_data))
 
-        for evidences in e_list:
+        for evidences in e_set:
             # print(evidences)
             new_evidences = copy.deepcopy(evidences)
             n_e = len(evidences)
@@ -46,12 +51,12 @@ def sample_additional_data_for_item(item):
                 pass
             res_sentids_list.append(new_evidences)
 
-        assert len(res_sentids_list) == len(e_list)
+        assert len(res_sentids_list) == len(e_set)
 
     elif item['verifiable'] == "NOT VERIFIABLE":
         assert item['label'] == 'NOT ENOUGH INFO'
 
-        e_list = check_sentences.check_and_clean_evidence(item)
+        e_set = check_sentences.check_and_clean_evidence(item)
         additional_data = item['predicted_sentids']
         # print(len(additional_data))
         random.shuffle(additional_data)
@@ -71,7 +76,7 @@ def sample_additional_data_for_item(item):
             flag = f"not_verifiable.non_eq.{len(new_evidences)}"
             flags.append(flag)
 
-        assert all(len(e) == 0 for e in e_list)
+        assert all(len(e) == 0 for e in e_set)
         res_sentids_list.append(new_evidences)
         assert len(res_sentids_list) == 1
 
@@ -80,7 +85,7 @@ def sample_additional_data_for_item(item):
     return res_sentids_list, flags
 
 
-def get_sample_data(upstream_data, tokenized=False):
+def get_sample_data(upstream_data, tokenized=False, pred=False):
     cursor, conn = fever_db.get_cursor()
     if isinstance(upstream_data, list):
         d_list = upstream_data
@@ -91,19 +96,12 @@ def get_sample_data(upstream_data, tokenized=False):
 
     for item in tqdm(d_list):
         # e_list = check_sentences.check_and_clean_evidence(item)
-        sampled_e_list, flags = sample_additional_data_for_item(item)
+        sampled_e_list, flags = sample_data_for_item(item, pred)
         # print(flags)
-        for i, (sampled_evidence, flag) in enumerate(zip(sampled_e_list, flags)):
-            # Do not copy, might change in the future for error analysis
-            # new_item = copy.deepcopy(item)
+        for i, sampled_evidence in enumerate(sampled_e_list):
             new_item = dict()
-            # print(new_item['claim'])
-            # print(e_list)
-            # print(sampled_evidence)
-            # print(flag)
             evidence_text = evidence_list_to_text(cursor, sampled_evidence,
                                                   contain_head=True, id_tokenized=tokenized)
-
             new_item['id'] = str(item['id']) + '#' + str(i)
 
             if tokenized:
@@ -113,14 +111,15 @@ def get_sample_data(upstream_data, tokenized=False):
 
             new_item['evid'] = evidence_text
             new_item['predicted_sentids'] = item['predicted_sentids']
-            new_item['predicted_evidence'] = convert_evidence2scoring_format(item['predicted_sentids'])
-            new_item['verifiable'] = item['verifiable']
-            new_item['label'] = item['label']
+            if not pred:
+                new_item['predicted_evidence'] = convert_evidence2scoring_format(item['predicted_sentids'])
+                new_item['verifiable'] = item['verifiable']
+                new_item['label'] = item['label']
+            else:
+                new_item['predicted_evidence'] = item['predicted_evidence']
+                # not used, but to avoid example error
+                new_item['label'] = 'NOT ENOUGH INFO'
 
-            # print("C:", new_item['claim'])
-            # print("E:", new_item['evid'])
-            # print("L:", new_item['label'])
-            # print()
             sampled_data_list.append(new_item)
 
     cursor.close()

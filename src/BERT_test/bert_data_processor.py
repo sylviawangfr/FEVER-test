@@ -111,7 +111,7 @@ class FeverNliProcessor(DataProcessor):
     def get_test_examples(self, upstream_data, sampler='nli_nn'):
         """See base class."""
         sampler_fun = get_sampler(sampler)
-        dev_list = sampler_fun(upstream_data, tokenized=True)
+        dev_list = sampler_fun(upstream_data, tokenized=True, pred=True)
         return self._create_examples(dev_list), dev_list
 
     def get_labels(self):
@@ -125,7 +125,10 @@ class FeverNliProcessor(DataProcessor):
             guid = line['id']
             text_a = convert_brc(line['evid'])
             text_b = convert_brc(line['claim'])
-            label = line['label']
+            if 'label' in line.keys():
+                label = line['label']
+            else:
+                label = None
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples

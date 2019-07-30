@@ -219,11 +219,11 @@ if __name__ == "__main__":
     paras.pred = True
     paras.mode = 'test'
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / "test_ss_full/eval_data_ss_test_0.5_top5.jsonl")[0:50]
-    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
-    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "test_ss_full/eval_data_ss_test_0.5_top5.jsonl")
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.output_folder = 'nli_test_pred_full'
     eval_nli_and_save(paras)
 

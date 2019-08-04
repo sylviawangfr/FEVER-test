@@ -1,9 +1,12 @@
 import six
 import utils
+import utils.check_sentences
 from collections import Counter
 import numpy as np
-from utils.file_loader import save_intermidiate_results, get_current_time_str
+from utils.file_loader import save_intermidiate_results, read_json_rows
 import config
+from utils import fever_db
+from itertools import chain
 
 SENT_LINE = '<SENT_LINE>'
 SENT_DOC_TITLE = ' - '
@@ -316,7 +319,7 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
 
     macro_recall = 0
     macro_recall_hits = 0
-
+    error_items = []
     # ana_f = None
     # if error_analysis_file is not None:
     #     ana_f = open(error_analysis_file, mode='w')
@@ -374,14 +377,17 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
                     mode['check_doc_id_correct_hits'] += 1
                 else:
                     error_count += 1
-                    log_print(instance)
+                    error_items(instance)
 
             if 'check_sent_id_correct' in mode and mode['check_sent_id_correct']:
                 if check_sent_correct(instance, actual[idx]):
                     mode['check_sent_id_correct_hits'] += 1
                 else:
                     error_count += 1
-                    log_print(instance)
+                    if 'predicted_evidence' in instance.keys():
+                        error_items.append(get_pred_instantce_details(instance))
+                    else:
+                        error_items(instance)
 
     log_print("Error count:", error_count)
     total = len(predictions)
@@ -410,7 +416,35 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
     else:
         f1 = 2.0 * pr * rec / (pr + rec)
 
+    log_print("pr: ",  pr)
+    log_print("recall: ", rec)
+    log_print("f1:", f1)
+    log_print(error_items)
+
     return strict_score, acc_score, pr, rec, f1
+
+
+def get_evid_text(evids_list):
+    cursor, conn = fever_db.get_cursor()
+    current_evidence_text = []
+    for e in evids_list:
+        doc_id, line_num = e
+        _, e_text, _ = fever_db.get_evidence(cursor, doc_id, line_num)
+        current_evidence_text.append(e_text)
+    cursor.close()
+    conn.close()
+    return current_evidence_text
+
+
+def get_pred_instantce_details(item):
+    el = utils.check_sentences.check_and_clean_evidence(item)
+    el_l = list(chain.from_iterable(el))
+    evidence_text = get_evid_text(el_l)
+    item['evidence_texts'] = evidence_text
+    predl = utils.check_sentences.get_predicted_evidence(item)
+    pred_text = get_evid_text(list(chain.from_iterable(predl)))
+    item['predicted_texts'] = pred_text
+    return item
 
 
 def delete_label(d_list):
@@ -474,3 +508,10 @@ def nei_stats(predictions, actual=None):
 # Best Acc: 0.7047204720472047
 # Best Acc Ind: [0, 1, 2, 4, 11]
 # --------------------------------------------------
+
+if __name__ == "__main__":
+    eval_mode = {'check_sent_id_correct': True, 'standard': False}
+    fever_score(read_json_rows(config.RESULT_PATH / 'dev_pred_ss_2019_07_31/eval_data_ss_dev_0.5_top5.jsonl'),
+                read_json_rows(config.DOC_RETRV_DEV),
+                mode=eval_mode,
+                error_analysis_file=config.LOG_PATH / 'dev_pred_f1_error_items.log')

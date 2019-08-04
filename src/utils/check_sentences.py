@@ -80,6 +80,7 @@ def check_and_clean_evidence(item):
 
     return evidences_list_set
 
+
 def get_predicted_evidence(item):
     whole_annotators_evidences = item['predicted_evidence']
     # print(evidences)

@@ -59,8 +59,8 @@ def search_subsets(phrases):
     if l > 1:
         l = 5 if l > 4 else l
         for i in reversed(range(2, l)):
-            sub_set = itertools.combinations(phrases, i)
-            for s in sub_set:
+            sub_sets = itertools.combinations(phrases, i)
+            for s in sub_sets:
                 if isSubset(s, searched_subsets):
                     # print("skip ", s)
                     continue

@@ -7,6 +7,7 @@ from utils.file_loader import save_intermidiate_results, read_json_rows
 import config
 from utils import fever_db
 from itertools import chain
+import os
 
 SENT_LINE = '<SENT_LINE>'
 SENT_DOC_TITLE = ' - '
@@ -29,6 +30,7 @@ def fever_doc_only(predictions, actual=None, max_evidence=5, analysis_log=None):
 
     evidence_number_list = []
     error_list = []
+    log_print = utils.get_adv_print_func(analysis_log.parent / f"{analysis_log.name}_f1")
 
     for idx, instance in enumerate(predictions):
         macro_prec = doc_macro_precision(instance, max_evidence)
@@ -63,6 +65,11 @@ def fever_doc_only(predictions, actual=None, max_evidence=5, analysis_log=None):
 
     print("oracle_score, pr, rec, f1")
     print(oracle_score, pr, rec, f1)
+
+    log_print({"Hit": doc_id_hits, "Total": total, "Avg. Len.": avg_length})
+    log_print("oracle_score, pr, rec, f1")
+    log_print(oracle_score, pr, rec, f1)
+
     save_intermidiate_results(error_list, analysis_log)
 
     return oracle_score, pr, rec, f1
@@ -308,7 +315,8 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
     :return:
     '''
 
-    log_print = utils.get_adv_print_func(error_analysis_file, verbose=verbose)
+    log_print = utils.get_adv_print_func(error_analysis_file.parent / f"{error_analysis_file.name}_f1",
+                                         verbose=verbose)
 
     correct = 0
     strict = 0
@@ -377,7 +385,7 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
                     mode['check_doc_id_correct_hits'] += 1
                 else:
                     error_count += 1
-                    error_items(instance)
+                    error_items.append(instance)
 
             if 'check_sent_id_correct' in mode and mode['check_sent_id_correct']:
                 if check_sent_correct(instance, actual[idx]):
@@ -387,7 +395,7 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
                     if 'predicted_evidence' in instance.keys():
                         error_items.append(get_pred_instantce_details(instance))
                     else:
-                        error_items(instance)
+                        error_items.append(instance)
 
     log_print("Error count:", error_count)
     total = len(predictions)
@@ -419,7 +427,7 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
     log_print("pr: ",  pr)
     log_print("recall: ", rec)
     log_print("f1:", f1)
-    log_print(error_items)
+    save_intermidiate_results(error_items, error_analysis_file)
 
     return strict_score, acc_score, pr, rec, f1
 
@@ -510,8 +518,11 @@ def nei_stats(predictions, actual=None):
 # --------------------------------------------------
 
 if __name__ == "__main__":
-    eval_mode = {'check_sent_id_correct': True, 'standard': False}
-    fever_score(read_json_rows(config.RESULT_PATH / 'dev_pred_ss_2019_07_31/eval_data_ss_dev_0.5_top5.jsonl'),
-                read_json_rows(config.DOC_RETRV_DEV),
-                mode=eval_mode,
-                error_analysis_file=config.LOG_PATH / 'dev_pred_f1_error_items.log')
+    # eval_mode = {'check_sent_id_correct': True, 'standard': False}
+    # fever_score(read_json_rows(config.RESULT_PATH / 'dev_pred_ss_2019_07_31/eval_data_ss_dev_0.5_top5.jsonl'),
+    #             read_json_rows(config.DOC_RETRV_DEV),
+    #             mode=eval_mode,
+    #             error_analysis_file=config.LOG_PATH / 'dev_pred_f1_error_items.log')
+    upstream_data = read_json_rows(config.RESULT_PATH / 'eval_data_nli_dev_0.5_top5.jsonl')
+    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    nei_stats(upstream_data, original_data)

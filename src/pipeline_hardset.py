@@ -85,8 +85,8 @@ def nli(input_data_path, origin_data_path, output_file):
 
 if __name__ == "__main__":
     input_file = config.RESULT_PATH / "doc_hardset.jsonl"
-    ss_file = "pred_ss_" + input_file.name
-    nli_file = "nli_" + input_file.name
+    ss_file = config.RESULT_PATH / "pred_ss_" + input_file.name
+    nli_file = config.RESULT_PATH / "nli_" + input_file.name
     pred_ss(input_file, input_file, ss_file)
     nli(ss_file, input_file, nli_file)
 

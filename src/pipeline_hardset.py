@@ -85,9 +85,9 @@ def nli(input_data_path, origin_data_path, output_file):
 
 
 def eval_three_classes(nli_result):
-    supports = [i for i in nli_result if i['lable'] == "SUPPORTS"]
-    refuses = [i for i in nli_result if i['lable'] == "REFUTES"]
-    nei = [i for i in nli_result if i['lable'] == "NOT ENOUGH INFO"]
+    supports = [i for i in nli_result if i['label'] == "SUPPORTS"]
+    refuses = [i for i in nli_result if i['label'] == "REFUTES"]
+    nei = [i for i in nli_result if i['label'] == "NOT ENOUGH INFO"]
     print(f"support/refuse/nei: {len(supports)}/{len(refuses)}/{len(nei)}")
     eval_mode = {'check_sent_id_correct': True, 'standard': True}
 

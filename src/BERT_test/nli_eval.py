@@ -179,8 +179,8 @@ def eval_nli_and_save(paras : bert_para.BERT_para):
             if not org_id in augmented_dict:
                 aug_i = {'predicted_label': str(evids_item["predicted_label"]), 'predicted_evidence': evids_item["predicted_evidence"]}
                 augmented_dict[org_id] = aug_i
-            else:
-                print("Exist:", evids_item)
+            # else:
+            #     print("Exist:", evids_item["id"])
 
 
          #todo:verify Dict len

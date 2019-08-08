@@ -84,11 +84,10 @@ def nli(input_data_path, origin_data_path, output_file):
     eval_nli_and_save(paras)
 
 
-def eval_three_classes(nli_result, original_data):
-    all_item = read_json_rows(nli_result);
-    supports = [i for i in all_item if i['lable'] == "SUPPORTS"]
-    refuses = [i for i in all_item if i['lable'] == "REFUTES"]
-    nei = [i for i in all_item if i['lable'] == "NOT ENOUGH INFO"]
+def eval_three_classes(nli_result):
+    supports = [i for i in nli_result if i['lable'] == "SUPPORTS"]
+    refuses = [i for i in nli_result if i['lable'] == "REFUTES"]
+    nei = [i for i in nli_result if i['lable'] == "NOT ENOUGH INFO"]
     print(f"support/refuse/nei: {len(supports)}/{len(refuses)}/{len(nei)}")
     eval_mode = {'check_sent_id_correct': True, 'standard': True}
 
@@ -114,7 +113,7 @@ def eval_three_classes(nli_result, original_data):
 
 if __name__ == "__main__":
     nli_data = read_json_rows(config.RESULT_PATH / "nli_doc_hardset.jsonl/eval_data_nli_dev_0.5_top5.jsonl")
-    eval_three_classes(nli_data, nli_data)
+    eval_three_classes(nli_data)
     # input_file = config.RESULT_PATH / "doc_hardset.jsonl"
     # ss_file = config.RESULT_PATH / f"pred_ss_{input_file.name}/eval_data_ss_dev_0.5_top5.jsonl"
     # nli_file = config.RESULT_PATH / f"nli_{input_file.name}"

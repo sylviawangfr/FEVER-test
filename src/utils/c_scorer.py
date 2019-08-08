@@ -402,11 +402,11 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
 
     print("Total:", total)
     print("Correct:", correct)
-    print("Strict:", strict)
+    print(f"Strict total/percentage: {strict}/{strict/total}")
     print("Error count:", error_count)
     log_print("Total:", total)
     log_print("Correct:", correct)
-    log_print("Strict:", strict)
+    log_print(f"Strict total/percentage: {strict}/{strict/total}")
 
     for k, v in mode.items():
         if k.endswith('_hits'):

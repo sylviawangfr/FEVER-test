@@ -427,6 +427,9 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
     log_print("pr: ",  pr)
     log_print("recall: ", rec)
     log_print("f1:", f1)
+    print("pr: ",  pr)
+    print("recall: ", rec)
+    print("f1:", f1)
     save_intermidiate_results(error_items, error_analysis_file)
 
     return strict_score, acc_score, pr, rec, f1

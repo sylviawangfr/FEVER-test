@@ -94,25 +94,26 @@ def eval_three_classes(nli_result):
     c_scorer.fever_score(supports,
                         supports,
                         mode=eval_mode,
-                        error_analysis_file=config.LOG_PATH / "hardset_support",
+                        error_analysis_file=config.LOG_PATH / "support",
                         verbose=False)
 
     c_scorer.fever_score(refuses,
                          refuses,
                          mode=eval_mode,
-                         error_analysis_file=config.LOG_PATH / "hardset_refuse",
+                         error_analysis_file=config.LOG_PATH / "refuse",
                          verbose=False)
 
     c_scorer.fever_score(nei,
                      nei,
                      mode=eval_mode,
-                     error_analysis_file=config.LOG_PATH / "hardset_nei",
+                     error_analysis_file=config.LOG_PATH / "nei",
                      verbose=False)
 
 
 
 if __name__ == "__main__":
-    nli_data = read_json_rows(config.RESULT_PATH / "nli_doc_hardset.jsonl/eval_data_nli_dev_0.5_top5.jsonl")
+    # nli_data = read_json_rows(config.RESULT_PATH / "nli_doc_hardset.jsonl/eval_data_nli_dev_0.5_top5.jsonl")
+    nli_data = read_json_rows(config.RESULT_PATH / "nli_dev_pred_full/eval_data_nli_dev_0.5_top5.jsonl")
     eval_three_classes(nli_data)
     # input_file = config.RESULT_PATH / "doc_hardset.jsonl"
     # ss_file = config.RESULT_PATH / f"pred_ss_{input_file.name}/eval_data_ss_dev_0.5_top5.jsonl"

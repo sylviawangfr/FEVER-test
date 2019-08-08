@@ -69,6 +69,7 @@ def pred_ss(input_data_path, origin_data_path, output_file):
     paras.original_data = read_json_rows(origin_data_path)
     paras.upstream_data = read_json_rows(input_data_path)
     pred_ss_and_save(paras)
+    return paras.get_eval_data_file()
 
 
 def nli(input_data_path, origin_data_path, output_file):
@@ -85,7 +86,7 @@ def nli(input_data_path, origin_data_path, output_file):
 
 if __name__ == "__main__":
     input_file = config.RESULT_PATH / "doc_hardset.jsonl"
-    ss_file = config.RESULT_PATH / f"pred_ss_{input_file.name}/{paras.get_eval_data_file()}"
+    ss_file = config.RESULT_PATH / f"pred_ss_{input_file.name}/eval_data_ss_dev_0.5_top5.jsonl"
     nli_file = config.RESULT_PATH / f"nli_{input_file.name}"
     # pred_ss(input_file, input_file, ss_file)
     nli(ss_file, input_file, nli_file)

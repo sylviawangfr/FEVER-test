@@ -260,17 +260,22 @@ def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_da
     else:
         prob_thresholds = paras.prob_thresholds
 
+    if not isinstance(paras.top_n, list):
+        top_n = [paras.top_n]
+    else:
+        top_n = paras.top_n
+
     for scal_prob in prob_thresholds:
         print("Eval Data prob_threshold:", scal_prob)
 
-        results_list = ss_score_converter(paras.original_data, upstream_eval_list,
+        for n in top_n:
+            results_list = ss_score_converter(paras.original_data, upstream_eval_list,
                                           prob_threshold=scal_prob,
-                                          top_n=paras.top_n)
+                                          top_n=n)
 
         if paras.mode is 'dev':
             eval_mode = {'check_sent_id_correct': True, 'standard': False}
             for n in paras.top_n:
-
                 strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(results_list,
                                                                     paras.original_data,
                                                                     max_evidence=n,
@@ -284,9 +289,9 @@ def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_da
                 print("Strict score:", strict_score)
                 print(f"Eval Tracking score:", f"{tracking_score}")
 
-    if save_data:
-        save_intermidiate_results(results_list, paras.get_eval_data_file('ss'))
-        save_intermidiate_results(upstream_eval_list, paras.get_eval_item_file('ss'))
+        if save_data:
+            save_intermidiate_results(results_list, paras.get_eval_data_file('ss_n'))
+            save_intermidiate_results(upstream_eval_list, paras.get_eval_item_file('ss_n'))
 
 
 def softmax_test(z):

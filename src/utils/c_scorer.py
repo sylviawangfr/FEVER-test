@@ -300,6 +300,15 @@ def check_sent_correct(instance, actual):
     return False
 
 
+def get_nli_error_items(predictions, error_analysis_file):
+    log_print = utils.get_adv_print_func(error_analysis_file);
+    for idx, instance in enumerate(predictions):
+        if check_sent_correct(instance, instance):
+            if not is_correct_label(instance):
+                log_print(instance)
+
+
+
 def fever_score(predictions, actual=None, max_evidence=5, mode=None,
                 error_analysis_file=None,
                 verbose=False, label_it=False):

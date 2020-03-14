@@ -5,6 +5,7 @@ from utils.text_clean import *
 import BERT_sampler.nli_nn_sampler as nli_nn_sampler
 import BERT_sampler.nli_tfidf_sampler as nli_tfidf_sampler
 import BERT_sampler.ss_sampler as ss_sampler
+import utils.common_types as bert_para
 
 
 logger = logging.getLogger(__name__)
@@ -60,21 +61,21 @@ class DataProcessor(object):
 class FeverSSProcessor(DataProcessor):
     """Processor for the MultiNLI data set (GLUE version)."""
 
-    def get_train_examples(self, upstream_data, sampler='ss_tfidf', top_k=3):
+    def get_train_examples(self, paras: bert_para.BERT_para, sampler='ss_tfidf'):
         sampler = get_sampler(sampler)
-        train_list = sampler(upstream_data, pred=False, top_k=top_k)
+        train_list = sampler(paras)
         return self._create_examples(train_list)
 
-    def get_dev_examples(self, upstream_data, sampler='ss_tfidf', pred=False, top_k=3):
+    def get_dev_examples(self, paras: bert_para.BERT_para, sampler='ss_tfidf'):
         """See base class."""
         sampler = get_sampler(sampler)
-        dev_list = sampler(upstream_data, pred=pred, top_k=top_k)
+        dev_list = sampler(paras)
         return self._create_examples(dev_list), dev_list
 
-    def get_test_examples(self, upstream_data, sampler='ss_full', pred=True, top_k=10):
+    def get_test_examples(self, paras: bert_para.BERT_para, sampler='ss_full'):
         """See base class."""
         sampler = get_sampler(sampler)
-        test_list = sampler(upstream_data, pred=pred, top_k=top_k)
+        test_list = sampler(paras)
         return self._create_examples(test_list), test_list
 
     def get_labels(self):
@@ -136,8 +137,8 @@ class FeverNliProcessor(DataProcessor):
 
 def get_sampler(s):
     processors = {
-        "ss_tfidf": ss_sampler.get_tfidf_sample_for_nn,
-        "ss_full": ss_sampler.get_full_list_sample_for_nn,
+        "ss_tfidf": ss_sampler.get_tfidf_sample,
+        "ss_full": ss_sampler.get_full_list_sample,
         "nli_tfidf": nli_tfidf_sampler.get_sample_data,
         "nli_nn": nli_nn_sampler.get_sample_data
     }

@@ -18,6 +18,7 @@ import numpy as np
 from collections import Counter
 import logging
 from utils.file_loader import *
+import utils.common_types as bert_para
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message
                     level=logging.INFO)
 
 
-def get_full_list_sample_for_nn(doc_retrieve_data, pred=False, top_k=None):
+def get_full_list_sample(paras: bert_para.BERT_para):
     """
     This method will select all the sentence from upstream doc retrieval and label the correct evident as true
     :param tokenized_data_file: Remember this is tokenized data with original format containing 'evidence'
@@ -34,14 +35,14 @@ def get_full_list_sample_for_nn(doc_retrieve_data, pred=False, top_k=None):
                                     This file need to contain *"predicted_docids"* field.
     :return:
     """
-    if isinstance(doc_retrieve_data, list):
-        d_list = doc_retrieve_data
+    if isinstance(paras.upstream_data, list):
+        d_list = paras.upstream_data
     else:
-        d_list = read_json_rows(doc_retrieve_data)
+        d_list = read_json_rows(paras.upstream_data)
 
-    if top_k is not None:
-        logger.info(f"Upstream document number truncate to: {top_k}")
-        trucate_item(d_list, top_k=top_k)
+    if paras.sample_n is not None:
+        logger.info(f"Upstream document number truncate to: {paras.sample_n}")
+        trucate_item(d_list, top_k=paras.sample_n)
 
     full_data_list = []
 
@@ -50,7 +51,7 @@ def get_full_list_sample_for_nn(doc_retrieve_data, pred=False, top_k=None):
     for item in tqdm(d_list):
         doc_ids = item["predicted_docids"]
 
-        if not pred:
+        if not paras.pred:
             if item['evidence'] is not None:
                 # ground truth
                 e_list = utils.check_sentences.check_and_clean_evidence(item)
@@ -106,93 +107,16 @@ def get_full_list_sample_for_nn(doc_retrieve_data, pred=False, top_k=None):
 
     cursor.close()
     conn.close()
-    return full_data_list
+    if not paras.post_filter_prob == 1:
+        return post_filter(full_data_list, keep_prob=paras.post_filter_prob, seed=12)
+    else:
+        return full_data_list
 
 
 def trucate_item(d_list, top_k=None):
     for item in d_list:
         if top_k is not None and len(item['predicted_docids']) > top_k:
             item['predicted_docids'] = item['predicted_docids'][:top_k]
-
-
-def get_full_list_from_list_d(tokenized_data_file, additional_data_file, pred=False, top_k=None):
-    """
-    This method will select all the sentence from upstream doc retrieval and label the correct evident as true
-    :param tokenized_data_file: Remember this is tokenized data with original format containing 'evidence'
-    :param additional_data_file:    This is the data after document retrieval.
-                                    This file need to contain *"predicted_docids"* field.
-    :return:
-    """
-
-    d_list = tokenized_data_file
-
-    additional_d_list = additional_data_file
-
-    if top_k is not None:
-        logger.info("Upstream document number truncate to:", top_k)
-        trucate_item(additional_d_list, top_k=top_k)
-
-    additional_data_dict = dict()
-
-    for add_item in additional_d_list:
-        additional_data_dict[add_item['id']] = add_item
-
-    full_data_list = []
-
-    cursor, conn = fever_db.get_cursor()
-    for item in tqdm(d_list):
-        doc_ids = additional_data_dict[item['id']]["predicted_docids"]
-
-        if not pred:
-            if item['evidence'] is not None:
-                e_list = utils.check_sentences.check_and_clean_evidence(item)
-                all_evidence_set = set(itertools.chain.from_iterable([evids.evidences_list for evids in e_list]))
-            else:
-                all_evidence_set = None
-            # print(all_evidence_set)
-            r_list = []
-            id_list = []
-
-            if all_evidence_set is not None:
-                for doc_id, ln in all_evidence_set:
-                    _, text, _ = fever_db.get_evidence(cursor, doc_id, ln)
-                    r_list.append(text)
-                    id_list.append(doc_id + '(-.-)' + str(ln))
-
-        else:            # If pred, then reset to not containing ground truth evidence.
-            all_evidence_set = None
-            r_list = []
-            id_list = []
-
-        for doc_id in doc_ids:
-            cur_r_list, cur_id_list = fever_db.get_all_sent_by_doc_id(cursor, doc_id, with_h_links=False)
-            # Merging to data list and removing duplicate
-            for i in range(len(cur_r_list)):
-                if cur_id_list[i] in id_list:
-                    continue
-                else:
-                    r_list.append(cur_r_list[i])
-                    id_list.append(cur_id_list[i])
-
-        assert len(id_list) == len(set(id_list))  # check duplicate
-        assert len(r_list) == len(id_list)
-
-        zipped_s_id_list = list(zip(r_list, id_list))
-        # Sort using id
-        # sorted(evidences_set, key=lambda x: (x[0], x[1]))
-        zipped_s_id_list = sorted(zipped_s_id_list, key=lambda x: (x[1][0], x[1][1]))
-
-        all_sent_list = convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
-                                                  id_tokenized=True)
-        cur_id = item['id']
-        for i, sent_item in enumerate(all_sent_list):
-            sent_item['selection_id'] = str(cur_id) + "<##>" + str(sent_item['sid'])
-            sent_item['query'] = item['claim']
-            full_data_list.append(sent_item)
-
-    conn.close()
-    return full_data_list
-
 
 
 def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True, id_tokenized=True):
@@ -247,7 +171,7 @@ def post_filter(d_list, keep_prob=0.75, seed=12):
 #     fever_db.get_all_sent_by_doc_id(cursor, doc_id)
 
 
-def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
+def get_tfidf_sample(paras: bert_para.BERT_para):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
     :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
@@ -255,10 +179,10 @@ def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
     :return:
     """
 
-    if not isinstance(tfidf_ss_data_file, list):
-        d_list = read_json_rows(tfidf_ss_data_file)
+    if not isinstance(paras.upstream_data, list):
+        d_list = read_json_rows(paras.upstream_data)
     else:
-        d_list = tfidf_ss_data_file
+        d_list = paras.upstream_data
 
     full_sample_list = []
 
@@ -268,7 +192,7 @@ def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
     for item in tqdm(d_list):
         predicted_evidence = item["predicted_sentids"]
         ground_truth = item['evidence']
-        if not pred:
+        if not paras.pred:
             if ground_truth is not None and len(ground_truth) > 0:
                 e_list = utils.check_sentences.check_and_clean_evidence(item)
                 all_evidence_set = set(itertools.chain.from_iterable([evids.evidences_list for evids in e_list]))
@@ -292,7 +216,7 @@ def get_tfidf_sample_for_nn(tfidf_ss_data_file, pred=False, top_k=3):
         num_envs = 0 if all_evidence_set is None else len(all_evidence_set)
         count_truth.append(num_envs)
         for pred_item in predicted_evidence:
-            if num_envs >= top_k:
+            if num_envs >= paras.sample_n:
                 break
             doc_id, ln = pred_item.split(c_scorer.SENT_LINE)[0], int(pred_item.split(c_scorer.SENT_LINE)[1])
             tmp_id = doc_id + '(-.-)' + str(ln)
@@ -341,8 +265,7 @@ def count_truth_examples(sample_list):
     print(f"Truth count/total count: , {count_hit}/{len(sample_list)}/{count_hit / len(sample_list)}")
 
 
-def eval_sample_length(upstream_data):
-    samples = get_tfidf_sample_for_nn(upstream_data, pred=False, top_k=3)
+def eval_sample_length(samples):
     count = Counter()
     length_list = []
     for item in samples:
@@ -356,30 +279,25 @@ def eval_sample_length(upstream_data):
     print(np.std(length_list))
 
 
-
-
-
 if __name__ == '__main__':
     logger.info("test")
-    tfidf_upstram_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[5:10]
-    eval_sample_length(tfidf_upstram_data)
-
-    sample_tfidf = get_tfidf_sample_for_nn(tfidf_upstram_data, pred=False, top_k=3)
+    paras = bert_para.BERT_para()
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[5:10]
+    paras.sample_n = 3
+    paras.pred = False
+    sample_tfidf = get_tfidf_sample(paras)
+    eval_sample_length(sample_tfidf)
     count_truth_examples(sample_tfidf)
 
+    paras2 = bert_para.BERT_para()
     dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[5:10]
-    complete_upstream_train_data = get_full_list_sample_for_nn(dev_upstream_data, pred=False)
-    # filtered_train_data = post_filter(complete_upstream_train_data, keep_prob=0.03, seed=12)
+    paras2.upstream_data = dev_upstream_data
+    paras2.pred = False
+    paras2.post_filter_prob = 0.5
+    complete_upstream_train_data = get_full_list_sample(paras2)
     filtered_train_data = complete_upstream_train_data
     full_list = complete_upstream_train_data
+    eval_sample_length(full_list)
+    count_truth_examples(full_list)
 
-    print(len(full_list))
-    print(len(filtered_train_data))
-    count_hit = 0
-    for item in filtered_train_data:
-        # print(item)
-        if item['selection_label'] == 'true':
-            count_hit += 1
-
-    print(count_hit, len(filtered_train_data), count_hit / len(filtered_train_data))
 

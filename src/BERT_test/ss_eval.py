@@ -140,9 +140,9 @@ def pred_ss_and_save(paras : bert_para.BERT_para):
     processor = FeverSSProcessor()
     eval_batch_size = 8
     if paras.mode == 'test':
-        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, pred=True, top_k=10)
+        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, sampler='ss_full', pred=True, top_k=10)
     else:
-        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, sampler='ss_full', pred=True, top_k=10)
+        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, sampler='ss_full', pred=paras.pred, top_k=10)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)
@@ -258,6 +258,7 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
 
 
 def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_data=True):
+
     if not isinstance(paras.prob_thresholds, list):
         prob_thresholds = [paras.prob_thresholds]
     else:
@@ -272,16 +273,20 @@ def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_da
 
         if paras.mode is 'dev':
             eval_mode = {'check_sent_id_correct': True, 'standard': False}
-            strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(results_list,
+            for n in paras.top_n:
+
+                strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(results_list,
                                                                     paras.original_data,
-                                                                        max_evidence=paras.top_n,
+                                                                    max_evidence=n,
                                                                     mode=eval_mode,
                                                                     error_analysis_file=paras.get_f1_log_file(f'{scal_prob}_ss'),
                                                                     verbose=False)
-            tracking_score = strict_score
-            print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
-            print("Strict score:", strict_score)
-            print(f"Eval Tracking score:", f"{tracking_score}")
+
+                tracking_score = strict_score
+                print(f"max evidence number:", n)
+                print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
+                print("Strict score:", strict_score)
+                print(f"Eval Tracking score:", f"{tracking_score}")
 
     if save_data:
         save_intermidiate_results(results_list, paras.get_eval_data_file('ss'))
@@ -309,13 +314,13 @@ if __name__ == "__main__":
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
 
     paras.output_folder = "dev_pred_ss_" + get_current_time_str()
-    paras.sample_n = 10
-
     paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[5:10]
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[5:10]
     paras.mode = 'dev'
     paras.pred = False
-    paras.top_n = 10
+    paras.sample_n = 10
+    paras.post_filter_prob = 0.5
+    paras.top_n = [10, 5]
     pred_ss_and_save(paras)
     # eval_ss_and_save(paras)
 

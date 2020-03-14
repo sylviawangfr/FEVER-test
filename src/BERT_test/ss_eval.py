@@ -268,7 +268,7 @@ def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_da
 
         results_list = ss_score_converter(paras.original_data, upstream_eval_list,
                                           prob_threshold=scal_prob,
-                                          top_n = paras.top_n)
+                                          top_n=paras.top_n)
 
         if paras.mode is 'dev':
             eval_mode = {'check_sent_id_correct': True, 'standard': False}
@@ -314,11 +314,12 @@ if __name__ == "__main__":
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:3]
     paras.mode = 'dev'
     paras.pred = False
+    paras.top_n = 10
     eval_ss_and_save(paras)
 
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / 'dev_doc_retrieve.jsonl')
     # paras.mode = 'dev'
     # paras.pred = True
-    pred_ss_and_save(paras)
+    # pred_ss_and_save(paras)
 

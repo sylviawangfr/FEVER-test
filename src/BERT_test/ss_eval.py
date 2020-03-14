@@ -274,6 +274,7 @@ def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_da
             eval_mode = {'check_sent_id_correct': True, 'standard': False}
             strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(results_list,
                                                                     paras.original_data,
+                                                                        max_evidence=paras.top_n,
                                                                     mode=eval_mode,
                                                                     error_analysis_file=paras.get_f1_log_file(f'{scal_prob}_ss'),
                                                                     verbose=False)

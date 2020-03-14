@@ -361,15 +361,16 @@ def eval_sample_length(upstream_data):
 
 if __name__ == '__main__':
     logger.info("test")
-    tfidf_upstram_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:10]
+    tfidf_upstram_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[5:10]
     eval_sample_length(tfidf_upstram_data)
 
     sample_tfidf = get_tfidf_sample_for_nn(tfidf_upstram_data, pred=False, top_k=3)
     count_truth_examples(sample_tfidf)
 
-    dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:10]
+    dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[5:10]
     complete_upstream_train_data = get_full_list_sample_for_nn(dev_upstream_data, pred=False)
-    filtered_train_data = post_filter(complete_upstream_train_data, keep_prob=0.03, seed=12)
+    # filtered_train_data = post_filter(complete_upstream_train_data, keep_prob=0.03, seed=12)
+    filtered_train_data = complete_upstream_train_data
     full_list = complete_upstream_train_data
 
     print(len(full_list))

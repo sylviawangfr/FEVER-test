@@ -49,11 +49,7 @@ def eval_ss_and_save(paras : bert_para.BERT_para):
     model.to(device)
     processor = FeverSSProcessor()
     eval_batch_size = 8
-
-    if paras.mode == 'dev':
-        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, pred=paras.pred, top_k=paras.sample_n)
-    else:
-        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, pred=paras.pred, top_k=paras.sample_n)
+    eval_examples, eval_list = processor.get_dev_examples(paras)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)
@@ -140,9 +136,9 @@ def pred_ss_and_save(paras : bert_para.BERT_para):
     processor = FeverSSProcessor()
     eval_batch_size = 8
     if paras.mode == 'test':
-        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, sampler='ss_full', pred=True, top_k=10)
+        eval_examples, eval_list = processor.get_test_examples(paras, sampler='ss_full')
     else:
-        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, sampler='ss_full', pred=paras.pred, top_k=10)
+        eval_examples, eval_list = processor.get_dev_examples(paras, sampler='ss_full')
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)

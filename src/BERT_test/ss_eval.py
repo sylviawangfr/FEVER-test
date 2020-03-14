@@ -315,7 +315,8 @@ if __name__ == "__main__":
     paras.mode = 'dev'
     paras.pred = False
     paras.top_n = 10
-    eval_ss_and_save(paras)
+    pred_ss_and_save(paras)
+    # eval_ss_and_save(paras)
 
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / 'dev_doc_retrieve.jsonl')

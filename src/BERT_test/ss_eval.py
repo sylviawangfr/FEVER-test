@@ -310,8 +310,8 @@ if __name__ == "__main__":
     paras.output_folder = "dev_pred_ss_" + get_current_time_str()
     paras.sample_n = 10
 
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[0:3]
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:3]
+    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[5:10]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[5:10]
     paras.mode = 'dev'
     paras.pred = False
     paras.top_n = 10

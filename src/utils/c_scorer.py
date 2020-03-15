@@ -400,6 +400,7 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
                 if check_sent_correct(instance, actual[idx]):
                     mode['check_sent_id_correct_hits'] += 1
                 else:
+                    print(instance)
                     error_count += 1
                     if 'predicted_evidence' in instance.keys():
                         error_items.append(get_pred_instantce_details(instance))

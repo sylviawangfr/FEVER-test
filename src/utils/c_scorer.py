@@ -289,7 +289,6 @@ def check_sent_correct(instance, actual, number_of_preds):
         for evience_group in actual["evidence"]:
             # Filter out the annotation ids. We just want the evidence page and line number
             sentids = [e[2] + SENT_LINE + str(e[3]) for e in evience_group]
-            print(sentids)
             # Only return true if an entire group of actual sentences is in the predicted sentences
             pred_ids = sorted(instance["predicted_sentids"], reverse=True)[:number_of_preds]
             if all([sentid in pred_ids for sentid in sentids]):

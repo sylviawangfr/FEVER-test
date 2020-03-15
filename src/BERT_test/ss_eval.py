@@ -269,29 +269,26 @@ def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_da
         print("Eval Data prob_threshold:", scal_prob)
 
         for n in top_n:
+            print(f"max evidence number:", n)
             results_list = ss_score_converter(paras.original_data, upstream_eval_list,
                                           prob_threshold=scal_prob,
                                           top_n=n)
-
-        if paras.mode is 'dev':
-            eval_mode = {'check_sent_id_correct': True, 'standard': False}
-            for n in paras.top_n:
+            if paras.mode is 'dev':
+                eval_mode = {'check_sent_id_correct': True, 'standard': False}
                 strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(results_list,
                                                                     paras.original_data,
                                                                     max_evidence=n,
                                                                     mode=eval_mode,
                                                                     error_analysis_file=paras.get_f1_log_file(f'{scal_prob}_{n}_ss'),
                                                                     verbose=False)
-
                 tracking_score = strict_score
-                print(f"max evidence number:", n)
                 print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
                 print("Strict score:", strict_score)
                 print(f"Eval Tracking score:", f"{tracking_score}")
 
-        if save_data:
-            save_intermidiate_results(results_list, paras.get_eval_data_file(f'ss_{n}'))
-            save_intermidiate_results(upstream_eval_list, paras.get_eval_item_file(f'ss_{n}'))
+            if save_data:
+                save_intermidiate_results(results_list, paras.get_eval_data_file(f'ss_{n}'))
+                save_intermidiate_results(upstream_eval_list, paras.get_eval_item_file(f'ss_{n}'))
 
 
 def softmax_test(z):
@@ -315,8 +312,8 @@ if __name__ == "__main__":
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
 
     paras.output_folder = "dev_pred_ss_" + get_current_time_str()
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[5:10]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[5:10]
     paras.mode = 'dev'
     paras.pred = False
     paras.sample_n = 10

@@ -279,7 +279,7 @@ def check_doc_id_correct(instance, actual, max_length=None):
     return False
 
 
-def check_sent_correct(instance, actual):
+def check_sent_correct(instance, actual, number_of_preds):
     check_predicted_evidence_format(instance)
 
     # if actual is not None:
@@ -289,8 +289,9 @@ def check_sent_correct(instance, actual):
         for evience_group in actual["evidence"]:
             # Filter out the annotation ids. We just want the evidence page and line number
             sentids = [e[2] + SENT_LINE + str(e[3]) for e in evience_group]
+            print(sentids)
             # Only return true if an entire group of actual sentences is in the predicted sentences
-            pred_ids = sorted(instance["predicted_sentids"], reverse=True)[:5]
+            pred_ids = sorted(instance["predicted_sentids"], reverse=True)[:number_of_preds]
             if all([sentid in pred_ids for sentid in sentids]):
                 return True
 
@@ -397,10 +398,9 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
                     error_items.append(instance)
 
             if 'check_sent_id_correct' in mode and mode['check_sent_id_correct']:
-                if check_sent_correct(instance, actual[idx]):
+                if check_sent_correct(instance, actual[idx], max_evidence):
                     mode['check_sent_id_correct_hits'] += 1
                 else:
-                    print(instance)
                     error_count += 1
                     if 'predicted_evidence' in instance.keys():
                         error_items.append(get_pred_instantce_details(instance))

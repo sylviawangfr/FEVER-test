@@ -318,7 +318,7 @@ if __name__ == "__main__":
     paras.pred = False
     paras.sample_n = 10
     paras.post_filter_prob = 0.5
-    paras.top_n = [10]
+    paras.top_n = [10, 5]
     paras.prob_thresholds = 0.4
     pred_ss_and_save(paras)
     # eval_ss_and_save(paras)

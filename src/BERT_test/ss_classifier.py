@@ -304,7 +304,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
         paras.BERT_tokenizer = output_dir
         paras.output_folder = output_folder
         paras.prob_thresholds = 0.5
-        paras.top_n = [10, 5]
+        paras.top_n = 5
         paras.sample_n = 3
         eval_ss_and_save(paras)
 

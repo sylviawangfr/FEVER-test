@@ -312,8 +312,8 @@ if __name__ == "__main__":
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
 
     paras.output_folder = "dev_pred_ss_" + get_current_time_str()
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[5:10]
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[5:10]
+    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
     paras.mode = 'dev'
     paras.pred = False
     paras.sample_n = 10

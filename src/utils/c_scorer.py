@@ -323,6 +323,24 @@ def get_ss_recall_precision(result_list):
     print(f"recall/precision:{recall}/{precision}")
 
 
+def get_macro_ss_recall_precision(result_list):
+    macro_precision = 0
+    macro_precision_hits = 0
+    macro_recall = 0
+    macro_recall_hits = 0
+    for instance in result_list:
+        macro_prec = evidence_macro_precision(instance)
+        macro_precision += macro_prec[0]
+        macro_precision_hits += macro_prec[1]
+
+        macro_rec = evidence_macro_recall(instance)
+        macro_recall += macro_rec[0]
+        macro_recall_hits += macro_rec[1]
+    pr = (macro_precision / macro_precision_hits) if macro_precision_hits > 0 else 1.0
+    rec = (macro_recall / macro_recall_hits) if macro_recall_hits > 0 else 0.0
+    print(f"recall/precision:{rec}/{pr}")
+
+
 def get_nli_error_items(predictions, error_analysis_file):
     log_print = utils.get_adv_print_func(error_analysis_file);
     for idx, instance in enumerate(predictions):
@@ -564,4 +582,6 @@ if __name__ == "__main__":
     upstream_data5 = read_json_rows(config.RESULT_PATH / 'dev_pred_ss_2020_03_15_16:50:23/eval_data_ss_5_dev_0.4_top[10, 5].jsonl')
     upstream_data10 = read_json_rows(config.RESULT_PATH / 'dev_pred_ss_2020_03_15_16:50:23/eval_data_ss_10_dev_0.4_top[10, 5].jsonl')
     get_ss_recall_precision(upstream_data5)
+    get_macro_ss_recall_precision(upstream_data5)
     get_ss_recall_precision(upstream_data10)
+    get_macro_ss_recall_precision(upstream_data10)

@@ -310,7 +310,7 @@ def get_ss_recall_precision(result_list):
             evi_ids = []
             for evience_group in item["evidence"]:
                 # Filter out the annotation ids. We just want the evidence page and line number
-                evi_ids = evi_ids.append([e[2] + SENT_LINE + str(e[3]) for e in evience_group])
+                evi_ids = evi_ids.extend([e[2] + SENT_LINE + str(e[3]) for e in evience_group])
             all_truth_s += len(set(evi_ids))
 
             for pred_s in pred_ids:

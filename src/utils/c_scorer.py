@@ -299,6 +299,26 @@ def check_sent_correct(instance, actual, number_of_preds):
 
     return False
 
+def get_ss_recall_precision(result_list):
+    all_truth_s = 0
+    all_true_preds = 0
+    all_preds = 0
+    for item in result_list:
+        if item["label"].upper() != "NOT ENOUGH INFO":
+            for evience_group in item["evidence"]:
+                # Filter out the annotation ids. We just want the evidence page and line number
+                sentids = [e[2] + SENT_LINE + str(e[3]) for e in evience_group]
+                all_true_preds += len(sentids)
+                # Only return true if an entire group of actual sentences is in the predicted sentences
+                pred_ids = item["predicted_sentids"]
+                all_preds += len(pred_ids)
+                for pred_s in pred_ids:
+                    if pred_s in sentids:
+                        all_true_preds += 1
+    recall = all_true_preds / all_truth_s
+    precision = all_true_preds / all_preds
+    print(f"recall/precision:{recall}/{precision}")
+
 
 def get_nli_error_items(predictions, error_analysis_file):
     log_print = utils.get_adv_print_func(error_analysis_file);
@@ -535,6 +555,10 @@ if __name__ == "__main__":
     #             read_json_rows(config.DOC_RETRV_DEV),
     #             mode=eval_mode,
     #             error_analysis_file=config.LOG_PATH / 'dev_pred_f1_error_items.log')
-    upstream_data = read_json_rows(config.RESULT_PATH / 'eval_data_nli_dev_0.5_top5.jsonl')
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    nei_stats(upstream_data, original_data)
+    # upstream_data = read_json_rows(config.RESULT_PATH / 'eval_data_nli_dev_0.5_top5.jsonl')
+    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # nei_stats(upstream_data, original_data)
+    upstream_data5 = read_json_rows(config.RESULT_PATH / 'dev_pred_ss_2020_03_15_16:50:23/eval_data_ss_5_dev_0.4_top[10, 5].jsonl')
+    upstream_data10 = read_json_rows(config.RESULT_PATH / 'dev_pred_ss_2020_03_15_16:50:23/eval_data_ss_10_dev_0.4_top[10, 5].jsonl')
+    get_ss_recall_precision(upstream_data5)
+    get_ss_recall_precision(upstream_data10)

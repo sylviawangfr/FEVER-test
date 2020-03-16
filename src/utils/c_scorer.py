@@ -305,16 +305,18 @@ def get_ss_recall_precision(result_list):
     all_preds = 0
     for item in result_list:
         if item["label"].upper() != "NOT ENOUGH INFO":
+            pred_ids = item["predicted_sentids"]
+            all_preds += len(pred_ids)
+            evi_ids = []
             for evience_group in item["evidence"]:
                 # Filter out the annotation ids. We just want the evidence page and line number
-                sentids = [e[2] + SENT_LINE + str(e[3]) for e in evience_group]
-                all_true_preds += len(sentids)
-                # Only return true if an entire group of actual sentences is in the predicted sentences
-                pred_ids = item["predicted_sentids"]
-                all_preds += len(pred_ids)
-                for pred_s in pred_ids:
-                    if pred_s in sentids:
-                        all_true_preds += 1
+                evi_ids = evi_ids.append([e[2] + SENT_LINE + str(e[3]) for e in evience_group])
+            all_truth_s += len(set(evi_ids))
+
+            for pred_s in pred_ids:
+                if pred_s in set(evi_ids):
+                    all_true_preds += 1
+
     recall = all_true_preds / all_truth_s
     precision = all_true_preds / all_preds
     print(f"recall/precision:{recall}/{precision}")

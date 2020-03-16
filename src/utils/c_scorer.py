@@ -319,6 +319,7 @@ def get_ss_recall_precision(result_list):
 
     recall = all_true_preds / all_truth_s
     precision = all_true_preds / all_preds
+    print(f"total truth/total true preds/total preds: {all_truth_s}/{all_true_preds}/{all_preds}")
     print(f"recall/precision:{recall}/{precision}")
 
 

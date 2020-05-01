@@ -215,7 +215,7 @@ def evidence_macro_precision(instance, max_evidence=None):
                 this_precision += 1.0
             this_precision_hits += 1.0
 
-        return this_precision , this_precision_hits if this_precision_hits > 0 else 1.0, 1.0
+        return this_precision, this_precision_hits if this_precision_hits > 0 else 1.0, 1.0
 
     return 0.0, 0.0
 

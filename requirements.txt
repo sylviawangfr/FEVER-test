@@ -3,3 +3,5 @@ elasticsearch>=6.3.0
 tqdm
 pytorch_pretrained_bert
 matplotlib
+pyspotlight
+validators

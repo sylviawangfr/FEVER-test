@@ -61,3 +61,19 @@ class SpacyTokenizer(Tokenizer):
 
         # Set special option for non-entity tag: '' vs 'O' in spaCy
         return Tokens(data, self.annotators, opts={'non_ent': ''})
+
+    def parseDependency(self, text):
+        clean_text = text.replace('\n', ' ')
+        doc = self.nlp(text)
+        for word in doc:
+            if word.dep_ in ("xcomp", "ccomp"):
+                print("".join(w.text_with_ws for w in word.subtree))
+
+
+    def parse_noun_chunks(self, text):
+        clean_text = text.replace('\n', ' ')
+        doc = self.nlp("text")
+        chunks = []
+        for chunk in doc.noun_chunks:
+            chunks.append(chunk.text)
+        return chunks

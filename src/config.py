@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import platform
 
 SRC_ROOT = Path(os.path.dirname(os.path.realpath(__file__)))
 PRO_ROOT = SRC_ROOT.parent
@@ -42,7 +43,22 @@ DOC_RETRV_DEV = RESULT_PATH / "dev_doc_retrieve.jsonl"
 S_TFIDF_RETRV_DEV = RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
 DOC_RETRV_TEST = RESULT_PATH / "test_doc_retrieve.jsonl"
 
+# ------------------------HOSTS-----------------------
+DBPEDIA_LOOKUP_PORT = 1111 if platform.system() is 'Linux' else 5001
+DBPEDIA_LOOKUP_URL = f"http://localhost:{DBPEDIA_LOOKUP_PORT}/api/search/KeywordSearch?QueryString="
+
+DBPEDIA_SPOTLIGHT_PORT = 2222 if platform.system() is 'Linux' else 5000
+DBPEDIA_SPOTLIGHT_URL = f"http://localhost:{DBPEDIA_SPOTLIGHT_PORT}/rest/annotate"
+
+DBPEDIA_GRAPH_PORT = 8890 if platform.system() is 'Linux' else 5002
+DBPEDIA_GRAPH_URL = f"http://localhost:{DBPEDIA_GRAPH_PORT}/sparql"
+
+BERT_SERVICE_PORT = 5555 if platform.system() is 'Linux' else 5003
+BERT_SERVICE_URL = f"http://localhost:{BERT_SERVICE_PORT}"
+
 if __name__ == '__main__':
+    print(DBPEDIA_LOOKUP_URL)
+    print(DBPEDIA_SPOTLIGHT_URL)
     print("PRO_ROOT", PRO_ROOT)
     print("SRC_ROOT", SRC_ROOT)
     print("UTEST_ROOT", UTEST_ROOT)

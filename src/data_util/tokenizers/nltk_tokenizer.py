@@ -12,6 +12,12 @@ from nltk.stem import WordNetLemmatizer
 import copy
 from .tokenizer import Tokens, Tokenizer
 from nltk.chunk import tree2conlltags
+from nltk.parse import CoreNLPParser
+from nltk.parse import CoreNLPDependencyParser
+
+from nltk.parse.dependencygraph import *
+from nltk.tree import *
+
 
 
 class NLTKTokenizer(Tokenizer):
@@ -73,3 +79,19 @@ class NLTKTokenizer(Tokenizer):
 
         # Set special option for non-entity tag: '' vs 'O' in spaCy
         return Tokens(data, self.annotators, opts={'non_ent': ''})
+
+
+    def parse_dependency(self, text):
+        parser = CoreNLPParser(url='http://localhost:9000')
+        iter = parser.raw_parse(text)
+        t = next(iter)
+        t.pretty_print()
+        parser = CoreNLPDependencyParser(url='http://localhost:9000')
+        dg = next(parser.raw_parse(text))
+        t2 = dg.tree()
+        t2.pretty_print()
+
+
+
+
+

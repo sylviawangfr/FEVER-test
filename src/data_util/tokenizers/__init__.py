@@ -15,11 +15,9 @@ import os
 # def set_default(key, value):
 #     # global DEFAULTS
 #     DEFAULTS[key] = value
-
-
-
-from .regexp_tokenizer import RegexpTokenizer
-from .simple_tokenizer import SimpleTokenizer
+from data_util.tokenizers.regexp_tokenizer import RegexpTokenizer
+from data_util.tokenizers.simple_tokenizer import SimpleTokenizer
+from data_util.tokenizers.nltk_tokenizer import NLTKTokenizer
 
 # Spacy is optional
 try:
@@ -54,3 +52,7 @@ def get_annotators_for_args(args):
 
 def get_annotators_for_model(model):
     return get_annotators_for_args(model.args)
+
+if __name__ == "__main__":
+    t = NLTKTokenizer()
+    t.parse_dependency('Roman Atwood is a content creator.')

@@ -12,7 +12,8 @@ PREFIX_DBR = "http://dbpedia.org/resource/"
 
 
 def get_triples(query_str):
-    sparql = SPARQLWrapper(config.DBPEDIA_GRAPH_PORT, defaultGraph=DEFAULT_GRAPH)
+    sparql = SPARQLWrapper(config.DBPEDIA_GRAPH_URL, defaultGraph=DEFAULT_GRAPH)
+    sparql.setTimeout(5)
     sparql.setQuery(query_str)
     sparql.setReturnFormat(JSON)
     triples = []
@@ -26,8 +27,9 @@ def get_triples(query_str):
             triples.append(tri)
         print(json.dumps(triples, indent=4))
         return triples
-    except:
+    except Exception as err:
         print("failed to query dbpedia virtuoso...")
+        print(err)
         return triples
 
 
@@ -87,16 +89,14 @@ def get_ontology_linked_values_outbound(resource_uri):
 
 def get_ontology_linked_values_inbound(resource_uri):
     query_str = f"PREFIX dbo: <{PREFIX_DBO}> " \
-        f"SELECT distinct (?subject ?relation <{resource_uri}> AS ?object " \
+        f"SELECT distinct ?subject ?relation (<{resource_uri}> AS ?object) " \
         "FROM <http://dbpedia.org> WHERE { " \
         f"?subject ?relation <{resource_uri}> . " \
         "filter contains(str(?relation), 'ontology') " \
+        "filter (!contains(str(?relation), \'wiki\'))"  \
         "filter (?relation not in (" \
         "dbo:thumbnail, " \
-        "dbo:abstract, " \
-        "dbo:wikiPageID, " \
-        "dbo:wikiPageRevisionID, " \
-        "dbo:wikiPageExternalLink))}"
+        "dbo:abstract))}"
     tris = get_triples(query_str)
     for tri in tris:
         rel_split = keyword_extract(tri['relation'])
@@ -109,7 +109,7 @@ def get_one_hop_resource_inbound(resource_uri):
     query_str_inbound = f"SELECT distinct ?subject ?relation (<{resource_uri}> AS ?object) " \
         f"WHERE {{ ?subject ?relation <{resource_uri}> . " \
         "filter (!contains(str(?relation), \'wiki\')) " \
-        "filter (!contains(str(?relation), \'onotology\')) " \
+        "filter (!contains(str(?relation), \'ontology\')) " \
         "filter contains(str(?subject), \'http://dbpedia.org/resource/\')}"
     tris = get_triples(query_str_inbound)
     for tri in tris:
@@ -176,13 +176,17 @@ if __name__ == "__main__":
     on = "http://dbpedia.org/ontology/City"
     o1 = get_categories_one_hop_child(on)
     o2 =get_categories_one_hop_parent(on)
+    get_properties(res)
+    get_one_hop_resource_inbound(res)
+    get_one_hop_resource_outbound(res)
+    get_ontology_linked_values_inbound(res)
+    get_ontology_linked_values_outbound(res)
+
     # get_keyword(re)
     # str = ['birthPlace', 'USA', 'Magic_Johnson', '112.3', 'USA_flag']
     # on = "http://dbpedia.org/resource/Los_Angeles_Lakers"
     t = get_one_hop_resource_inbound(res)
     print(t)
-    # trui = get_properties(re)
-    # print(tri1)
-    # print(tri2)
+
 
 

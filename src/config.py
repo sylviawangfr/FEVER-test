@@ -54,7 +54,8 @@ DBPEDIA_GRAPH_PORT = 8890 if platform.system() is 'Linux' else 5002
 DBPEDIA_GRAPH_URL = f"http://localhost:{DBPEDIA_GRAPH_PORT}/sparql"
 
 BERT_SERVICE_PORT = 5555 if platform.system() is 'Linux' else 5003
-BERT_SERVICE_URL = f"http://localhost:{BERT_SERVICE_PORT}"
+BERT_SERVICE_PORT_OUT = 5556 if platform.system() is 'Linux' else 5004
+
 
 if __name__ == '__main__':
     print(DBPEDIA_LOOKUP_URL)

@@ -9,7 +9,7 @@ from dbpedia_sampler.dbpedia_virtuoso import keyword_extract
 def lookup_resource(text_phrase):
     url = config.DBPEDIA_LOOKUP_URL + text_phrase
     print(url)
-    response = requests.get(url, timeout=2)
+    response = requests.get(url, timeout=5)
     if response.status_code is 200:
         results = xmltodict.parse(response.text)
         if len(results['ArrayOfResult']) <= 3:

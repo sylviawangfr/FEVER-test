@@ -4,6 +4,8 @@ from dbpedia_sampler import dbpedia_virtuoso
 from dbpedia_sampler import bert_similarity
 import json
 import itertools
+import numpy as np
+import sklearn.metrics.pairwise as pw
 
 
 def get_phrases(text):
@@ -37,7 +39,7 @@ def construct_subgraph(text):
     not_linked_phrases_l = []
     linked_phrases_l = []
     relative_hash = {key: set() for key in phrases}
-    keyword_embeddings = {key:[ ] for key in phrases}
+    embeddings_hash = {key: [] for key in phrases}
 
     for p in phrases:
         linked_phrase = dict()
@@ -56,31 +58,25 @@ def construct_subgraph(text):
             linked_phrase['URI'] = resource
             linked_phrases_l.append(linked_phrase)
 
-    filter_resource_vs_keyword(linked_phrases_l, relative_hash)
-    filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, relative_hash)
-    filter_keyword_vs_keyword(linked_phrases_l, relative_hash)
+    filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
+    # filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, embeddings_hash, relative_hash)
+    # filter_keyword_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
 
 
     # print(json.dumps(filtered_triples, indent=4))
 
 
-def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, relative_hash):
+def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embeddings, relative_hash):
     result = []
     for one_phrase in not_linked_phrases_l:
         for linked_p in linked_phrases_l:
-            filtered_triples = []
             text = linked_p['text']
-            uri = linked_p['URI']
-            candidates = linked_p['categories'] + linked_p['ontology_linked_values'] + \
-                         linked_p['linked_resources'] + linked_p['properties']
-            filtered_triples.append(get_topk_triples(one_phrase, candidates, top_k=3))
+            filtered_triples = get_topk_similar_triples(one_phrase, linked_p, keyword_embeddings, top_k=3)
             for tri in filtered_triples:
-                tri['relatives'] = [linked_p['URI'], one_phrase]
-                tri['text'] = text
-                tri['URI'] = uri
-            relative_hash[one_phrase].add(linked_p)
-            relative_hash[text].add(one_phrase)
-            result.append(filtered_triples)
+                if not does_tri_exit_in_list(tri, result):
+                    relative_hash[one_phrase].add(linked_p)
+                    relative_hash[text].add(one_phrase)
+                    result.append(tri)
     return result
 
 
@@ -93,13 +89,12 @@ def does_tri_exit_in_list(tri, tri_l):
     return False
 
 
-def filter_resource_vs_keyword(linked_phrases_l, relative_hash):
+def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash):
     result = []
     for i in itertools.permutations(linked_phrases_l, 2):
         uri_matched = False
         resource1 = i[0]         # key
         resource2 = i[1]        # candidates
-        resource1_uri_short = dbpedia_virtuoso.keyword_extract(resource1['URI'])
         candidates = resource2['categories'] + resource2['ontology_linked_values'] + \
                      resource2['linked_resources'] + resource2['properties']
         resource1_uri = resource1['URI']
@@ -114,19 +109,16 @@ def filter_resource_vs_keyword(linked_phrases_l, relative_hash):
                     item['URI'] = resource2['URI']
                     result.append(item)
 
-        if not uri_matched:
-            filtered_triples = get_topk_triples(resource1_uri_short, candidates, top_k=3)
+        if uri_matched:
+            filtered_triples = get_topk_similar_triples(resource1_uri, resource2, keyword_embeddings, top_k=3)
             for item in filtered_triples:
                 if not does_tri_exit_in_list(item, result):
-                    item['relatives'] = [resource2['URI'], resource1['URI']]
-                    item['text'] = resource2['text']
-                    item['URI'] = resource2['URI']
                     result.append(item)
     return result
 
 
 
-def filter_keyword_vs_keyword(linked_phrases_l, relative_hash):
+def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash):
     result = []
     for i in itertools.combinations(linked_phrases_l, 2):
         resource1 = i[0]
@@ -153,40 +145,84 @@ def filter_keyword_vs_keyword(linked_phrases_l, relative_hash):
                         item2['text'] = resource2['text']
                         item2['URI'] = resource2['URI']
                         result.append(item2)
-        if not exact_match:
-            candidates1_keywords = [' '.join(c['keywords']) for c in candidates1]
-            candidates2_keywords = [' '.join(c['keywords']) for c in candidates2]
-            top_k_pair = bert_similarity.get_most_close_pair(candidates1_keywords, candidates2_keywords, top_k=3)
-            for item in top_k_pair:
-                tri1 = candidates1[item[0]]
-                tri2 = candidates2[item[1]]
-                score = item[2]
-                if not does_tri_exit_in_list(tri1, result):
-                    tri1['relatives'] = [resource1['URI'], resource2['URI']]
-                    tri1['text'] = resource1['text']
-                    tri1['URI'] = resource1['URI']
-                    tri1['score'] = score
-                    result.append(tri1)
-                if not does_tri_exit_in_list(tri2, result):
-                    tri2['relatives'] = [resource2['URI'], resource1['URI']]
-                    tri2['text'] = resource2['text']
-                    tri2['URI'] = resource2['URI']
-                    tri2['score'] = score
-                    result.append(tri2)
+        if exact_match:
+            top_k_pairs = get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=3)
+            for item in top_k_pairs:
+                if not does_tri_exit_in_list(item, result):
+                    result.append(item)
     return result
 
 
+def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
+    candidates1 = resource1['categories'] + resource1['ontology_linked_values'] + \
+                  resource1['linked_resources'] + resource1['properties']
+    candidates2 = resource2['categories'] + resource2['ontology_linked_values'] + \
+                  resource2['linked_resources'] + resource2['properties']
+    tri_keywords_l1 = [' '.join(tri['keywords']) for tri in candidates1]
+    tri_keywords_l2 = [' '.join(tri['keywords']) for tri in candidates2]
+    embedding1 = keyword_embeddings[resource1['text']]
+    embedding2 = keyword_embeddings[resource2['text']]
+    if len(embedding1) == 0:
+        embedding1 = bert_similarity.get_phrase_embedding(tri_keywords_l1)
+        keyword_embeddings[resource1['text']] = embedding1
+    if len(embedding2) == 0:
+        embedding2 = bert_similarity.get_phrase_embedding(tri_keywords_l2)
+        keyword_embeddings[resource2['text']] = embedding2
 
-def get_topk_triples(keyword, triple_l, top_k=2):
-    topk_l = bert_similarity.get_topk_similar_phrases(keyword, [' '.join(tri['keywords']) for tri in triple_l],
-                                              top_k=top_k)
-    for i in topk_l:
-        idx = i['idx']
-        i['subject'] = triple_l[idx]['subject']
-        i['relation'] = triple_l[idx]['relation']
-        i['object'] = triple_l[idx]['object']
-    return topk_l
+    out = pw.cosine_similarity(embedding1, embedding2).flatten()
+    topk_idx = np.argsort(out)[::-1][:top_k]
+    len2 = len(tri_keywords_l2)
+    result = []
+    for item in topk_idx:
+        tri1 = candidates1[item//len2]
+        tri2 = candidates2[item%len2]
+        score = out[item]
+        tri1['relatives'] = [resource1['URI'], resource2['URI']]
+        tri1['text'] = resource1['text']
+        tri1['URI'] = resource1['URI']
+        tri1['score'] = score
+        tri2['relatives'] = [resource2['URI'], resource1['URI']]
+        tri2['text'] = resource2['text']
+        tri2['URI'] = resource2['URI']
+        tri2['score'] = score
+        result.append(tri1)
+        result.append(tri2)
+    return result
 
+
+def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, top_k=2):
+    # get embedding of single_phrase
+    if single_phrase in keyword_embeddings:
+        keyword_vec = keyword_embeddings[single_phrase]
+        if len(keyword_vec) == 0:
+            keyword_vec = bert_similarity.get_phrase_embedding([single_phrase])[0]
+            keyword_embeddings[single_phrase] = keyword_vec
+    else:
+        short_phrase = dbpedia_virtuoso.keyword_extract(single_phrase)
+        keyword_vec = bert_similarity.get_phrase_embedding([short_phrase])[0]
+        keyword_embeddings[single_phrase] = keyword_vec
+
+    # get embedding for linked phrase triple keywords
+    candidates = linked_phrase['categories'] + linked_phrase['ontology_linked_values'] + \
+                 linked_phrase['linked_resources'] + linked_phrase['properties']
+    tri_keywords_l = [' '.join(tri['keywords']) for tri in candidates]
+    triple_vec_l = keyword_embeddings[linked_phrase['text']]
+    if len(triple_vec_l) == 0:
+        phrases_vecs = bert_similarity.get_phrase_embedding(tri_keywords_l)
+        keyword_embeddings[linked_phrase['text']] = phrases_vecs
+
+    score = np.sum(keyword_vec * phrases_vecs, axis=1) / np.linalg.norm(phrases_vecs, axis=1)
+    topk_idx = np.argsort(score)[::-1][:top_k]
+    result = []
+    for idx in topk_idx:
+        record = candidates[idx]
+        record['score'] = score[idx]
+        record['relatives'] = [linked_phrase['URI'], single_phrase]
+        record['text'] = linked_phrase['text']
+        record['URI'] = linked_phrase['URI']
+        result.append(record)
+        print('>%s\t%s' % (score[idx], tri_keywords_l[idx]))
+    return result
 
 if __name__ == '__main__':
     # text1 = "Autonomous cars shift insurance liability toward manufacturers"

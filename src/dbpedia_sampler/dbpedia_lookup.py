@@ -15,15 +15,21 @@ def lookup_resource(text_phrase):
         if len(results['ArrayOfResult']) <= 3:
             return -3
         else:
-            top_match = results['ArrayOfResult']['Result'][0]
+            re = results['ArrayOfResult']['Result']
+            top_match = re if isinstance(re, dict) else re[0]
             record = dict()
             record['Label'] = top_match['Label']
             record['URI'] = top_match['URI']
             catgr = []
-            cls_l = top_match['Classes']['Class']
+            if not top_match['Classes'] is None:
+                cl = top_match['Classes']['Class']
+                cls_l = [cl] if isinstance(cl, dict) else cl
+            else:
+                cls_l = []
             for c in cls_l:
-                if 'http://dbpedia.org/ontology/' in c['URI']:
-                    catgr.append(c['URI'])
+                if 'http://dbpedia.org/ontology/' in c['URI'] \
+                        or 'http://schema.org/' in c['URI']:
+                    catgr.append(c['URI'])                           # or 'http://www.w3.org/2002/07/owl' in c['URI'] \
             record['Classes'] = catgr
 
         print(json.dumps(record, indent=4))
@@ -50,4 +56,4 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
-    to_triples(lookup_resource('Berlin'))
+    lookup_resource('manufacturers')

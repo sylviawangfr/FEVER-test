@@ -4,8 +4,13 @@ import config
 
 
 def get_phrase_embedding(phrases):
-    bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=20000)
-    return bc.encode(phrases)
+    try:
+        bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=100000)
+        return bc.encode(phrases)
+    except Exception as err:
+        print("failed to get embedding for phrases...")
+        print(err)
+        return []
 
 
 if __name__ == '__main__':

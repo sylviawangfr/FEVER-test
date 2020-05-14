@@ -58,12 +58,11 @@ def construct_subgraph(text):
             linked_phrase['URI'] = resource
             linked_phrases_l.append(linked_phrase)
 
-    filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
-    # filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, embeddings_hash, relative_hash)
-    # filter_keyword_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
+    r1 = filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
+    r2 = filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, embeddings_hash, relative_hash)
+    r3 = filter_keyword_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
 
-
-    # print(json.dumps(filtered_triples, indent=4))
+    print(json.dumps(r3, indent=4))
 
 
 def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embeddings, relative_hash):
@@ -109,7 +108,7 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_ha
                     item['URI'] = resource2['URI']
                     result.append(item)
 
-        if uri_matched:
+        if not uri_matched:
             filtered_triples = get_topk_similar_triples(resource1_uri, resource2, keyword_embeddings, top_k=3)
             for item in filtered_triples:
                 if not does_tri_exit_in_list(item, result):
@@ -145,7 +144,7 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
                         item2['text'] = resource2['text']
                         item2['URI'] = resource2['URI']
                         result.append(item2)
-        if exact_match:
+        if not exact_match:
             top_k_pairs = get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=3)
             for item in top_k_pairs:
                 if not does_tri_exit_in_list(item, result):
@@ -208,10 +207,14 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
     tri_keywords_l = [' '.join(tri['keywords']) for tri in candidates]
     triple_vec_l = keyword_embeddings[linked_phrase['text']]
     if len(triple_vec_l) == 0:
-        phrases_vecs = bert_similarity.get_phrase_embedding(tri_keywords_l)
-        keyword_embeddings[linked_phrase['text']] = phrases_vecs
+        triple_vec_l = bert_similarity.get_phrase_embedding(tri_keywords_l)
+        keyword_embeddings[linked_phrase['text']] = triple_vec_l
 
-    score = np.sum(keyword_vec * phrases_vecs, axis=1) / np.linalg.norm(phrases_vecs, axis=1)
+    if keyword_vec == [] or triple_vec_l == []:   #failed to get phrase embeddings
+        return []
+
+    score = np.sum(keyword_vec * triple_vec_l, axis=1) / \
+            (np.linalg.norm(keyword_vec) * np.linalg.norm(triple_vec_l, axis=1))
     topk_idx = np.argsort(score)[::-1][:top_k]
     result = []
     for idx in topk_idx:
@@ -221,10 +224,11 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
         record['text'] = linked_phrase['text']
         record['URI'] = linked_phrase['URI']
         result.append(record)
-        print('>%s\t%s' % (score[idx], tri_keywords_l[idx]))
+        # print('>%s\t%s' % (score[idx], tri_keywords_l[idx]))
     return result
 
 if __name__ == '__main__':
     # text1 = "Autonomous cars shift insurance liability toward manufacturers"
-    text2 = "Magic Johnson did not play for the Lakers."
-    construct_subgraph(text2)
+    # text2 = "Magic Johnson did not play for the Lakers."
+    text1 = 'Don Bradman retired from soccer.'
+    construct_subgraph(text1)

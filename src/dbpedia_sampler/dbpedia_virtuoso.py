@@ -25,7 +25,7 @@ def get_triples(query_str):
             tri['relation'] = re['relation']['value']
             tri['object'] = re['object']['value']
             triples.append(tri)
-        print(json.dumps(triples, indent=4))
+        # print(json.dumps(triples, indent=4))
         return triples
     except Exception as err:
         print("failed to query dbpedia virtuoso...")

@@ -32,7 +32,7 @@ def lookup_resource(text_phrase):
                     catgr.append(c['URI'])                           # or 'http://www.w3.org/2002/07/owl' in c['URI'] \
             record['Classes'] = catgr
 
-        print(json.dumps(record, indent=4))
+        # print(json.dumps(record, indent=4))
         return record
         # print(json.dumps(results, indent=4))
     else:
@@ -51,7 +51,7 @@ def to_triples(record_json):
         tri['object'] = i
         tri['keywords'] = [keyword_extract(i)]
         triples.append(tri)
-    print(json.dumps(triples, indent=4))
+    # print(json.dumps(triples, indent=4))
     return triples
 
 

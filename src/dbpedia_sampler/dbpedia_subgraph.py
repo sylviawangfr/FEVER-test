@@ -58,11 +58,20 @@ def construct_subgraph(text):
             linked_phrase['URI'] = resource
             linked_phrases_l.append(linked_phrase)
 
-    r1 = filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
-    r2 = filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, embeddings_hash, relative_hash)
-    r3 = filter_keyword_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
+    merged_result = filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, embeddings_hash, relative_hash)
+    r2 = filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
+    no_exact_found = []
+    # only keyword-match on those no exact match triples
+    for i in linked_phrases_l:
+        relatives = relative_hash[i['text']]
+        if len(relatives) == 0:
+            no_exact_found.append(i)
+    r3 = filter_keyword_vs_keyword(no_exact_found, embeddings_hash, relative_hash)
+    for i in r2 + r3:
+        if not does_tri_exit_in_list(i, merged_result):
+            merged_result.append(i)
 
-    print(json.dumps(r3, indent=4))
+    print(json.dumps(merged_result, indent=4))
 
 
 def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embeddings, relative_hash):
@@ -114,7 +123,6 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_ha
                 if not does_tri_exit_in_list(item, result):
                     result.append(item)
     return result
-
 
 
 def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash):
@@ -179,11 +187,11 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
         tri1['relatives'] = [resource1['URI'], resource2['URI']]
         tri1['text'] = resource1['text']
         tri1['URI'] = resource1['URI']
-        tri1['score'] = score
+        tri1['score'] = float(score)
         tri2['relatives'] = [resource2['URI'], resource1['URI']]
         tri2['text'] = resource2['text']
         tri2['URI'] = resource2['URI']
-        tri2['score'] = score
+        tri2['score'] = float(score)
         result.append(tri1)
         result.append(tri2)
     return result
@@ -219,7 +227,7 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
     result = []
     for idx in topk_idx:
         record = candidates[idx]
-        record['score'] = score[idx]
+        record['score'] = float(score[idx])
         record['relatives'] = [linked_phrase['URI'], single_phrase]
         record['text'] = linked_phrase['text']
         record['URI'] = linked_phrase['URI']
@@ -229,6 +237,6 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
 
 if __name__ == '__main__':
     # text1 = "Autonomous cars shift insurance liability toward manufacturers"
-    # text2 = "Magic Johnson did not play for the Lakers."
-    text1 = 'Don Bradman retired from soccer.'
+    text1 = "Magic Johnson did not play for the Lakers."
+    # text1 = 'Don Bradman retired from soccer.'
     construct_subgraph(text1)

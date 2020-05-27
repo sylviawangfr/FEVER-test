@@ -2,6 +2,7 @@ from utils.tokenizer_simple import *
 from dbpedia_sampler import dbpedia_lookup
 from dbpedia_sampler import dbpedia_virtuoso
 from dbpedia_sampler import bert_similarity
+from dbpedia_sampler import dbpedia_spotlight
 import json
 import itertools
 import numpy as np
@@ -16,8 +17,14 @@ def get_phrases(text):
     print(f"entities: {entities}")
     print(f"capitalized phrases: {capitalized_phrased}")
     phrases = list(set(chunks) | set(entities) | set(capitalized_phrased))
+    merged = merge_phrase(phrases)
+    print(f"merged phrases: {merged}")
+    return merged
+
+
+def merge_phrase(phrases_l):
     merged = []
-    for p in phrases:
+    for p in phrases_l:
         is_dup = False
         for m in merged:
             if m in p:
@@ -30,33 +37,65 @@ def get_phrases(text):
                 break
         if not is_dup:
             merged.append(p)
+    print(f"merged phrases: {merged}")
     return merged
 
 
-def construct_subgraph(text):
-    phrases = get_phrases(text)
-    entity_graphs = []
+def lookup_phrase(phrase):
+    linked_phrase = dict()
+    resource_dict = dbpedia_lookup.lookup_resource(phrase)
+    if isinstance(resource_dict, dict):
+        resource = resource_dict['URI']
+        linked_phrase['categories'] = dbpedia_lookup.to_triples(resource_dict)
+        linked_phrase['text'] = phrase
+        linked_phrase = linked_phrase.update(query_resource(resource))
+    return linked_phrase
+
+
+def query_resource(uri):
+    context = dict()
+    context['ontology_linked_values'] = dbpedia_virtuoso.get_ontology_linked_values_inbound(uri) + \
+                                              dbpedia_virtuoso.get_ontology_linked_values_outbound(uri)
+    context['properties'] = dbpedia_virtuoso.get_properties(uri)
+    context['linked_resources'] = dbpedia_virtuoso.get_one_hop_resource_inbound(uri) + \
+                                        dbpedia_virtuoso.get_one_hop_resource_outbound(uri)
+    context['URI'] = uri
+    return context
+
+
+def link_sentence(sentence):
+    phrases = get_phrases(sentence)
     not_linked_phrases_l = []
     linked_phrases_l = []
-    relative_hash = {key: set() for key in phrases}
-    embeddings_hash = {key: [] for key in phrases}
-
     for p in phrases:
-        linked_phrase = dict()
-        resource_dict = dbpedia_lookup.lookup_resource(p)
-        if not isinstance(resource_dict, dict):
+        linked_phrase = lookup_phrase(p)
+        if len(linked_phrase) == 0:
             not_linked_phrases_l.append(p)
         else:
-            resource = resource_dict['URI']
-            linked_phrase['categories'] = dbpedia_lookup.to_triples(resource_dict)
-            linked_phrase['ontology_linked_values'] = dbpedia_virtuoso.get_ontology_linked_values_inbound(resource) + \
-                                                      dbpedia_virtuoso.get_ontology_linked_values_outbound(resource)
-            linked_phrase['properties'] = dbpedia_virtuoso.get_properties(resource)
-            linked_phrase['linked_resources'] = dbpedia_virtuoso.get_one_hop_resource_inbound(resource) + \
-                                                dbpedia_virtuoso.get_one_hop_resource_outbound(resource)
-            linked_phrase['text'] = p
-            linked_phrase['URI'] = resource
             linked_phrases_l.append(linked_phrase)
+
+    spotlight_links = dbpedia_spotlight.entity_link(sentence)
+    for i in spotlight_links:
+        surface = i['surfaceForm']
+        for j in not_linked_phrases_l:
+            if surface in i:
+                not_linked_phrases_l.remove(j)
+                resource = i['URI']
+                linked_i = dict()
+                linked_i['text'] = surface
+                linked_i['categories'] = []
+                linked_i = linked_i.update(query_resource(resource))
+                linked_phrases_l.append(linked_i)
+                break
+    return not_linked_phrases_l, linked_phrases_l
+
+
+def construct_subgraph(sentence):
+    not_linked_phrases_l, linked_phrases_l = link_sentence(sentence)
+    phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
+
+    relative_hash = {key: set() for key in phrases}
+    embeddings_hash = {key: [] for key in phrases}
 
     merged_result = filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, embeddings_hash, relative_hash)
     r2 = filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash)
@@ -72,6 +111,7 @@ def construct_subgraph(text):
             merged_result.append(i)
 
     print(json.dumps(merged_result, indent=4))
+    return merged_result
 
 
 def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embeddings, relative_hash):
@@ -82,7 +122,7 @@ def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embed
             filtered_triples = get_topk_similar_triples(one_phrase, linked_p, keyword_embeddings, top_k=3)
             for tri in filtered_triples:
                 if not does_tri_exit_in_list(tri, result):
-                    relative_hash[one_phrase].add(linked_p)
+                    relative_hash[one_phrase].add(linked_p['text'])
                     relative_hash[text].add(one_phrase)
                     result.append(tri)
     return result
@@ -237,6 +277,9 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
 
 if __name__ == '__main__':
     # text1 = "Autonomous cars shift insurance liability toward manufacturers"
-    text1 = "Magic Johnson did not play for the Lakers."
+    # text1 = "Magic Johnson did not play for the Lakers."
     # text1 = 'Don Bradman retired from soccer.'
-    construct_subgraph(text1)
+    text = "President Obama on Monday will call for a new minimum tax rate for individuals making more " \
+                 "than $1 million a year to ensure that they pay at least the same percentage of their earnings " \
+                 "as other taxpayers, according to administration officials."
+    construct_subgraph(text)

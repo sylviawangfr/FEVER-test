@@ -23,8 +23,11 @@ def entity_link(sentence):
 
 
 if __name__ == "__main__":
-    entity_link("President Obama on Monday will call for a new minimum tax rate for individuals making more "
-                "than $1 million a year to ensure that they pay at least the same percentage of their earnings "
-                "as other taxpayers, according to administration officials.")
-
+    # entity_link("President Obama on Monday will call for a new minimum tax rate for individuals making more "
+    #             "than $1 million a year to ensure that they pay at least the same percentage of their earnings "
+    #             "as other taxpayers, according to administration officials.")
+    text1 = "Autonomous cars shift insurance liability toward manufacturers"
+    # text1 = "Magic Johnson did not play for the Lakers."
+    # text1 = 'Don Bradman retired from soccer.'
+    entity_link(text1)
 

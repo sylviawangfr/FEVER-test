@@ -13,7 +13,7 @@ def entity_link(sentence):
     entity_list = []
     for item in annotations:
         ent = dict()
-        ent['uri'] = item['URI']
+        ent['URI'] = item['URI']
         ent['surfaceForm'] = item['surfaceForm']
         entity_list.append(ent)
     print(entity_list)

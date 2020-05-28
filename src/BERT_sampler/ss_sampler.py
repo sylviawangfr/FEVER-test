@@ -262,7 +262,7 @@ def count_truth_examples(sample_list):
         # print(item)
         if item['selection_label'] == 'true':
             count_hit += 1
-    print(f"Truth count/total count: , {count_hit}/{len(sample_list)}/{count_hit / len(sample_list)}")
+    print(f"truth_count/total_count/rate: , {count_hit}/{len(sample_list)}/{count_hit / len(sample_list)}")
 
 
 def eval_sample_length(samples):
@@ -272,11 +272,11 @@ def eval_sample_length(samples):
         length_list.extend([len(item['text'].split(' '))])
 
     count.update(length_list)
-    print(count.most_common())
-    print(sorted(list(count.most_common()), key=lambda x: -x[0]))
-    print(np.max(length_list))
-    print(np.mean(length_list))
-    print(np.std(length_list))
+    # print(f"most common: {count.most_common}")
+    print(f"most_common: {sorted(list(count.most_common()), key=lambda x: -x[0])}")
+    print(f"max_length: {np.max(length_list)}")
+    print(f"mean: {np.mean(length_list)}")
+    print(f"std: {np.std(length_list)}")
 
 
 if __name__ == '__main__':

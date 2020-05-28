@@ -9,7 +9,7 @@ PREFIX_DBO = "http://dbpedia.org/ontology/"
 PREFIX_SCHEMA = "http://www.w3.org/2001/XMLSchema"
 PREFIX_SUBCLASSOF = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
 PREFIX_DBR = "http://dbpedia.org/resource/"
-
+PREFIX_TYPE_OF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 
 def get_triples(query_str):
     sparql = SPARQLWrapper(config.DBPEDIA_GRAPH_URL, defaultGraph=DEFAULT_GRAPH)
@@ -31,6 +31,19 @@ def get_triples(query_str):
         print("failed to query dbpedia virtuoso...")
         print(err)
         return triples
+
+
+def get_categories(resource):
+    query_str_inbound = f"SELECT distinct (<{resource}> AS ?subject) (<{PREFIX_TYPE_OF}> AS ?relation) ?object " \
+        "FROM <http://dbpedia.org> WHERE {" \
+        f"<{resource}> <{PREFIX_TYPE_OF}> ?object ." \
+        "filter contains(str(?object), 'http://dbpedia.org/ontology/') " \
+        "filter (!contains(str(?object), \'wiki\'))}"
+    tris = get_triples(query_str_inbound)
+    for tri in tris:
+        obj_split = keyword_extract(tri['object'])
+        tri['keywords'] = [obj_split]
+    return tris
 
 
 def get_categories_one_hop_child(ontology_uri):
@@ -62,8 +75,8 @@ def get_properties(resource_uri):
     tris = get_triples(query_str)
     for tri in tris:
         rel_split = keyword_extract(tri['relation'].split('^^')[0])
-        subj_split = keyword_extract(tri['subject'].split('^^')[0])
-        tri['keywords'] = [rel_split, subj_split]
+        obj_split = keyword_extract(tri['object'].split('^^')[0])
+        tri['keywords'] = [rel_split, obj_split]
     return tris
 
 
@@ -84,6 +97,7 @@ def get_ontology_linked_values_outbound(resource_uri):
         rel_split = keyword_extract(tri['relation'])
         obj_split = keyword_extract(tri['object'])
         tri['keywords'] = [rel_split, obj_split]
+    print(f"outbound re: {len(tris)}")
     return tris
 
 
@@ -101,7 +115,8 @@ def get_ontology_linked_values_inbound(resource_uri):
     for tri in tris:
         rel_split = keyword_extract(tri['relation'])
         subj_split = keyword_extract(tri['subject'])
-        tri['keywords'] = [rel_split, subj_split]
+        tri['keywords'] = [subj_split, rel_split]
+    print(f"inbound re: {len(tris)}")
     return tris
 
 
@@ -115,7 +130,7 @@ def get_one_hop_resource_inbound(resource_uri):
     for tri in tris:
         rel_split = keyword_extract(tri['relation'])
         subj_split = keyword_extract(tri['subject'])
-        tri['keywords'] = [rel_split, subj_split]
+        tri['keywords'] = [subj_split, rel_split]
     return tris
 
 

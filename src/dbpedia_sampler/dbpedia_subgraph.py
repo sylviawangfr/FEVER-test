@@ -8,12 +8,17 @@ import itertools
 import numpy as np
 import sklearn.metrics.pairwise as pw
 
-STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we']
 
-def get_phrases(text):
-    chunks, ents = split_claim_spacy(text)
+STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we']
+CANDIDATE_UP_TO = 150
+SCORE_CONFIDENCE = 0.8
+
+
+def get_phrases(sentence):
+    print(sentence)
+    chunks, ents = split_claim_spacy(sentence)
     entities = [en[0] for en in ents]
-    capitalized_phrased = split_claim_regex(text)
+    capitalized_phrased = split_claim_regex(sentence)
     print(f"chunks: {chunks}")
     print(f"entities: {entities}")
     print(f"capitalized phrases: {capitalized_phrased}")
@@ -39,7 +44,6 @@ def merge_phrase(phrases_l):
         if not is_dup:
             merged.append(p)
     merged = [i for i in merged if i.lower() not in STOP_WORDS]
-    print(f"merged phrases: {merged}")
     return merged
 
 
@@ -86,7 +90,7 @@ def link_sentence(sentence):
                 resource = i['URI']
                 linked_i = dict()
                 linked_i['text'] = surface
-                linked_i['categories'] = []
+                linked_i['categories'] = dbpedia_virtuoso.get_categories(resource)
                 linked_i.update(query_resource(resource))
                 linked_phrases_l.append(linked_i)
                 break
@@ -112,6 +116,12 @@ def construct_subgraph(sentence):
     for i in r2 + r3:
         if not does_tri_exit_in_list(i, merged_result):
             merged_result.append(i)
+
+    for t in linked_phrases_l:
+        relatives = relative_hash[t['text']]
+        if len(relatives) == 0:
+            categories_triples = t['categories']
+            merged_result.extend(categories_triples)
 
     print(json.dumps(merged_result, indent=4))
     return merged_result
@@ -209,7 +219,7 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
     candidates2 = resource2['categories'] + resource2['ontology_linked_values'] + \
                   resource2['linked_resources'] + resource2['properties']
 
-    if len(candidates1) > 100 or len(candidates2) > 100:
+    if len(candidates1) > CANDIDATE_UP_TO or len(candidates2) > CANDIDATE_UP_TO:
         return []
 
     tri_keywords_l1 = [' '.join(tri['keywords']) for tri in candidates1]
@@ -223,13 +233,16 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
         embedding2 = bert_similarity.get_phrase_embedding(tri_keywords_l2)
         keyword_embeddings[resource2['text']] = embedding2
 
+    if len(embedding1) == 0 or len(embedding2) == 0:
+        return []
+
     out = pw.cosine_similarity(embedding1, embedding2).flatten()
     topk_idx = np.argsort(out)[::-1][:top_k]
     len2 = len(tri_keywords_l2)
     result = []
     for item in topk_idx:
         score = float(out[item])
-        if score < float(0.8):
+        if score < float(SCORE_CONFIDENCE):
             break
         else:
             tri1 = candidates1[item//len2]
@@ -264,7 +277,7 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
     candidates = linked_phrase['categories'] + linked_phrase['ontology_linked_values'] + \
                  linked_phrase['linked_resources'] + linked_phrase['properties']
 
-    if len(candidates) > 100:
+    if len(candidates) > CANDIDATE_UP_TO:
         return []
 
     tri_keywords_l = [' '.join(tri['keywords']) for tri in candidates]
@@ -282,7 +295,7 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
     result = []
     for idx in topk_idx:
         idx_score = float(score[idx])
-        if idx_score < float(0.8):
+        if idx_score < float(SCORE_CONFIDENCE):
             break
         else:
             record = candidates[idx]
@@ -294,11 +307,14 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
         # print('>%s\t%s' % (score[idx], tri_keywords_l[idx]))
     return result
 
+
+
 if __name__ == '__main__':
-    # text1 = "Autonomous cars shift insurance liability toward manufacturers"
-    # text1 = "Magic Johnson did not play for the Lakers."
-    # text1 = 'Don Bradman retired from soccer.'
-    text = "President Obama on Monday will call for a new minimum tax rate for individuals making more " \
-                 "than $1 million a year to ensure that they pay at least the same percentage of their earnings " \
-                 "as other taxpayers, according to administration officials."
+    # text = "Autonomous cars shift insurance liability toward manufacturers"
+    # text = "Magic Johnson did not play for the Lakers."
+    # text = 'Don Bradman retired from soccer.'
+    # text = "President Obama on Monday will call for a new minimum tax rate for individuals making more " \
+    #              "than $1 million a year to ensure that they pay at least the same percentage of their earnings " \
+    #              "as other taxpayers, according to administration officials."
+
     construct_subgraph(text)

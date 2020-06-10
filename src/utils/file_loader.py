@@ -178,6 +178,7 @@ def save_file(text, out_filename):
 
     with open(out_filename, encoding='utf-8', mode='w') as out_f:
         out_f.write(text)
+    out_f.close()
 
 
 def save_intermidiate_results(d_list, out_filename: Path, last_loaded_path=None):
@@ -191,6 +192,21 @@ def save_intermidiate_results(d_list, out_filename: Path, last_loaded_path=None)
     if last_loaded_path is not None:
         with open(out_filename.parent / "log_info.txt", encoding='utf-8', mode='a') as out_f:
             out_f.write(last_loaded_path)
+    out_f.close()
+
+
+def save_and_append_results(d_list, out_filename: Path, log_filename):
+    if not out_filename.parent.exists():
+        out_filename.parent.mkdir(exist_ok=False)
+
+    with open(out_filename, encoding='utf-8', mode='a') as out_f:
+        for item in d_list:
+            out_f.write(json.dumps(item) + '\n')
+    out_f.close()
+
+    with open(log_filename, encoding='utf-8', mode='a') as log_f:
+        log_f.write(f"{get_current_time_str()}, from ID: {d_list[0]['id']} to ID {d_list[-1]['id']}, count: {len(d_list)}\n")
+    log_f.close()
 
 
 def get_current_time_str():

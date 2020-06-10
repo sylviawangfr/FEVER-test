@@ -19,6 +19,9 @@ def get_triples(query_str):
     triples = []
     try:
         results = sparql.query().convert()
+        if len(results["results"]["bindings"]) > 200:
+            print('extra large bindings in DBpedia, ignore')
+            return triples
         for re in results["results"]["bindings"]:
             tri = dict()
             tri['subject'] = re['subject']['value']

@@ -4,6 +4,7 @@ import json
 import os
 import config
 from dbpedia_sampler.dbpedia_virtuoso import keyword_extract
+import difflib
 
 
 def lookup_resource(text_phrase):
@@ -16,7 +17,23 @@ def lookup_resource(text_phrase):
             return -3
         else:
             re = results['ArrayOfResult']['Result']
-            top_match = re if isinstance(re, dict) else re[0]
+            if isinstance(re, dict):
+                top_match = re
+            else:
+                # keyword_matching = [difflib.SequenceMatcher(None, text_phrase, i['Label']).ratio() for i in re]
+                # sorted_matching_index = sorted(range(len(keyword_matching)), key=lambda k: keyword_matching[k], reverse=True)
+                # top_match = re[sorted_matching_index[0]]
+                top_match = re[0]
+                close_matches = []
+                for i in re:
+                    tmp_label = i['Label']
+                    if tmp_label == text_phrase or text_phrase in tmp_label or tmp_label in text_phrase:
+                        close_matches.append(i)
+                if len(close_matches) > 0:
+                    keyword_matching = [difflib.SequenceMatcher(None, text_phrase, i['Label']).ratio() for i in close_matches]
+                    sorted_matching_index = sorted(range(len(keyword_matching)), key=lambda k: keyword_matching[k], reverse=True)
+                    top_match = close_matches[sorted_matching_index[0]]
+
             record = dict()
             record['Label'] = top_match['Label']
             record['URI'] = top_match['URI']
@@ -32,7 +49,7 @@ def lookup_resource(text_phrase):
                     catgr.append(c['URI'])                           # or 'http://www.w3.org/2002/07/owl' in c['URI'] \
             record['Classes'] = catgr
 
-        # print(json.dumps(record, indent=4))
+        print(json.dumps(record, indent=4))
         return record
         # print(json.dumps(results, indent=4))
     else:
@@ -56,4 +73,5 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
-    lookup_resource('manufacturers')
+    lookup_resource('Bloomington')
+

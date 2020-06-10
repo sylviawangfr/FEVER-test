@@ -102,20 +102,25 @@ def prepare_train_data_filter_full_list():
     paras2.pred = False
     paras2.post_filter_prob = 0.05
     complete_upstream_train_data = ss_sampler.get_full_list_sample(paras2)
-    filtered_train_data = complete_upstream_train_data
-    ss_sampler.eval_sample_length(filtered_train_data)
-    ss_sampler.count_truth_examples(filtered_train_data)
-    return filtered_train_data
+    return complete_upstream_train_data
 
 
 def prepare_train_data_filter_tfidf():
     paras = bert_para.BERT_para()
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[14:15]
+    all_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:15]
+    data_len = len(all_data)
     paras.sample_n = 3
     paras.pred = False
-    sample_tfidf = get_tfidf_sample(paras)
-    ss_sampler.eval_sample_length(sample_tfidf)
-    ss_sampler.count_truth_examples(sample_tfidf)
+    bulk_size = 3
+    start = 0
+    end = start + bulk_size if start + bulk_size < data_len else data_len - 1
+    while start < data_len:
+        paras.upstream_data = all_data[start:end]
+        # sample_tfidf = get_tfidf_sample(paras)
+        sample_tfidf = all_data[start:end]
+        save_and_append_results(sample_tfidf, config.RESULT_PATH / "sample_ss_graph.jsonl", config.LOG_PATH / "sample_ss_graph.log")
+        start = end + 1
+        end = start + bulk_size if start + bulk_size < data_len else data_len - 1
     return sample_tfidf
 
 

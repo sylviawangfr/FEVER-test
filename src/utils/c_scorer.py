@@ -10,7 +10,7 @@ from itertools import chain
 import os
 
 SENT_LINE = '<SENT_LINE>'
-SENT_DOC_TITLE = ' - '
+SENT_DOC_TITLE = '; '
 
 """
 This is customized scoring module

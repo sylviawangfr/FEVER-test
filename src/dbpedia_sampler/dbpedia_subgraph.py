@@ -9,23 +9,28 @@ import numpy as np
 import sklearn.metrics.pairwise as pw
 
 
-STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we']
+STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',
+              'which', 'when', 'whom', 'the']
 CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.8
 
 
 def get_phrases(sentence):
     print(sentence)
+    if ' - ' in sentence:
+        title_and_sen = sentence.split(' _ ')
+
     chunks, ents = split_claim_spacy(sentence)
     entities = [en[0] for en in ents]
     capitalized_phrased = split_claim_regex(sentence)
     print(f"chunks: {chunks}")
     print(f"entities: {entities}")
     print(f"capitalized phrases: {capitalized_phrased}")
-    phrases = list(set(chunks) | set(entities) | set(capitalized_phrased))
-    merged = merge_phrase(phrases)
-    print(f"merged phrases: {merged}")
-    return merged
+    merged_entities = list(set(entities) | set(capitalized_phrased))
+    other_chunks = list(set(chunks) - set(merged_entities))
+    print(f"merged entities: {merged_entities}")
+    print(f"other phrases: {other_chunks}")
+    return merged_entities, other_chunks
 
 
 def merge_phrase(phrases_l):
@@ -71,9 +76,14 @@ def query_resource(uri):
 
 
 def link_sentence(sentence):
-    phrases = get_phrases(sentence)
+    entities, chunks = get_phrases(sentence)
     not_linked_phrases_l = []
     linked_phrases_l = []
+    if len(entities) < 1:
+        phrases = entities + chunks
+    else:
+        phrases = entities
+
     for p in phrases:
         linked_phrase = lookup_phrase(p)
         if len(linked_phrase) == 0:
@@ -84,16 +94,29 @@ def link_sentence(sentence):
     spotlight_links = dbpedia_spotlight.entity_link(sentence)
     for i in spotlight_links:
         surface = i['surfaceForm']
+        resource = i['URI']
+        linked_i = dict()
+        linked_i['text'] = surface
+
+        does_exist = False
+        for p in linked_phrases_l:
+            if p['URI'] == resource:
+                if p['text'] in surface or surface in p['text']:
+                    does_exist = True
+                    break
+            if p['text'] == surface and not p['URI'] == resource:
+                linked_i['text'] = surface + ' ,'  # same text linked to different entities
+                break
+
         for j in not_linked_phrases_l:
             if surface in j or j in surface:
                 not_linked_phrases_l.remove(j)
-                resource = i['URI']
-                linked_i = dict()
-                linked_i['text'] = surface
-                linked_i['categories'] = dbpedia_virtuoso.get_categories(resource)
-                linked_i.update(query_resource(resource))
-                linked_phrases_l.append(linked_i)
-                break
+
+        if not does_exist:
+            linked_i['categories'] = dbpedia_virtuoso.get_categories(resource)
+            linked_i.update(query_resource(resource))
+            linked_phrases_l.append(linked_i)
+
     return not_linked_phrases_l, linked_phrases_l
 
 
@@ -123,7 +146,7 @@ def construct_subgraph(sentence):
             categories_triples = t['categories']
             merged_result.extend(categories_triples)
 
-    print(json.dumps(merged_result, indent=4))
+    # print(json.dumps(merged_result, indent=4))
     return merged_result
 
 
@@ -266,8 +289,10 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
     if single_phrase in keyword_embeddings:
         keyword_vec = keyword_embeddings[single_phrase]
         if len(keyword_vec) == 0:
-            keyword_vec = bert_similarity.get_phrase_embedding([single_phrase])[0]
-            keyword_embeddings[single_phrase] = keyword_vec
+            tmp_embedding = bert_similarity.get_phrase_embedding([single_phrase])
+            if len(tmp_embedding) > 0:
+                keyword_vec = bert_similarity.get_phrase_embedding([single_phrase])[0]
+                keyword_embeddings[single_phrase] = keyword_vec
     else:
         short_phrase = dbpedia_virtuoso.keyword_extract(single_phrase)
         keyword_vec = bert_similarity.get_phrase_embedding([short_phrase])[0]
@@ -313,8 +338,8 @@ if __name__ == '__main__':
     # text = "Autonomous cars shift insurance liability toward manufacturers"
     # text = "Magic Johnson did not play for the Lakers."
     # text = 'Don Bradman retired from soccer.'
-    # text = "President Obama on Monday will call for a new minimum tax rate for individuals making more " \
-    #              "than $1 million a year to ensure that they pay at least the same percentage of their earnings " \
-    #              "as other taxpayers, according to administration officials."
+    text = "President Obama on Monday will call for a new minimum tax rate for individuals making more " \
+                 "than $1 million a year to ensure that they pay at least the same percentage of their earnings " \
+                 "as other taxpayers, according to administration officials."
 
     construct_subgraph(text)

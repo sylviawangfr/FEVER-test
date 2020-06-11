@@ -3,6 +3,7 @@ import json
 import re
 import validators
 import config
+import nltk
 
 DEFAULT_GRAPH = "http://dbpedia.org"
 PREFIX_DBO = "http://dbpedia.org/ontology/"
@@ -10,6 +11,7 @@ PREFIX_SCHEMA = "http://www.w3.org/2001/XMLSchema"
 PREFIX_SUBCLASSOF = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
 PREFIX_DBR = "http://dbpedia.org/resource/"
 PREFIX_TYPE_OF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+RECORD_LIMIT = 200
 
 def get_triples(query_str):
     sparql = SPARQLWrapper(config.DBPEDIA_GRAPH_URL, defaultGraph=DEFAULT_GRAPH)
@@ -22,11 +24,11 @@ def get_triples(query_str):
         if len(results["results"]["bindings"]) > 200:
             print('extra large bindings in DBpedia, ignore')
             return triples
-        for re in results["results"]["bindings"]:
+        for record in results["results"]["bindings"]:
             tri = dict()
-            tri['subject'] = re['subject']['value']
-            tri['relation'] = re['relation']['value']
-            tri['object'] = re['object']['value']
+            tri['subject'] = record['subject']['value']
+            tri['relation'] = record['relation']['value']
+            tri['object'] = record['object']['value']
             triples.append(tri)
         # print(json.dumps(triples, indent=4))
         return triples
@@ -41,7 +43,7 @@ def get_categories(resource):
         "FROM <http://dbpedia.org> WHERE {" \
         f"<{resource}> <{PREFIX_TYPE_OF}> ?object ." \
         "filter contains(str(?object), 'http://dbpedia.org/ontology/') " \
-        "filter (!contains(str(?object), \'wiki\'))}"
+        "filter (!contains(str(?object), \'wiki\'))} LIMIT 500"
     tris = get_triples(query_str_inbound)
     for tri in tris:
         obj_split = keyword_extract(tri['object'])
@@ -52,7 +54,7 @@ def get_categories(resource):
 def get_categories_one_hop_child(ontology_uri):
     query_str_inbound = f"SELECT distinct ?subject (<{PREFIX_SUBCLASSOF}> AS ?relation) (<{ontology_uri}> AS ?object) " \
         "FROM <http://dbpedia.org> WHERE {" \
-        f"?subject <{PREFIX_SUBCLASSOF}> <{ontology_uri}> .}}"
+        f"?subject <{PREFIX_SUBCLASSOF}> <{ontology_uri}> .}} LIMIT 500"
     tris = get_triples(query_str_inbound)
     for tri in tris:
         subj_split = keyword_extract(tri['subject'])
@@ -63,7 +65,7 @@ def get_categories_one_hop_child(ontology_uri):
 def get_categories_one_hop_parent(ontology_uri):
     query_str_outbound = f"SELECT distinct (<{ontology_uri}> AS ?subject) (<{PREFIX_SUBCLASSOF}> AS ?relation) ?object " \
         "FROM <http://dbpedia.org> WHERE {" \
-        f"<{ontology_uri}> <{PREFIX_SUBCLASSOF}> ?object .}}"
+        f"<{ontology_uri}> <{PREFIX_SUBCLASSOF}> ?object .}} LIMIT 500"
     tris = get_triples(query_str_outbound)
     for tri in tris:
         obj_split = keyword_extract(tri['object'])
@@ -74,12 +76,19 @@ def get_properties(resource_uri):
     query_str = f"SELECT distinct (<{resource_uri}> AS ?subject) ?relation ?object " \
         "FROM <http://dbpedia.org> WHERE {" \
         f"<{resource_uri}> ?relation ?object . " \
-        "filter contains(str(?relation), \'http://dbpedia.org/property/\')}"
+        "filter contains(str(?relation), \'http://dbpedia.org/property/\')} LIMIT 500"
     tris = get_triples(query_str)
+    to_delete = []
     for tri in tris:
-        rel_split = keyword_extract(tri['relation'].split('^^')[0])
         obj_split = keyword_extract(tri['object'].split('^^')[0])
-        tri['keywords'] = [rel_split, obj_split]
+        if does_reach_max_length(obj_split):
+            to_delete.append(tri)
+            continue
+        else:
+            rel_split = keyword_extract(tri['relation'].split('^^')[0])
+            tri['keywords'] = [rel_split, obj_split]
+    for i in to_delete:
+        tris.remove(i)
     return tris
 
 
@@ -94,13 +103,20 @@ def get_ontology_linked_values_outbound(resource_uri):
         "dbo:abstract, " \
         "dbo:wikiPageID, " \
         "dbo:wikiPageRevisionID, " \
-        "dbo:wikiPageExternalLink))}"
+        "dbo:wikiPageExternalLink))} LIMIT 500"
     tris = get_triples(query_str)
+    to_delete = []
     for tri in tris:
-        rel_split = keyword_extract(tri['relation'])
         obj_split = keyword_extract(tri['object'])
-        tri['keywords'] = [rel_split, obj_split]
-    print(f"outbound re: {len(tris)}")
+        if does_reach_max_length(obj_split):
+            to_delete.append(tri)
+            continue
+        else:
+            rel_split = keyword_extract(tri['relation'])
+            tri['keywords'] = [rel_split, obj_split]
+    # print(f"outbound re: {len(tris)}")
+    for i in to_delete:
+        tris.remove(i)
     return tris
 
 
@@ -113,7 +129,7 @@ def get_ontology_linked_values_inbound(resource_uri):
         "filter (!contains(str(?relation), \'wiki\'))"  \
         "filter (?relation not in (" \
         "dbo:thumbnail, " \
-        "dbo:abstract))}"
+        "dbo:abstract))} LIMIT 500"
     tris = get_triples(query_str)
     for tri in tris:
         rel_split = keyword_extract(tri['relation'])
@@ -128,7 +144,7 @@ def get_one_hop_resource_inbound(resource_uri):
         f"WHERE {{ ?subject ?relation <{resource_uri}> . " \
         "filter (!contains(str(?relation), \'wiki\')) " \
         "filter (!contains(str(?relation), \'ontology\')) " \
-        "filter contains(str(?subject), \'http://dbpedia.org/resource/\')}"
+        "filter contains(str(?subject), \'http://dbpedia.org/resource/\')} LIMIT 500"
     tris = get_triples(query_str_inbound)
     for tri in tris:
         rel_split = keyword_extract(tri['relation'])
@@ -142,7 +158,7 @@ def get_one_hop_resource_outbound(resource_uri):
         f"WHERE {{ <{resource_uri}> ?relation ?object . " \
         "filter (!contains(str(?relation), \'wiki\')) " \
         "filter (!contains(str(?relation), \'ontology\')) " \
-        "filter contains(str(?object), \'http://dbpedia.org/resource/\')}"
+        "filter contains(str(?object), \'http://dbpedia.org/resource/\')} LIMIT 500"
     tris = get_triples(query_str_outbound)
     for tri in tris:
         rel_split = keyword_extract(tri['relation'])
@@ -159,6 +175,10 @@ def get_similar_properties(resource1, resource2):
 def get_relevant_triples(triple, keyword):
     pass
 
+
+def does_reach_max_length(text):
+    if len(nltk.word_tokenize(text)) > 25:
+        return True
 
 def keyword_extract(uri):
     lastword = uri.split('/')[-1]

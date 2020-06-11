@@ -3,6 +3,7 @@ from dbpedia_sampler import dbpedia_lookup
 from dbpedia_sampler import dbpedia_virtuoso
 from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_spotlight
+from utils import c_scorer
 import json
 import itertools
 import numpy as np
@@ -15,18 +16,24 @@ CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.8
 
 
-def get_phrases(sentence):
+def get_phrases(sentence, doc_title):
     print(sentence)
-    if ' - ' in sentence:
-        title_and_sen = sentence.split(' _ ')
+    if doc_title != '' and c_scorer.SENT_DOC_TITLE in sentence and sentence.startswith(doc_title):
+        title_and_sen = sentence.split(c_scorer.SENT_DOC_TITLE, 1)
+        sent = title_and_sen[1]
+    else:
+        sent = sentence
 
-    chunks, ents = split_claim_spacy(sentence)
+    chunks, ents = split_claim_spacy(sent)
     entities = [en[0] for en in ents]
-    capitalized_phrased = split_claim_regex(sentence)
+    capitalized_phrased = split_claim_regex(sent)
     print(f"chunks: {chunks}")
     print(f"entities: {entities}")
     print(f"capitalized phrases: {capitalized_phrased}")
     merged_entities = list(set(entities) | set(capitalized_phrased))
+    if not doc_title == '':
+        merged_entities = list(set(merged_entities) | set([doc_title]))
+    merged_entities = [i for i in merged_entities if i.lower() not in STOP_WORDS]
     other_chunks = list(set(chunks) - set(merged_entities))
     print(f"merged entities: {merged_entities}")
     print(f"other phrases: {other_chunks}")
@@ -75,12 +82,12 @@ def query_resource(uri):
     return context
 
 
-def link_sentence(sentence):
-    entities, chunks = get_phrases(sentence)
+def link_sentence(sentence, doc_title):
+    entities, chunks = get_phrases(sentence, doc_title)
     not_linked_phrases_l = []
     linked_phrases_l = []
     if len(entities) < 1:
-        phrases = entities + chunks
+        phrases = list(set(entities) + set(chunks))
     else:
         phrases = entities
 
@@ -120,8 +127,33 @@ def link_sentence(sentence):
     return not_linked_phrases_l, linked_phrases_l
 
 
-def construct_subgraph(sentence):
-    not_linked_phrases_l, linked_phrases_l = link_sentence(sentence)
+def merge_linked_items(linked_phrase_l):
+    merged_l = []
+
+    for i in linked_phrase_l:
+        text_i = i['text']
+        URI_i = i['URI']
+        is_dup = False
+        for m in merged_l:
+            text_m = m['text']
+            URI_m = m['URI']
+            if URI_i == URI_m:
+                if text_m in text_i:
+                    merged_l.remove(m)
+                    merged_l.append(i)
+                    is_dup = True
+                    break
+                if text_i in text_m:
+                    is_dup = True
+                break
+        if not is_dup:
+            merged.append(p)
+
+
+
+
+def construct_subgraph(sentence, doc_title):
+    not_linked_phrases_l, linked_phrases_l = link_sentence(sentence, doc_title)
     phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
 
     relative_hash = {key: set() for key in phrases}
@@ -293,10 +325,16 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
             if len(tmp_embedding) > 0:
                 keyword_vec = bert_similarity.get_phrase_embedding([single_phrase])[0]
                 keyword_embeddings[single_phrase] = keyword_vec
+            else:
+                return []
     else:
         short_phrase = dbpedia_virtuoso.keyword_extract(single_phrase)
-        keyword_vec = bert_similarity.get_phrase_embedding([short_phrase])[0]
-        keyword_embeddings[single_phrase] = keyword_vec
+        keyword_matrix = bert_similarity.get_phrase_embedding([short_phrase])
+        if len(keyword_matrix) > 0:
+            keyword_vec = keyword_matrix[0]
+            keyword_embeddings[single_phrase] = keyword_vec
+        else:
+            return []
 
     # get embedding for linked phrase triple keywords
     candidates = linked_phrase['categories'] + linked_phrase['ontology_linked_values'] + \
@@ -304,8 +342,10 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
 
     if len(candidates) > CANDIDATE_UP_TO:
         return []
-
-    tri_keywords_l = [' '.join(tri['keywords']) for tri in candidates]
+    try:
+        tri_keywords_l = [' '.join(tri['keywords']) for tri in candidates]
+    except Exception:
+        print('error')
     triple_vec_l = keyword_embeddings[linked_phrase['text']]
     if len(triple_vec_l) == 0:
         triple_vec_l = bert_similarity.get_phrase_embedding(tri_keywords_l)

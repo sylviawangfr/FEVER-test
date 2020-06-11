@@ -32,6 +32,7 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
     for item in tqdm(d_list):
         one_full_example = dict()
         one_full_example['claim'] = item['claim']
+        one_full_example['id'] = item['id']
         predicted_evidence = item["predicted_sentids"]
         ground_truth = item['evidence']
         if paras.pred:            # If pred, then reset to not containing ground truth evidence.
@@ -75,17 +76,17 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
 
         all_sent_list = ss_sampler.convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
                                                   id_tokenized=True)
-        cur_id = item['id']
         example_l = []
         for i, sent_item in enumerate(all_sent_list):
-            sent_item['selection_id'] = str(cur_id) + "<##>" + str(sent_item['sid'])
+            sent_item['selection_id'] = str(item['id']) + "<##>" + str(sent_item['sid'])
             if 'label' in item.keys():
                 sent_item['claim_label'] = item['label']
             sentence = text_clean.convert_brc(sent_item['text'])
-            sent_item['triples'] = dbpedia_subgraph.construct_subgraph(sentence)
+            doc_title = sent_item['sid'].split(c_scorer.SENT_LINE)[0].replace("_", " ")
+            sent_item['triples'] = dbpedia_subgraph.construct_subgraph(sentence, doc_title)
             example_l.append(sent_item)
         one_full_example['examples'] = example_l
-        one_full_example['claim_subgraph'] = dbpedia_subgraph.construct_subgraph(text_clean.convert_brc(item['claim']))
+        one_full_example['claim_subgraph'] = dbpedia_subgraph.construct_subgraph(text_clean.convert_brc(item['claim']), '')
         dbpedia_examples_l.append(one_full_example)
 
     cursor.close()
@@ -116,8 +117,8 @@ def prepare_train_data_filter_tfidf():
     end = start + bulk_size if start + bulk_size < data_len else data_len - 1
     while start < data_len:
         paras.upstream_data = all_data[start:end]
-        # sample_tfidf = get_tfidf_sample(paras)
-        sample_tfidf = all_data[start:end]
+        sample_tfidf = get_tfidf_sample(paras)
+        # sample_tfidf = all_data[start:end]
         save_and_append_results(sample_tfidf, config.RESULT_PATH / "sample_ss_graph.jsonl", config.LOG_PATH / "sample_ss_graph.log")
         start = end + 1
         end = start + bulk_size if start + bulk_size < data_len else data_len - 1

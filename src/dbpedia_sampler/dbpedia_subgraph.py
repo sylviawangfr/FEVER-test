@@ -16,7 +16,7 @@ CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.8
 
 
-def get_phrases(sentence, doc_title):
+def get_phrases(sentence, doc_title=''):
     print(sentence)
     if doc_title != '' and c_scorer.SENT_DOC_TITLE in sentence and sentence.startswith(doc_title):
         title_and_sen = sentence.split(c_scorer.SENT_DOC_TITLE, 1)
@@ -63,11 +63,9 @@ def lookup_phrase(phrase):
     linked_phrase = dict()
     resource_dict = dbpedia_lookup.lookup_resource(phrase)
     if isinstance(resource_dict, dict):
-        resource = resource_dict['URI']
         linked_phrase['categories'] = dbpedia_lookup.to_triples(resource_dict)
         linked_phrase['text'] = phrase
-        query_re = query_resource(resource)
-        linked_phrase.update(query_re)
+        linked_phrase['URI'] = resource_dict['URI']
     return linked_phrase
 
 
@@ -82,7 +80,7 @@ def query_resource(uri):
     return context
 
 
-def link_sentence(sentence, doc_title):
+def link_sentence(sentence, doc_title=''):
     entities, chunks = get_phrases(sentence, doc_title)
     not_linked_phrases_l = []
     linked_phrases_l = []
@@ -101,35 +99,22 @@ def link_sentence(sentence, doc_title):
     spotlight_links = dbpedia_spotlight.entity_link(sentence)
     for i in spotlight_links:
         surface = i['surfaceForm']
-        resource = i['URI']
         linked_i = dict()
         linked_i['text'] = surface
+        linked_i['URI'] = i['URI']
+        linked_phrases_l.append(linked_i)
 
-        does_exist = False
-        for p in linked_phrases_l:
-            if p['URI'] == resource:
-                if p['text'] in surface or surface in p['text']:
-                    does_exist = True
-                    break
-            if p['text'] == surface and not p['URI'] == resource:
-                linked_i['text'] = surface + ' ,'  # same text linked to different entities
-                break
-
-        for j in not_linked_phrases_l:
-            if surface in j or j in surface:
-                not_linked_phrases_l.remove(j)
-
-        if not does_exist:
-            linked_i['categories'] = dbpedia_virtuoso.get_categories(resource)
-            linked_i.update(query_resource(resource))
-            linked_phrases_l.append(linked_i)
+    linked_phrases_l = merge_linked_items(linked_phrases_l)
+    for i in linked_phrases_l:
+        i.update(query_resource(i['URI']))
+        if 'categories' not in i:
+            i['categories'] = dbpedia_virtuoso.get_categories(i['URI'])
 
     return not_linked_phrases_l, linked_phrases_l
 
 
 def merge_linked_items(linked_phrase_l):
     merged_l = []
-
     for i in linked_phrase_l:
         text_i = i['text']
         URI_i = i['URI']
@@ -145,14 +130,16 @@ def merge_linked_items(linked_phrase_l):
                     break
                 if text_i in text_m:
                     is_dup = True
+                    break
+            if text_i == text_m and not URI_i == URI_m:
+                i['text'] = text_i + ' ,'  # same text linked to different entities
                 break
         if not is_dup:
-            merged.append(p)
+            merged_l.append(i)
+    return merged_l
 
 
-
-
-def construct_subgraph(sentence, doc_title):
+def construct_subgraph(sentence, doc_title=''):
     not_linked_phrases_l, linked_phrases_l = link_sentence(sentence, doc_title)
     phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
 
@@ -187,6 +174,8 @@ def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embed
     for one_phrase in not_linked_phrases_l:
         for linked_p in linked_phrases_l:
             text = linked_p['text']
+            if text in one_phrase or one_phrase in text:
+                continue
             filtered_triples = get_topk_similar_triples(one_phrase, linked_p, keyword_embeddings, top_k=3)
             for tri in filtered_triples:
                 if not does_tri_exit_in_list(tri, result):
@@ -208,9 +197,13 @@ def does_tri_exit_in_list(tri, tri_l):
 def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash):
     result = []
     for i in itertools.permutations(linked_phrases_l, 2):
-        uri_matched = False
         resource1 = i[0]         # key
-        resource2 = i[1]        # candidates
+        resource2 = i[1]
+        if resource1['text'] in resource2['text'] or resource2['text'] in resource1['text']:
+            continue
+
+        uri_matched = False
+        # candidates
         candidates = resource2['categories'] + resource2['ontology_linked_values'] + \
                      resource2['linked_resources'] + resource2['properties']
         resource1_uri = resource1['URI']
@@ -238,6 +231,9 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
     for i in itertools.combinations(linked_phrases_l, 2):
         resource1 = i[0]
         resource2 = i[1]
+        if resource1['text'] in resource2['text'] or resource2['text'] in resource1['text']:
+            continue
+
         candidates1 = resource1['categories'] + resource1['ontology_linked_values'] + \
                      resource1['linked_resources'] + resource1['properties']
         candidates2 = resource2['categories'] + resource2['ontology_linked_values'] + \
@@ -323,7 +319,7 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
         if len(keyword_vec) == 0:
             tmp_embedding = bert_similarity.get_phrase_embedding([single_phrase])
             if len(tmp_embedding) > 0:
-                keyword_vec = bert_similarity.get_phrase_embedding([single_phrase])[0]
+                keyword_vec = tmp_embedding[0]
                 keyword_embeddings[single_phrase] = keyword_vec
             else:
                 return []
@@ -340,12 +336,13 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
     candidates = linked_phrase['categories'] + linked_phrase['ontology_linked_values'] + \
                  linked_phrase['linked_resources'] + linked_phrase['properties']
 
-    if len(candidates) > CANDIDATE_UP_TO:
+    if len(candidates) > CANDIDATE_UP_TO or len(candidates) < 1:
         return []
     try:
         tri_keywords_l = [' '.join(tri['keywords']) for tri in candidates]
-    except Exception:
-        print('error')
+    except Exception as err:
+        print(err)
+
     triple_vec_l = keyword_embeddings[linked_phrase['text']]
     if len(triple_vec_l) == 0:
         triple_vec_l = bert_similarity.get_phrase_embedding(tri_keywords_l)

@@ -4,6 +4,7 @@ import re
 import validators
 import config
 import nltk
+from datetime import datetime
 
 DEFAULT_GRAPH = "http://dbpedia.org"
 PREFIX_DBO = "http://dbpedia.org/ontology/"
@@ -14,6 +15,7 @@ PREFIX_TYPE_OF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 RECORD_LIMIT = 200
 
 def get_triples(query_str):
+    start = datetime.now()
     sparql = SPARQLWrapper(config.DBPEDIA_GRAPH_URL, defaultGraph=DEFAULT_GRAPH)
     sparql.setTimeout(5)
     sparql.setQuery(query_str)
@@ -21,7 +23,7 @@ def get_triples(query_str):
     triples = []
     try:
         results = sparql.query().convert()
-        if len(results["results"]["bindings"]) > 200:
+        if len(results["results"]["bindings"]) > 300:
             print('extra large bindings in DBpedia, ignore')
             return triples
         for record in results["results"]["bindings"]:
@@ -31,10 +33,12 @@ def get_triples(query_str):
             tri['object'] = record['object']['value']
             triples.append(tri)
         # print(json.dumps(triples, indent=4))
+        print(f"sparql time: {(datetime.now() - start).seconds}")
         return triples
     except Exception as err:
         print("failed to query dbpedia virtuoso...")
         print(err)
+        print(f"sparql time: {(datetime.now() - start).seconds}")
         return triples
 
 
@@ -149,6 +153,8 @@ def get_one_hop_resource_inbound(resource_uri):
     for tri in tris:
         rel_split = keyword_extract(tri['relation'])
         subj_split = keyword_extract(tri['subject'])
+        if does_reach_max_length(subj_split):
+            print('here')
         tri['keywords'] = [subj_split, rel_split]
     return tris
 
@@ -163,6 +169,8 @@ def get_one_hop_resource_outbound(resource_uri):
     for tri in tris:
         rel_split = keyword_extract(tri['relation'])
         obj_split = keyword_extract(tri['object'])
+        if does_reach_max_length(obj_split):
+            print('here')
         tri['keywords'] = [rel_split, obj_split]
     return tris
 

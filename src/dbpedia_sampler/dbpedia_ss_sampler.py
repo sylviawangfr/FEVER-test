@@ -91,8 +91,8 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
 
     cursor.close()
     conn.close()
-    ss_sampler.count_truth_examples([j for i in dbpedia_examples_l for j in i['examples']])
-    logger.info(np.sum(count_truth))
+    # ss_sampler.count_truth_examples([j for i in dbpedia_examples_l for j in i['examples']])
+    # logger.info(np.sum(count_truth))
     return dbpedia_examples_l
 
 
@@ -114,14 +114,15 @@ def prepare_train_data_filter_tfidf():
     paras.pred = False
     bulk_size = 3
     start = 0
-    end = start + bulk_size if start + bulk_size < data_len else data_len - 1
     while start < data_len:
+        end = start + bulk_size if start + bulk_size < data_len else data_len
         paras.upstream_data = all_data[start:end]
         sample_tfidf = get_tfidf_sample(paras)
-        # sample_tfidf = all_data[start:end]
         save_and_append_results(sample_tfidf, config.RESULT_PATH / "sample_ss_graph.jsonl", config.LOG_PATH / "sample_ss_graph.log")
-        start = end + 1
-        end = start + bulk_size if start + bulk_size < data_len else data_len - 1
+        if end == data_len:
+            break
+        else:
+            start = end
     return sample_tfidf
 
 

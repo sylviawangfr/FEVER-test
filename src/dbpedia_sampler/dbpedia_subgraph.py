@@ -4,20 +4,20 @@ from dbpedia_sampler import dbpedia_virtuoso
 from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_spotlight
 from utils import c_scorer
-import json
+import logging
 import itertools
 import numpy as np
 import sklearn.metrics.pairwise as pw
 
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',
-              'which', 'when', 'whom', 'the']
+              'which', 'when', 'whom', 'the', 'history']
 CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.8
 
 
 def get_phrases(sentence, doc_title=''):
-    print(sentence)
+    logging.debug(sentence)
     if doc_title != '' and c_scorer.SENT_DOC_TITLE in sentence and sentence.startswith(doc_title):
         title_and_sen = sentence.split(c_scorer.SENT_DOC_TITLE, 1)
         sent = title_and_sen[1]
@@ -27,16 +27,16 @@ def get_phrases(sentence, doc_title=''):
     chunks, ents = split_claim_spacy(sent)
     entities = [en[0] for en in ents]
     capitalized_phrased = split_claim_regex(sent)
-    print(f"chunks: {chunks}")
-    print(f"entities: {entities}")
-    print(f"capitalized phrases: {capitalized_phrased}")
+    logging.debug(f"chunks: {chunks}")
+    logging.debug(f"entities: {entities}")
+    logging.debug(f"capitalized phrases: {capitalized_phrased}")
     merged_entities = list(set(entities) | set(capitalized_phrased))
     if not doc_title == '':
         merged_entities = list(set(merged_entities) | set([doc_title]))
     merged_entities = [i for i in merged_entities if i.lower() not in STOP_WORDS]
     other_chunks = list(set(chunks) - set(merged_entities))
-    print(f"merged entities: {merged_entities}")
-    print(f"other phrases: {other_chunks}")
+    logging.debug(f"merged entities: {merged_entities}")
+    logging.debug(f"other phrases: {other_chunks}")
     return merged_entities, other_chunks
 
 
@@ -71,11 +71,8 @@ def lookup_phrase(phrase):
 
 def query_resource(uri):
     context = dict()
-    context['ontology_linked_values'] = dbpedia_virtuoso.get_ontology_linked_values_inbound(uri) + \
-                                              dbpedia_virtuoso.get_ontology_linked_values_outbound(uri)
-    context['properties'] = dbpedia_virtuoso.get_properties(uri)
-    context['linked_resources'] = dbpedia_virtuoso.get_one_hop_resource_inbound(uri) + \
-                                        dbpedia_virtuoso.get_one_hop_resource_outbound(uri)
+    context['inbounds'] = dbpedia_virtuoso.get_inbounds(uri)
+    context['outbounds'] = dbpedia_virtuoso.get_outbounds(uri)
     context['URI'] = uri
     return context
 
@@ -204,8 +201,7 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_ha
 
         uri_matched = False
         # candidates
-        candidates = resource2['categories'] + resource2['ontology_linked_values'] + \
-                     resource2['linked_resources'] + resource2['properties']
+        candidates = resource2['categories'] + resource2['inbounds'] + resource2['outbounds']
         resource1_uri = resource1['URI']
         for item in candidates:
             if resource1_uri in [item['subject'], item['relation'], item['object']]:
@@ -234,10 +230,8 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
         if resource1['text'] in resource2['text'] or resource2['text'] in resource1['text']:
             continue
 
-        candidates1 = resource1['categories'] + resource1['ontology_linked_values'] + \
-                     resource1['linked_resources'] + resource1['properties']
-        candidates2 = resource2['categories'] + resource2['ontology_linked_values'] + \
-                     resource2['linked_resources'] + resource2['properties']
+        candidates1 = resource1['categories'] + + resource1['inbounds'] + resource1['outbounds']
+        candidates2 = resource2['categories'] + + resource2['inbounds'] + resource2['outbounds']
 
         exact_match = False
         for item1 in candidates1:
@@ -265,10 +259,8 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
 
 
 def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
-    candidates1 = resource1['categories'] + resource1['ontology_linked_values'] + \
-                  resource1['linked_resources'] + resource1['properties']
-    candidates2 = resource2['categories'] + resource2['ontology_linked_values'] + \
-                  resource2['linked_resources'] + resource2['properties']
+    candidates1 = resource1['categories'] + + resource1['inbounds'] + resource1['outbounds']
+    candidates2 = resource2['categories'] + + resource2['inbounds'] + resource2['outbounds']
 
     if len(candidates1) > CANDIDATE_UP_TO or len(candidates2) > CANDIDATE_UP_TO:
         return []
@@ -333,15 +325,14 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
             return []
 
     # get embedding for linked phrase triple keywords
-    candidates = linked_phrase['categories'] + linked_phrase['ontology_linked_values'] + \
-                 linked_phrase['linked_resources'] + linked_phrase['properties']
+    candidates = linked_phrase['categories'] + linked_phrase['inbounds'] + linked_phrase['outbounds']
 
     if len(candidates) > CANDIDATE_UP_TO or len(candidates) < 1:
         return []
     try:
         tri_keywords_l = [' '.join(tri['keywords']) for tri in candidates]
     except Exception as err:
-        print(err)
+        logging.error(err)
 
     triple_vec_l = keyword_embeddings[linked_phrase['text']]
     if len(triple_vec_l) == 0:
@@ -368,7 +359,6 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
             result.append(record)
         # print('>%s\t%s' % (score[idx], tri_keywords_l[idx]))
     return result
-
 
 
 if __name__ == '__main__':

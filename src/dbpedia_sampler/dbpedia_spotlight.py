@@ -2,12 +2,13 @@ import spotlight
 import json
 import config
 from datetime import datetime
+import logging
 
 CONFIDENCE = 0.4
 
 def entity_link(sentence):
+    start = datetime.now()
     try:
-        start = datetime.now()
         annotations = spotlight.annotate(config.DBPEDIA_SPOTLIGHT_URL, sentence,
                                      confidence=CONFIDENCE,
                                      support=20)
@@ -16,15 +17,14 @@ def entity_link(sentence):
         return []
 
     pretty_data = json.dumps(annotations, indent=4)
-    print(pretty_data)
+    logging.debug(pretty_data)
     entity_list = []
     for item in annotations:
         ent = dict()
         ent['URI'] = item['URI']
         ent['surfaceForm'] = item['surfaceForm']
         entity_list.append(ent)
-    print(entity_list)
-    print(f"spotlight time: {(datetime.now() - start).seconds}")
+    logging.debug(f"spotlight time: {(datetime.now() - start).seconds}")
     return entity_list
 
 

@@ -1,15 +1,17 @@
 import requests
 import xmltodict
 import json
-import os
+import logging
 import config
 from dbpedia_sampler.dbpedia_virtuoso import keyword_extract
 import difflib
+from datetime import datetime
 
 
 def lookup_resource(text_phrase):
+    start = datetime.now()
     url = config.DBPEDIA_LOOKUP_URL + text_phrase
-    print(url)
+    logging.debug(f"lookup url: {url}")
     response = requests.get(url, timeout=5)
     if response.status_code is 200:
         results = xmltodict.parse(response.text)
@@ -49,11 +51,13 @@ def lookup_resource(text_phrase):
                     catgr.append(c['URI'])                           # or 'http://www.w3.org/2002/07/owl' in c['URI'] \
             record['Classes'] = catgr
 
-        print(json.dumps(record, indent=4))
+        logging.debug(json.dumps(record, indent=4))
+        logging.debug(f"lookup time: {(datetime.now() - start).seconds}")
         return record
         # print(json.dumps(results, indent=4))
     else:
-        print('failed to connect DBpedia lookup')
+        logging.warning('failed to connect DBpedia lookup')
+        logging.debug(f"lookup time: {(datetime.now() - start).seconds}")
         return -1
 
 
@@ -73,5 +77,5 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
-    lookup_resource('Bloomington')
+    lookup_resource('American')
 

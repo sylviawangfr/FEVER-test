@@ -2,6 +2,7 @@ from bert_serving.client import BertClient
 import config
 import difflib
 from datetime import datetime
+import logging
 
 
 def get_phrase_embedding(phrases):
@@ -12,11 +13,11 @@ def get_phrase_embedding(phrases):
 
         bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
         re = bc.encode(phrases)
-        print(f"embedding time: {(datetime.now() - start).seconds}")
+        logging.debug(f"embedding time: {(datetime.now() - start).seconds}")
         return re
     except Exception as err:
-        print("failed to get embedding for phrases...")
-        print(err)
+        logging.warning("failed to get embedding for phrases...")
+        logging.error(err)
         return []
 
 

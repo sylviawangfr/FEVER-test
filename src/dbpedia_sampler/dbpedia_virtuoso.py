@@ -5,6 +5,7 @@ import validators
 import config
 import nltk
 from datetime import datetime
+import logging
 
 DEFAULT_GRAPH = "http://dbpedia.org"
 PREFIX_DBO = "http://dbpedia.org/ontology/"
@@ -24,7 +25,7 @@ def get_triples(query_str):
     try:
         results = sparql.query().convert()
         if len(results["results"]["bindings"]) > 300:
-            print('extra large bindings in DBpedia, ignore')
+            logging.warning('extra large bindings in DBpedia, ignore')
             return triples
         for record in results["results"]["bindings"]:
             tri = dict()
@@ -33,12 +34,12 @@ def get_triples(query_str):
             tri['object'] = record['object']['value']
             triples.append(tri)
         # print(json.dumps(triples, indent=4))
-        print(f"sparql time: {(datetime.now() - start).seconds}")
+        logging.debug(f"sparql time: {(datetime.now() - start).seconds}")
         return triples
     except Exception as err:
-        print("failed to query dbpedia virtuoso...")
-        print(err)
-        print(f"sparql time: {(datetime.now() - start).seconds}")
+        logging.warning("failed to query dbpedia virtuoso...")
+        logging.error(err)
+        logging.debug(f"sparql time: {(datetime.now() - start).seconds}")
         return triples
 
 
@@ -139,7 +140,53 @@ def get_ontology_linked_values_inbound(resource_uri):
         rel_split = keyword_extract(tri['relation'])
         subj_split = keyword_extract(tri['subject'])
         tri['keywords'] = [subj_split, rel_split]
-    print(f"inbound re: {len(tris)}")
+    logging.debug(f"inbound re: {len(tris)}")
+    return tris
+
+
+def get_outbounds(resource_uri):
+    query_str_outbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
+        f"SELECT distinct (<{resource_uri}> AS ?subject) ?relation ?object " \
+        "FROM <http://dbpedia.org> WHERE { " \
+        f"<{resource_uri}> ?relation ?object . " \
+        "filter (!contains(str(?relation), 'wiki')) " \
+        "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
+        "filter (contains(str(?relation), 'ontology') " \
+        "|| contains(str(?object), 'http://dbpedia.org/resource/') " \
+        "|| contains(str(?relation), 'http://dbpedia.org/property/'))} LIMIT 500"
+    tris = get_triples(query_str_outbound)
+    to_delete = []
+    for tri in tris:
+        obj_split = keyword_extract(tri['object'])
+        if does_reach_max_length(obj_split):
+            to_delete.append(tri)
+            continue
+        else:
+            rel_split = keyword_extract(tri['relation'])
+            tri['keywords'] = [rel_split, obj_split]
+    logging.debug(f"outbound re: {len(tris)}")
+    for i in to_delete:
+        tris.remove(i)
+    return tris
+
+
+def get_inbounds(resource_uri):
+    query_str_inbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
+        f"SELECT distinct ?subject ?relation (<{resource_uri}> AS ?object) " \
+        "FROM <http://dbpedia.org> " \
+        f"WHERE {{ ?subject ?relation <{resource_uri}> . " \
+        "filter (!contains(str(?relation), 'wiki')) " \
+        "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
+        "filter (contains(str(?relation), 'ontology') " \
+        "|| contains(str(?subject), 'http://dbpedia.org/resource/') " \
+        "|| contains(str(?relation), 'http://dbpedia.org/property/'))} LIMIT 500"
+    tris = get_triples(query_str_inbound)
+    for tri in tris:
+        rel_split = keyword_extract(tri['relation'])
+        subj_split = keyword_extract(tri['subject'])
+        if does_reach_max_length(subj_split):
+            print('here')
+        tri['keywords'] = [subj_split, rel_split]
     return tris
 
 
@@ -219,14 +266,16 @@ def isURI(str):
 
 if __name__ == "__main__":
     res = "http://dbpedia.org/resource/Magic_Johnson"
-    on = "http://dbpedia.org/ontology/City"
-    o1 = get_categories_one_hop_child(on)
-    o2 =get_categories_one_hop_parent(on)
-    get_properties(res)
-    get_one_hop_resource_inbound(res)
-    get_one_hop_resource_outbound(res)
-    get_ontology_linked_values_inbound(res)
-    get_ontology_linked_values_outbound(res)
+    # get_inbounds(res)
+    get_outbounds(res)
+    # on = "http://dbpedia.org/ontology/City"
+    # o1 = get_categories_one_hop_child(on)
+    # o2 =get_categories_one_hop_parent(on)
+    # get_properties(res)
+    # get_one_hop_resource_inbound(res)
+    # get_one_hop_resource_outbound(res)
+    # get_ontology_linked_values_inbound(res)
+    # get_ontology_linked_values_outbound(res)
 
     # get_keyword(re)
     # str = ['birthPlace', 'USA', 'Magic_Johnson', '112.3', 'USA_flag']

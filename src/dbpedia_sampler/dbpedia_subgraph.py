@@ -230,8 +230,8 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
         if resource1['text'] in resource2['text'] or resource2['text'] in resource1['text']:
             continue
 
-        candidates1 = resource1['categories'] + + resource1['inbounds'] + resource1['outbounds']
-        candidates2 = resource2['categories'] + + resource2['inbounds'] + resource2['outbounds']
+        candidates1 = resource1['categories'] + resource1['inbounds'] + resource1['outbounds']
+        candidates2 = resource2['categories'] + resource2['inbounds'] + resource2['outbounds']
 
         exact_match = False
         for item1 in candidates1:
@@ -259,8 +259,8 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
 
 
 def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
-    candidates1 = resource1['categories'] + + resource1['inbounds'] + resource1['outbounds']
-    candidates2 = resource2['categories'] + + resource2['inbounds'] + resource2['outbounds']
+    candidates1 = resource1['categories'] + resource1['inbounds'] + resource1['outbounds']
+    candidates2 = resource2['categories'] + resource2['inbounds'] + resource2['outbounds']
 
     if len(candidates1) > CANDIDATE_UP_TO or len(candidates2) > CANDIDATE_UP_TO:
         return []

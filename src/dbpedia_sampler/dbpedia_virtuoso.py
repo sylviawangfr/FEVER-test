@@ -24,7 +24,7 @@ def get_triples(query_str):
     triples = []
     try:
         results = sparql.query().convert()
-        if len(results["results"]["bindings"]) > 300:
+        if len(results["results"]["bindings"]) > 500:
             logging.warning('extra large bindings in DBpedia, ignore')
             return triples
         for record in results["results"]["bindings"]:

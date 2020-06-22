@@ -199,7 +199,8 @@ if __name__ == '__main__':
     sentence1 = "Brett Atwood is a website editor , content strategist and former print and online journalist whose " \
                "writings have appeared in Billboard , Rolling Stone , Vibe , " \
                "The Hollywood Reporter and other publications "
-    sentence2 = "Roman Bernard Atwood (born May 28, 1983) is an American YouTube personality and prankster."
+    sentence2 = 'Roman Atwood - He also has another YouTube channel called `` RomanAtwood \'\' , where he posts pranks .'
+    # sentence2 = "Roman Bernard Atwood (born May 28, 1983) is an American YouTube personality and prankster."
     # link_sentence(sentence2, doc_title='Roman Atwood')
     claim_dict = construct_subgraph_for_claim(claim)
     construct_subgraph_for_candidate(claim_dict, sentence2, doc_title='Roman Atwood')

@@ -38,6 +38,7 @@ def get_phrases(sentence, doc_title=''):
         merged_entities = list(set(merged_entities) | set([doc_title]))
     merged_entities = [i for i in merged_entities if i.lower() not in STOP_WORDS]
     other_chunks = list(set(chunks) - set(merged_entities))
+    other_chunks = [i for i in other_chunks if i.lower() not in STOP_WORDS]
     log.debug(f"merged entities: {merged_entities}")
     log.debug(f"other phrases: {other_chunks}")
     return merged_entities, other_chunks
@@ -94,6 +95,8 @@ def link_sentence(sentence, doc_title=''):
     spotlight_links = dbpedia_spotlight.entity_link(sentence)
     for i in spotlight_links:
         surface = i['surfaceForm']
+        if surface in STOP_WORDS:
+            break
         i_URI = i['URI']
         if len(list(filter(lambda x: (surface in x['text'] and i_URI == x['URI']), linked_phrases_l))) == 0:
             linked_i = dict()
@@ -106,7 +109,6 @@ def link_sentence(sentence, doc_title=''):
         i.update(query_resource(i['URI']))
         if 'categories' not in i:
             i['categories'] = dbpedia_virtuoso.get_categories(i['URI'])
-
     return not_linked_phrases_l, linked_phrases_l
 
 
@@ -116,6 +118,8 @@ def merge_linked_l1_to_l2(l1, l2):
         URI_i = i['URI']
         is_dup = False
         for m in l2:
+            if not 'text' in m:
+                break
             text_m = m['text']
             URI_m = m['URI']
             if URI_i == URI_m:

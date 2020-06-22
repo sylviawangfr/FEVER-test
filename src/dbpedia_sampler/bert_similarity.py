@@ -2,22 +2,25 @@ from bert_serving.client import BertClient
 import config
 import difflib
 from datetime import datetime
-import logging
+import log_util
+
+log = log_util.get_logger('bert_similarity')
 
 
 def get_phrase_embedding(phrases):
     try:
         start = datetime.now()
+        log.debug(f"embedding: {phrases}")
         if phrases is None or len(phrases) < 1:
             return []
 
         bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
         re = bc.encode(phrases)
-        logging.debug(f"embedding time: {(datetime.now() - start).seconds}")
+        log.debug(f"embedding time: {(datetime.now() - start).seconds}")
         return re
     except Exception as err:
-        logging.warning("failed to get embedding for phrases...")
-        logging.error(err)
+        log.warning("failed to get embedding for phrases...")
+        log.error(err)
         return []
 
 

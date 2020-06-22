@@ -1,17 +1,20 @@
 import requests
 import xmltodict
 import json
-import logging
 import config
 from dbpedia_sampler.dbpedia_virtuoso import keyword_extract
 import difflib
 from datetime import datetime
+import log_util
+
+
+log = log_util.get_logger('lookup_resource')
 
 
 def lookup_resource(text_phrase):
     start = datetime.now()
     url = config.DBPEDIA_LOOKUP_URL + text_phrase
-    logging.debug(f"lookup url: {url}")
+    log.debug(f"lookup url: {url}")
     response = requests.get(url, timeout=5)
     if response.status_code is 200:
         results = xmltodict.parse(response.text)
@@ -46,18 +49,19 @@ def lookup_resource(text_phrase):
             else:
                 cls_l = []
             for c in cls_l:
-                if 'http://dbpedia.org/ontology/' in c['URI'] \
-                        or 'http://schema.org/' in c['URI']:
+                if ('http://dbpedia.org/ontology/' in c['URI'] \
+                        or 'http://schema.org/' in c['URI']) \
+                        and not '/Agent' in c['URI']:
                     catgr.append(c['URI'])                           # or 'http://www.w3.org/2002/07/owl' in c['URI'] \
             record['Classes'] = catgr
 
-        logging.debug(json.dumps(record, indent=4))
-        logging.debug(f"lookup time: {(datetime.now() - start).seconds}")
+        log.debug(json.dumps(record, indent=4))
+        log.debug(f"lookup time: {(datetime.now() - start).seconds}")
         return record
         # print(json.dumps(results, indent=4))
     else:
-        logging.warning('failed to connect DBpedia lookup')
-        logging.debug(f"lookup time: {(datetime.now() - start).seconds}")
+        log.warning('failed to connect DBpedia lookup')
+        log.debug(f"lookup time: {(datetime.now() - start).seconds}")
         return -1
 
 
@@ -77,5 +81,7 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
-    lookup_resource('American')
+    lookup_resource('United states')
+    log.warning("test debug")
+    log.info("test info")
 

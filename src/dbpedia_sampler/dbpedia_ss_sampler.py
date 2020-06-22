@@ -1,15 +1,11 @@
 import utils.check_sentences
 import itertools
-import numpy as np
+from log_util import log
 from utils.file_loader import *
 import utils.common_types as bert_para
 import BERT_sampler.ss_sampler as ss_sampler
 from utils import fever_db, c_scorer
-import logging
 from dbpedia_sampler import dbpedia_subgraph
-
-
-logger = logging.getLogger(__name__)
 
 
 def get_tfidf_sample(paras: bert_para.BERT_para):
@@ -76,6 +72,8 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
 
         all_sent_list = ss_sampler.convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
                                                   id_tokenized=True)
+
+        claim_dict = dbpedia_subgraph.construct_subgraph_for_claim(text_clean.convert_brc(item['claim']), '')
         example_l = []
         for i, sent_item in enumerate(all_sent_list):
             sent_item['selection_id'] = str(item['id']) + "<##>" + str(sent_item['sid'])
@@ -83,10 +81,10 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
                 sent_item['claim_label'] = item['label']
             sentence = text_clean.convert_brc(sent_item['text'])
             doc_title = sent_item['sid'].split(c_scorer.SENT_LINE)[0].replace("_", " ")
-            sent_item['triples'] = dbpedia_subgraph.construct_subgraph(sentence, doc_title)
+            sent_item['triples'] = dbpedia_subgraph.construct_subgraph_for_candidate(claim_dict, sentence, doc_title)
             example_l.append(sent_item)
-        one_full_example['examples'] = example_l
-        one_full_example['claim_subgraph'] = dbpedia_subgraph.construct_subgraph(text_clean.convert_brc(item['claim']), '')
+        one_full_example['claim_links'] = claim_dict
+        one_full_example['example_links'] = example_l
         dbpedia_examples_l.append(one_full_example)
 
     cursor.close()

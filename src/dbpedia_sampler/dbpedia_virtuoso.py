@@ -5,7 +5,7 @@ import validators
 import config
 import nltk
 from datetime import datetime
-import logging
+import log_util
 
 DEFAULT_GRAPH = "http://dbpedia.org"
 PREFIX_DBO = "http://dbpedia.org/ontology/"
@@ -14,6 +14,8 @@ PREFIX_SUBCLASSOF = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
 PREFIX_DBR = "http://dbpedia.org/resource/"
 PREFIX_TYPE_OF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 RECORD_LIMIT = 200
+
+log = log_util.get_logger('dbpedia_virtuoso')
 
 def get_triples(query_str):
     start = datetime.now()
@@ -25,7 +27,7 @@ def get_triples(query_str):
     try:
         results = sparql.query().convert()
         if len(results["results"]["bindings"]) > 500:
-            logging.warning('extra large bindings in DBpedia, ignore')
+            log.warning('extra large bindings in DBpedia, ignore')
             return triples
         for record in results["results"]["bindings"]:
             tri = dict()
@@ -34,12 +36,12 @@ def get_triples(query_str):
             tri['object'] = record['object']['value']
             triples.append(tri)
         # print(json.dumps(triples, indent=4))
-        logging.debug(f"sparql time: {(datetime.now() - start).seconds}")
+        log.debug(f"sparql time: {(datetime.now() - start).seconds}")
         return triples
     except Exception as err:
-        logging.warning("failed to query dbpedia virtuoso...")
-        logging.error(err)
-        logging.debug(f"sparql time: {(datetime.now() - start).seconds}")
+        log.warning("failed to query dbpedia virtuoso...")
+        log.error(err)
+        log.debug(f"sparql time: {(datetime.now() - start).seconds}")
         return triples
 
 
@@ -140,7 +142,7 @@ def get_ontology_linked_values_inbound(resource_uri):
         rel_split = keyword_extract(tri['relation'])
         subj_split = keyword_extract(tri['subject'])
         tri['keywords'] = [subj_split, rel_split]
-    logging.debug(f"inbound re: {len(tris)}")
+    log.debug(f"inbound re: {len(tris)}")
     return tris
 
 
@@ -164,7 +166,7 @@ def get_outbounds(resource_uri):
         else:
             rel_split = keyword_extract(tri['relation'])
             tri['keywords'] = [rel_split, obj_split]
-    logging.debug(f"outbound re: {len(tris)}")
+    log.debug(f"outbound re: {len(tris)}")
     for i in to_delete:
         tris.remove(i)
     return tris
@@ -265,9 +267,10 @@ def isURI(str):
 
 
 if __name__ == "__main__":
-    res = "http://dbpedia.org/resource/Magic_Johnson"
-    # get_inbounds(res)
-    get_outbounds(res)
+    # res = "http://dbpedia.org/resource/Magic_Johnson"
+    res = "http://dbpedia.org/resource/Content_creation"
+    print(get_inbounds(res))
+    print(get_outbounds(res))
     # on = "http://dbpedia.org/ontology/City"
     # o1 = get_categories_one_hop_child(on)
     # o2 =get_categories_one_hop_parent(on)
@@ -280,8 +283,8 @@ if __name__ == "__main__":
     # get_keyword(re)
     # str = ['birthPlace', 'USA', 'Magic_Johnson', '112.3', 'USA_flag']
     # on = "http://dbpedia.org/resource/Los_Angeles_Lakers"
-    t = get_one_hop_resource_inbound(res)
-    print(t)
+    # t = get_one_hop_resource_inbound(res)
+    # print(t)
 
 
 

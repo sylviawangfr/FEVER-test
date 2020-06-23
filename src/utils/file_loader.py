@@ -1,5 +1,3 @@
-import json
-import config
 from utils.text_clean import *
 from utils.common import *
 from pathlib import Path

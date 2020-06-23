@@ -2,7 +2,6 @@ from dbpedia_sampler import dbpedia_triple_linker
 from dbpedia_sampler import bert_similarity
 import numpy as np
 import sklearn.metrics.pairwise as pw
-import difflib
 
 
 CANDIDATE_UP_TO = 150
@@ -104,6 +103,9 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
     for t in no_exact_found:
         for i in t['categories']:
             if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
+                i['text'] = t['text']
+                i['URI'] = t['URI']
+                i['score'] = SCORE_CONFIDENCE
                 sent_graph.append(i)
 
     # claim_resources VS sent_resources
@@ -134,6 +136,8 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
         if len(one_hop_embedding) < 1:
             one_hop_embedding = bert_similarity.get_phrase_embedding(one_hop_keywords)
             embeddings_hash[i['text']]['one_hop'] = one_hop_embedding
+        if len(one_hop_embedding) < 1:
+            continue
         top_k = 3
         out = pw.cosine_similarity(claim_linked_phrase_embedding, one_hop_embedding).flatten()
         topk_idx = np.argsort(out)[::-1][:top_k]
@@ -167,6 +171,9 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
             c_one_hop_embedding = one_hop_embedding
 
         top_k = 3
+        if len(sent_linked_embedding) < 1 or len(c_one_hop_embedding) < 1:
+            continue
+
         out = pw.cosine_similarity(sent_linked_embedding, c_one_hop_embedding).flatten()
         topk_idx = np.argsort(out)[::-1][:top_k]
         len2 = len(c_one_hop_embedding)
@@ -185,8 +192,8 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
 
     # all together and sort
     sent_graph = dbpedia_triple_linker.merge_linked_l1_to_l2(filtered_one_hop, sent_graph)
-    print(claim_graph)
-    print(filtered_links)
+    # print(claim_graph)
+    # print(filtered_links)
     return sent_graph
 
 

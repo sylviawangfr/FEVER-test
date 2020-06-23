@@ -12,15 +12,12 @@ import utils.check_sentences
 import itertools
 import numpy as np
 from collections import Counter
-import logging
+import log_util
 from utils.file_loader import *
 import utils.common_types as bert_para
 
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-                    datefmt='%m/%d/%Y %H:%M:%S',
-                    level=logging.INFO)
+logger = log_util.get_logger('ss_sampler')
 
 
 def get_full_list_sample(paras: bert_para.BERT_para):

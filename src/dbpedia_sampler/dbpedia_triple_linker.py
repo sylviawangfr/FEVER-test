@@ -8,7 +8,6 @@ import log_util
 import itertools
 import numpy as np
 import sklearn.metrics.pairwise as pw
-import difflib
 
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',

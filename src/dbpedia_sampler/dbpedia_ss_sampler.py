@@ -5,6 +5,7 @@ import utils.common_types as bert_para
 import BERT_sampler.ss_sampler as ss_sampler
 from utils import fever_db, c_scorer
 from dbpedia_sampler import dbpedia_subgraph
+import log_util
 
 
 def get_tfidf_sample(paras: bert_para.BERT_para):
@@ -108,7 +109,7 @@ def prepare_train_data_filter_full_list():
 
 def prepare_train_data_filter_tfidf():
     paras = bert_para.BERT_para()
-    all_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:2]
+    all_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[2:16]
     data_len = len(all_data)
     paras.sample_n = 3
     paras.pred = False
@@ -136,5 +137,7 @@ def cache_temp_graph_result_to_file():
 
 if __name__ == '__main__':
     # prepare_train_data_filter_full_list()
+    logger = log_util.get_logger('test')
+    logger.error("test error")
     prepare_train_data_filter_tfidf()
 

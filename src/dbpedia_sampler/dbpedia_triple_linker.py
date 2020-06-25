@@ -5,13 +5,15 @@ from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_spotlight
 from utils import c_scorer
 import log_util
+import difflib
 import itertools
 import numpy as np
 import sklearn.metrics.pairwise as pw
+import re
 
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',
-              'which', 'when', 'whom', 'the', 'history']
+              'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night']
 CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.85
 
@@ -44,15 +46,18 @@ def get_phrases(sentence, doc_title=''):
 
 
 def merge_phrases_l1_to_l2(l1, l2):
+    to_delete = []
     for i in l1:
         is_dup = False
         for j in l2:
             if i in j:
                 is_dup = True
                 break
+            if j in i:
+                l2.remove(j)
         if not is_dup:
             l2.append(i)
-    merged = [i for i in l2 if i.lower() not in STOP_WORDS]
+    merged = [i for i in l2 if (i.lower() not in STOP_WORDS) and not re.match(r'^(\-|\+)?\d+(\.\d+)?$', i)]
     return merged
 
 
@@ -68,10 +73,19 @@ def lookup_phrase(phrase):
 
 def query_resource(uri):
     context = dict()
-    context['inbounds'] = dbpedia_virtuoso.get_inbounds(uri)
+    # context['inbounds'] = dbpedia_virtuoso.get_inbounds(uri)
     context['outbounds'] = dbpedia_virtuoso.get_outbounds(uri)
     context['URI'] = uri
     return context
+
+
+def merge_chunks_with_entities(chunks, ents):
+    merged = ents
+    for c in chunks:
+        if len(list(filter(lambda x: (c in x), ents))) < 1:
+            merged.append(c)
+    return merged
+
 
 
 def link_sentence(sentence, doc_title=''):
@@ -82,7 +96,7 @@ def link_sentence(sentence, doc_title=''):
     #     phrases = list(set(entities) | set(chunks))
     # else:
     #     phrases = entities
-    phrases = list(set(entities) | set(chunks))
+    phrases = merge_chunks_with_entities(chunks, entities)
 
     for p in phrases:
         linked_phrase = lookup_phrase(p)
@@ -104,11 +118,24 @@ def link_sentence(sentence, doc_title=''):
             linked_phrases_l.append(linked_i)
 
     linked_phrases_l = merge_linked_l1_to_l2(linked_phrases_l, [])
+
+    for i in linked_phrases_l:
+        for j in not_linked_phrases_l:
+            if i['text'] in j or j in i['text']:
+                not_linked_phrases_l.remove(j)
+                break
+
     for i in linked_phrases_l:
         i.update(query_resource(i['URI']))
         if 'categories' not in i:
             i['categories'] = dbpedia_virtuoso.get_categories(i['URI'])
     return not_linked_phrases_l, linked_phrases_l
+
+
+def keyword_matching(text, str_l):
+    keyword_matching_score = [difflib.SequenceMatcher(None, text, i).ratio() for i in str_l]
+    sorted_matching_index = sorted(range(len(keyword_matching_score)), key=lambda k: keyword_matching_score[k], reverse=True)
+    return keyword_matching_score, sorted_matching_index
 
 
 def merge_linked_l1_to_l2(l1, l2):
@@ -130,8 +157,23 @@ def merge_linked_l1_to_l2(l1, l2):
                     break
             if not URI_i == URI_m:
                 if text_i == text_m:
-                    i['text'] = text_i + ' ,'  # same text linked to different entities
-                    break
+                    short_uri_i = dbpedia_virtuoso.uri_short_extract(URI_i)
+                    short_uri_m = dbpedia_virtuoso.uri_short_extract(URI_m)
+                    score, sorted_idx = keyword_matching(text_i.lower(), [short_uri_i.lower(), short_uri_m.lower()])
+                    if score[sorted_idx[0]] == 1:   # exact match
+                        if sorted_idx[0] == 0:  # pick i
+                            l2.remove(m)
+                            break
+                        else:   # keep m
+                            is_dup = True
+                            break
+                    else:
+                        if score[0] > score[1]:
+                            l2.remove(m)
+                            break
+                        else:
+                            is_dup = True
+                            break
                 if text_i in text_m:
                     is_dup = True
                     break
@@ -152,7 +194,7 @@ def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embed
         embedding1 = bert_similarity.get_phrase_embedding(not_linked_phrases_l)
         keyword_embeddings['not_linked_phrases_l'] = embedding1
     for i in linked_phrases_l:
-        candidates2 = i['categories'] + i['inbounds'] + i['outbounds']
+        candidates2 = get_one_hop(i)
         if len(candidates2) > CANDIDATE_UP_TO:
             continue
         embedding2 = keyword_embeddings[i['text']]['one_hop']
@@ -188,7 +230,7 @@ def does_tri_exit_in_list(tri, tri_l):
     for item in tri_l:
         if tri['subject'] == item['subject'] \
                 and tri['relation'] == item['relation'] \
-                and dbpedia_virtuoso.keyword_extract(tri['object']) == dbpedia_virtuoso.keyword_extract(item['object']):
+                and dbpedia_virtuoso.uri_short_extract(tri['object']) == dbpedia_virtuoso.uri_short_extract(item['object']):
             return True
     return False
 
@@ -203,7 +245,7 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_ha
 
         uri_matched = False
         # candidates
-        candidates = resource2['categories'] + resource2['inbounds'] + resource2['outbounds']
+        candidates = get_one_hop(resource2)
         resource1_uri = resource1['URI']
         for item in candidates:
             if resource1_uri in [item['subject'], item['relation'], item['object']]:
@@ -217,6 +259,15 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_ha
                     result.append(item)
 
         if fuzzy_match and not uri_matched:
+            if len(keyword_embeddings['linked_phrases_l']) < 1:
+                linked_phrases_text_l = [i['text'] for i in linked_phrases_l]
+                linked_text_embedding = bert_similarity.get_phrase_embedding(linked_phrases_text_l)
+                keyword_embeddings['linked_phrases_l'] = linked_text_embedding
+                if len(linked_text_embedding) < 1:
+                    continue
+                for idx, i in enumerate(linked_phrases_l):
+                    keyword_embeddings[i['text']]['phrase'] = linked_text_embedding[idx]
+
             filtered_triples = get_topk_similar_triples(resource1['text'], resource2, keyword_embeddings, top_k=3)
             for item in filtered_triples:
                 if not does_tri_exit_in_list(item, result):
@@ -232,9 +283,8 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
         if resource1['text'] in resource2['text'] or resource2['text'] in resource1['text']:
             continue
 
-        candidates1 = resource1['categories'] + resource1['inbounds'] + resource1['outbounds']
-        candidates2 = resource2['categories'] + resource2['inbounds'] + resource2['outbounds']
-
+        candidates1 = get_one_hop(resource1)
+        candidates2 = get_one_hop(resource2)
         exact_match = False
         for item1 in candidates1:
             for item2 in candidates2:
@@ -261,8 +311,8 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
 
 
 def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
-    candidates1 = resource1['categories'] + resource1['inbounds'] + resource1['outbounds']
-    candidates2 = resource2['categories'] + resource2['inbounds'] + resource2['outbounds']
+    candidates1 = get_one_hop(resource1)
+    candidates2 = get_one_hop(resource2)
 
     if len(candidates1) > CANDIDATE_UP_TO or len(candidates2) > CANDIDATE_UP_TO:
         return []
@@ -322,7 +372,7 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
         return []
 
     # get embedding for linked phrase triple keywords
-    candidates = linked_phrase['categories'] + linked_phrase['inbounds'] + linked_phrase['outbounds']
+    candidates = get_one_hop(linked_phrase)
 
     if len(candidates) > CANDIDATE_UP_TO or len(candidates) < 1:
         return []
@@ -358,6 +408,12 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
     return result
 
 
+def get_one_hop(linked_dict):
+    # one_hop = linked_dict['categories'] + linked_dict['inbounds'] + linked_dict['outbounds']
+    one_hop = linked_dict['categories'] + linked_dict['outbounds']
+    return one_hop
+
+
 if __name__ == '__main__':
     # embedding1 = bert_similarity.get_phrase_embedding(['Advertising'])
     # embedding2 = bert_similarity.get_phrase_embedding(['Pranksters'])
@@ -368,4 +424,22 @@ if __name__ == '__main__':
                "writings have appeared in Billboard , Rolling Stone , Vibe , " \
                "The Hollywood Reporter and other publications "
     sentence2 = "Roman Bernard Atwood (born May 28, 1983) is an American YouTube personality and prankster."
-    link_sentence(sentence2, doc_title='Roman Atwood')
+    s1 = "Narrative can be organized in a number of thematic or formal categories : non-fiction -LRB- such as " \
+         "definitively including creative non-fiction , biography , journalism , transcript poetry , " \
+         "and historiography -RRB- ; fictionalization of historical events -LRB- such as anecdote , myth , " \
+         "legend , and historical fiction -RRB- ; and fiction proper -LRB- such as literature in prose and " \
+         "sometimes poetry , such as short stories , novels , and narrative poems and songs , and imaginary narratives " \
+         "as portrayed in other textual forms , games , or live or recorded performances -RRB- ."
+    s2 = "'History of art includes architecture, dance, sculpture, music, painting, poetry " \
+         "literature, theatre, narrative, film, photography and graphic arts.'"
+
+    s3 = "'Graphic arts - Graphic art further includes calligraphy , photography , painting , typography , " \
+         "computer graphics , and bindery .'"
+
+    s4 = "Homeland is an American spy thriller television series developed by Howard Gordon and Alex Gansa based on" \
+         " the Israeli series Prisoners of War ( Original title חטופים Hatufim , literally `` Abductees '' ) , " \
+         "which was created by Gideon Raff .."
+    s5 = "He is best known for hosting the talent competition show American Idol , " \
+         "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
+
+    link_sentence(claim, doc_title='')

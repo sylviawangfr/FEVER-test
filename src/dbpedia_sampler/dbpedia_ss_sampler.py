@@ -7,6 +7,7 @@ from utils import fever_db, c_scorer
 from dbpedia_sampler import dbpedia_subgraph
 import log_util
 
+log = log_util.get_logger("dbpedia_ss_sampler")
 
 def get_tfidf_sample(paras: bert_para.BERT_para):
     """
@@ -81,13 +82,12 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
                 sent_item['claim_label'] = item['label']
             sentence = text_clean.convert_brc(sent_item['text'])
             doc_title = sent_item['sid'].split(c_scorer.SENT_LINE)[0].replace("_", " ")
-            sent_item['triples'] = dbpedia_subgraph.construct_subgraph_for_candidate(claim_dict, sentence, doc_title)
+            doc_title = text_clean.convert_brc(doc_title)
+            sent_item['graph'] = dbpedia_subgraph.construct_subgraph_for_candidate(claim_dict, sentence, doc_title)
             example_l.append(sent_item)
 
-        if 'embedding' in claim_dict:   # do not need the phrase embedding anymore
-            claim_dict.pop('embedding')
-        one_full_example['claim_links'] = claim_dict
-        one_full_example['example_links'] = example_l
+        one_full_example['claim_links'] = claim_dict['graph']
+        one_full_example['examples'] = example_l
         dbpedia_examples_l.append(one_full_example)
 
     cursor.close()
@@ -109,7 +109,7 @@ def prepare_train_data_filter_full_list():
 
 def prepare_train_data_filter_tfidf():
     paras = bert_para.BERT_para()
-    all_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[2:16]
+    all_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:16]
     data_len = len(all_data)
     paras.sample_n = 3
     paras.pred = False
@@ -120,6 +120,7 @@ def prepare_train_data_filter_tfidf():
         paras.upstream_data = all_data[start:end]
         sample_tfidf = get_tfidf_sample(paras)
         save_and_append_results(sample_tfidf, config.RESULT_PATH / "sample_ss_graph.jsonl", config.LOG_PATH / "sample_ss_graph.log")
+        log.info(f"Finished total count: {end}")
         if end == data_len:
             break
         else:

@@ -2,10 +2,13 @@ from dbpedia_sampler import dbpedia_triple_linker
 from dbpedia_sampler import bert_similarity
 import numpy as np
 import sklearn.metrics.pairwise as pw
+import log_util
 
 
 CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.85
+
+log = log_util.get_logger("subgraph")
 
 
 def construct_subgraph(sentence, doc_title=''):
@@ -65,12 +68,12 @@ def construct_subgraph_for_claim(claim_text):
                 merged_result.append(i)
 
     # print(json.dumps(merged_result, indent=4))
-    claim_dict = dict()
-    claim_dict['linked_phrases_l'] = linked_phrases_l
-    claim_dict['not_linked_phrases_l'] = not_linked_phrases_l
-    claim_dict['graph'] = merged_result
-    claim_dict['embedding'] = embeddings_hash
-    return claim_dict
+    claim_d = dict()
+    claim_d['linked_phrases_l'] = linked_phrases_l
+    claim_d['not_linked_phrases_l'] = not_linked_phrases_l
+    claim_d['graph'] = merged_result
+    claim_d['embedding'] = embeddings_hash
+    return claim_d
 
 
 def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
@@ -128,7 +131,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
         claim_dict['embedding']['linked_phrases_l'] = claim_linked_phrase_embedding
     filtered_one_hop = []
     for i in todo_sent_one_hop:
-        one_hop = i['categories'] + i['inbounds'] + i['outbounds']
+        one_hop = dbpedia_triple_linker.get_one_hop(i)
         one_hop_keywords = [' '.join(tri['keywords']) for tri in one_hop]
         if len(one_hop) > CANDIDATE_UP_TO:
             continue
@@ -136,10 +139,14 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
         if len(one_hop_embedding) < 1:
             one_hop_embedding = bert_similarity.get_phrase_embedding(one_hop_keywords)
             embeddings_hash[i['text']]['one_hop'] = one_hop_embedding
-        if len(one_hop_embedding) < 1:
+        if len(one_hop_embedding) < 1 or len(claim_linked_phrase_embedding) < 1:
             continue
         top_k = 3
-        out = pw.cosine_similarity(claim_linked_phrase_embedding, one_hop_embedding).flatten()
+        try:
+            out = pw.cosine_similarity(claim_linked_phrase_embedding, one_hop_embedding).flatten()
+        except Exception as err:
+            log.error(err)
+            continue
         topk_idx = np.argsort(out)[::-1][:top_k]
         len2 = len(one_hop_embedding)
         for item in topk_idx:
@@ -159,7 +166,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
         sent_linked_embedding = bert_similarity.get_phrase_embedding(sent_linked_text)
         embeddings_hash['linked_phrases_l'] = sent_linked_embedding
     for i in claim_linked_phrases_l:
-        c_one_hop = i['categories'] + i['inbounds'] + i['outbounds']
+        c_one_hop = dbpedia_triple_linker.get_one_hop(i)
         c_one_hop_keywords = [' '.join(tri['keywords']) for tri in c_one_hop]
         if len(c_one_hop) > CANDIDATE_UP_TO:
             continue
@@ -209,5 +216,13 @@ if __name__ == '__main__':
     sentence2 = 'Roman Atwood - He also has another YouTube channel called `` RomanAtwood \'\' , where he posts pranks .'
     # sentence2 = "Roman Bernard Atwood (born May 28, 1983) is an American YouTube personality and prankster."
     # link_sentence(sentence2, doc_title='Roman Atwood')
-    claim_dict = construct_subgraph_for_claim(claim)
-    construct_subgraph_for_candidate(claim_dict, sentence2, doc_title='Roman Atwood')
+
+    s4 = "Homeland is an American spy thriller television series developed by Howard Gordon and Alex Gansa based on" \
+         " the Israeli series Prisoners of War ( Original title חטופים Hatufim , literally `` Abductees '' ) , " \
+         "which was created by Gideon Raff .."
+
+    # link_sentence(s4, doc_title='Homeland (TV series)')
+    s3 = "Homeland is an American television spy thriller based on the Israeli television series Prisoners of War."
+    s5 ="Magic Johnson did not play for the Lakers."
+    claim_dict = construct_subgraph_for_claim(s5)
+    # construct_subgraph_for_candidate(claim_dict, s4, doc_title='Homeland (TV series)')

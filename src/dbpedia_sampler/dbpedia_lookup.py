@@ -2,7 +2,7 @@ import requests
 import xmltodict
 import json
 import config
-from dbpedia_sampler.dbpedia_virtuoso import keyword_extract
+from dbpedia_sampler.dbpedia_virtuoso import uri_short_extract
 import difflib
 from datetime import datetime
 import log_util
@@ -38,6 +38,10 @@ def lookup_resource(text_phrase):
                     keyword_matching = [difflib.SequenceMatcher(None, text_phrase, i['Label']).ratio() for i in close_matches]
                     sorted_matching_index = sorted(range(len(keyword_matching)), key=lambda k: keyword_matching[k], reverse=True)
                     top_match = close_matches[sorted_matching_index[0]]
+            double_check_matching_score = difflib.SequenceMatcher(None, text_phrase, top_match['Label']).ratio()
+            if double_check_matching_score < 0.15:
+                log.warning(f"failed to connect DBpedia lookup, matching score is too low: {text_phrase} VS {top_match['Label']}")
+                return -1
 
             record = dict()
             record['Label'] = top_match['Label']
@@ -55,7 +59,7 @@ def lookup_resource(text_phrase):
                     catgr.append(c['URI'])                           # or 'http://www.w3.org/2002/07/owl' in c['URI'] \
             record['Classes'] = catgr
 
-        log.debug(json.dumps(record, indent=4))
+        # log.debug(json.dumps(record, indent=4))
         log.debug(f"lookup time: {(datetime.now() - start).seconds}")
         return record
         # print(json.dumps(results, indent=4))
@@ -74,14 +78,15 @@ def to_triples(record_json):
         tri['subject'] = subject
         tri['relation'] = relation
         tri['object'] = i
-        tri['keywords'] = [keyword_extract(i)]
+        tri['keywords'] = [uri_short_extract(i)]
         triples.append(tri)
     # print(json.dumps(triples, indent=4))
     return triples
 
 
 if __name__ == "__main__":
-    lookup_resource('United states')
+    lookup_resource('music')
+    lookup_resource('film')
     log.warning("test debug")
     log.info("test info")
 

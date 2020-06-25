@@ -44,17 +44,17 @@ S_TFIDF_RETRV_DEV = RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
 DOC_RETRV_TEST = RESULT_PATH / "test_doc_retrieve.jsonl"
 
 # ------------------------HOSTS-----------------------
-DBPEDIA_LOOKUP_PORT = 1111 if platform.system() is 'Linux' else 5001
+DBPEDIA_LOOKUP_PORT = 1111 if platform.system() == 'Linux' else 5001
 DBPEDIA_LOOKUP_URL = f"http://localhost:{DBPEDIA_LOOKUP_PORT}/api/search/KeywordSearch?QueryString="
 
-DBPEDIA_SPOTLIGHT_PORT = 2222 if platform.system() is 'Linux' else 5000
+DBPEDIA_SPOTLIGHT_PORT = 2222 if platform.system() == 'Linux' else 5000
 DBPEDIA_SPOTLIGHT_URL = f"http://localhost:{DBPEDIA_SPOTLIGHT_PORT}/rest/annotate"
 
-DBPEDIA_GRAPH_PORT = 8890 if platform.system() is 'Linux' else 5002
+DBPEDIA_GRAPH_PORT = 8890 if platform.system() == 'Linux' else 5002
 DBPEDIA_GRAPH_URL = f"http://localhost:{DBPEDIA_GRAPH_PORT}/sparql"
 
-BERT_SERVICE_PORT = 5555 if platform.system() is 'Linux' else 5003
-BERT_SERVICE_PORT_OUT = 5556 if platform.system() is 'Linux' else 5004
+BERT_SERVICE_PORT = 5555 if platform.system() == 'Linux' else 5003
+BERT_SERVICE_PORT_OUT = 5556 if platform.system() == 'Linux' else 5004
 
 
 if __name__ == '__main__':

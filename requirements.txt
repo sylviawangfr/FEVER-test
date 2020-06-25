@@ -4,4 +4,5 @@ tqdm
 pytorch_pretrained_bert
 matplotlib
 pyspotlight
-validators
+validators>=0.15.0
+SPARQLWrapper>=1.8.5

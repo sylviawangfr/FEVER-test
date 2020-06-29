@@ -107,19 +107,21 @@ def prepare_train_data_filter_full_list():
     return complete_upstream_train_data
 
 
-def prepare_train_data_filter_tfidf():
+def prepare_train_data_filter_tfidf(tfidf_data):
     paras = bert_para.BERT_para()
-    all_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:16]
-    data_len = len(all_data)
+    # all_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:100]
+    data_len = len(tfidf_data)
     paras.sample_n = 3
     paras.pred = False
     bulk_size = 3
     start = 0
     while start < data_len:
         end = start + bulk_size if start + bulk_size < data_len else data_len
-        paras.upstream_data = all_data[start:end]
+        paras.upstream_data = tfidf_data[start:end]
         sample_tfidf = get_tfidf_sample(paras)
-        save_and_append_results(sample_tfidf, config.RESULT_PATH / "sample_ss_graph.jsonl", config.LOG_PATH / "sample_ss_graph.log")
+        dt = get_current_time_str()
+        save_and_append_results(sample_tfidf, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+                                config.LOG_PATH / f"sample_ss_graph_{dt}.log")
         log.info(f"Finished total count: {end}")
         if end == data_len:
             break
@@ -137,8 +139,6 @@ def cache_temp_graph_result_to_file():
 
 
 if __name__ == '__main__':
-    # prepare_train_data_filter_full_list()
-    logger = log_util.get_logger('test')
-    logger.error("test error")
-    prepare_train_data_filter_tfidf()
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:10]
+    prepare_train_data_filter_tfidf(tfidf_dev_data)
 

@@ -1,6 +1,11 @@
 import unicodedata
 import regex
 import re
+from dateutil.parser import parse
+from data_util.tokenizers import SpacyTokenizer
+
+tok = SpacyTokenizer()
+
 
 STOPWORDS = {
     'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your',
@@ -71,6 +76,48 @@ def check_arabic(input_string):
         return False
 
 
+def is_date(string, fuzzy=False):
+    """
+        Return whether the string can be interpreted as a date.
+
+        :param string: str, string to check for date
+        :param fuzzy: bool, ignore unknown tokens in string if True
+        """
+    try:
+        parse(string, fuzzy=fuzzy)
+        return True
+    except ValueError:
+        return False
+
+
+def easy_tokenize(text):
+    if tok is None:
+        tok.create_instance()
+    return tok.tokenize(normalize(text)).words()
+
+
+NUMERIC_WORDS = ['zero', 'one', 'two','three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
+             'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty', 'thirty',
+             'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety',
+             'first', 'second', 'third', 'fourth', 'fifty', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh'
+                 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth',
+                 'nineteenth', 'twentieth', 'thirtieth', 'fortieth', 'fiftieth', 'sixtieth', 'seventieth', 'eightieth',
+                 'ninetieth', 'hundredth', 'thousandth', 'hundred', 'hundreds', 'thousand', 'thousands']
+
+def is_number(str):
+    is_num = str.isnumeric()
+    if not is_num:
+        tokens = easy_tokenize(str)
+        tokens = [i.lower() for i in tokens if re.match(r'(\w)+', i)]
+        is_num = True
+        for i in tokens:
+            if i not in NUMERIC_WORDS:
+                is_num = False
+                break
+    return is_num
+
+
+
 def filter_document_id(input_string):
     pid_words = input_string.strip().replace('_', ' ')
     match = re.search('[a-zA-Z]', pid_words)
@@ -106,6 +153,9 @@ def reverse_convert_brc(string):
 
 
 if __name__ == '__main__':
+    # is_date('October 18 , 2008')
+    is_number('first')
+    is_number('sixty two')
     pass
     # print(filter_word("what is going on"))
 

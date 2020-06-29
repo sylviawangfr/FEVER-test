@@ -3,7 +3,7 @@ from dbpedia_sampler import dbpedia_lookup
 from dbpedia_sampler import dbpedia_virtuoso
 from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_spotlight
-from utils import c_scorer
+from utils import c_scorer, text_clean
 import log_util
 import difflib
 import itertools
@@ -13,9 +13,11 @@ import re
 
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',
-              'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night']
+              'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
+              'third']
 CANDIDATE_UP_TO = 150
-SCORE_CONFIDENCE = 0.85
+SCORE_CONFIDENCE_1 = 0.6
+SCORE_CONFIDENCE_2 = 0.85
 
 log = log_util.get_logger('dbpedia_triple_linker')
 
@@ -38,11 +40,20 @@ def get_phrases(sentence, doc_title=''):
     if not doc_title == '':
         merged_entities = list(set(merged_entities) | set([doc_title]))
     merged_entities = [i for i in merged_entities if i.lower() not in STOP_WORDS]
-    other_chunks = list(set(chunks) - set(merged_entities))
-    other_chunks = [i for i in other_chunks if i.lower() not in STOP_WORDS]
+    other_chunks = delete_ents_from_chunks(merged_entities, chunks)
     log.debug(f"merged entities: {merged_entities}")
     log.debug(f"other phrases: {other_chunks}")
     return merged_entities, other_chunks
+
+
+def delete_ents_from_chunks(ents: list, chunks: list):
+    to_delete = []
+    for i in ents:
+        for j in chunks:
+            if j in i or j.lower() in STOP_WORDS:
+                to_delete.append(j)
+    chunks = list(set(chunks) - set(to_delete))
+    return chunks
 
 
 def merge_phrases_l1_to_l2(l1, l2):
@@ -54,9 +65,10 @@ def merge_phrases_l1_to_l2(l1, l2):
                 is_dup = True
                 break
             if j in i:
-                l2.remove(j)
+                to_delete.append(j)
         if not is_dup:
             l2.append(i)
+    l2 = list(set(l2) - set(to_delete))
     merged = [i for i in l2 if (i.lower() not in STOP_WORDS) and not re.match(r'^(\-|\+)?\d+(\.\d+)?$', i)]
     return merged
 
@@ -75,7 +87,6 @@ def query_resource(uri):
     context = dict()
     # context['inbounds'] = dbpedia_virtuoso.get_inbounds(uri)
     context['outbounds'] = dbpedia_virtuoso.get_outbounds(uri)
-    context['URI'] = uri
     return context
 
 
@@ -87,8 +98,8 @@ def merge_chunks_with_entities(chunks, ents):
     return merged
 
 
-
-def link_sentence(sentence, doc_title=''):
+def link_sentence(sentence, doc_title='', lookup_hash=None):
+    sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)
     not_linked_phrases_l = []
     linked_phrases_l = []
@@ -99,7 +110,14 @@ def link_sentence(sentence, doc_title=''):
     phrases = merge_chunks_with_entities(chunks, entities)
 
     for p in phrases:
-        linked_phrase = lookup_phrase(p)
+        if text_clean.is_date(p):
+            not_linked_phrases_l.append(p)
+            continue
+        if lookup_hash is not None and p in lookup_hash:
+            linked_phrase = lookup_hash[p]
+        else:
+            linked_phrase = lookup_phrase(p)
+
         if len(linked_phrase) == 0:
             not_linked_phrases_l.append(p)
         else:
@@ -119,14 +137,16 @@ def link_sentence(sentence, doc_title=''):
 
     linked_phrases_l = merge_linked_l1_to_l2(linked_phrases_l, [])
 
+    tmp_delete = []
     for i in linked_phrases_l:
         for j in not_linked_phrases_l:
             if i['text'] in j or j in i['text']:
-                not_linked_phrases_l.remove(j)
-                break
+                tmp_delete.append(j)
+    not_linked_phrases_l = list(set(not_linked_phrases_l) - set(tmp_delete))
 
     for i in linked_phrases_l:
-        i.update(query_resource(i['URI']))
+        if 'outbounds' not in i:
+            i.update(query_resource(i['URI']))
         if 'categories' not in i:
             i['categories'] = dbpedia_virtuoso.get_categories(i['URI'])
     return not_linked_phrases_l, linked_phrases_l
@@ -185,7 +205,7 @@ def merge_linked_l1_to_l2(l1, l2):
     return l2
 
 
-def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embeddings):
+def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embeddings):
     if len(not_linked_phrases_l) > CANDIDATE_UP_TO or len(not_linked_phrases_l) < 1:
         return []
 
@@ -207,12 +227,12 @@ def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embed
             return []
 
         out = pw.cosine_similarity(embedding1, embedding2).flatten()
-        topk_idx = np.argsort(out)[::-1][:3]
+        topk_idx = np.argsort(out)[::-1][:5]
         len2 = len(tri_keywords_l2)
         tmp_result = []
         for item in topk_idx:
             score = float(out[item])
-            if score < float(SCORE_CONFIDENCE):
+            if score < float(SCORE_CONFIDENCE_1):
                 break
             else:
                 p1 = not_linked_phrases_l[item // len2]
@@ -222,8 +242,8 @@ def filter_text_vs_keyword(not_linked_phrases_l, linked_phrases_l, keyword_embed
                 tri2['URI'] = i['URI']
                 tri2['score'] = score
                 tmp_result.append(tri2)
-    result = sorted(tmp_result, key=lambda t: t['score'], reverse=True)[:5]
-    return result
+    # result = sorted(tmp_result, key=lambda t: t['score'], reverse=True)[:5]
+    return tmp_result
 
 
 def does_tri_exit_in_list(tri, tri_l):
@@ -337,7 +357,7 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
     result = []
     for item in topk_idx:
         score = float(out[item])
-        if score < float(SCORE_CONFIDENCE):
+        if score < float(SCORE_CONFIDENCE_2):
             break
         else:
             tri1 = candidates1[item//len2]
@@ -395,7 +415,7 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
     result = []
     for idx in topk_idx:
         idx_score = float(score[idx])
-        if idx_score < float(SCORE_CONFIDENCE):
+        if idx_score < float(SCORE_CONFIDENCE_2):
             break
         else:
             record = candidates[idx]
@@ -441,5 +461,5 @@ if __name__ == '__main__':
          "which was created by Gideon Raff .."
     s5 = "He is best known for hosting the talent competition show American Idol , " \
          "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
-
-    link_sentence(claim, doc_title='')
+    s7 = 'Giada at Home - It first aired on October 18 , 2008 on the Food Network .'
+    link_sentence(s7, doc_title='')

@@ -59,7 +59,7 @@ def combine_lookup(text_phrase):
     top_match = []
     # token_count = len(text_clean.easy_tokenize(text_phrase))
     token_count = text_phrase.count(' ') + 1
-    if token_count < 2:         # use lookup refCount
+    if token_count < 2 and len(lookup_matches) > 0:         # use lookup refCount
         partial_matches = []
         for i in lookup_matches:
             tmp_label = i['Label'].lower()
@@ -131,7 +131,7 @@ def lookup_resource_ref_count(text_phrase):
     close_matches = []
 
     if response.status_code is not 200:
-        log.error("failed to query lookup, response code: " + response.status_code)
+        log.error(f"failed to query lookup, response code: {response.status_code}")
         return []
     else:
         results = xmltodict.parse(response.text)

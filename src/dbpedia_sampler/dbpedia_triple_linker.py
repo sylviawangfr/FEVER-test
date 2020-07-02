@@ -9,7 +9,7 @@ import difflib
 import itertools
 import numpy as np
 import sklearn.metrics.pairwise as pw
-import re
+import dateutil.parser as dateutil
 
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',
@@ -56,6 +56,10 @@ def delete_ents_from_chunks(ents: list, chunks: list):
     return chunks
 
 
+def is_date_or_number(str):
+    return text_clean.is_date(str) or text_clean.is_number(str)
+
+
 def merge_phrases_l1_to_l2(l1, l2):
     to_delete = []
     for i in l1:
@@ -69,7 +73,7 @@ def merge_phrases_l1_to_l2(l1, l2):
         if not is_dup:
             l2.append(i)
     l2 = list(set(l2) - set(to_delete))
-    merged = [i for i in l2 if (i.lower() not in STOP_WORDS) and not re.match(r'^(\-|\+)?\d+(\.\d+)?$', i)]
+    merged = [i for i in l2 if i.lower() not in STOP_WORDS]
     return merged
 
 
@@ -110,7 +114,7 @@ def link_sentence(sentence, doc_title='', lookup_hash=None):
     phrases = merge_chunks_with_entities(chunks, entities)
 
     for p in phrases:
-        if text_clean.is_date(p):
+        if is_date_or_number(p):
             not_linked_phrases_l.append(p)
             continue
         if lookup_hash is not None and p in lookup_hash:
@@ -149,6 +153,7 @@ def link_sentence(sentence, doc_title='', lookup_hash=None):
             i.update(query_resource(i['URI']))
         if 'categories' not in i:
             i['categories'] = dbpedia_virtuoso.get_categories(i['URI'])
+
     return not_linked_phrases_l, linked_phrases_l
 
 
@@ -203,6 +208,64 @@ def merge_linked_l1_to_l2(l1, l2):
         if not is_dup:
             l2.append(i)
     return l2
+
+
+def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l):
+    if len(not_linked_phrases_l) < 1:
+        return []
+    all_date_phrases = []
+    for p in not_linked_phrases_l:
+        if text_clean.is_date(p):
+            all_date_phrases.append(p)
+    if len(all_date_phrases) < 1:
+        return []
+
+    all_date_properties = []
+    for res in linked_phrases_l:
+        one_hop = get_one_hop(res)
+        for idx_o, tri in enumerate(one_hop):
+            if 'datatype' in tri and tri['datatype'] == 'date':
+                all_date_properties.append(tri)
+    if len(all_date_properties) < 1:
+        return []
+
+    no_exact_match_phrase = []
+    all_exact_match = []
+    for i in all_date_phrases:
+        date_i = dateutil.parse(i)
+        p_exact_match = []
+        for j in all_date_properties:
+            if dateutil.parse(dbpedia_virtuoso.uri_short_extract(j['object'])) == date_i:
+                p_exact_match.append(j)
+        if len(p_exact_match) < 1:
+            no_exact_match_phrase.append(i)
+        else:
+            all_exact_match.extend(p_exact_match)
+
+    similarity_match = []
+    if len(no_exact_match_phrase) > 0:
+        all_phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
+        verbs_d = get_dependent_verb(sents, all_phrases)
+        for i in no_exact_match_phrase:
+            if i in verbs_d:
+                v = verbs_d[i]
+                one_hop_relation = [dbpedia_virtuoso.uri_short_extract(tri['relation'])
+                                    for tri in all_date_properties]
+                keyword_matching_score = [difflib.SequenceMatcher(None, v.lower(), property_value.lower()).ratio() for
+                                          property_value in one_hop_relation]
+                sorted_matching_index = sorted(range(len(keyword_matching_score)),
+                                               key=lambda k: keyword_matching_score[k],
+                                               reverse=True)
+                if keyword_matching_score[sorted_matching_index[0]] < 0.5:
+                    similarity_match.extend(all_date_properties)
+                    break
+
+                for i in sorted_matching_index:
+                    score = keyword_matching_score[i]
+                    if score >= 0.5:
+                        similarity_match.append(all_date_properties[sorted_matching_index[i]])
+
+    return similarity_match.extend(all_exact_match)
 
 
 def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embeddings):
@@ -461,5 +524,6 @@ if __name__ == '__main__':
          "which was created by Gideon Raff .."
     s5 = "He is best known for hosting the talent competition show American Idol , " \
          "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
-    s7 = 'Giada at Home - It first aired on October 18 , 2008 on the Food Network .'
-    link_sentence(s7, doc_title='')
+    s7 = 'Giada at Home first aired on October 18 , 2007 on the Food Network .'
+    l, no_l = link_sentence(s7, doc_title='')
+    filter_date_vs_property(s7, l, no_l)

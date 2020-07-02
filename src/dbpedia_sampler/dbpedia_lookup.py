@@ -118,7 +118,7 @@ def lookup_resource_label(text_phrase):
                 if len(close_matches) < 1:
                     close_matches = re
     else:
-        log.error("failed to query lookup-app, response code: " + response.status_code)
+        log.error(f"failed to query lookup-app, response code:{response.status_code}")
     log.debug(f"lookup-app time: {(datetime.now() - start).seconds}")
     return close_matches
 

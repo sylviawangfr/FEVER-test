@@ -80,7 +80,6 @@ class NLTKTokenizer(Tokenizer):
         # Set special option for non-entity tag: '' vs 'O' in spaCy
         return Tokens(data, self.annotators, opts={'non_ent': ''})
 
-
     def parse_dependency(self, text):
         parser = CoreNLPParser(url='http://localhost:9000')
         iter = parser.raw_parse(text)

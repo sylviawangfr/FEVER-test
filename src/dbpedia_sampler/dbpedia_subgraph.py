@@ -158,7 +158,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
         if len(claim_not_in_sent_nodes_embedding) > 0:
             for j in empty_embedding_idx:
                 node_text = claim_not_in_sent_nodes[j]['text']
-                embeddings_hash[node_text]['phrase'] = claim_not_in_sent_nodes_embedding[j]
+                claim_embedding[node_text]['phrase'] = claim_not_in_sent_nodes_embedding[j]
 
     sent_not_in_claim_nodes_embedding = []
     empty_embedding_idx = []
@@ -175,7 +175,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
         if len(sent_not_in_claim_nodes_embedding) > 0:
             for j in empty_embedding_idx:
                 node_text = sent_not_in_claim_nodes[j]['text']
-                claim_embedding[node_text]['phrase'] = sent_not_in_claim_nodes_embedding[j]
+                embeddings_hash[node_text]['phrase'] = sent_not_in_claim_nodes_embedding[j]
 
     # claim_resource VS sent_resource_one_hop
     sent_filtered_one_hop = []
@@ -278,9 +278,14 @@ if __name__ == '__main__':
     s3 = "Homeland is an American television spy thriller based on the Israeli television series Prisoners of War."
     s5 ="Magic Johnson did not play for the Lakers."
     s6 = "'Noah Cyrus is a younger sister of Macy Grey.'"
-    claim_dict = construct_subgraph_for_claim("Giada at Home was only available on DVD")
+    # claim_dict = construct_subgraph_for_claim("Giada at Home was only available on DVD")
     s7 = 'Giada at Home - It first aired on October 18 , 2008 on the Food Network .'
     s8 = "'Giada Pamela De Laurentiis -LRB- -LSB- ˈdʒaːda paˈmɛːla de lauˈrɛnti.is -RSB- ; born August 22 , 1970 " \
          "-RRB- is an Italian-born American chef , writer , television personality , and the host of the " \
          "current Food Network television program Giada at Home .'"
-    construct_subgraph_for_candidate(claim_dict, s7, doc_title='Giada at Home')
+    ss1 = "Dinah Sings Bessie Smith is a 1958 album by blues , R&B and j" \
+            "azz singer Dinah Washington released on the Emarcy label , and reissued by Verve " \
+          "Records in 1999 as The Bessie Smith Songbook ."
+    cc1 = "Bessie Smith was married on April 15, 1894."
+    claim_dict = construct_subgraph_for_claim(cc1)
+    construct_subgraph_for_candidate(claim_dict, ss1, doc_title='')

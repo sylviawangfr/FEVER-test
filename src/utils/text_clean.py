@@ -104,6 +104,7 @@ NUMERIC_WORDS = ['zero', 'one', 'two','three', 'four', 'five', 'six', 'seven', '
                  'nineteenth', 'twentieth', 'thirtieth', 'fortieth', 'fiftieth', 'sixtieth', 'seventieth', 'eightieth',
                  'ninetieth', 'hundredth', 'thousandth', 'hundred', 'hundreds', 'thousand', 'thousands']
 
+
 def is_number(str):
     is_num = str.isnumeric()
     if not is_num:
@@ -115,7 +116,6 @@ def is_number(str):
                 is_num = False
                 break
     return is_num
-
 
 
 def filter_document_id(input_string):

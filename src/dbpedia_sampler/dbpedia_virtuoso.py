@@ -31,11 +31,19 @@ def get_triples(query_str):
             log.warning('extra large bindings in DBpedia, ignore')
             return triples
         for record in results["results"]["bindings"]:
-            tri = dict()
-            tri['subject'] = record['subject']['value']
-            tri['relation'] = record['relation']['value']
-            tri['object'] = record['object']['value']
-            triples.append(tri)
+            if 0 < len(record['object']['value']) < 100:
+                tri = dict()
+                tri['subject'] = record['subject']['value']
+                tri['relation'] = record['relation']['value']
+                tri['object'] = record['object']['value']
+                if 'datatype' in record['object']:
+                    tri['datatype'] = record['object']['datatype'].split('#')[-1]
+                else:
+                    tri['datatype'] = 'uri'
+
+                triples.append(tri)
+            else:
+                log.debug(f"extra long obj: {record['object']['value']}")
         # print(json.dumps(triples, indent=4))
         log.debug(f"sparql time: {(datetime.now() - start).seconds}")
         return triples
@@ -272,9 +280,9 @@ def isURI(str):
 
 if __name__ == "__main__":
     # res = "http://dbpedia.org/resource/Magic_Johnson"
-    res = "http://dbpedia.org/resource/Content_creation"
-    print(get_inbounds(res))
+    res = "http://dbpedia.org/resource/Los_Angeles_Lakers"
     print(get_outbounds(res))
+    # print(get_properties(res))
     # on = "http://dbpedia.org/ontology/City"
     # o1 = get_categories_one_hop_child(on)
     # o2 =get_categories_one_hop_parent(on)

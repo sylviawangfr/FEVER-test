@@ -248,7 +248,7 @@ def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l):
         verbs_d = get_dependent_verb(sents, all_phrases)
         for i in no_exact_match_phrase:
             if i in verbs_d:
-                v = verbs_d[i]
+                v = verbs_d[i]['verb']
                 one_hop_relation = [dbpedia_virtuoso.uri_short_extract(tri['relation'])
                                     for tri in all_date_properties]
                 keyword_matching_score = [difflib.SequenceMatcher(None, v.lower(), property_value.lower()).ratio() for
@@ -265,7 +265,8 @@ def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l):
                     if score >= 0.5:
                         similarity_match.append(all_date_properties[sorted_matching_index[i]])
 
-    return similarity_match.extend(all_exact_match)
+    similarity_match.extend(all_exact_match)
+    return similarity_match
 
 
 def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embeddings):

@@ -52,6 +52,7 @@ def construct_subgraph_for_claim(claim_text):
                                'categories': i['categories']} for i in linked_phrases_l}
 
     merged_result = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash)
+    r1 = dbpedia_triple_linker.filter_date_vs_property(claim_text, not_linked_phrases_l, linked_phrases_l)
     r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash, fuzzy_match=True)
     no_exact_found = []
     # only keyword-match on those no exact match triples
@@ -60,7 +61,7 @@ def construct_subgraph_for_claim(claim_text):
         if len(relatives) == 0:
             no_exact_found.append(i)
     r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_exact_found, embeddings_hash, relative_hash, fuzzy_match=True)
-    for i in r2 + r3:
+    for i in r1 + r2 + r3:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
             merged_result.append(i)
 
@@ -109,6 +110,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
             claim_dict['lookup_hash'].update({i['text']: {'URI': i['URI'], 'text': i['text'], 'outbounds': i['outbounds'],
                                'categories': i['categories']}})
     sent_graph = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash)
+    r1 = dbpedia_triple_linker.filter_date_vs_property(candidate_sent, not_linked_phrases_l, linked_phrases_l)
     r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash, fuzzy_match=True)
     no_exact_found = []
     # only keyword-match on those no exact match triples
@@ -117,7 +119,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
         if len(relatives) == 0:
             no_exact_found.append(i)
     r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_exact_found, embeddings_hash, relative_hash, fuzzy_match=False)
-    for i in r2 + r3:
+    for i in r1 + r2 + r3:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
             sent_graph.append(i)
 

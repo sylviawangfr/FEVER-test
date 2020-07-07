@@ -60,7 +60,7 @@ def get_dependent_verb(sent, phrase_l):
                 else:
                     if possible_phrase.head.pos == ADP and possible_phrase.head.head.pos == VERB:
                         one_p['verb'] = possible_phrase.head.head.text
-            phs[ph] = one_p
+                phs[ph] = one_p
     return phs
 
 

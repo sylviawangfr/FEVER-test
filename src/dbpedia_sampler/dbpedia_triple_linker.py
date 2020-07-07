@@ -277,6 +277,7 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
     if len(embedding1) == 0:
         embedding1 = bert_similarity.get_phrase_embedding(not_linked_phrases_l)
         keyword_embeddings['not_linked_phrases_l'] = embedding1
+    tmp_result = []
     for i in linked_phrases_l:
         candidates2 = get_one_hop(i)
         if len(candidates2) > CANDIDATE_UP_TO:
@@ -293,7 +294,7 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
         out = pw.cosine_similarity(embedding1, embedding2).flatten()
         topk_idx = np.argsort(out)[::-1][:5]
         len2 = len(tri_keywords_l2)
-        tmp_result = []
+
         for item in topk_idx:
             score = float(out[item])
             if score < float(SCORE_CONFIDENCE_1):

@@ -74,16 +74,19 @@ def combine_lookup(text_phrase):
             if len(tmp_match) > 0:
                 top_match = tmp_match
             else:
-                top_match = get_keyword_matching_ratio_top(text_phrase, [first_match], 0.15)
+                top_match = get_keyword_matching_ratio_top(text_phrase, [first_match], 0.155)
+        if len(top_match) > 0:
+            log.info(f"DBpedia lookup phrase: {text_phrase}, matching: {top_match['URI']}")
 
     if len(lookup_app_matches) > 0 and (token_count > 1 or len(top_match) < 1):        # use lookup-app Label+comments
         top_match = get_keyword_matching_ratio_top(text_phrase, lookup_app_matches, 0.6)
+        if len(top_match) > 0:
+            log.info(f"DBpedia lookup-app phrase: {text_phrase}, matching: {top_match['URI']}")
 
     if len(top_match) < 1:
         log.warning(f"failed to query DBpedia_lookup and lookup-app, matching score is too low: "
                     f"{text_phrase}")
-    else:
-        log.info(f"DBpedia lookup phrase: {text_phrase}, matching: {top_match['URI']}")
+
     return top_match
 
 
@@ -171,10 +174,12 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
+    lookup_resource('USA')
+    lookup_resource('Italian')
+    lookup_resource('Even')
     lookup_resource('Giada Pamela De Laurentiis')
     lookup_resource('American')
     lookup_resource('UK')
-    lookup_resource('Italian')
     lookup_resource('Bloomington')
     lookup_resource('Indiana')
     lookup_resource('film')

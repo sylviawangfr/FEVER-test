@@ -12,7 +12,8 @@ import sklearn.metrics.pairwise as pw
 import dateutil.parser as dateutil
 
 
-STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',
+STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
+               'we', 'who', 'where', 'what', 'days', 'him', 'her',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
               'third']
 CANDIDATE_UP_TO = 150
@@ -112,6 +113,7 @@ def link_sentence(sentence, doc_title='', lookup_hash=None):
     # else:
     #     phrases = entities
     phrases = merge_chunks_with_entities(chunks, entities)
+    log.debug(f"all phrases to be linked: {phrases}")
 
     for p in phrases:
         if is_date_or_number(p):
@@ -128,6 +130,7 @@ def link_sentence(sentence, doc_title='', lookup_hash=None):
             linked_phrases_l.append(linked_phrase)
 
     spotlight_links = dbpedia_spotlight.entity_link(sentence)
+    spotlight_resources = []
     for i in spotlight_links:
         surface = i['surfaceForm']
         if surface in STOP_WORDS:
@@ -137,9 +140,9 @@ def link_sentence(sentence, doc_title='', lookup_hash=None):
             linked_i = dict()
             linked_i['text'] = surface
             linked_i['URI'] = i_URI
-            linked_phrases_l.append(linked_i)
+            spotlight_resources.append(linked_i)
 
-    linked_phrases_l = merge_linked_l1_to_l2(linked_phrases_l, [])
+    linked_phrases_l = merge_linked_l1_to_l2(spotlight_resources, linked_phrases_l)
 
     tmp_delete = []
     for i in linked_phrases_l:
@@ -193,12 +196,12 @@ def merge_linked_l1_to_l2(l1, l2):
                             is_dup = True
                             break
                     else:
-                        if score[0] > score[1]:
-                            l2.remove(m)
-                            break
-                        else:
-                            is_dup = True
-                            break
+                        # if score[0] > score[1]:    Australia VS Australian VS Australians
+                        #     l2.remove(m)
+                        #     break
+                        # else:
+                        is_dup = True
+                        break
                 if text_i in text_m:
                     is_dup = True
                     break
@@ -210,7 +213,7 @@ def merge_linked_l1_to_l2(l1, l2):
     return l2
 
 
-def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l):
+def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l, verb_d):
     if len(not_linked_phrases_l) < 1:
         return []
     all_date_phrases = []
@@ -244,11 +247,9 @@ def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l):
 
     similarity_match = []
     if len(no_exact_match_phrase) > 0:
-        all_phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
-        verbs_d = get_dependent_verb(sents, all_phrases)
         for i in no_exact_match_phrase:
-            if i in verbs_d:
-                v = verbs_d[i]['verb']
+            if i in verb_d:
+                v = verb_d[i]['verb']
                 one_hop_relation = [dbpedia_virtuoso.uri_short_extract(tri['relation'])
                                     for tri in all_date_properties]
                 keyword_matching_score = [difflib.SequenceMatcher(None, v.lower(), property_value.lower()).ratio() for
@@ -257,7 +258,7 @@ def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l):
                                                key=lambda k: keyword_matching_score[k],
                                                reverse=True)
                 if keyword_matching_score[sorted_matching_index[0]] < 0.5:
-                    similarity_match.extend(all_date_properties)
+                    # similarity_match.extend(all_date_properties)
                     break
 
                 for i in sorted_matching_index:
@@ -269,14 +270,21 @@ def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l):
     return similarity_match
 
 
-def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embeddings):
+def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embeddings, verb_d):
     if len(not_linked_phrases_l) > CANDIDATE_UP_TO or len(not_linked_phrases_l) < 1:
         return []
 
     embedding1 = keyword_embeddings['not_linked_phrases_l']
     if len(embedding1) == 0:
-        embedding1 = bert_similarity.get_phrase_embedding(not_linked_phrases_l)
+        add_verbs = []
+        for idx, p in enumerate(not_linked_phrases_l):
+            if is_date_or_number(p) and p in verb_d:
+                add_verbs.append(verb_d[p]['verb'] + " " + p)
+            else:
+                add_verbs.append(p)
+        embedding1 = bert_similarity.get_phrase_embedding(add_verbs)
         keyword_embeddings['not_linked_phrases_l'] = embedding1
+
     tmp_result = []
     for i in linked_phrases_l:
         candidates2 = get_one_hop(i)
@@ -292,12 +300,12 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
             return []
 
         out = pw.cosine_similarity(embedding1, embedding2).flatten()
-        topk_idx = np.argsort(out)[::-1][:5]
+        topk_idx = np.argsort(out)[::-1][:3]
         len2 = len(tri_keywords_l2)
 
         for item in topk_idx:
             score = float(out[item])
-            if score < float(SCORE_CONFIDENCE_1):
+            if score < float(SCORE_CONFIDENCE_2):
                 break
             else:
                 p1 = not_linked_phrases_l[item // len2]
@@ -527,5 +535,9 @@ if __name__ == '__main__':
     s5 = "He is best known for hosting the talent competition show American Idol , " \
          "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
     s7 = 'Giada at Home first aired on October 18 , 2007 on the Food Network .'
-    l, no_l = link_sentence(s7, doc_title='')
-    filter_date_vs_property(s7, l, no_l)
+    s8 = 'Giada Pamela De Laurentiis ( [ ˈdʒaːda paˈmɛːla de lauˈrɛnti.is ] ; born August 22 , 1970 ) is an Italian-born American chef , writer , television personality , and the host of the current Food Network television program Giada at Home .'
+    s9 = "Even after he became reclusive in his declining years his opinion was highly sought , and his status as a national icon was still recognised -- more than 50 years after his retirement as a Test player , in 2001 , Prime Minister John Howard of Australia called him the `` greatest living Australian '' "
+    no_l, l = link_sentence(s9, doc_title='')
+    all_phrases = no_l + [i['text'] for i in l]
+    verb_d = get_dependent_verb(s9, all_phrases)
+

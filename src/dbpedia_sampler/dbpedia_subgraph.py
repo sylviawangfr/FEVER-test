@@ -1,5 +1,6 @@
 from dbpedia_sampler import dbpedia_triple_linker
 from dbpedia_sampler import bert_similarity
+from utils.tokenizer_simple import get_dependent_verb
 import numpy as np
 import sklearn.metrics.pairwise as pw
 import log_util
@@ -51,8 +52,10 @@ def construct_subgraph_for_claim(claim_text):
     lookup_hash = {i['text']: {'URI': i['URI'], 'text': i['text'], 'outbounds': i['outbounds'],
                                'categories': i['categories']} for i in linked_phrases_l}
 
-    merged_result = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash)
-    r1 = dbpedia_triple_linker.filter_date_vs_property(claim_text, not_linked_phrases_l, linked_phrases_l)
+    all_phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
+    verb_d = get_dependent_verb(claim_text, all_phrases)
+    merged_result = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d)
+    r1 = dbpedia_triple_linker.filter_date_vs_property(claim_text, not_linked_phrases_l, linked_phrases_l, verb_d)
     r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash, fuzzy_match=True)
     no_exact_found = []
     # only keyword-match on those no exact match triples
@@ -109,8 +112,10 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
         if not i['text'] in claim_dict['lookup_hash']:
             claim_dict['lookup_hash'].update({i['text']: {'URI': i['URI'], 'text': i['text'], 'outbounds': i['outbounds'],
                                'categories': i['categories']}})
-    sent_graph = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash)
-    r1 = dbpedia_triple_linker.filter_date_vs_property(candidate_sent, not_linked_phrases_l, linked_phrases_l)
+    all_phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
+    verb_d = get_dependent_verb(candidate_sent, all_phrases)
+    sent_graph = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d)
+    r1 = dbpedia_triple_linker.filter_date_vs_property(candidate_sent, not_linked_phrases_l, linked_phrases_l, verb_d)
     r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash, fuzzy_match=True)
     no_exact_found = []
     # only keyword-match on those no exact match triples
@@ -289,5 +294,8 @@ if __name__ == '__main__':
             "azz singer Dinah Washington released on the Emarcy label , and reissued by Verve " \
           "Records in 1999 as The Bessie Smith Songbook ."
     cc1 = "Bessie Smith was married on April 15, 1894."
-    claim_dict = construct_subgraph_for_claim(cc1)
-    construct_subgraph_for_candidate(claim_dict, ss1, doc_title='')
+    s7 = 'Giada at Home first aired on October 18 , 2007 on the Food Network .'
+    s8 = 'Giada Pamela De Laurentiis ( [ ˈdʒaːda paˈmɛːla de lauˈrɛnti.is ] ; born August 22 , 1970 ) is an Italian-born American chef , writer , television personality , and the host of the current Food Network television program Giada at Home .'
+    s9 = 'Howard Eugene Johnson ( 30 January 1915 -- 28 May 2000 ) , better known as `` Stretch '' Johnson , was a tap dancer and social activist .'
+    claim_dict = construct_subgraph_for_claim(s9)
+    # construct_subgraph_for_candidate(claim_dict, s8, doc_title='')

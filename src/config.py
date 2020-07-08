@@ -50,7 +50,7 @@ DBPEDIA_LOOKUP_URL = f"http://localhost:{DBPEDIA_LOOKUP_PORT}/api/search/Keyword
 DBPEDIA_LOOKUP_APP_PORT = 9274 if platform.system() == 'Linux' else 5005
 DBPEDIA_LOOKUP_APP_URL = f"http://localhost:{DBPEDIA_LOOKUP_APP_PORT}/lookup-application/api/search?query="
 
-DBPEDIA_SPOTLIGHT_PORT = 2222 if platform.system() == 'Linux' else 5000
+DBPEDIA_SPOTLIGHT_PORT = 2222 if platform.system() == 'Linux' else 5006
 DBPEDIA_SPOTLIGHT_URL = f"http://localhost:{DBPEDIA_SPOTLIGHT_PORT}/rest/annotate"
 
 DBPEDIA_GRAPH_PORT = 8890 if platform.system() == 'Linux' else 5002

@@ -43,7 +43,7 @@ def get_triples(query_str):
 
                 triples.append(tri)
             else:
-                log.debug(f"extra long obj: {record['object']['value']}")
+                log.debug(f"extra long obj or empty str: {record['object']['value']}")
         # print(json.dumps(triples, indent=4))
         log.debug(f"sparql time: {(datetime.now() - start).seconds}")
         return triples

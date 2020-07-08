@@ -176,8 +176,11 @@ def get_outbounds(resource_uri):
             rel_split = uri_short_extract(tri['relation'])
             if rel_split == 'subject':
                 tri['keywords'] = [obj_split.replace('Category ', '')]
-            else:
-                tri['keywords'] = [rel_split, obj_split]
+                continue
+            if rel_split == 'rdf schema see Also':
+                tri['keywords'] = [obj_split]
+                continue
+            tri['keywords'] = [rel_split, obj_split]
     log.debug(f"outbound re: {len(tris)}")
     for i in to_delete:
         tris.remove(i)

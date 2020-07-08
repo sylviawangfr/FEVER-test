@@ -211,11 +211,16 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
                 if score < float(SCORE_CONFIDENCE):
                     break
                 else:
-                    tri2 = one_hop[item % len2]
-                    tri2['text'] = i['text']
-                    tri2['URI'] = i['URI']
-                    tri2['score'] = score
-                    sent_filtered_one_hop.append(tri2)
+                    try:
+                        tri2 = one_hop[item % len2]
+                        tri2['text'] = i['text']
+                        tri2['URI'] = i['URI']
+                        tri2['score'] = score
+                        sent_filtered_one_hop.append(tri2)
+                    except Exception as err:
+                        log.error(err)
+                        log.error(f"one_hop: {one_hop}")
+                        log.error(f"item: {item}, len2: {len2}")
 
     # claim one hop VS sentence resource
     claim_filtered_one_hop = []
@@ -292,9 +297,7 @@ if __name__ == '__main__':
     ss1 = "Dinah Sings Bessie Smith is a 1958 album by blues , R&B and j" \
             "azz singer Dinah Washington released on the Emarcy label , and reissued by Verve " \
           "Records in 1999 as The Bessie Smith Songbook ."
-    cc1 = "Bessie Smith was married on April 15, 1894."
-    s7 = 'Giada at Home first aired on October 18 , 2007 on the Food Network .'
-    s8 = 'Giada Pamela De Laurentiis ( [ ˈdʒaːda paˈmɛːla de lauˈrɛnti.is ] ; born August 22 , 1970 ) is an Italian-born American chef , writer , television personality , and the host of the current Food Network television program Giada at Home .'
-    s9 = 'Howard Eugene Johnson ( 30 January 1915 -- 28 May 2000 ) , better known as `` Stretch '' Johnson , was a tap dancer and social activist .'
-    claim_dict = construct_subgraph_for_claim(s9)
-    # construct_subgraph_for_candidate(claim_dict, s8, doc_title='')
+    cc1 = "Michelin Guides are published by George Lucas."
+    s9 = "The term normally refers to the annually published Michelin Red Guide , the oldest European hotel and restaurant reference guide , which awards Michelin stars for excellence to a select few establishments ."
+    claim_dict = construct_subgraph_for_claim(cc1)
+    construct_subgraph_for_candidate(claim_dict, s9, doc_title='Michelin Guide')

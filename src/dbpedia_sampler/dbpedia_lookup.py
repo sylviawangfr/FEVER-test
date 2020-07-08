@@ -92,7 +92,7 @@ def combine_lookup(text_phrase):
 
 def has_exact_match(text_phrase, lookup_records):
     for i in lookup_records:
-        if text_phrase.lower() == i['Label'].lower():
+        if i['Label'] is not None and text_phrase.lower() == i['Label'].lower():
             return i
     return None
 
@@ -113,11 +113,12 @@ def lookup_resource_label(text_phrase):
                 close_matches.append(re)
             else:
                 for i in re:
-                    tmp_label = i['Label'].lower()
-                    text_phrase_lower = text_phrase.lower()
-                    if tmp_label == text_phrase_lower:
-                        close_matches.append(i)
-                        break
+                    if 'Label' in i and i['Label'] is not None:
+                        tmp_label = i['Label'].lower()
+                        text_phrase_lower = text_phrase.lower()
+                        if tmp_label == text_phrase_lower:
+                            close_matches.append(i)
+                            break
                 if len(close_matches) < 1:
                     close_matches = re
     else:
@@ -174,7 +175,7 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
-    lookup_resource('USA')
+    lookup_resource('cultists')
     lookup_resource('Italian')
     lookup_resource('Even')
     lookup_resource('Giada Pamela De Laurentiis')

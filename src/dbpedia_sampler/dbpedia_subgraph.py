@@ -227,10 +227,9 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
                 continue
 
             c_one_hop_embedding = claim_dict['embedding'][i['text']]['one_hop']
-            if len(one_hop_embedding) < 1:
-                one_hop_embedding = bert_similarity.get_phrase_embedding(c_one_hop_keywords)
-                claim_dict['embedding'][i['text']]['one_hop'] = one_hop_embedding
-                c_one_hop_embedding = one_hop_embedding
+            if len(c_one_hop_embedding) < 1:
+                c_one_hop_embedding = bert_similarity.get_phrase_embedding(c_one_hop_keywords)
+                claim_dict['embedding'][i['text']]['one_hop'] = c_one_hop_embedding
 
             top_k = 3
             if len(c_one_hop_embedding) < 1:

@@ -115,11 +115,11 @@ def prepare_train_data_filter_tfidf(tfidf_data):
     paras.pred = False
     bulk_size = 3
     start = 0
+    dt = get_current_time_str()
     while start < data_len:
         end = start + bulk_size if start + bulk_size < data_len else data_len
         paras.upstream_data = tfidf_data[start:end]
         sample_tfidf = get_tfidf_sample(paras)
-        dt = get_current_time_str()
         save_and_append_results(sample_tfidf, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
                                 config.LOG_PATH / f"sample_ss_graph_{dt}.log")
         log.info(f"Finished total count: {end}")

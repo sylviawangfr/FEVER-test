@@ -48,7 +48,8 @@ DBPEDIA_LOOKUP_PORT = 1111 if platform.system() == 'Linux' else 5001
 DBPEDIA_LOOKUP_URL = f"http://localhost:{DBPEDIA_LOOKUP_PORT}/api/search/KeywordSearch?QueryString="
 
 DBPEDIA_LOOKUP_APP_PORT = 9274 if platform.system() == 'Linux' else 5005
-DBPEDIA_LOOKUP_APP_URL = f"http://localhost:{DBPEDIA_LOOKUP_APP_PORT}/lookup-application/api/search?query="
+DBPEDIA_LOOKUP_APP_URL_QUERY = f"http://localhost:{DBPEDIA_LOOKUP_APP_PORT}/lookup-application/api/search?query="
+DBPEDIA_LOOKUP_APP_URL_LABEL = f"http://localhost:{DBPEDIA_LOOKUP_APP_PORT}/lookup-application/api/search?label="
 
 DBPEDIA_SPOTLIGHT_PORT = 2222 if platform.system() == 'Linux' else 5006
 DBPEDIA_SPOTLIGHT_URL = f"http://localhost:{DBPEDIA_SPOTLIGHT_PORT}/rest/annotate"

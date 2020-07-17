@@ -299,5 +299,8 @@ if __name__ == '__main__':
           "Records in 1999 as The Bessie Smith Songbook ."
     cc1 = "Michelin Guides are published by George Lucas."
     s9 = "The term normally refers to the annually published Michelin Red Guide , the oldest European hotel and restaurant reference guide , which awards Michelin stars for excellence to a select few establishments ."
-    claim_dict = construct_subgraph_for_claim(cc1)
-    construct_subgraph_for_candidate(claim_dict, s9, doc_title='Michelin Guide')
+    s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
+    s7 = "Firefox is a computer game."
+
+    claim_dict = construct_subgraph_for_claim(s7)
+    construct_subgraph_for_candidate(claim_dict, s6, doc_title='')

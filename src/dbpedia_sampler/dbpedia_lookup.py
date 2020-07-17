@@ -50,7 +50,13 @@ def combine_lookup(text_phrase):
         log.info(f"DBpedia lookup phrase: {text_phrase}, matching: {exact_match['URI']}")
         return exact_match
     else:
-        lookup_app_matches = lookup_resource_label(text_phrase)
+        lookup_app_matches_label = lookup_resource_app_label(text_phrase)
+        lookup_app_matches_query = lookup_resource_app_query(text_phrase)
+        lookup_app_matches = lookup_app_matches_label
+        for i in lookup_app_matches_query:
+            if len(list(filter(lambda x: (x['Label'] == i['Label']), lookup_app_matches))) < 1:
+                lookup_app_matches.append(i)
+
         exact_match = has_exact_match(text_phrase, lookup_app_matches)
         if exact_match is not None:
             log.info(f"DBpedia lookup-app phrase: {text_phrase}, matching: {exact_match['URI']}")
@@ -97,18 +103,27 @@ def has_exact_match(text_phrase, lookup_records):
     return None
 
 
-def lookup_resource_label(text_phrase):
+def lookup_resource_app_query(text_phrase):
+    url = config.DBPEDIA_LOOKUP_APP_URL_QUERY + text_phrase
+    return lookup_resource_app(text_phrase, url)
+
+
+def lookup_resource_app_label(text_phrase):
+    url = config.DBPEDIA_LOOKUP_APP_URL_LABEL + text_phrase
+    return lookup_resource_app(text_phrase, url)
+
+
+def lookup_resource_app(text_phrase, url):
     start = datetime.now()
-    url = config.DBPEDIA_LOOKUP_APP_URL + text_phrase
     close_matches = []
     response = requests.get(url, timeout=5)
     if response.status_code is 200:
-        results = xmltodict.parse(response.text)
-        if len(results['ArrayOfResults']) <= 3:
-            log.warning(f"lookup phrase: {text_phrase}, no matching found by lookup-app.")
+        results1 = xmltodict.parse(response.text)
+        if len(results1['ArrayOfResults']) <= 3:
+            log.warning(f"lookup phrase: {text_phrase}, no matching found by lookup-app-query.")
             return close_matches
         else:
-            re = results['ArrayOfResults']['Result']
+            re = results1['ArrayOfResults']['Result']
             if isinstance(re, dict):
                 close_matches.append(re)
             else:
@@ -175,6 +190,7 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
+    lookup_resource('a computer game')
     lookup_resource('cultists')
     lookup_resource('Italian')
     lookup_resource('Even')

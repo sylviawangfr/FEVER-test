@@ -142,7 +142,8 @@ def link_sentence(sentence, doc_title='', lookup_hash=None):
             linked_i['URI'] = i_URI
             spotlight_resources.append(linked_i)
 
-    linked_phrases_l = merge_linked_l1_to_l2(spotlight_resources, linked_phrases_l)
+    merged_links_step1 = merge_linked_l1_to_l2(spotlight_resources, linked_phrases_l)
+    linked_phrases_l = merge_linked_l1_to_l2(merged_links_step1, [])
 
     tmp_delete = []
     for i in linked_phrases_l:
@@ -171,45 +172,54 @@ def merge_linked_l1_to_l2(l1, l2):
         text_i = i['text']
         URI_i = i['URI']
         is_dup = False
+        to_delete = []
         for m in l2:
             if not 'text' in m:
-                break
+                continue
             text_m = m['text']
             URI_m = m['URI']
+            short_uri_i = dbpedia_virtuoso.uri_short_extract(URI_i)
+            short_uri_m = dbpedia_virtuoso.uri_short_extract(URI_m)
+            score_i, sorted_idx_i = keyword_matching(text_i.lower(), [short_uri_i.lower()])
+            score_m, sorted_idx_m = keyword_matching(text_m.lower(), [short_uri_m.lower()])
             if URI_i == URI_m:
-                if text_m in text_i:
-                    l2.remove(m)
+                if score_i[0] == 1:  # exact match
+                    to_delete.append(m)
+                    continue
+                if score_m[0] == 1:  # exact match
+                    is_dup = True
                     break
+                if text_m in text_i:
+                    to_delete.append(m)
+                    continue
                 if text_i in text_m:
                     is_dup = True
                     break
-            if not URI_i == URI_m:
+            else:   # URI_i != URI_m:
                 if text_i == text_m:
-                    short_uri_i = dbpedia_virtuoso.uri_short_extract(URI_i)
-                    short_uri_m = dbpedia_virtuoso.uri_short_extract(URI_m)
-                    score, sorted_idx = keyword_matching(text_i.lower(), [short_uri_i.lower(), short_uri_m.lower()])
-                    if score[sorted_idx[0]] == 1:   # exact match
-                        if sorted_idx[0] == 0:  # pick i
-                            l2.remove(m)
-                            break
-                        else:   # keep m
-                            is_dup = True
-                            break
-                    else:
-                        # if score[0] > score[1]:    Australia VS Australian VS Australians
-                        #     l2.remove(m)
-                        #     break
-                        # else:
+                    if score_i[0] == 1:   # exact match, pick i
+                        to_delete.append(m)
+                        continue
+                    if score_m[0] == 1:
                         is_dup = True
                         break
-                if text_i in text_m:
+                    # if score[0] > score[1]:    Australia VS Australian VS Australians
+                    #     l2.remove(m)
+                    #     break
+                    # else:
                     is_dup = True
                     break
-                if text_m in text_i:
-                    l2.remove(m)
-                    break
+                if text_i in text_m:
+                    if score_i[0] < SCORE_CONFIDENCE_2:
+                        is_dup = True
+                        break
+                # if text_m in text_i:
+                #     l2.remove(m)
+                #     break
         if not is_dup:
             l2.append(i)
+        for d in to_delete:
+            l2.remove(d)
     return l2
 
 
@@ -276,13 +286,13 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
 
     embedding1 = keyword_embeddings['not_linked_phrases_l']
     if len(embedding1) == 0:
-        add_verbs = []
+        with_verbs = []
         for idx, p in enumerate(not_linked_phrases_l):
             if is_date_or_number(p) and p in verb_d:
-                add_verbs.append(verb_d[p]['verb'] + " " + p)
+                with_verbs.append(verb_d[p]['verb'] + " " + p)
             else:
-                add_verbs.append(p)
-        embedding1 = bert_similarity.get_phrase_embedding(add_verbs)
+                with_verbs.append(p)
+        embedding1 = bert_similarity.get_phrase_embedding(with_verbs)
         keyword_embeddings['not_linked_phrases_l'] = embedding1
 
     tmp_result = []
@@ -333,7 +343,9 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_ha
     for i in itertools.permutations(linked_phrases_l, 2):
         resource1 = i[0]         # key
         resource2 = i[1]
-        if resource1['text'] in resource2['text'] or resource2['text'] in resource1['text']:
+        if resource1['text'] in resource2['text'] \
+                or resource2['text'] in resource1['text'] \
+                or resource1['URI'] == resource2['URI']:
             continue
 
         uri_matched = False
@@ -373,7 +385,9 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
     for i in itertools.combinations(linked_phrases_l, 2):
         resource1 = i[0]
         resource2 = i[1]
-        if resource1['text'] in resource2['text'] or resource2['text'] in resource1['text']:
+        if resource1['text'] in resource2['text'] \
+                or resource2['text'] in resource1['text'] \
+                or resource1['URI'] == resource2['URI']:
             continue
 
         candidates1 = get_one_hop(resource1)
@@ -534,10 +548,9 @@ if __name__ == '__main__':
          "which was created by Gideon Raff .."
     s5 = "He is best known for hosting the talent competition show American Idol , " \
          "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
-    s7 = 'Giada at Home first aired on October 18 , 2007 on the Food Network .'
-    s8 = 'Giada Pamela De Laurentiis ( [ ˈdʒaːda paˈmɛːla de lauˈrɛnti.is ] ; born August 22 , 1970 ) is an Italian-born American chef , writer , television personality , and the host of the current Food Network television program Giada at Home .'
-    s9 = "Even after he became reclusive in his declining years his opinion was highly sought , and his status as a national icon was still recognised -- more than 50 years after his retirement as a Test player , in 2001 , Prime Minister John Howard of Australia called him the `` greatest living Australian '' "
-    no_l, l = link_sentence(s9, doc_title='')
-    all_phrases = no_l + [i['text'] for i in l]
-    verb_d = get_dependent_verb(s9, all_phrases)
+    s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
+    s7 = "Firefox is a computer game."
+    no_l, l = link_sentence(s6, doc_title='')
+    # all_phrases = no_l + [i['text'] for i in l]
+    # verb_d = get_dependent_verb(s6, all_phrases)
 

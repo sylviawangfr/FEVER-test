@@ -139,6 +139,6 @@ def cache_temp_graph_result_to_file():
 
 
 if __name__ == '__main__':
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[1365:1366]
     prepare_train_data_filter_tfidf(tfidf_dev_data)
 

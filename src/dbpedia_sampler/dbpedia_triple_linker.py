@@ -428,10 +428,10 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
     tri_keywords_l2 = [' '.join(tri['keywords']) for tri in candidates2]
     embedding1 = keyword_embeddings[resource1['text']]['one_hop']
     embedding2 = keyword_embeddings[resource2['text']]['one_hop']
-    if len(embedding1) == 0:
+    if not len(embedding1) == len(candidates1):
         embedding1 = bert_similarity.get_phrase_embedding(tri_keywords_l1)
         keyword_embeddings[resource1['text']]['one_hop'] = embedding1
-    if len(embedding2) == 0:
+    if not len(embedding2) == len(candidates2):
         embedding2 = bert_similarity.get_phrase_embedding(tri_keywords_l2)
         keyword_embeddings[resource2['text']]['one_hop'] = embedding2
 
@@ -489,7 +489,7 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
         log.error(err)
 
     triple_vec_l = keyword_embeddings[linked_phrase['text']]['one_hop']
-    if len(triple_vec_l) == 0:
+    if not len(triple_vec_l) == len(candidates):
         triple_vec_l = bert_similarity.get_phrase_embedding(tri_keywords_l)
         keyword_embeddings[linked_phrase['text']]['one_hop'] = triple_vec_l
 

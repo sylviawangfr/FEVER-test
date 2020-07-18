@@ -120,14 +120,14 @@ def prepare_train_data_filter_tfidf(tfidf_data):
         end = start + bulk_size if start + bulk_size < data_len else data_len
         paras.upstream_data = tfidf_data[start:end]
         sample_tfidf = get_tfidf_sample(paras)
-        save_and_append_results(sample_tfidf, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+        save_and_append_results(sample_tfidf, end, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
                                 config.LOG_PATH / f"sample_ss_graph_{dt}.log")
         log.info(f"Finished total count: {end}")
         if end == data_len:
             break
         else:
             start = end
-    return sample_tfidf
+    return
 
 
 def construct_graphs_for_example(example):
@@ -139,6 +139,7 @@ def cache_temp_graph_result_to_file():
 
 
 if __name__ == '__main__':
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
-    prepare_train_data_filter_tfidf(tfidf_dev_data)
-
+    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:4]
+    # prepare_train_data_filter_tfidf(tfidf_dev_data)
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")
+    prepare_train_data_filter_tfidf(tfidf_train_data)

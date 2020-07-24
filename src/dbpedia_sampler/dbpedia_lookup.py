@@ -34,7 +34,16 @@ def lookup_resource(text_phrase):
 
 def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
     top_match = []
-    keyword_matching_score = [difflib.SequenceMatcher(None, text_phrase, i['Label']).ratio() for i in lookup_records]
+    try:
+        keyword_matching_score = [difflib.SequenceMatcher(None, text_phrase,
+                                                          i['Label'] if i['Label'] is not None else '').ratio()
+                                  for i in lookup_records]
+    except Exception as err:
+        print(err)
+        print(text_phrase)
+    if keyword_matching_score is None:
+        return top_match
+
     sorted_matching_index = sorted(range(len(keyword_matching_score)), key=lambda k: keyword_matching_score[k],
                                    reverse=True)
     top_score = keyword_matching_score[sorted_matching_index[0]]
@@ -190,7 +199,7 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
-    lookup_resource('a computer game')
+    lookup_resource('The filmstars')
     lookup_resource('cultists')
     lookup_resource('Italian')
     lookup_resource('Even')

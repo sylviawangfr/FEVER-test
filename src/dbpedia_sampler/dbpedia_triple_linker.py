@@ -550,7 +550,8 @@ if __name__ == '__main__':
          "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
     s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
     s7 = "Firefox is a computer game."
-    no_l, l = link_sentence(s6, doc_title='')
+    s8 = "Where the Heart Is ( 2000 film ) - The filmstars Natalie Portman , Stockard Channing , Ashley Judd , and Joan Cusack with supporting roles done by James Frain , Dylan Bruno , Keith David , and Sally Field ."
+    no_l, l = link_sentence(s8, doc_title='')
     # all_phrases = no_l + [i['text'] for i in l]
     # verb_d = get_dependent_verb(s6, all_phrases)
 

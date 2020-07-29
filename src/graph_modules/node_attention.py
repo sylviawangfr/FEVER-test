@@ -4,18 +4,16 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 
-class ESIM(nn.Module):
+class Node_Alignment(nn.Module):
     def __init__(self, args):
-        super(ESIM, self).__init__()
+        super(Node_Alignment, self).__init__()
         self.args = args
         self.dropout = 0.5
         self.hidden_size = args.hidden_size
         self.embeds_dim = args.embeds_dim
-        num_word = 20000
-        self.embeds = nn.Embedding(num_word, self.embeds_dim)
+        num_nodes = 20000
+        self.embeds = nn.Embedding(num_nodes, self.embeds_dim)
         self.bn_embeds = nn.BatchNorm1d(self.embeds_dim)
-        self.lstm1 = nn.LSTM(self.embeds_dim, self.hidden_size, batch_first=True, bidirectional=True)
-        self.lstm2 = nn.LSTM(self.hidden_size * 8, self.hidden_size, batch_first=True, bidirectional=True)
 
         self.fc = nn.Sequential(
             nn.BatchNorm1d(self.hidden_size * 8),
@@ -62,7 +60,9 @@ class ESIM(nn.Module):
         # output: batch_size * (4 * hidden_size)
         return torch.cat([p1, p2], 1)
 
+
     def forward(self, *input):
+        # g1, g2
         # batch_size * seq_len
         sent1, sent2 = input[0], input[1]
         mask1, mask2 = sent1.eq(0), sent2.eq(0)
@@ -72,21 +72,33 @@ class ESIM(nn.Module):
         x2 = self.bn_embeds(self.embeds(sent2).transpose(1, 2).contiguous()).transpose(1, 2)
 
         # batch_size * seq_len * dim => batch_size * seq_len * hidden_size
-        o1, _ = self.lstm1(x1)
-        o2, _ = self.lstm1(x2)
+        # o1, _ = self.lstm1(x1)
+        # o2, _ = self.lstm1(x2)
+
+        # batch_size * num_nodes * dim => batch_size * num_nodes * dim
+        o1 = x1
+        o2 = x2
+
 
         # Attention
         # batch_size * seq_len * hidden_size
+        # batch_size * num_nodes * dim
         q1_align, q2_align = self.soft_attention_align(o1, o2, mask1, mask2)
 
         # Compose
         # batch_size * seq_len * (8 * hidden_size)
+        # batch_size * num_nodes * (8 * dim)
         q1_combined = torch.cat([o1, q1_align, self.submul(o1, q1_align)], -1)
         q2_combined = torch.cat([o2, q2_align, self.submul(o2, q2_align)], -1)
 
+
         # batch_size * seq_len * (2 * hidden_size)
-        q1_compose, _ = self.lstm2(q1_combined)
-        q2_compose, _ = self.lstm2(q2_combined)
+        # q1_compose, _ = self.lstm2(q1_combined)
+        # q2_compose, _ = self.lstm2(q2_combined)
+
+        # batch_size * num_nodes * (2 * dim)
+        q1_compose, _ = self.GAT(q1_combined)
+        q2_compose, _ = self.GAT(q2_combined)
 
         # Aggregate
         # input: batch_size * seq_len * (2 * hidden_size)
@@ -120,31 +132,31 @@ def val_model(val_iter, net3):
     f2 = 2 * b_p * b_r / (b_p + b_r)
     return f1, f2
 
-
-def main():
-    model = ESIM()
-    model.train()
-    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.01)
-    crition = F.cross_entropy
-    min_f = 0
-    for epoch in range(30):
-        epoch_loss = 0
-        for epoch, batch in enumerate(train_iter):
-            optimizer.zero_grad()
-            predicted = model(batch.query1, batch.query2)
-            loss = crition(predicted, batch.label)
-            loss.backward()
-            optimizer.step()
-            epoch_loss = epoch_loss + loss.data
-        # 计算每一个epoch的loss
-        # 计算验证集的准确度来确认是否存储这个model
-        print("epoch_loss", epoch_loss)
-        f1, f2 = val_model(val_iter, model)
-        if (f1 + f2) / 2 > min_f:
-            min_f = (f1 + f2) / 2
-            print("save model")
-            torch.save(model.state_dict(), '../data/esim_match_data/esim_params_30.pkl')
-
-
-if __name__ == '__main__':
-    main()
+#
+# def main():
+#     model = Node_Alignment()
+#     model.train()
+#     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.01)
+#     crition = F.cross_entropy
+#     min_f = 0
+#     for epoch in range(30):
+#         epoch_loss = 0
+#         for epoch, batch in enumerate(train_iter):
+#             optimizer.zero_grad()
+#             predicted = model(batch.query1, batch.query2)
+#             loss = crition(predicted, batch.label)
+#             loss.backward()
+#             optimizer.step()
+#             epoch_loss = epoch_loss + loss.data
+#         # 计算每一个epoch的loss
+#         # 计算验证集的准确度来确认是否存储这个model
+#         print("epoch_loss", epoch_loss)
+#         f1, f2 = val_model(val_iter, model)
+#         if (f1 + f2) / 2 > min_f:
+#             min_f = (f1 + f2) / 2
+#             print("save model")
+#             torch.save(model.state_dict(), '../data/esim_match_data/esim_params_30.pkl')
+#
+#
+# if __name__ == '__main__':
+#     main()

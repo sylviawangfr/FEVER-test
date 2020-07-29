@@ -5,8 +5,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from dgl.data import MiniGCDataset
+from graph_modules.minigpc import MiniGPCDataset
 from dgl.nn.pytorch import *
 from torch.utils.data import DataLoader
+import random
 
 
 class GATLayer(nn.Module):
@@ -23,12 +25,13 @@ class GATLayer(nn.Module):
         self.num_heads = num_heads
         self.feat_drop = nn.Dropout(feat_drop)
         self.fc = nn.Linear(in_dim, num_heads * out_dim, bias=False)
-        self.attn_l = nn.Parameter(torch.Tensor(size=(num_heads, out_dim, 1)))
-        self.attn_r = nn.Parameter(torch.Tensor(size=(num_heads, out_dim, 1)))
+        # self.attn_l = nn.Parameter(torch.Tensor(size=(num_heads, out_dim, 1)))
+        # self.attn_r = nn.Parameter(torch.Tensor(size=(num_heads, out_dim, 1)))
+        self.attn_l = nn.Parameter(torch.randn(size=(num_heads, out_dim, 1)))
+        self.attn_r = nn.Parameter(torch.randn(size=(num_heads, out_dim, 1)))
         self.attn_drop = nn.Dropout(attn_drop)
         self.activation = nn.LeakyReLU(alpha)
         self.softmax = edge_softmax
-
         self.agg_activation=agg_activation
 
     def clean_data(self):
@@ -87,64 +90,79 @@ class GATClassifier(nn.Module):
             GATLayer(in_dim, hidden_dim, num_heads),
             GATLayer(hidden_dim * num_heads, hidden_dim, num_heads)
         ])
-        self.classify = nn.Linear(hidden_dim * num_heads, n_classes)
 
-    def forward(self, bg):
+        self.classify = nn.Linear(hidden_dim * num_heads * 2, n_classes)
+        self.mlp_1 = nn.Linear(hidden_dim * num_heads * 2, hidden_dim)
+        self.mlp_2 = nn.Linear(hidden_dim, n_classes)
+        self.classifier = nn.Sequential(*[nn.Dropout(0), self.mlp_1, nn.ReLU(), nn.Dropout(0), self.mlp_2])
+
+    def forward(self, gp):
         # For undirected graphs, in_degree is the same as
         # out_degree.
-        h = bg.in_degrees().view(-1, 1).float()
+        g1, g2 = gp[0], gp[1]
+        len1 = len(g1)
+        len2 = len(g2)
+        g1.extend(g2)
+        bgp = dgl.batch(g1)
+        h = bgp.in_degrees().view(-1, 1).float()
         for i, gnn in enumerate(self.layers):
-            h = gnn(h, bg)
-        bg.ndata['h'] = h
-        hg = dgl.mean_nodes(bg, 'h')
-        return self.classify(hg)
+            h = gnn(h, bgp)
+
+        bgp.ndata['h'] = h
+        hg_all = dgl.mean_nodes(bgp, 'h')
+        hg1 = hg_all[0:len1]
+        hg2 = hg_all[len1:len1+len2]
+        x = torch.cat([hg1, hg2], dim=1)
+        return self.classifier(x)
 
 
 def collate(samples):
     # The input `samples` is a list of pairs
-    #  (graph, label).
-    graphs, labels = map(list, zip(*samples))
-    batched_graph = dgl.batch(graphs)
-    return batched_graph, torch.tensor(labels)
+    random.shuffle(samples)
+    graph_pairs, labels = map(list, zip(*samples))
+    g1_l = [i['g1'] for i in graph_pairs]
+    g2_l = [i['g2'] for i in graph_pairs]
+    return (g1_l, g2_l), torch.tensor(labels)
 
 
 # Create training and test sets.
-trainset = MiniGCDataset(320, 10, 20)
-testset = MiniGCDataset(80, 10, 20)
+trainset = MiniGPCDataset(320, 10, 20)
+testset = MiniGPCDataset(80, 10, 20)
 # Use PyTorch's DataLoader and the collate function
 # defined before.
 data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
                          collate_fn=collate)
 
 # Create model
+# in_dim, hidden_dim, num_heads, n_classes
 model = GATClassifier(1, 16, 8, trainset.num_classes)
 loss_func = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=0.002)
 model.train()
 
 epoch_losses = []
 for epoch in range(80):
     epoch_loss = 0
-    for iter, (bg, label) in enumerate(data_loader):
-        prediction = model(bg)
+    for ite, (bgp, label) in enumerate(data_loader):
+        prediction = model(bgp)
         loss = loss_func(prediction, label)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         epoch_loss += loss.detach().item()
-    epoch_loss /= (iter + 1)
+    epoch_loss /= (ite + 1)
     print('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
     epoch_losses.append(epoch_loss)
 
 model.eval()
 # Convert a list of tuples to two lists
-test_X, test_Y = map(list, zip(*testset))
-test_bg = dgl.batch(test_X)
-test_Y = torch.tensor(test_Y).float().view(-1, 1)
-probs_Y = torch.softmax(model(test_bg), 1)
-sampled_Y = torch.multinomial(probs_Y, 1)
-argmax_Y = torch.max(probs_Y, 1)[1].view(-1, 1)
-print('Accuracy of sampled predictions on the test set: {:.4f}%'.format(
-    (test_Y == sampled_Y.float()).sum().item() / len(test_Y) * 100))
-print('Accuracy of argmax predictions on the test set: {:4f}%'.format(
-    (test_Y == argmax_Y.float()).sum().item() / len(test_Y) * 100))
+test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate)
+for it, (test_bg, test_Y) in enumerate(test_data_loader):
+    test_Y = torch.tensor(test_Y).float().view(-1, 1)
+    probs_Y = torch.softmax(model(test_bg), 1)
+    sampled_Y = torch.multinomial(probs_Y, 1)
+    argmax_Y = torch.max(probs_Y, 1)[1].view(-1, 1)
+    print('Accuracy of sampled predictions on the test set: {:.4f}%'.format(
+        (test_Y == sampled_Y.float()).sum().item() / len(test_Y) * 100))
+    print('Accuracy of argmax predictions on the test set: {:4f}%'.format(
+        (test_Y == argmax_Y.float()).sum().item() / len(test_Y) * 100))

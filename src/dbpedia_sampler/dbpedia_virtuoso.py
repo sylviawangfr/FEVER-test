@@ -17,6 +17,7 @@ RECORD_LIMIT = 200
 
 log = log_util.get_logger('dbpedia_virtuoso')
 
+
 def get_triples(query_str):
     # log.debug("virtuoso query str: " + query_str)
     start = datetime.now()
@@ -88,6 +89,7 @@ def get_categories_one_hop_parent(ontology_uri):
         tri['keywords'] = [obj_split]
     return tris
 
+
 def get_properties(resource_uri):
     query_str = f"SELECT distinct (<{resource_uri}> AS ?subject) ?relation ?object " \
         "FROM <http://dbpedia.org> WHERE {" \
@@ -142,7 +144,7 @@ def get_ontology_linked_values_inbound(resource_uri):
         "FROM <http://dbpedia.org> WHERE { " \
         f"?subject ?relation <{resource_uri}> . " \
         "filter contains(str(?relation), 'ontology') " \
-        "filter (!contains(str(?relation), \'wiki\'))"  \
+        "filter (!contains(str(?relation), \'wiki\'))" \
         "filter (?relation not in (" \
         "dbo:thumbnail, " \
         "dbo:abstract))} LIMIT 500"
@@ -165,6 +167,42 @@ def get_outbounds(resource_uri):
         "filter (contains(str(?relation), 'ontology') " \
         "|| contains(str(?object), 'http://dbpedia.org/resource/') " \
         "|| contains(str(?relation), 'http://dbpedia.org/property/'))} LIMIT 500"
+    tris = get_triples(query_str_outbound)
+    to_delete = []
+    for tri in tris:
+        obj_split = uri_short_extract(tri['object'])
+        if does_reach_max_length(obj_split):
+            to_delete.append(tri)
+            continue
+        else:
+            rel_split = uri_short_extract(tri['relation'])
+            if rel_split == 'subject':
+                tri['keywords'] = [obj_split.replace('Category ', '')]
+                continue
+            if rel_split == 'rdf schema see Also':
+                tri['keywords'] = [obj_split]
+                continue
+            tri['keywords'] = [rel_split, obj_split]
+    log.debug(f"outbound re: {len(tris)}")
+    for i in to_delete:
+        tris.remove(i)
+    return tris
+
+
+def get_disambiguates_outbounds(resource_uri):
+    query_str_outbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
+        "PREFIX disambiguates: <http://dbpedia.org/ontology/wikiPageDisambiguates> " \
+        "PREFIX redirects: <http://dbpedia.org/ontology/wikiPageRedirects> " \
+        "SELECT distinct ?subject ?relation ?object where { " \
+        f"<{resource_uri}> ?x ?subject. " \
+        "?subject ?relation ?object. " \
+        "filter (?x in (disambiguates:, redirects:)) " \
+        "filter (!contains(str(?relation), 'wiki')) " \
+        "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
+        "filter (contains(str(?relation), 'ontology') " \
+        "|| contains(str(?object), 'http://dbpedia.org/resource/') " \
+        "|| contains(str(?relation), 'http://dbpedia.org/property/'))} " \
+        "LIMIT 500"
     tris = get_triples(query_str_outbound)
     to_delete = []
     for tri in tris:
@@ -239,7 +277,6 @@ def get_one_hop_resource_outbound(resource_uri):
     return tris
 
 
-
 def get_similar_properties(resource1, resource2):
     pass
 
@@ -252,6 +289,7 @@ def does_reach_max_length(text):
     if len(nltk.word_tokenize(text)) > 25:
         return True
 
+
 def uri_short_extract(uri):
     lastword = uri.split('/')[-1]
     words = wildcase_split(lastword)
@@ -261,6 +299,7 @@ def uri_short_extract(uri):
         phrases.append(' '.join([ww for ww in ph]))
     one_phrase = ' '.join(p for p in phrases)
     return one_phrase
+
 
 def wildcase_split(str):
     p_l = re.findall(r'(?:\d+\.\d+)|(?:\d+)|(?:[a-zA-Z]+)', str)
@@ -283,8 +322,8 @@ def isURI(str):
 
 if __name__ == "__main__":
     # res = "http://dbpedia.org/resource/Magic_Johnson"
-    res = "http://dbpedia.org/resource/Los_Angeles_Lakers"
-    print(get_outbounds(res))
+    res = "http://dbpedia.org/resource/Tap_dancer"
+    print(get_disambiguates_outbounds(res))
     # print(get_properties(res))
     # on = "http://dbpedia.org/ontology/City"
     # o1 = get_categories_one_hop_child(on)
@@ -300,6 +339,3 @@ if __name__ == "__main__":
     # on = "http://dbpedia.org/resource/Los_Angeles_Lakers"
     # t = get_one_hop_resource_inbound(res)
     # print(t)
-
-
-

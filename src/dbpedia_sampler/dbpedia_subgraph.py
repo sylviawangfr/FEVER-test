@@ -300,7 +300,8 @@ if __name__ == '__main__':
     cc1 = "Michelin Guides are published by George Lucas."
     s9 = "The term normally refers to the annually published Michelin Red Guide , the oldest European hotel and restaurant reference guide , which awards Michelin stars for excellence to a select few establishments ."
     s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
-    s7 = "Firefox is a computer game."
-
-    claim_dict = construct_subgraph_for_claim(s7)
-    construct_subgraph_for_candidate(claim_dict, s6, doc_title='')
+    s7 = "Howard Eugene Johnson -LRB- 30 January 1915 -- 28 May 2000 -RRB- , better known as `` Stretch \'\' Johnson , was a tap dancer and social activist ."
+    s8 = "Magic Johnson was a tap dancer"
+    s9 = 'Tap Tap was a series of rhythm games by Tapulous available for the iOS of which several versions , both purchasable and free , have been produced .'
+    claim_dict = construct_subgraph_for_claim(s8)
+    construct_subgraph_for_candidate(claim_dict, s9, doc_title='')

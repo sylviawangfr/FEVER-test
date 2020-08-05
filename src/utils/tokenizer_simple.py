@@ -23,7 +23,9 @@ def split_claim_spacy(text):
 def split_claim_regex(text):
     # get capital phrases
     # REGEX = r'(?<![.])([A-Z]+[\w]*\s)*([A-Z][\w]+)'
-    REGEX = r'([A-Z0-9]+[\w]*(\s)*(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(and\s)*(with\s)*(the\s)*(-?)(\d*\s)*)*(?<!-\s)([A-Z]+[\w]*(\s\d+)*)'
+    REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\s)*' \
+            r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(and\s)*(with\s)*(the\s)*' \
+            r'(-?)(\d*\s)*)*(?<!-\s)([A-Z]+[\w]*(\s\d+)*)'
     regexp = regex.compile(REGEX)
     matches = [m for m in regexp.finditer(text)]
     tokens = [matches[i].group() for i in range(len(matches))]

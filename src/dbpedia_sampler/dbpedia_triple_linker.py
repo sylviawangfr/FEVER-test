@@ -90,8 +90,10 @@ def lookup_phrase(phrase):
 
 def query_resource(uri):
     context = dict()
-    # context['inbounds'] = dbpedia_virtuoso.get_inbounds(uri)
-    context['outbounds'] = dbpedia_virtuoso.get_outbounds(uri)
+    outbounds = dbpedia_virtuoso.get_outbounds(uri)
+    if len(outbounds) < 1:
+        outbounds = dbpedia_virtuoso.get_disambiguates_outbounds(uri)
+    context['outbounds'] = outbounds
     return context
 
 

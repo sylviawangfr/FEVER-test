@@ -1,14 +1,64 @@
 import dgl
 import dgl.function as fn
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from dgl.data import MiniGCDataset
-from graph_modules.minigpc import MiniGPCDataset
+from graph_modules.dbpedia_ss_gat_sampler import DBpediaGATSampler
 from dgl.nn.pytorch import *
 from torch.utils.data import DataLoader
 import random
+from torch import nn
+import torch
+import torch.nn.functional as F
+import torch.optim as optim
+from utils.file_loader import *
+
+
+class Node_Alignment(nn.Module):
+    def __init__(self):
+        super(Node_Alignment, self).__init__()
+
+    def soft_attention_align(self, x1, x2):
+        '''
+        x1: batch_size * node_len * dim
+        x2: batch_size * node_len * dim
+        '''
+        # attention: batch_size * node_len * node_len
+        attention = torch.matmul(x1, x2.transpose(0, 1))
+
+        # weight: batch_size * node_len * node_len
+        weight1 = F.softmax(attention, dim=-1)
+        x1_align = torch.matmul(weight1, x2)
+        weight2 = F.softmax(attention.transpose(0, 1), dim=-1)
+        x2_align = torch.matmul(weight2, x1)
+        # x_align: batch_size * node_len * hidden_size
+        return x1_align, x2_align
+
+    def submul(self, x1, x2):
+        mul = x1 * x2
+        sub = x1 - x2
+        return torch.cat([sub, mul], -1)
+
+    def apply_multiple(self, x):
+        # input: batch_size * node_len * (2 * hidden_size)
+        p1 = F.avg_pool1d(x.transpose(1, 2), x.size(1)).squeeze(-1)
+        p2 = F.max_pool1d(x.transpose(1, 2), x.size(1)).squeeze(-1)
+        # output: batch_size * (4 * hidden_size)
+        return torch.cat([p1, p2], 1)
+
+    def forward(self, nodes_embeddings1, nodes_embeddings2):
+        # g1, g2
+        # batch_size * node_len
+        o1 = nodes_embeddings1
+        o2 = nodes_embeddings2
+
+        # Attention
+        # batch_size * seq_len * hidden_size
+        # batch_size * num_nodes * dim
+        q1_align, q2_align = self.soft_attention_align(o1, o2)
+
+        # Compose
+        # batch_size * num_nodes * (4 * dim)
+        q1_combined = torch.cat([o1, q1_align, self.submul(o1, q1_align)], -1)
+        q2_combined = torch.cat([o2, q2_align, self.submul(o2, q2_align)], -1)
+        return q1_combined, q2_combined
 
 
 class GATLayer(nn.Module):
@@ -74,7 +124,7 @@ class GATLayer(nn.Module):
     def edge_attention(self, edges):
         # an edge UDF to compute un-normalized attention values from src and dst
         a = self.activation(edges.src['a1'] + edges.dst['a2'])
-        return {'a' : a}
+        return {'a': a}
 
     def edge_softmax(self):
         attention = self.softmax(self.g, self.g.edata.pop('a'))
@@ -85,30 +135,44 @@ class GATLayer(nn.Module):
 class GATClassifier(nn.Module):
     def __init__(self, in_dim, hidden_dim, num_heads, n_classes):
         super(GATClassifier, self).__init__()
+        self.node_alignment = Node_Alignment()
 
-        self.layers = nn.ModuleList([
-            GATLayer(in_dim, hidden_dim, num_heads),
+        self.gat_layers = nn.ModuleList([
+            GATLayer(in_dim * 4, hidden_dim, num_heads),    # aligned node embedding = in_dim * 4
             GATLayer(hidden_dim * num_heads, hidden_dim, num_heads)
         ])
 
-        self.classify = nn.Linear(hidden_dim * num_heads * 2, n_classes)
-        self.mlp_1 = nn.Linear(hidden_dim * num_heads * 2, hidden_dim)
-        self.mlp_2 = nn.Linear(hidden_dim, n_classes)
-        self.classifier = nn.Sequential(*[nn.Dropout(0), self.mlp_1, nn.ReLU(), nn.Dropout(0), self.mlp_2])
+        self.classifier = nn.Sequential(
+            nn.BatchNorm1d(hidden_dim * (num_heads + 1) * 2),
+            nn.Dropout(0),
+            nn.Linear(hidden_dim * (num_heads + 1) * 2, hidden_dim),
+            nn.ReLU(),
+            nn.BatchNorm1d(hidden_dim),
+            nn.Dropout(0),
+            nn.Linear(hidden_dim, n_classes))
 
     def forward(self, gp):
         # For undirected graphs, in_degree is the same as
         # out_degree.
         g1, g2 = gp[0], gp[1]
+        bg1 = dgl.batch(g1)
+        bg2 = dgl.batch(g2)
+        bg1_align, bg2_align = self.node_alignment(bg1.ndata['nbd'], bg2.ndata['nbd'])  # 768 * 4
+        bg1.ndata.update({'nbd_align': bg1_align})
+        bg2.ndata.update({'nbd_align': bg2_align})
+        g1 = dgl.unbatch(bg1)
+        g2 = dgl.unbatch(bg2)
         len1 = len(g1)
         len2 = len(g2)
         g1.extend(g2)
         bgp = dgl.batch(g1)
-        h = bgp.in_degrees().view(-1, 1).float()
-        for i, gnn in enumerate(self.layers):
+        h = bgp.ndata['nbd_align']    # aligned node embeddings: 768 * 4
+        # h = bgp.in_degrees().view(-1, 1).float()
+        for i, gnn in enumerate(self.gat_layers):
             h = gnn(h, bgp)
 
-        bgp.ndata['h'] = h
+        edge_embeddings = bgp.edata['ebd']
+        bgp.ndata['h'] = torch.cat([h, edge_embeddings], dim=1)    # 768 * 5
         hg_all = dgl.mean_nodes(bgp, 'h')
         hg1 = hg_all[0:len1]
         hg2 = hg_all[len1:len1+len2]
@@ -118,17 +182,19 @@ class GATClassifier(nn.Module):
 
 def collate(samples):
     # The input `samples` is a list of pairs
-    random.shuffle(samples)
+    # random.shuffle(samples)
     graph_pairs, labels = map(list, zip(*samples))
-    # g1_l = [i['g1'] for i in graph_pairs]
-    # g2_l = [i['g2'] for i in graph_pairs]
-    g1_l, g2_l = map(list, zip(*graph_pairs))
+    g1_l = [i['graph1'] for i in graph_pairs]
+    g2_l = [i['graph2'] for i in graph_pairs]
     return (g1_l, g2_l), torch.tensor(labels)
+
 
 def train():
     # Create training and test sets.
-    trainset = MiniGPCDataset(320, 10, 20)
-    testset = MiniGPCDataset(80, 10, 20)
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")
+    trainset = DBpediaGATSampler(data_train)
+    testset = DBpediaGATSampler(data_dev)
     # Use PyTorch's DataLoader and the collate function
     # defined before.
     data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
@@ -136,7 +202,7 @@ def train():
 
     # Create model
     # in_dim, hidden_dim, num_heads, n_classes
-    model = GATClassifier(1, 16, 8, trainset.num_classes)
+    model = GATClassifier(768, 768, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.002)
     model.train()

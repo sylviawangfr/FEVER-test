@@ -199,7 +199,7 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
-    lookup_resource('The filmstars')
+    lookup_resource('Howard Eugene Johnson')
     lookup_resource('cultists')
     lookup_resource('Italian')
     lookup_resource('Even')

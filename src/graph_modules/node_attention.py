@@ -31,21 +31,20 @@ class Node_Alignment(nn.Module):
 
     def soft_attention_align(self, x1, x2, mask1, mask2):
         '''
-        x1: batch_size * seq_len * dim
-        x2: batch_size * seq_len * dim
+        x1: batch_size * node_len * dim
+        x2: batch_size * node_len * dim
         '''
-        # attention: batch_size * seq_len * seq_len
+        # attention: batch_size * node_len * node_len
         attention = torch.matmul(x1, x2.transpose(1, 2))
         mask1 = mask1.float().masked_fill_(mask1, float('-inf'))
         mask2 = mask2.float().masked_fill_(mask2, float('-inf'))
 
-        # weight: batch_size * seq_len * seq_len
+        # weight: batch_size * node_len * node_len
         weight1 = F.softmax(attention + mask2.unsqueeze(1), dim=-1)
         x1_align = torch.matmul(weight1, x2)
         weight2 = F.softmax(attention.transpose(1, 2) + mask1.unsqueeze(1), dim=-1)
         x2_align = torch.matmul(weight2, x1)
-        # x_align: batch_size * seq_len * hidden_size
-
+        # x_align: batch_size * node_len * hidden_size
         return x1_align, x2_align
 
     def submul(self, x1, x2):
@@ -54,7 +53,7 @@ class Node_Alignment(nn.Module):
         return torch.cat([sub, mul], -1)
 
     def apply_multiple(self, x):
-        # input: batch_size * seq_len * (2 * hidden_size)
+        # input: batch_size * node_len * (2 * hidden_size)
         p1 = F.avg_pool1d(x.transpose(1, 2), x.size(1)).squeeze(-1)
         p2 = F.max_pool1d(x.transpose(1, 2), x.size(1)).squeeze(-1)
         # output: batch_size * (4 * hidden_size)
@@ -63,13 +62,13 @@ class Node_Alignment(nn.Module):
 
     def forward(self, *input):
         # g1, g2
-        # batch_size * seq_len
-        sent1, sent2 = input[0], input[1]
-        mask1, mask2 = sent1.eq(0), sent2.eq(0)
+        # batch_size * node_len
+        nodes1_embeddings, nodes2_embeddings = input[0], input[1]
+        mask1, mask2 = nodes1_embeddings.eq(0), nodes2_embeddings.eq(0)
 
         # embeds: batch_size * seq_len => batch_size * seq_len * dim
-        x1 = self.bn_embeds(self.embeds(sent1).transpose(1, 2).contiguous()).transpose(1, 2)
-        x2 = self.bn_embeds(self.embeds(sent2).transpose(1, 2).contiguous()).transpose(1, 2)
+        x1 = self.bn_embeds(self.embeds(nodes1_embeddings).transpose(1, 2).contiguous()).transpose(1, 2)
+        x2 = self.bn_embeds(self.embeds(nodes2_embeddings).transpose(1, 2).contiguous()).transpose(1, 2)
 
         # batch_size * seq_len * dim => batch_size * seq_len * hidden_size
         # o1, _ = self.lstm1(x1)

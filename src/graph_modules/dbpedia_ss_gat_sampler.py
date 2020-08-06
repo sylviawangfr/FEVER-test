@@ -37,7 +37,65 @@ class DBpediaGATSampler(object):
         """Number of classes."""
         return 2
 
-    def _convert_tri_to_adj(self, triple_l):
+    def _pair_existed(self, src, dst, pairs):
+        if len(list(filter(lambda x: (src == x[0] and dst == x[1]), pairs))) < 1:
+            return False
+        else:
+            return True
+
+    def _convert_rel_to_node(self, triple_l):
+        cleaned_pairs = []
+        single_nodes = []
+        for p in triple_l:
+            cleaned_p = []
+            s = uri_short_extract(p['subject']).lower()
+            r = uri_short_extract(p['relation']).lower()
+            o = uri_short_extract(p['object']).replace('Category', '').lower()
+            if o == '':
+                single_nodes.append(s)
+                continue
+            if (r == 'subject' or r == '') and not self._pair_existed(s, o, cleaned_pairs):
+                cleaned_p.append([s, o])
+                cleaned_pairs.extend(cleaned_p)
+            else:
+                if not self._pair_existed(s, r, cleaned_pairs):
+                    cleaned_p.append([s, r])
+                if not self._pair_existed(r, o, cleaned_pairs):
+                    cleaned_p.append([r, o])
+                cleaned_pairs.extend(cleaned_p)
+
+        all_nodes = set()
+        all_nodes.update(set([i[0] for i in cleaned_pairs]))
+        all_nodes.update(set([i[1] for i in cleaned_pairs]))
+        single_nodes = list(set(single_nodes))
+        all_nodes.update(set(single_nodes))
+        all_nodes = list(all_nodes)
+
+        # text -> num dict
+        dict_nodes = dict()
+        for idx, n in enumerate(all_nodes):
+            dict_nodes[n] = idx
+
+        start_nums = []
+        end_nums = []
+        for p in cleaned_pairs:
+            start_nums.append(dict_nodes[p[0]])
+            end_nums.append(dict_nodes[p[1]])
+        for n in single_nodes:
+            start_nums.append(dict_nodes[n])
+            end_nums.append(dict_nodes[n])
+        all_node_embeddings = bert_similarity.get_phrase_embedding(all_nodes)
+
+        if len(all_node_embeddings) > 0:
+            g = dgl.DGLGraph()
+            g.add_nodes(len(all_nodes), {'nbd': torch.Tensor(all_node_embeddings)})
+            g.add_edges(start_nums, end_nums)
+            dict_nodes_inverse = dict(zip(dict_nodes.values(), dict_nodes.keys()))
+            return g, dict_nodes_inverse
+        else:
+            return None, None
+
+    def _convert_rel_to_efeature(self, triple_l):
         cleaned_tris = []
         for tri in triple_l:
             cleaned_t = []
@@ -66,9 +124,10 @@ class DBpediaGATSampler(object):
                 start_nums.append(dict_nodes[tri[0]])
                 end_nums.append(dict_nodes[tri[2]])
                 edges_text.append(tri[1])
-            else:
-                start_nums.append(dict_nodes[tri[0]])
-                end_nums.append(dict_nodes[tri[0]])
+            # add self loop
+        for i in dict_nodes.values():
+            start_nums.append(i)
+            end_nums.append(i)
 
         all_node_embeddings = bert_similarity.get_phrase_embedding(all_nodes)
         edge_embeddings = bert_similarity.get_phrase_embedding(edges_text)
@@ -76,8 +135,8 @@ class DBpediaGATSampler(object):
         if len(edge_embeddings) > 0:
             edge_embeddings = edge_embeddings.tolist()
             all_edge_embeddings_l = []
-            for idx, tri in enumerate(cleaned_tris):
-                if tri[2] == '':
+            for idx, p in enumerate(zip(start_nums, end_nums)):
+                if p[0] == p[1]:
                     all_edge_embeddings_l.append([0] * 768)
                 else:
                     all_edge_embeddings_l.append(edge_embeddings.pop(0))
@@ -97,7 +156,7 @@ class DBpediaGATSampler(object):
     def _load(self, dbpedia_sampled_data):
         for idx, item in enumerate(dbpedia_sampled_data):
             claim_graph = item['claim_links']
-            g_claim, g_claim_dict = self._convert_tri_to_adj(claim_graph)
+            g_claim, g_claim_dict = self._convert_rel_to_efeature(claim_graph)
             if g_claim is None:
                 continue
 
@@ -106,7 +165,7 @@ class DBpediaGATSampler(object):
                 c_graph = c['graph']
                 if c_graph is None or len(c_graph) < 1:
                     continue
-                g_c, g_c_dict = self._convert_tri_to_adj(c_graph)
+                g_c, g_c_dict = self._convert_rel_to_efeature(c_graph)
                 if g_c is None:
                     continue
                 one_example = dict()

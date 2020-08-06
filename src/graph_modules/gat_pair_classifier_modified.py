@@ -74,7 +74,7 @@ class GATLayer(nn.Module):
     def edge_attention(self, edges):
         # an edge UDF to compute un-normalized attention values from src and dst
         a = self.activation(edges.src['a1'] + edges.dst['a2'])
-        return {'a' : a}
+        return {'a': a}
 
     def edge_softmax(self):
         attention = self.softmax(self.g, self.g.edata.pop('a'))
@@ -120,9 +120,9 @@ def collate(samples):
     # The input `samples` is a list of pairs
     random.shuffle(samples)
     graph_pairs, labels = map(list, zip(*samples))
-    # g1_l = [i['g1'] for i in graph_pairs]
-    # g2_l = [i['g2'] for i in graph_pairs]
-    g1_l, g2_l = map(list, zip(*graph_pairs))
+    g1_l = [i['g1'] for i in graph_pairs]
+    g2_l = [i['g2'] for i in graph_pairs]
+    # g1_l, g2_l = map(list, zip(*graph_pairs))
     return (g1_l, g2_l), torch.tensor(labels)
 
 def train():

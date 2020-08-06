@@ -12,8 +12,9 @@ from utils.file_loader import *
 
 
 class Node_Alignment(nn.Module):
-    def __init__(self):
+    def __init__(self, in_dim, out_dim):
         super(Node_Alignment, self).__init__()
+        self.projection = nn.Linear(in_dim * 4, out_dim, bias=False)
 
     def soft_attention_align(self, x1, x2):
         '''
@@ -58,13 +59,15 @@ class Node_Alignment(nn.Module):
         # batch_size * num_nodes * (4 * dim)
         q1_combined = torch.cat([o1, q1_align, self.submul(o1, q1_align)], -1)
         q2_combined = torch.cat([o2, q2_align, self.submul(o2, q2_align)], -1)
-        return q1_combined, q2_combined
+        q1_projection = self.projection(q1_combined)
+        q2_projection = self.projection(q2_combined)
+        return q1_projection, q2_projection
 
 
 class GATLayer(nn.Module):
     def __init__(self,
                  in_dim,
-                 out_dim,
+                 hidden_dim,
                  num_heads,
                  feat_drop=0.,
                  attn_drop=0.,
@@ -74,11 +77,10 @@ class GATLayer(nn.Module):
 
         self.num_heads = num_heads
         self.feat_drop = nn.Dropout(feat_drop)
-        self.fc = nn.Linear(in_dim, num_heads * out_dim, bias=False)
-        # self.attn_l = nn.Parameter(torch.Tensor(size=(num_heads, out_dim, 1)))
-        # self.attn_r = nn.Parameter(torch.Tensor(size=(num_heads, out_dim, 1)))
-        self.attn_l = nn.Parameter(torch.randn(size=(num_heads, out_dim, 1)))
-        self.attn_r = nn.Parameter(torch.randn(size=(num_heads, out_dim, 1)))
+        self.fc = nn.Linear(in_dim, num_heads * hidden_dim, bias=False)
+        self.attn_l = nn.Parameter(torch.randn(size=(num_heads, hidden_dim, 1)))
+        self.attn_r = nn.Parameter(torch.randn(size=(num_heads, hidden_dim, 1)))
+        self.attn_e = nn.Parameter(torch.randn(size=(num_heads, hidden_dim, 1)))
         self.attn_drop = nn.Dropout(attn_drop)
         self.activation = nn.LeakyReLU(alpha)
         self.softmax = edge_softmax
@@ -86,44 +88,55 @@ class GATLayer(nn.Module):
 
     def clean_data(self):
         ndata_names = ['ft', 'a1', 'a2']
-        edata_names = ['a_drop']
+        edata_names = ['a_drop', 'w_n_ft', 'e_ft', 'f_cat']
         for name in ndata_names:
             self.g.ndata.pop(name)
         for name in edata_names:
             self.g.edata.pop(name)
 
-    def forward(self, feat, bg):
+    def forward(self, node_feature, edge_feature, bg):
         # prepare, inputs are of shape V x F, V the number of nodes, F the dim of input features
         self.g = bg
-        h = self.feat_drop(feat)
+        h = self.feat_drop(node_feature)
+        e_h = self.feat_drop(edge_feature)
         # V x K x F', K number of heads, F' dim of transformed features
         ft = self.fc(h).reshape((h.shape[0], self.num_heads, -1))
+        e_ft = self.fc(e_h).reshape((e_h.shape[0], self.num_heads, -1))
         head_ft = ft.transpose(0, 1)                              # K x V x F'
+        e_head_ft = e_ft.transpose(0, 1)
         a1 = torch.bmm(head_ft, self.attn_l).transpose(0, 1)      # V x K x 1
         a2 = torch.bmm(head_ft, self.attn_r).transpose(0, 1)      # V x K x 1
-        self.g.ndata.update({'ft' : ft, 'a1' : a1, 'a2' : a2})
+        a3 = torch.bmm(e_head_ft, self.attn_e).transpose(0, 1)      # V x K x 1
+        self.g.ndata.update({'ft': ft, 'a1': a1, 'a2': a2})
+        self.g.edata.update({'e_ft': e_ft, 'a3': a3})
         # 1. compute edge attention
         self.g.apply_edges(self.edge_attention)
         # 2. compute softmax in two parts: exp(x - max(x)) and sum(exp(x - max(x)))
         self.edge_softmax()
-        # 2. compute the aggregated node features scaled by the dropped,
+        self.g.apply_edges(fn.src_mul_edge('ft', 'a_drop', 'w_n_ft'))
+        self.edge_concat()
+        # compute the aggregated node features scaled by the dropped,
         # unnormalized attention values.
-        self.g.update_all(fn.src_mul_edge('ft', 'a_drop', 'ft'), fn.sum('ft', 'ft'))
+        # self.g.update_all(fn.src_mul_edge('ft', 'a_drop', 'ft'), fn.sum('ft', 'ft'))
+        self.g.update_all(fn.copy_edge('f_cat', 'tmp_ft'), fn.sum('tmp_ft', 'ft'))
         # 3. apply normalizer
-        ret = self.g.ndata['ft']                                  # V x K x F'
-        ret = ret.flatten(1)
+        ret1 = self.g.ndata['ft']                                  # V x K x F'
+        ret2 = self.g.edata['f_cat']
+        ret1 = ret1.flatten(1)
+        ret2 = ret2.flatten(1)
 
         if self.agg_activation is not None:
-            ret = self.agg_activation(ret)
+            ret1 = self.agg_activation(ret1)
+            ret2 = self.agg_activation(ret2)
 
         # Clean ndata and edata
         self.clean_data()
 
-        return ret
+        return ret1, ret2
 
     def edge_attention(self, edges):
         # an edge UDF to compute un-normalized attention values from src and dst
-        a = self.activation(edges.src['a1'] + edges.dst['a2'])
+        a = self.activation(edges.src['a1'] + edges.data['a3'] + edges.dst['a2'])
         return {'a': a}
 
     def edge_softmax(self):
@@ -131,21 +144,25 @@ class GATLayer(nn.Module):
         # Dropout attention scores and save them
         self.g.edata['a_drop'] = self.attn_drop(attention)
 
+    def edge_concat(self):
+        weighted_ebd = torch.mul(self.g.edata['e_ft'], self.g.edata['a_drop']) + self.g.edata['w_n_ft']
+        self.g.edata['f_cat'] = weighted_ebd
+
 
 class GATClassifier(nn.Module):
     def __init__(self, in_dim, hidden_dim, num_heads, n_classes):
         super(GATClassifier, self).__init__()
-        self.node_alignment = Node_Alignment()
+        self.node_alignment = Node_Alignment(768, 768)
 
         self.gat_layers = nn.ModuleList([
-            GATLayer(in_dim * 4, hidden_dim, num_heads),    # aligned node embedding = in_dim * 4
+            GATLayer(in_dim, hidden_dim, num_heads),    # aligned node embedding = in_dim
             GATLayer(hidden_dim * num_heads, hidden_dim, num_heads)
         ])
 
         self.classifier = nn.Sequential(
-            nn.BatchNorm1d(hidden_dim * (num_heads + 1) * 2),
+            nn.BatchNorm1d(hidden_dim * num_heads * 2),
             nn.Dropout(0),
-            nn.Linear(hidden_dim * (num_heads + 1) * 2, hidden_dim),
+            nn.Linear(hidden_dim * num_heads * 2, hidden_dim),
             nn.ReLU(),
             nn.BatchNorm1d(hidden_dim),
             nn.Dropout(0),
@@ -157,7 +174,7 @@ class GATClassifier(nn.Module):
         g1, g2 = gp[0], gp[1]
         bg1 = dgl.batch(g1)
         bg2 = dgl.batch(g2)
-        bg1_align, bg2_align = self.node_alignment(bg1.ndata['nbd'], bg2.ndata['nbd'])  # 768 * 4
+        bg1_align, bg2_align = self.node_alignment(bg1.ndata['nbd'], bg2.ndata['nbd'])  # 768
         bg1.ndata.update({'nbd_align': bg1_align})
         bg2.ndata.update({'nbd_align': bg2_align})
         g1 = dgl.unbatch(bg1)
@@ -166,13 +183,13 @@ class GATClassifier(nn.Module):
         len2 = len(g2)
         g1.extend(g2)
         bgp = dgl.batch(g1)
-        h = bgp.ndata['nbd_align']    # aligned node embeddings: 768 * 4
+        h_n = bgp.ndata['nbd_align']    # aligned node embeddings: 768
+        h_e = bgp.edata['ebd']  # 768
         # h = bgp.in_degrees().view(-1, 1).float()
         for i, gnn in enumerate(self.gat_layers):
-            h = gnn(h, bgp)
+            h_n, h_e = gnn(h_n, h_e, bgp)
 
-        edge_embeddings = bgp.edata['ebd']
-        bgp.ndata['h'] = torch.cat([h, edge_embeddings], dim=1)    # 768 * 5
+        bgp.ndata['h'] = h_n
         hg_all = dgl.mean_nodes(bgp, 'h')
         hg1 = hg_all[0:len1]
         hg2 = hg_all[len1:len1+len2]
@@ -208,7 +225,7 @@ def train():
     model.train()
 
     epoch_losses = []
-    for epoch in range(80):
+    for epoch in range(40):
         epoch_loss = 0
         for ite, (bgp, label) in enumerate(data_loader):
             prediction = model(bgp)

@@ -88,7 +88,7 @@ class GATLayer(nn.Module):
 
     def clean_data(self):
         ndata_names = ['ft', 'a1', 'a2']
-        edata_names = ['a_drop', 'w_n_ft', 'e_ft', 'f_cat']
+        edata_names = ['a_drop', 'w_n_ft', 'e_ft', 'f_cat', 'a3']
         for name in ndata_names:
             self.g.ndata.pop(name)
         for name in edata_names:
@@ -208,13 +208,13 @@ def collate(samples):
 
 def train():
     # Create training and test sets.
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:1500]
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[1500:1700]
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:5]
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[1500:1505]
     trainset = DBpediaGATSampler(data_train)
     testset = DBpediaGATSampler(data_dev)
     # Use PyTorch's DataLoader and the collate function
     # defined before.
-    data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
+    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
                              collate_fn=collate)
 
     # Create model
@@ -222,18 +222,23 @@ def train():
     model = GATClassifier(768, 768, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.002)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    n_gpu = torch.cuda.device_count()
+    print("device: {} n_gpu: {}".format(device, n_gpu))
+    model.to(device)
     model.train()
 
     epoch_losses = []
-    for epoch in range(40):
+    for epoch in range(20):
         epoch_loss = 0
-        for ite, (bgp, label) in enumerate(data_loader):
-            prediction = model(bgp)
-            loss = loss_func(prediction, label)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            epoch_loss += loss.detach().item()
+        with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
+            for ite, (bgp, label) in enumerate(train_data_loader):
+                prediction = model(bgp)
+                loss = loss_func(prediction, label)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.detach().item()
         epoch_loss /= (ite + 1)
         print('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
         epoch_losses.append(epoch_loss)
@@ -241,16 +246,25 @@ def train():
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate)
-    for it, (test_bg, test_Y) in enumerate(test_data_loader):
+    all_sampled_y_t = 0
+    all_argmax_y_t = 0
+    test_len = 0
+    for test_bg, test_Y in tqdm(test_data_loader):
         test_Y = torch.tensor(test_Y).float().view(-1, 1)
         probs_Y = torch.softmax(model(test_bg), 1)
         sampled_Y = torch.multinomial(probs_Y, 1)
         argmax_Y = torch.max(probs_Y, 1)[1].view(-1, 1)
-        print('Accuracy of sampled predictions on the test set: {:.4f}%'.format(
-            (test_Y == sampled_Y.float()).sum().item() / len(test_Y) * 100))
-        print('Accuracy of argmax predictions on the test set: {:4f}%'.format(
-            (test_Y == argmax_Y.float()).sum().item() / len(test_Y) * 100))
+        all_sampled_y_t = all_sampled_y_t + ((test_Y == sampled_Y.float()).sum().item())
+        all_argmax_y_t = all_argmax_y_t + ((test_Y == argmax_Y.float()).sum().item())
+        test_len = test_len + len(test_Y)
+    accuracy_sampled = all_sampled_y_t / test_len * 100
+    accuracy_argmax = all_argmax_y_t / test_len * 100
+    print('Accuracy of sampled predictions on the test set: {:.4f}%'.format(all_sampled_y_t / test_len * 100))
+    print('Accuracy of argmax predictions on the test set: {:4f}%'.format(all_argmax_y_t / test_len * 100))
 
+    model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+    output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{get_current_time_str()}_{accuracy_sampled}_{accuracy_argmax}"
+    torch.save(model_to_save.state_dict(), output_model_file)
 
 if __name__ == '__main__':
     train()

@@ -9,6 +9,7 @@ UTEST_ROOT = PRO_ROOT / "utest"
 DATA_ROOT = PRO_ROOT / "data"
 RESULT_PATH = PRO_ROOT / "results"
 LOG_PATH = PRO_ROOT / "log"
+SAVED_MODELS_PATH = PRO_ROOT / "saved_models"
 
 WIKI_PAGE_PATH = DATA_ROOT / "wiki-pages"
 FEVER_DB = DATA_ROOT / "fever.db"

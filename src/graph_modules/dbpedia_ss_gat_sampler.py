@@ -3,6 +3,7 @@ import dgl
 import torch
 from dbpedia_sampler.util import uri_short_extract
 import numpy as np
+from tqdm import tqdm
 
 __all__ = ['DBpediaGATSampler']
 
@@ -154,7 +155,7 @@ class DBpediaGATSampler(object):
             return None, None
 
     def _load(self, dbpedia_sampled_data):
-        for idx, item in enumerate(dbpedia_sampled_data):
+        for item in tqdm(dbpedia_sampled_data):
             claim_graph = item['claim_links']
             g_claim, g_claim_dict = self._convert_rel_to_efeature(claim_graph)
             if g_claim is None:

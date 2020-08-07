@@ -56,7 +56,7 @@ def combine_lookup(text_phrase):
     lookup_matches = lookup_resource_ref_count(text_phrase)
     exact_match = has_exact_match(text_phrase, lookup_matches)
     if exact_match is not None:
-        log.info(f"DBpedia lookup phrase: {text_phrase}, matching: {exact_match['URI']}")
+        log.debug(f"DBpedia lookup phrase: {text_phrase}, matching: {exact_match['URI']}")
         return exact_match
     else:
         lookup_app_matches_label = lookup_resource_app_label(text_phrase)
@@ -68,7 +68,7 @@ def combine_lookup(text_phrase):
 
         exact_match = has_exact_match(text_phrase, lookup_app_matches)
         if exact_match is not None:
-            log.info(f"DBpedia lookup-app phrase: {text_phrase}, matching: {exact_match['URI']}")
+            log.debug(f"DBpedia lookup-app phrase: {text_phrase}, matching: {exact_match['URI']}")
             return exact_match
 
     top_match = []
@@ -91,12 +91,12 @@ def combine_lookup(text_phrase):
             else:
                 top_match = get_keyword_matching_ratio_top(text_phrase, [first_match], 0.155)
         if len(top_match) > 0:
-            log.info(f"DBpedia lookup phrase: {text_phrase}, matching: {top_match['URI']}")
+            log.debug(f"DBpedia lookup phrase: {text_phrase}, matching: {top_match['URI']}")
 
     if len(lookup_app_matches) > 0 and (token_count > 1 or len(top_match) < 1):        # use lookup-app Label+comments
         top_match = get_keyword_matching_ratio_top(text_phrase, lookup_app_matches, 0.6)
         if len(top_match) > 0:
-            log.info(f"DBpedia lookup-app phrase: {text_phrase}, matching: {top_match['URI']}")
+            log.debug(f"DBpedia lookup-app phrase: {text_phrase}, matching: {top_match['URI']}")
 
     if len(top_match) < 1:
         log.warning(f"failed to query DBpedia_lookup and lookup-app, matching score is too low: "
@@ -164,7 +164,7 @@ def lookup_resource_ref_count(text_phrase):
     else:
         results = xmltodict.parse(response.text)
         if len(results['ArrayOfResult']) <= 3:
-            log.warning(f"lookup phrase: {text_phrase}, no matching found by lookup.")
+            log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
             return []
         else:
             re = results['ArrayOfResult']['Result']

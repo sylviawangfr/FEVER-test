@@ -6,6 +6,8 @@ import BERT_sampler.ss_sampler as ss_sampler
 from utils import fever_db, c_scorer
 from dbpedia_sampler import dbpedia_subgraph
 import log_util
+from torch.utils.data import DataLoader
+import time
 
 log = log_util.get_logger("dbpedia_ss_sampler")
 
@@ -26,7 +28,7 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
     err_log_f = config.LOG_PATH / f"{get_current_time_str()}_analyze_sample.log"
     count_truth = []
     dbpedia_examples_l = []
-    for item in tqdm(d_list):
+    for idx, item in enumerate(d_list):
         one_full_example = dict()
         one_full_example['claim'] = item['claim']
         one_full_example['id'] = item['id']
@@ -107,28 +109,50 @@ def prepare_train_data_filter_full_list():
     return complete_upstream_train_data
 
 
+# def prepare_train_data_filter_tfidf(tfidf_data):
+#     paras = bert_para.BERT_para()
+#     # all_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:100]
+#     data_len = len(tfidf_data)
+#     paras.sample_n = 3
+#     paras.pred = False
+#     batch_size = 3
+#     start = 0
+#     dt = get_current_time_str()
+#     while start < data_len:
+#         end = start + batch_size if start + batch_size < data_len else data_len
+#         paras.upstream_data = tfidf_data[start:end]
+#         sample_tfidf = get_tfidf_sample(paras)
+#         save_and_append_results(sample_tfidf, end, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+#                                 config.LOG_PATH / f"sample_ss_graph_{dt}.log")
+#         log.info(f"Finished total count: {end}")
+#         if end == data_len:
+#             break
+#         else:
+#             start = end
+#     return
+
+
+def collate(samples):
+    return samples
+
+
 def prepare_train_data_filter_tfidf(tfidf_data):
     paras = bert_para.BERT_para()
-    # all_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:100]
-    data_len = len(tfidf_data)
     paras.sample_n = 3
     paras.pred = False
-    bulk_size = 3
-    start = 0
+    batch_size = 10
     dt = get_current_time_str()
-    while start < data_len:
-        end = start + bulk_size if start + bulk_size < data_len else data_len
-        paras.upstream_data = tfidf_data[start:end]
-        sample_tfidf = get_tfidf_sample(paras)
-        save_and_append_results(sample_tfidf, end, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
-                                config.LOG_PATH / f"sample_ss_graph_{dt}.log")
-        log.info(f"Finished total count: {end}")
-        if end == data_len:
-            break
-        else:
-            start = end
+    sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
+    with tqdm(total=len(sample_dataloader), desc=f"Sampling") as pbar:
+        for batch, batched_sample in enumerate(sample_dataloader):
+            paras.upstream_data = batched_sample
+            sample_tfidf = get_tfidf_sample(paras)
+            num = batch * batch_size + len(batched_sample)
+            log.info(f"total count: {num}")
+            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+                                    config.LOG_PATH / f"sample_ss_graph_{dt}.log")
+            pbar.update(1)
     return
-
 
 def construct_graphs_for_example(example):
     pass
@@ -141,5 +165,5 @@ def cache_temp_graph_result_to_file():
 if __name__ == '__main__':
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
     # prepare_train_data_filter_tfidf(tfidf_dev_data)
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:20000]
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:10000]
     prepare_train_data_filter_tfidf(tfidf_train_data)

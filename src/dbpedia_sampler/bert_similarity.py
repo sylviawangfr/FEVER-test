@@ -18,6 +18,7 @@ def get_phrase_embedding(phrases):
         re = bc.encode(phrases)
         log.debug(f"embedding time: {(datetime.now() - start).seconds}")
         return re
+        # return []
     except Exception as err:
         log.warning("failed to get embedding for phrases...")
         log.error(err)

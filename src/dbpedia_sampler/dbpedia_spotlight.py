@@ -11,7 +11,7 @@ log = log_util.get_logger('dbpedia_spotlight')
 
 def entity_link(sentence):
     start = datetime.now()
-    log.info("spotlight sent: " + sentence)
+    log.debug("spotlight sent: " + sentence)
     try:
         annotations = spotlight.annotate(config.DBPEDIA_SPOTLIGHT_URL, sentence,
                                      confidence=CONFIDENCE,

@@ -99,8 +99,7 @@ def combine_lookup(text_phrase):
             log.debug(f"DBpedia lookup-app phrase: {text_phrase}, matching: {top_match['URI']}")
 
     if len(top_match) < 1:
-        log.warning(f"failed to query DBpedia_lookup and lookup-app, matching score is too low: "
-                    f"{text_phrase}")
+        log.debug(f"failed to query DBpedia_lookup and lookup-app, matching score is too low: {text_phrase}")
 
     return top_match
 
@@ -129,7 +128,7 @@ def lookup_resource_app(text_phrase, url):
     if response.status_code is 200:
         results1 = xmltodict.parse(response.text)
         if len(results1['ArrayOfResults']) <= 3:
-            log.warning(f"lookup phrase: {text_phrase}, no matching found by lookup-app-query.")
+            log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup-app-query.")
             return close_matches
         else:
             re = results1['ArrayOfResults']['Result']

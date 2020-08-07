@@ -13,7 +13,7 @@ import dateutil.parser as dateutil
 
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
-               'we', 'who', 'where', 'what', 'days', 'him', 'her',
+               'we', 'who', 'where', 'what', 'days', 'him', 'her','here', 'there', 'a', 'for',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
               'third']
 CANDIDATE_UP_TO = 150
@@ -250,7 +250,8 @@ def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l, verb_
         date_i = dateutil.parse(i)
         p_exact_match = []
         for j in all_date_properties:
-            if dateutil.parse(dbpedia_virtuoso.uri_short_extract(j['object'])) == date_i:
+            short_obj = dbpedia_virtuoso.uri_short_extract(j['object'])
+            if text_clean.is_date(short_obj) and (dateutil.parse(short_obj) == date_i):
                 p_exact_match.append(j)
         if len(p_exact_match) < 1:
             no_exact_match_phrase.append(i)

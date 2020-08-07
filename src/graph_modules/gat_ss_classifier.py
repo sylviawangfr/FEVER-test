@@ -207,8 +207,8 @@ def collate(samples):
 
 def train():
     # Create training and test sets.
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:2]
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[1500:1505]
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:1500]
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[1500:1700]
     trainset = DBpediaGATSampler(data_train)
     testset = DBpediaGATSampler(data_dev)
     # Use PyTorch's DataLoader and the collate function

@@ -214,8 +214,7 @@ def train():
     testset = DBpediaGATSampler(data_dev)
     # Use PyTorch's DataLoader and the collate function
     # defined before.
-    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
-                             collate_fn=collate)
+
 
     # Create model
     # in_dim, hidden_dim, num_heads, n_classes
@@ -225,9 +224,14 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     n_gpu = torch.cuda.device_count()
     print("device: {} n_gpu: {}".format(device, n_gpu))
-    model.to(device)
-    model.train()
+    if n_gpu > 1:
+        model = torch.nn.DataParallel(model)
 
+    model.to(device)
+    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
+                             collate_fn=collate)
+
+    model.train()
     epoch_losses = []
     for epoch in range(20):
         epoch_loss = 0

@@ -26,9 +26,9 @@ class Node_Alignment(nn.Module):
 
         # weight: batch_size * node_len * node_len
         weight1 = F.softmax(attention, dim=-1)
-        x1_align = torch.matmul(weight1, x2)
+        x1_align = F.relu(torch.matmul(weight1, x2))
         weight2 = F.softmax(attention.transpose(0, 1), dim=-1)
-        x2_align = torch.matmul(weight2, x1)
+        x2_align = F.relu(torch.matmul(weight2, x1))
         # x_align: batch_size * node_len * hidden_size
         return x1_align, x2_align
 
@@ -207,8 +207,8 @@ def collate(samples):
 
 def train():
     # Create training and test sets.
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:1500]
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[1500:1700]
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:2]
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[1500:1502]
     trainset = DBpediaGATSampler(data_train)
     testset = DBpediaGATSampler(data_dev)
     # Use PyTorch's DataLoader and the collate function
@@ -228,7 +228,7 @@ def train():
             model = torch.nn.DataParallel(model)
         model.to(device)
 
-    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
+    train_data_loader = DataLoader(trainset, batch_size=2, shuffle=True,
                              collate_fn=collate)
 
     model.train()
@@ -247,6 +247,7 @@ def train():
                 loss.backward()
                 optimizer.step()
                 epoch_loss += loss.detach().item()
+                pbar.update(1)
         epoch_loss /= (batch + 1)
         print('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
         epoch_losses.append(epoch_loss)

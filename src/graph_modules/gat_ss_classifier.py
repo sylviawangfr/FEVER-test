@@ -168,12 +168,11 @@ class GATClassifier(nn.Module):
             nn.Dropout(0),
             nn.Linear(hidden_dim, n_classes))
 
-    def forward(self, gp):
+    def forward(self, graph1_batched, graph2_batched):
         # For undirected graphs, in_degree is the same as
         # out_degree.
-        g1, g2 = gp[0], gp[1]
-        bg1 = dgl.batch(g1)
-        bg2 = dgl.batch(g2)
+        bg1 = graph1_batched
+        bg2 = graph2_batched
         bg1_align, bg2_align = self.node_alignment(bg1.ndata['nbd'], bg2.ndata['nbd'])  # 768
         bg1.ndata.update({'nbd_align': bg1_align})
         bg2.ndata.update({'nbd_align': bg2_align})
@@ -203,12 +202,12 @@ def collate(samples):
     graph_pairs, labels = map(list, zip(*samples))
     g1_l = [i['graph1'] for i in graph_pairs]
     g2_l = [i['graph2'] for i in graph_pairs]
-    return (g1_l, g2_l), torch.tensor(labels)
+    return dgl.batch(g1_l), dgl.batch(g2_l), torch.tensor(labels)
 
 
 def train():
     # Create training and test sets.
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:5]
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:2]
     data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[1500:1505]
     trainset = DBpediaGATSampler(data_train)
     testset = DBpediaGATSampler(data_dev)
@@ -224,10 +223,11 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     n_gpu = torch.cuda.device_count()
     print("device: {} n_gpu: {}".format(device, n_gpu))
-    if n_gpu > 1:
-        model = torch.nn.DataParallel(model)
+    if device == "cuda":
+        if n_gpu > 1:
+            model = torch.nn.DataParallel(model)
+        model.to(device)
 
-    model.to(device)
     train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
                              collate_fn=collate)
 
@@ -236,14 +236,18 @@ def train():
     for epoch in range(20):
         epoch_loss = 0
         with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
-            for ite, (bgp, label) in enumerate(train_data_loader):
-                prediction = model(bgp)
+            for batch, graphs_and_labels in enumerate(train_data_loader):
+                graph1_batched, graph2_batched, label = graphs_and_labels
+                if device == "cuda":
+                    for t in graphs_and_labels:
+                        t.to(device)
+                prediction = model(graph1_batched, graph2_batched)
                 loss = loss_func(prediction, label)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
                 epoch_loss += loss.detach().item()
-        epoch_loss /= (ite + 1)
+        epoch_loss /= (batch + 1)
         print('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
         epoch_losses.append(epoch_loss)
 
@@ -253,14 +257,18 @@ def train():
     all_sampled_y_t = 0
     all_argmax_y_t = 0
     test_len = 0
-    for test_bg, test_Y in tqdm(test_data_loader):
-        test_Y = torch.tensor(test_Y).float().view(-1, 1)
-        probs_Y = torch.softmax(model(test_bg), 1)
+    for graphs_and_labels in tqdm(test_data_loader):
+        if device == "cuda":
+            for t in graphs_and_labels:
+                t.to(device)
+        test_bg1, test_bg2, test_y = graphs_and_labels
+        test_y = torch.tensor(test_y).float().view(-1, 1)
+        probs_Y = torch.softmax(model(test_bg1, test_bg2), 1)
         sampled_Y = torch.multinomial(probs_Y, 1)
         argmax_Y = torch.max(probs_Y, 1)[1].view(-1, 1)
-        all_sampled_y_t = all_sampled_y_t + ((test_Y == sampled_Y.float()).sum().item())
-        all_argmax_y_t = all_argmax_y_t + ((test_Y == argmax_Y.float()).sum().item())
-        test_len = test_len + len(test_Y)
+        all_sampled_y_t = all_sampled_y_t + ((test_y == sampled_Y.float()).sum().item())
+        all_argmax_y_t = all_argmax_y_t + ((test_y == argmax_Y.float()).sum().item())
+        test_len = test_len + len(test_y)
     accuracy_sampled = all_sampled_y_t / test_len * 100
     accuracy_argmax = all_argmax_y_t / test_len * 100
     print('Accuracy of sampled predictions on the test set: {:.4f}%'.format(all_sampled_y_t / test_len * 100))

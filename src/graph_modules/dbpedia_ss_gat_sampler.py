@@ -151,7 +151,7 @@ class DBpediaGATSampler(object):
             dict_nodes_inversed = dict(zip(dict_nodes.values(), dict_nodes.keys()))
             return g, dict_nodes_inversed
         else:
-            return None
+            return None, None
 
     def _load(self, dbpedia_sampled_data):
         for idx, item in enumerate(dbpedia_sampled_data):

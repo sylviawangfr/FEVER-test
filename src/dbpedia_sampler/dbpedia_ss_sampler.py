@@ -7,6 +7,7 @@ from utils import fever_db, c_scorer
 from dbpedia_sampler import dbpedia_subgraph
 import log_util
 from torch.utils.data import DataLoader
+import threading
 import time
 
 log = log_util.get_logger("dbpedia_ss_sampler")
@@ -143,7 +144,7 @@ def prepare_train_data_filter_tfidf(tfidf_data):
     batch_size = 10
     dt = get_current_time_str()
     sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
-    with tqdm(total=len(sample_dataloader), desc=f"Sampling") as pbar:
+    with tqdm(total=len(sample_dataloader), desc=f"Sampling in {threading.current_thread().getName()}") as pbar:
         for batch, batched_sample in enumerate(sample_dataloader):
             paras.upstream_data = batched_sample
             sample_tfidf = get_tfidf_sample(paras)
@@ -156,8 +157,9 @@ def prepare_train_data_filter_tfidf(tfidf_data):
 
 
 def test_multi_thread_sampler():
-    data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[10180:20000]
+    # data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[10180:20000]
     # data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:18]
+    data = range(10180)
     data_iter = iter_baskets_contiguous(data, 5000)
     thread_exe(prepare_train_data_filter_tfidf, data_iter, 2, "Multi_thread_sampler\n")
     print("done")

@@ -159,7 +159,7 @@ def test_multi_thread_sampler():
     # data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[10180:20000]
     data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:18]
     data_iter = iter_baskets_contiguous(data, 5)
-    thread_exe(prepare_train_data_filter_tfidf, data_iter, 4, "testing multi_thread_sampler")
+    thread_exe(prepare_train_data_filter_tfidf, data_iter, 4, "testing multi_thread_sampler\n")
     print("done")
 
 

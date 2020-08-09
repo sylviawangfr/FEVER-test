@@ -17,7 +17,7 @@ def entity_link(sentence):
                                      confidence=CONFIDENCE,
                                      support=20)
     except Exception as err:
-        print(err)
+        log.error(err)
         return []
 
     # pretty_data = json.dumps(annotations, indent=4)

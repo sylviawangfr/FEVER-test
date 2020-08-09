@@ -39,7 +39,7 @@ def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
                                                           i['Label'] if i['Label'] is not None else '').ratio()
                                   for i in lookup_records]
     except Exception as err:
-        print(err)
+        log.error(err)
         print(text_phrase)
     if keyword_matching_score is None:
         return top_match
@@ -158,7 +158,7 @@ def lookup_resource_ref_count(text_phrase):
     close_matches = []
 
     if response.status_code is not 200:
-        log.error(f"failed to query lookup, response code: {response.status_code}")
+        log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
         return []
     else:
         results = xmltodict.parse(response.text)

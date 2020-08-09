@@ -18,20 +18,20 @@ def get_current_time_str():
     return str(datetime.datetime.now().strftime('%Y_%m_%d_%H:%M:%S'))
 
 
-# def wait_delay(d):
-#     print(d)
-#     d_list = []
-#     with open(d, encoding='utf-8', mode='r') as in_f:
-#         for line in in_f:
-#             item = json.loads(line.strip())
-#             d_list.append(item)
-#     print(len(d_list))
-#
-#
-# def test():
-#     # print(len(list(config.WIKI_PAGE_PATH.iterdir())))
-#     thread_exe(wait_delay, config.WIKI_PAGE_PATH.iterdir(), 5, "testing")
-#     print("done")
+def wait_delay(d):
+    print(d)
+    d_list = []
+    with open(d, encoding='utf-8', mode='r') as in_f:
+        for line in in_f:
+            item = json.loads(line.strip())
+            d_list.append(item)
+    print(len(d_list))
+
+
+def test():
+    # print(len(list(config.WIKI_PAGE_PATH.iterdir())))
+    thread_exe(wait_delay, config.WIKI_PAGE_PATH.iterdir(), 5, "testing")
+    print("done")
 
 
 def iter_baskets_contiguous(items, bunch_size):

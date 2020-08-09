@@ -20,7 +20,7 @@ def get_phrase_embedding(phrases):
         return re
         # return []
     except Exception as err:
-        log.warning("failed to get embedding for phrases...")
+        log.warning(f"failed to get embedding for phrases...{phrases}")
         log.error(err)
         return []
 

@@ -6,8 +6,10 @@ import config
 import json
 import re
 from utils.sqlite_queue import *
+import log_util
 
 
+log = log_util.get_logger("fever_db")
 # Write some standard API for query information
 def get_cursor(save_path=str(config.FEVER_DB)):
     conn = sqlite3.connect(save_path)
@@ -24,6 +26,7 @@ def get_evidence(cursor, doc_id, line_num):
         _id, text, h_links, doc_id = fetched_data
     else:
         _id, text, h_links, doc_id = None, None, None, None
+
     return _id, text, h_links
 
 
@@ -73,6 +76,7 @@ def get_evidence_multithread(sqlite_queue, doc_id, line_num):
         _id, text, h_links, doc_id = fetched_data[0]
     else:
         _id, text, h_links, doc_id = None, None, None, None
+        log.warning("Fever DB returned None")
     return _id, text, h_links
 # API Ends
 

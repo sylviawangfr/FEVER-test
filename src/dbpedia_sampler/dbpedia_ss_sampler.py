@@ -149,21 +149,23 @@ def prepare_train_data_filter_tfidf(tfidf_data):
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
             log.info(f"total count: {num}")
-            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_20000_{dt}.jsonl",
+            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
                                     config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
     return
 
-def construct_graphs_for_example(example):
-    pass
 
-
-def cache_temp_graph_result_to_file():
-    pass
+def test_multi_thread_sampler():
+    # data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[10180:20000]
+    data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:18]
+    data_iter = iter_baskets_contiguous(data, 5)
+    thread_exe(prepare_train_data_filter_tfidf, data_iter, 4, "testing multi_thread_sampler")
+    print("done")
 
 
 if __name__ == '__main__':
+    test_multi_thread_sampler()
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
     # prepare_train_data_filter_tfidf(tfidf_dev_data)
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[10000:20000]
-    prepare_train_data_filter_tfidf(tfidf_train_data)
+    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[10000:20000]
+    # prepare_train_data_filter_tfidf(tfidf_train_data)

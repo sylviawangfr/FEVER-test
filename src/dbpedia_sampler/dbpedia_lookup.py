@@ -152,6 +152,8 @@ def lookup_resource_app(text_phrase, url):
 
 def lookup_resource_ref_count(text_phrase):
     start = datetime.now()
+    if '%' in text_phrase:
+        return []
     url = config.DBPEDIA_LOOKUP_URL + text_phrase
     # log.debug(f"lookup url: {url}")
     response = requests.get(url, timeout=5)

@@ -119,6 +119,7 @@ if __name__ == '__main__':
 
     text = "Bessie Smith was married on April 15, 1894."
     ph = ['Bessie Smith', 'April 15, 1894']
+    text = "When sitting in the chair on April 15, 1894, Bessie Smith fell asleep."
     get_triple(text, ph)
 
     print(split_claim_regex(text))

@@ -171,7 +171,7 @@ def get_outbounds(resource_uri):
     to_delete = []
     for tri in tris:
         obj_split = uri_short_extract(tri['object'])
-        if does_reach_max_length(obj_split):
+        if does_reach_max_length(obj_split) or obj_split == '':
             to_delete.append(tri)
             continue
         else:
@@ -321,6 +321,7 @@ def isURI(str):
 
 
 if __name__ == "__main__":
+    uri_short_extract('*')
     # res = "http://dbpedia.org/resource/Magic_Johnson"
     res = "http://dbpedia.org/resource/Tap_dancer"
     print(get_disambiguates_outbounds(res))

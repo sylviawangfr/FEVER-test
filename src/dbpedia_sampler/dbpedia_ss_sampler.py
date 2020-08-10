@@ -86,6 +86,8 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
             sentence = text_clean.convert_brc(sent_item['text'])
             doc_title = sent_item['sid'].split(c_scorer.SENT_LINE)[0].replace("_", " ")
             doc_title = text_clean.convert_brc(doc_title)
+            if sentence.startswith(f"{doc_title} - "):
+                sentence = sentence.replace(f"{doc_title} - ", "")
             sent_item['graph'] = dbpedia_subgraph.construct_subgraph_for_candidate(claim_dict, sentence, doc_title)
             example_l.append(sent_item)
 
@@ -137,35 +139,36 @@ def collate(samples):
     return samples
 
 
-def prepare_train_data_filter_tfidf(tfidf_data):
+def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3
     paras.pred = False
     batch_size = 10
     dt = get_current_time_str()
+    thread_name = threading.current_thread().getName()
     sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
-    with tqdm(total=len(sample_dataloader), desc=f"Sampling in {threading.current_thread().getName()}") as pbar:
+    with tqdm(total=len(sample_dataloader), desc=f"Sampling in {thread_name}") as pbar:
         for batch, batched_sample in enumerate(sample_dataloader):
             paras.upstream_data = batched_sample
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
             log.info(f"total count: {num}")
-            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
-                                    config.LOG_PATH / f"sample_ss_graph_{dt}.log")
+            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{thread_name}_{dt}.jsonl",
+                                    config.LOG_PATH / f"sample_ss_graph_{thread_name}_{dt}.log")
             pbar.update(1)
     return
 
 
-def test_multi_thread_sampler():
-    data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[10180:20000]
-    # data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:18]
+def multi_thread_sampler():
+    data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[20000:30000]
+    # data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:6]
     data_iter = iter_baskets_contiguous(data, 5000)
-    thread_exe(prepare_train_data_filter_tfidf, data_iter, 2, "Multi_thread_sampler\n")
+    thread_exe(tfidf_to_graph_sampler, data_iter, 2, "Multi_thread_sampler\n")
     print("done")
 
 
 if __name__ == '__main__':
-    test_multi_thread_sampler()
+    multi_thread_sampler()
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
     # prepare_train_data_filter_tfidf(tfidf_dev_data)
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[10000:20000]

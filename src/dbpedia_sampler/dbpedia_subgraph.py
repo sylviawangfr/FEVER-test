@@ -269,39 +269,13 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
 
 
 if __name__ == '__main__':
-    # embedding1 = bert_similarity.get_phrase_embedding(['Advertising'])
-    # embedding2 = bert_similarity.get_phrase_embedding(['Pranksters'])
-    # out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
-    # text = "Autonomous cars shift insurance liability toward manufacturers"
-    claim = "Roman Atwood is a content creator."
-    sentence1 = "Brett Atwood is a website editor , content strategist and former print and online journalist whose " \
-               "writings have appeared in Billboard , Rolling Stone , Vibe , " \
-               "The Hollywood Reporter and other publications "
-    sentence2 = 'Roman Atwood - He also has another YouTube channel called `` RomanAtwood \'\' , where he posts pranks .'
-    # sentence2 = "Roman Bernard Atwood (born May 28, 1983) is an American YouTube personality and prankster."
-    # link_sentence(sentence2, doc_title='Roman Atwood')
-
-    s4 = "Homeland is an American spy thriller television series developed by Howard Gordon and Alex Gansa based on" \
-         " the Israeli series Prisoners of War ( Original title חטופים Hatufim , literally `` Abductees '' ) , " \
-         "which was created by Gideon Raff .."
-
-    # link_sentence(s4, doc_title='Homeland (TV series)')
-    s3 = "Homeland is an American television spy thriller based on the Israeli television series Prisoners of War."
-    s5 ="Magic Johnson did not play for the Lakers."
-    s6 = "'Noah Cyrus is a younger sister of Macy Grey.'"
-    # claim_dict = construct_subgraph_for_claim("Giada at Home was only available on DVD")
-    s7 = 'Giada at Home - It first aired on October 18 , 2008 on the Food Network .'
-    s8 = "'Giada Pamela De Laurentiis -LRB- -LSB- ˈdʒaːda paˈmɛːla de lauˈrɛnti.is -RSB- ; born August 22 , 1970 " \
-         "-RRB- is an Italian-born American chef , writer , television personality , and the host of the " \
-         "current Food Network television program Giada at Home .'"
-    ss1 = "Dinah Sings Bessie Smith is a 1958 album by blues , R&B and j" \
-            "azz singer Dinah Washington released on the Emarcy label , and reissued by Verve " \
-          "Records in 1999 as The Bessie Smith Songbook ."
     cc1 = "Michelin Guides are published by George Lucas."
     s9 = "The term normally refers to the annually published Michelin Red Guide , the oldest European hotel and restaurant reference guide , which awards Michelin stars for excellence to a select few establishments ."
     s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
     s7 = "Howard Eugene Johnson -LRB- 30 January 1915 -- 28 May 2000 -RRB- , better known as `` Stretch \'\' Johnson , was a tap dancer and social activist ."
     s8 = "Magic Johnson was a tap dancer"
     s9 = 'Tap Tap was a series of rhythm games by Tapulous available for the iOS of which several versions , both purchasable and free , have been produced .'
+    s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
+    s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
     claim_dict = construct_subgraph_for_claim(s8)
-    construct_subgraph_for_candidate(claim_dict, s9, doc_title='')
+    construct_subgraph_for_candidate(claim_dict, s9, doc_title='Chanhassen High School')

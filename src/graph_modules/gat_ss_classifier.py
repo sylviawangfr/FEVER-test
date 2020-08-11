@@ -282,12 +282,12 @@ def train():
 
 
 def concat_tmp_data():
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl")
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl")[0:10]
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
-    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
+    # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:100]
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:2]
     print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 

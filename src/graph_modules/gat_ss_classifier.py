@@ -227,8 +227,7 @@ def train():
             model = torch.nn.DataParallel(model)
         model.to(device)
 
-    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
-                             collate_fn=collate)
+    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate)
 
     model.train()
     epoch_losses = []
@@ -236,10 +235,12 @@ def train():
         epoch_loss = 0
         with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
             for batch, graphs_and_labels in enumerate(train_data_loader):
-                graph1_batched, graph2_batched, label = graphs_and_labels
+                # graph1_batched, graph2_batched, label = graphs_and_labels
                 if device == "cuda":
-                    for t in graphs_and_labels:
-                        t.to(device)
+                    batch = tuple(t.to(device) for t in batch)
+                    graph1_batched, graph2_batched, label = batch
+                else:
+                    graph1_batched, graph2_batched, label = graphs_and_labels
                 prediction = model(graph1_batched, graph2_batched)
                 loss = loss_func(prediction, label)
                 optimizer.zero_grad()
@@ -280,12 +281,12 @@ def train():
 
 
 def concat_tmp_data():
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10000.jsonl")
-    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
-    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
-    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
-    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10000.jsonl")[0:1000]
+    # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
+    # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
+    # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
+    # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:100]
     print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 

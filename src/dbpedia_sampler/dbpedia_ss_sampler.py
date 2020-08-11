@@ -160,7 +160,7 @@ def tfidf_to_graph_sampler(tfidf_data):
 
 
 def multi_thread_sampler():
-    data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[20000:30000]
+    data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[30000:40000]
     # data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:6]
     data_iter = iter_baskets_contiguous(data, 5000)
     thread_exe(tfidf_to_graph_sampler, data_iter, 2, "Multi_thread_sampler\n")
@@ -168,8 +168,8 @@ def multi_thread_sampler():
 
 
 if __name__ == '__main__':
-    multi_thread_sampler()
+    # multi_thread_sampler()
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
     # prepare_train_data_filter_tfidf(tfidf_dev_data)
-    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[10000:20000]
-    # prepare_train_data_filter_tfidf(tfidf_train_data)
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[30000:30003]
+    tfidf_to_graph_sampler(tfidf_train_data)

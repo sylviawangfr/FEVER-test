@@ -237,8 +237,8 @@ def train():
             for batch, graphs_and_labels in enumerate(train_data_loader):
                 # graph1_batched, graph2_batched, label = graphs_and_labels
                 if is_cuda:
-                    batch = tuple(t.to(device) for t in batch)
-                    graph1_batched, graph2_batched, label = batch
+                    graphs_and_labels = tuple(t.to(device) for t in graphs_and_labels)
+                    graph1_batched, graph2_batched, label = graphs_and_labels
                 else:
                     graph1_batched, graph2_batched, label = graphs_and_labels
                 prediction = model(graph1_batched, graph2_batched)
@@ -260,7 +260,7 @@ def train():
     test_len = 0
     for graphs_and_labels in tqdm(test_data_loader):
         if is_cuda:
-            batch = tuple(t.to(device) for t in batch)
+            batch = tuple(t.to(device) for t in graphs_and_labels)
             test_bg1, test_bg2, test_y = batch
         else:
             test_bg1, test_bg2, test_y = graphs_and_labels
@@ -282,7 +282,7 @@ def train():
 
 
 def concat_tmp_data():
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10000.jsonl")[0:100]
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:20]
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))

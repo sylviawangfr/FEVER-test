@@ -227,7 +227,7 @@ def train():
             model = torch.nn.DataParallel(model)
         model.to(device)
 
-    train_data_loader = DataLoader(trainset, batch_size=2, shuffle=True,
+    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True,
                              collate_fn=collate)
 
     model.train()

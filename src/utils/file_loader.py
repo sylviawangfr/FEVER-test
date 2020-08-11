@@ -209,6 +209,16 @@ def save_and_append_results(d_list, total, out_filename: Path, log_filename):
     log_f.close()
 
 
+def append_results(d_list, out_filename: Path):
+    if not out_filename.parent.exists():
+        out_filename.parent.mkdir(exist_ok=False)
+
+    with open(out_filename, encoding='utf-8', mode='a') as out_f:
+        for item in d_list:
+            out_f.write(json.dumps(item) + '\n')
+    out_f.close()
+
+
 def get_current_time_str():
     return str(datetime.datetime.now().strftime('%Y_%m_%d_%H:%M:%S'))
 

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import platform
+import socket
 
 SRC_ROOT = Path(os.path.dirname(os.path.realpath(__file__)))
 PRO_ROOT = SRC_ROOT.parent
@@ -45,18 +46,19 @@ S_TFIDF_RETRV_DEV = RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
 DOC_RETRV_TEST = RESULT_PATH / "test_doc_retrieve.jsonl"
 
 # ------------------------HOSTS-----------------------
+LOCALHOST = "10.1.100.102" if socket.gethostname() == 'vanadium' else "localhost"
 DBPEDIA_LOOKUP_PORT = 1111 if platform.system() == 'Linux' else 5001
-DBPEDIA_LOOKUP_URL = f"http://localhost:{DBPEDIA_LOOKUP_PORT}/api/search/KeywordSearch?QueryString="
+DBPEDIA_LOOKUP_URL = f"http://{LOCALHOST}:{DBPEDIA_LOOKUP_PORT}/api/search/KeywordSearch?QueryString="
 
 DBPEDIA_LOOKUP_APP_PORT = 9274 if platform.system() == 'Linux' else 5005
-DBPEDIA_LOOKUP_APP_URL_QUERY = f"http://localhost:{DBPEDIA_LOOKUP_APP_PORT}/lookup-application/api/search?query="
-DBPEDIA_LOOKUP_APP_URL_LABEL = f"http://localhost:{DBPEDIA_LOOKUP_APP_PORT}/lookup-application/api/search?label="
+DBPEDIA_LOOKUP_APP_URL_QUERY = f"http://{LOCALHOST}:{DBPEDIA_LOOKUP_APP_PORT}/lookup-application/api/search?query="
+DBPEDIA_LOOKUP_APP_URL_LABEL = f"http://{LOCALHOST}:{DBPEDIA_LOOKUP_APP_PORT}/lookup-application/api/search?label="
 
 DBPEDIA_SPOTLIGHT_PORT = 2222 if platform.system() == 'Linux' else 5006
-DBPEDIA_SPOTLIGHT_URL = f"http://localhost:{DBPEDIA_SPOTLIGHT_PORT}/rest/annotate"
+DBPEDIA_SPOTLIGHT_URL = f"http://{LOCALHOST}:{DBPEDIA_SPOTLIGHT_PORT}/rest/annotate"
 
 DBPEDIA_GRAPH_PORT = 8890 if platform.system() == 'Linux' else 5002
-DBPEDIA_GRAPH_URL = f"http://localhost:{DBPEDIA_GRAPH_PORT}/sparql"
+DBPEDIA_GRAPH_URL = f"http://{LOCALHOST}:{DBPEDIA_GRAPH_PORT}/sparql"
 
 BERT_SERVICE_PORT = 5555 if platform.system() == 'Linux' else 5003
 BERT_SERVICE_PORT_OUT = 5556 if platform.system() == 'Linux' else 5004

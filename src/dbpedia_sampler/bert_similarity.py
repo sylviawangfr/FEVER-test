@@ -14,7 +14,7 @@ def get_phrase_embedding(phrases):
         if phrases is None or len(phrases) < 1:
             return []
 
-        bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+        bc = BertClient(ip=config.LOCALHOST, port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
         re = bc.encode(phrases)
         log.debug(f"embedding time: {(datetime.now() - start).seconds}")
         return re
@@ -28,7 +28,9 @@ def get_phrase_embedding(phrases):
 if __name__ == '__main__':
     p1 = ['Neil Armstrong', 'moon buggy', 'human', 'rocket']
     p2 = ['spacecraft', 'Birthday', 'game', 'fire', 'man']
-    keyword_matching = [difflib.SequenceMatcher(None, 'Neil Armstrong', i['Label']).ratio() for i in p2]
-    sorted_matching_index = sorted(range(len(keyword_matching)), key=lambda k: keyword_matching[k], reverse=True)
+    get_phrase_embedding(p1)
+
+    # keyword_matching = [difflib.SequenceMatcher(None, 'Neil Armstrong', i['Label']).ratio() for i in p2]
+    # sorted_matching_index = sorted(range(len(keyword_matching)), key=lambda k: keyword_matching[k], reverse=True)
 
 

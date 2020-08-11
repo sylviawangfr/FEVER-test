@@ -220,63 +220,63 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
-    # if device == "cuda":
-    #     if n_gpu > 1:
-    #         model = torch.nn.DataParallel(model)
-    #     model.to(device)
-    #
-    # train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate)
-    #
-    # model.train()
-    # epoch_losses = []
-    # for epoch in range(20):
-    #     epoch_loss = 0
-    #     with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
-    #         for batch, graphs_and_labels in enumerate(train_data_loader):
-    #             # graph1_batched, graph2_batched, label = graphs_and_labels
-    #             if device == "cuda":
-    #                 batch = tuple(t.to(device) for t in batch)
-    #                 graph1_batched, graph2_batched, label = batch
-    #             else:
-    #                 graph1_batched, graph2_batched, label = graphs_and_labels
-    #             prediction = model(graph1_batched, graph2_batched)
-    #             loss = loss_func(prediction, label)
-    #             optimizer.zero_grad()
-    #             loss.backward()
-    #             optimizer.step()
-    #             epoch_loss += loss.detach().item()
-    #             pbar.update(1)
-    #     epoch_loss /= (batch + 1)
-    #     print('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
-    #     epoch_losses.append(epoch_loss)
-    #
-    # model.eval()
-    # # Convert a list of tuples to two lists
-    # test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate)
-    # all_sampled_y_t = 0
-    # all_argmax_y_t = 0
-    # test_len = 0
-    # for graphs_and_labels in tqdm(test_data_loader):
-    #     if device == "cuda":
-    #         batch = tuple(t.to(device) for t in batch)
-    #         test_bg1, test_bg2, test_y = batch
-    #     else:
-    #         test_bg1, test_bg2, test_y = graphs_and_labels
-    #     test_y = torch.tensor(test_y).float().view(-1, 1)
-    #     probs_Y = torch.softmax(model(test_bg1, test_bg2), 1)
-    #     sampled_Y = torch.multinomial(probs_Y, 1)
-    #     argmax_Y = torch.max(probs_Y, 1)[1].view(-1, 1)
-    #     all_sampled_y_t = all_sampled_y_t + ((test_y == sampled_Y.float()).sum().item())
-    #     all_argmax_y_t = all_argmax_y_t + ((test_y == argmax_Y.float()).sum().item())
-    #     test_len = test_len + len(test_y)
-    # accuracy_sampled = all_sampled_y_t / test_len * 100
-    # accuracy_argmax = all_argmax_y_t / test_len * 100
-    # print('Accuracy of sampled predictions on the test set: {:.4f}%'.format(all_sampled_y_t / test_len * 100))
-    # print('Accuracy of argmax predictions on the test set: {:4f}%'.format(all_argmax_y_t / test_len * 100))
-    #
-    # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-    # output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{get_current_time_str()}_{accuracy_sampled}_{accuracy_argmax}"
-    # torch.save(model_to_save.state_dict(), output_model_file)
+    if device == "cuda":
+        if n_gpu > 1:
+            model = torch.nn.DataParallel(model)
+        model.to(device)
+
+    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate)
+
+    model.train()
+    epoch_losses = []
+    for epoch in range(20):
+        epoch_loss = 0
+        with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
+            for batch, graphs_and_labels in enumerate(train_data_loader):
+                # graph1_batched, graph2_batched, label = graphs_and_labels
+                if device == "cuda":
+                    batch = tuple(t.to(device) for t in batch)
+                    graph1_batched, graph2_batched, label = batch
+                else:
+                    graph1_batched, graph2_batched, label = graphs_and_labels
+                prediction = model(graph1_batched, graph2_batched)
+                loss = loss_func(prediction, label)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.detach().item()
+                pbar.update(1)
+        epoch_loss /= (batch + 1)
+        print('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
+        epoch_losses.append(epoch_loss)
+
+    model.eval()
+    # Convert a list of tuples to two lists
+    test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate)
+    all_sampled_y_t = 0
+    all_argmax_y_t = 0
+    test_len = 0
+    for graphs_and_labels in tqdm(test_data_loader):
+        if device == "cuda":
+            batch = tuple(t.to(device) for t in batch)
+            test_bg1, test_bg2, test_y = batch
+        else:
+            test_bg1, test_bg2, test_y = graphs_and_labels
+        test_y = torch.tensor(test_y).float().view(-1, 1)
+        probs_Y = torch.softmax(model(test_bg1, test_bg2), 1)
+        sampled_Y = torch.multinomial(probs_Y, 1)
+        argmax_Y = torch.max(probs_Y, 1)[1].view(-1, 1)
+        all_sampled_y_t = all_sampled_y_t + ((test_y == sampled_Y.float()).sum().item())
+        all_argmax_y_t = all_argmax_y_t + ((test_y == argmax_Y.float()).sum().item())
+        test_len = test_len + len(test_y)
+    accuracy_sampled = all_sampled_y_t / test_len * 100
+    accuracy_argmax = all_argmax_y_t / test_len * 100
+    print('Accuracy of sampled predictions on the test set: {:.4f}%'.format(all_sampled_y_t / test_len * 100))
+    print('Accuracy of argmax predictions on the test set: {:4f}%'.format(all_argmax_y_t / test_len * 100))
+
+    model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+    output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{get_current_time_str()}_{accuracy_sampled}_{accuracy_argmax}"
+    torch.save(model_to_save.state_dict(), output_model_file)
 
 
 def concat_tmp_data():

@@ -155,29 +155,32 @@ class DBpediaGATSampler(object):
             return None, None
 
     def _load(self, dbpedia_sampled_data):
-        for item in tqdm(dbpedia_sampled_data):
-            claim_graph = item['claim_links']
-            g_claim, g_claim_dict = self._convert_rel_to_efeature(claim_graph)
-            if g_claim is None:
-                continue
+        with tqdm(total=len(dbpedia_sampled_data), desc=f"converting data to graph type") as pbar:
+            for item in tqdm(dbpedia_sampled_data):
+                claim_graph = item['claim_links']
+                g_claim, g_claim_dict = self._convert_rel_to_efeature(claim_graph)
+                pbar.update(1)
+                if g_claim is None:
+                    continue
 
-            candidates = item['examples']
-            for c in candidates:
-                c_graph = c['graph']
-                if c_graph is None or len(c_graph) < 1:
-                    continue
-                g_c, g_c_dict = self._convert_rel_to_efeature(c_graph)
-                if g_c is None:
-                    continue
-                one_example = dict()
-                one_example['selection_label'] = c['selection_label']
-                one_example['selection_id'] = c['selection_id']
-                one_example['graph1'] = g_claim
-                one_example['graph1_dict'] = g_claim_dict
-                one_example['graph2'] = g_c
-                one_example['graph2_dict'] = g_c_dict
-                self.labels.append(1 if c['selection_label'] == 'true' else 0)
-                self.graph_instances.append(one_example)
+                candidates = item['examples']
+                for c in candidates:
+                    c_graph = c['graph']
+                    if c_graph is None or len(c_graph) < 1:
+                        continue
+                    g_c, g_c_dict = self._convert_rel_to_efeature(c_graph)
+                    if g_c is None:
+                        continue
+                    one_example = dict()
+                    # one_example['selection_label'] = c['selection_label']
+                    # one_example['selection_id'] = c['selection_id']
+                    one_example['graph1'] = g_claim
+                    # one_example['graph1_dict'] = g_claim_dict
+                    one_example['graph2'] = g_c
+                    # one_example['graph2_dict'] = g_c_dict
+                    self.labels.append(1 if c['selection_label'] == 'true' else 0)
+                    self.graph_instances.append(one_example)
+
 
 
 

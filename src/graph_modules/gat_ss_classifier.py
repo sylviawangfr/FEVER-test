@@ -260,9 +260,10 @@ def train():
     test_len = 0
     for graphs_and_labels in tqdm(test_data_loader):
         if device == "cuda":
-            for t in graphs_and_labels:
-                t.to(device)
-        test_bg1, test_bg2, test_y = graphs_and_labels
+            batch = tuple(t.to(device) for t in batch)
+            test_bg1, test_bg2, test_y = batch
+        else:
+            test_bg1, test_bg2, test_y = graphs_and_labels
         test_y = torch.tensor(test_y).float().view(-1, 1)
         probs_Y = torch.softmax(model(test_bg1, test_bg2), 1)
         sampled_Y = torch.multinomial(probs_Y, 1)

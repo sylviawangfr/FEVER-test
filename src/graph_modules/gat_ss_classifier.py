@@ -248,9 +248,9 @@ def train():
                 optimizer.step()
                 epoch_loss += loss.detach().item()
                 pbar.update(1)
-        epoch_loss /= (batch + 1)
-        print('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
-        epoch_losses.append(epoch_loss)
+            epoch_loss /= (batch + 1)
+            pbar.write('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
+            epoch_losses.append(epoch_loss)
 
     model.eval()
     # Convert a list of tuples to two lists

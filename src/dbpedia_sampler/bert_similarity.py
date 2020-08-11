@@ -14,7 +14,7 @@ def get_phrase_embedding(phrases):
         if phrases is None or len(phrases) < 1:
             return []
 
-        bc = BertClient(ip=config.LOCALHOST, port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+        bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
         re = bc.encode(phrases)
         log.debug(f"embedding time: {(datetime.now() - start).seconds}")
         return re

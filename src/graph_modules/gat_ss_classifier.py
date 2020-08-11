@@ -26,9 +26,9 @@ class Node_Alignment(nn.Module):
 
         # weight: batch_size * node_len * node_len
         weight1 = F.softmax(attention, dim=-1)
-        x1_align = F.relu(torch.matmul(weight1, x2))
+        x1_align = torch.matmul(weight1, x2)
         weight2 = F.softmax(attention.transpose(0, 1), dim=-1)
-        x2_align = F.relu(torch.matmul(weight2, x1))
+        x2_align = torch.matmul(weight2, x1)
         # x_align: batch_size * node_len * hidden_size
         return x1_align, x2_align
 
@@ -59,8 +59,8 @@ class Node_Alignment(nn.Module):
         # batch_size * num_nodes * (4 * dim)
         q1_combined = torch.cat([o1, q1_align, self.submul(o1, q1_align)], -1)
         q2_combined = torch.cat([o2, q2_align, self.submul(o2, q2_align)], -1)
-        q1_projection = self.projection(q1_combined)
-        q2_projection = self.projection(q2_combined)
+        q1_projection = F.relu(self.projection(q1_combined))
+        q2_projection = F.relu(self.projection(q2_combined))
         return q1_projection, q2_projection
 
 
@@ -207,8 +207,7 @@ def collate(samples):
 
 def train():
     # Create training and test sets.
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:2]
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[1500:1502]
+    data_train, data_dev = concat_tmp_data()
     trainset = DBpediaGATSampler(data_train)
     testset = DBpediaGATSampler(data_dev)
     # Use PyTorch's DataLoader and the collate function
@@ -279,5 +278,17 @@ def train():
     output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{get_current_time_str()}_{accuracy_sampled}_{accuracy_argmax}"
     torch.save(model_to_save.state_dict(), output_model_file)
 
+
+def concat_tmp_data():
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10000.jsonl")
+    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
+    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
+    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
+    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")
+    return data_train, data_dev
+
+
 if __name__ == '__main__':
-    train()
+    # train()
+    concat_tmp_data()

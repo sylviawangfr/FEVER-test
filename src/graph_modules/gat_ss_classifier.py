@@ -291,5 +291,5 @@ def concat_tmp_data():
 
 
 if __name__ == '__main__':
-    # train()
-    concat_tmp_data()
+    train()
+    # concat_tmp_data()

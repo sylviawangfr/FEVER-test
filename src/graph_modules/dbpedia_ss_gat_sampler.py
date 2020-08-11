@@ -155,7 +155,7 @@ class DBpediaGATSampler(object):
             return None, None
 
     def _load(self, dbpedia_sampled_data):
-        with tqdm(total=len(dbpedia_sampled_data), desc=f"converting data to graph type") as pbar:
+        with tqdm(total=len(dbpedia_sampled_data), desc=f"converting data to graph type:\n") as pbar:
             for item in tqdm(dbpedia_sampled_data):
                 claim_graph = item['claim_links']
                 g_claim, g_claim_dict = self._convert_rel_to_efeature(claim_graph)

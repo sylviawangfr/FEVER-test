@@ -217,19 +217,20 @@ def train():
     model = GATClassifier(768, 768, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.002)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
     if device == "cuda":
         if n_gpu > 1:
-            model = torch.nn.DataParallel(model)
+            model = torch.nn.DataParallel(model, devices_ids=[0, 2])
         model.to(device)
+        loss_func.to(device)
 
     train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate)
 
     model.train()
     epoch_losses = []
-    for epoch in range(20):
+    for epoch in range(30):
         epoch_loss = 0
         with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
             for batch, graphs_and_labels in enumerate(train_data_loader):
@@ -280,7 +281,7 @@ def train():
 
 
 def concat_tmp_data():
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10000.jsonl")[0:1000]
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10000.jsonl")[0:100]
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))

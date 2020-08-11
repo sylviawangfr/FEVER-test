@@ -212,8 +212,6 @@ def train():
     testset = DBpediaGATSampler(data_dev)
     # Use PyTorch's DataLoader and the collate function
     # defined before.
-
-
     # Create model
     # in_dim, hidden_dim, num_heads, n_classes
     model = GATClassifier(768, 768, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
@@ -221,7 +219,7 @@ def train():
     optimizer = optim.Adam(model.parameters(), lr=0.002)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     n_gpu = torch.cuda.device_count()
-    print("device: {} n_gpu: {}".format(device, n_gpu))
+    print(f"device: {device} n_gpu: {n_gpu}")
     if device == "cuda":
         if n_gpu > 1:
             model = torch.nn.DataParallel(model)

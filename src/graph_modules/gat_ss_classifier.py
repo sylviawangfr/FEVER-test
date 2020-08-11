@@ -231,7 +231,7 @@ def train():
 
     model.train()
     epoch_losses = []
-    for epoch in range(80):
+    for epoch in range(120):
         epoch_loss = 0
         with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
             for batch, graphs_and_labels in enumerate(train_data_loader):

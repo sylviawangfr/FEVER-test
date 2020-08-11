@@ -217,12 +217,13 @@ def train():
     model = GATClassifier(768, 768, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.002)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    is_cuda = True if torch.cuda.is_available() else False
+    device = torch.device("cuda:0" if is_cuda else "cpu")
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
-    if device == "cuda":
+    if is_cuda:
         if n_gpu > 1:
-            model = torch.nn.DataParallel(model, devices_ids=[0, 2])
+            model = torch.nn.DataParallel(model)
         model.to(device)
         loss_func.to(device)
 
@@ -235,7 +236,7 @@ def train():
         with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
             for batch, graphs_and_labels in enumerate(train_data_loader):
                 # graph1_batched, graph2_batched, label = graphs_and_labels
-                if device == "cuda":
+                if is_cuda:
                     batch = tuple(t.to(device) for t in batch)
                     graph1_batched, graph2_batched, label = batch
                 else:
@@ -258,12 +259,12 @@ def train():
     all_argmax_y_t = 0
     test_len = 0
     for graphs_and_labels in tqdm(test_data_loader):
-        if device == "cuda":
+        if is_cuda:
             batch = tuple(t.to(device) for t in batch)
             test_bg1, test_bg2, test_y = batch
         else:
             test_bg1, test_bg2, test_y = graphs_and_labels
-        test_y = torch.tensor(test_y).float().view(-1, 1)
+        test_y = test_y.clone().detach().float().view(-1, 1)
         probs_Y = torch.softmax(model(test_bg1, test_bg2), 1)
         sampled_Y = torch.multinomial(probs_Y, 1)
         argmax_Y = torch.max(probs_Y, 1)[1].view(-1, 1)
@@ -286,7 +287,7 @@ def concat_tmp_data():
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:100]
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:10]
     print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 

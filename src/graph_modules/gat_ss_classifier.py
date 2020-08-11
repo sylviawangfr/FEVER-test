@@ -222,8 +222,8 @@ def train():
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
     if is_cuda:
-        if n_gpu > 1:
-            model = torch.nn.DataParallel(model)
+        # if n_gpu > 1:
+        #     model = torch.nn.DataParallel(model)
         model.to(device)
         loss_func.to(device)
 

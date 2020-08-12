@@ -97,7 +97,7 @@ class DBpediaGATSampler(object):
 
         if len(all_node_embeddings) > 0:
             g = dgl.DGLGraph()
-            g.add_nodes(len(all_nodes), {'nbd': torch.Tensor(all_node_embeddings)})
+            g.add_nodes(len(all_nodes), {'nbd': torch.Tensor(all_node_embeddings.clone())})
             g.add_edges(start_nums, end_nums)
             dict_nodes_inverse = dict(zip(dict_nodes.values(), dict_nodes.keys()))
             return g, dict_nodes_inverse
@@ -156,8 +156,8 @@ class DBpediaGATSampler(object):
 
         if len(all_node_embeddings) > 0 and len(all_edge_embeddings) > 0:
             g = dgl.DGLGraph()
-            g.add_nodes(len(all_nodes), {'nbd': torch.Tensor(all_node_embeddings)})
-            g.add_edges(start_nums, end_nums, {'ebd': torch.Tensor(all_edge_embeddings)})
+            g.add_nodes(len(all_nodes), {'nbd': torch.Tensor(np.copy(all_node_embeddings))})
+            g.add_edges(start_nums, end_nums, {'ebd': torch.Tensor(np.copy(all_edge_embeddings))})
             if return_with_data:
                 one_example_data['nodes'] = len(all_nodes)
                 one_example_data['edges'] = {'src': start_nums, 'dst': end_nums}
@@ -171,7 +171,6 @@ class DBpediaGATSampler(object):
 
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data, save=False):
         dt = get_current_time_str()
-        save_batch = []
         with tqdm(total=len(dbpedia_sampled_data), desc=f"converting data to graph type:") as pbar:
             for idx, item in enumerate(dbpedia_sampled_data):
                 claim_graph = item['claim_links']
@@ -203,10 +202,11 @@ class DBpediaGATSampler(object):
                     self.labels.append(c_label)
                     self.graph_instances.append(one_example)
                 if save:
+                    save_batch = []
                     save_example_data = dict()
                     save_example_data.update({'claim': g_claim_data})
                     save_example_data.update({'candidates': save_c_data_l})
-                    if len(save_batch) < 2 or idx < len(dbpedia_sampled_data) - 1:
+                    if len(save_batch) < 5 or idx < len(dbpedia_sampled_data) - 1:
                         save_batch.append(save_example_data)
                     else:
                         append_results(save_batch, config.RESULT_PATH / f"gat_ss_{dt}.jsonl")
@@ -244,4 +244,4 @@ class DBpediaGATSampler(object):
 
 if __name__ == '__main__':
     data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:3]
-    sample = DBpediaGATSampler(data, from_gat=False, save=True)
+    sample = DBpediaGATSampler(data)

@@ -207,7 +207,7 @@ def collate(samples):
 
 
 def train():
-    lr = 0.01
+    lr = 0.001
     epoches = 160
     # Create training and test sets.
     data_train, data_dev = concat_tmp_data()
@@ -320,12 +320,12 @@ def eval(model, dbpedia_data):
 
 
 def concat_tmp_data():
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl")[0:3]
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl")
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl")[0:3]
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl")[0:200]
     print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 

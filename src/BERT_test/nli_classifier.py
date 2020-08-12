@@ -278,7 +278,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
                     print(torch.cuda.current_device())
                     raise e
         loss_for_chart.append(epoch_loss)
-    drawLoss(loss_for_chart, f"loss_{output_folder}_{learning_rate}")
+    draw_loss_epoch_detailed(loss_for_chart, f"loss_{output_folder}_{learning_rate}")
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self

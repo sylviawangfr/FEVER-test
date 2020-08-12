@@ -134,7 +134,7 @@ def eval_nli_and_save(paras : bert_para.BERT_para):
                 preds[0], logits.detach().cpu().numpy(), axis=0)
 
     if not paras.pred:
-        drawLoss(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), f"nli_eval_{paras.output_folder}")
+        draw_loss_epoch_detailed(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), f"nli_eval_{paras.output_folder}")
         eval_loss = eval_loss / nb_eval_steps
 
     preds = preds[0]

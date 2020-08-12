@@ -254,13 +254,15 @@ def train():
             epoch_loss /= (batch + 1)
             pbar.set_postfix_str('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
             epoch_losses.append(epoch_loss)
-    draw_loss_epoches(epoch_losses, f"gat_ss_train_loss_{lr}_epoch{epoches}_{get_current_time_str()}.png")
+
+    dt = get_current_time_str()
+    draw_loss_epoches(epoch_losses, f"gat_ss_train_loss_{lr}_epoch{epoches}_{dt}.png")
 
     loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)
-    draw_loss_epoches(loss_eval_chart, f"gat_ss_eval_loss_{lr}_epoch{epoches}_{get_current_time_str()}.png")
+    draw_loss_epoches(loss_eval_chart, f"gat_ss_eval_loss_{lr}_epoch{epoches}_{dt}.png")
 
     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-    output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{lr}_epoch{epoches}_{get_current_time_str()}_{accuracy_sampled}_{accuracy_argmax}"
+    output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{lr}_epoch{epoches}_{dt}_{accuracy_sampled}_{accuracy_argmax}"
     torch.save(model_to_save.state_dict(), output_model_file)
 
 

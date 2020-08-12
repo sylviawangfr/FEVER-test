@@ -172,7 +172,7 @@ class DBpediaGATSampler(object):
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data, save=False):
         dt = get_current_time_str()
         save_batch = []
-        with tqdm(total=len(dbpedia_sampled_data), desc=f"converting data to graph type:\n") as pbar:
+        with tqdm(total=len(dbpedia_sampled_data), desc=f"converting data to graph type:") as pbar:
             for idx, item in enumerate(dbpedia_sampled_data):
                 claim_graph = item['claim_links']
                 g_claim, g_claim_data = self._convert_rel_to_efeature(claim_graph, save)

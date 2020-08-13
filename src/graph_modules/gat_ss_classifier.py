@@ -212,11 +212,6 @@ def train():
     # Create training and test sets.
     data_train, data_dev = concat_tmp_data()
     trainset = DBpediaGATSampler(data_train)
-    testset = DBpediaGATSampler(data_dev)
-    # Use PyTorch's DataLoader and the collate function
-    # defined before.
-    # Create model
-    # in_dim, hidden_dim, num_heads, n_classes
     model = GATClassifier(768, 768, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -225,8 +220,8 @@ def train():
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
     if is_cuda:
-        # if n_gpu > 1:
-        #     model = torch.nn.DataParallel(model)
+        if n_gpu > 1:
+            model = torch.nn.DataParallel(model)
         model.to(device)
         loss_func.to(device)
 
@@ -275,8 +270,8 @@ def eval(model, dbpedia_data):
     if model is Path:
         model = torch.load(model)
         if is_cuda:
-            # if n_gpu > 1:
-            #     model = torch.nn.DataParallel(model)
+            if n_gpu > 1:
+                model = torch.nn.DataParallel(model)
             model.to(device)
             loss_func.to(device)
     testset = DBpediaGATSampler(dbpedia_data)
@@ -322,12 +317,12 @@ def eval(model, dbpedia_data):
 
 
 def concat_tmp_data():
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl")
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl")[0:4]
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl")[0:200]
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl")[0:2]
     print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 

@@ -65,6 +65,7 @@ BERT_SERVICE_PORT_OUT = 5556 if platform.system() == 'Linux' else 5004
 
 
 if __name__ == '__main__':
+    print(BERT_SERVICE_PORT)
     print(DBPEDIA_LOOKUP_URL)
     print(DBPEDIA_SPOTLIGHT_URL)
     print("PRO_ROOT", PRO_ROOT)

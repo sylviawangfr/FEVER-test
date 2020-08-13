@@ -15,12 +15,12 @@ class TestDB(unittest.TestCase):
             bert_similarity.get_phrase_embedding(ps)
         print(f"embedding time: {(datetime.now() - start).seconds}")
 
-    def test_gat_sampler(self):
-        start = datetime.now()
-        data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:10]
-        sample = DBpediaGATSampler(data)
-        print(len(sample.graph_instances))
-        print(f"sampling time: {(datetime.now() - start).seconds}")
+    # def test_gat_sampler(self):
+    #     start = datetime.now()
+    #     data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:10]
+    #     sample = DBpediaGATSampler(data)
+    #     print(len(sample.graph_instances))
+    #     print(f"sampling time: {(datetime.now() - start).seconds}")
 
 
 if __name__ == '__main__':

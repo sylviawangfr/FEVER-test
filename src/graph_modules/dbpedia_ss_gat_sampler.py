@@ -4,7 +4,7 @@ import torch
 from dbpedia_sampler.util import uri_short_extract
 import numpy as np
 from utils.file_loader import *
-from threading import Thread,Lock
+from threading import Lock
 import math
 
 

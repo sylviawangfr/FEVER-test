@@ -264,7 +264,7 @@ def train():
 def eval(model, dbpedia_data):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False
-    device = torch.device("cuda:0" if is_cuda else "cpu")
+    device = torch.device("cuda:1" if is_cuda else "cpu")
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
     if model is Path:

@@ -18,6 +18,7 @@ class DBpediaGATSampler(object):
         self.labels = []
         self.parallel = parallel
         self._load(dbpedia_sampled_data)
+        self.lock = Lock()
 
     def __len__(self):
         """Return the number of graphs in the dataset."""
@@ -186,11 +187,11 @@ class DBpediaGATSampler(object):
                     one_example['graph1'] = g_claim
                     one_example['graph2'] = g_c
                     if self.parallel:
-                        Lock.acquire()
+                        self.lock.acquire()
                     self.labels.append(c_label)
                     self.graph_instances.append(one_example)
                     if self.parallel:
-                        Lock.release()
+                        self.lock.release()
 
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
         num_worker = 3

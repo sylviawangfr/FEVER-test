@@ -262,7 +262,7 @@ def train():
     draw_loss_epoches(loss_eval_chart, f"gat_ss_eval_loss_{lr}_epoch{epoches}_{dt}.png")
 
     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-    output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{lr}_epoch{epoches}_{dt}_{accuracy_sampled}_{accuracy_argmax}"
+    output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{lr}_epoch{epoches}_{dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"
     torch.save(model_to_save.state_dict(), output_model_file)
 
 

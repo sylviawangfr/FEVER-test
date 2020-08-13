@@ -22,7 +22,7 @@ class TestDB(unittest.TestCase):
         thread_exe(wait_delay, config.WIKI_PAGE_PATH.iterdir(), 5, "testing")
         print("done")
 
-    @unittest.skip(" ")
+
     def test_gat_sampler(self):
         start = dt.now()
         data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:50]

@@ -1,6 +1,6 @@
 import dgl
 import dgl.function as fn
-from graph_modules.dbpedia_ss_gat_sampler import DBpediaGATSampler
+from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
 from dgl.nn.pytorch import *
 from torch.utils.data import DataLoader
 import random

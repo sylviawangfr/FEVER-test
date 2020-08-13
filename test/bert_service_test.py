@@ -1,6 +1,6 @@
 import unittest
 from dbpedia_sampler import bert_similarity
-from graph_modules.dbpedia_ss_gat_sampler import DBpediaGATSampler
+from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
 from utils.file_loader import *
 from datetime import datetime as dt
 
@@ -23,6 +23,7 @@ class TestDB(unittest.TestCase):
         print(f"parallel graph pair count: {len(sample.graph_instances)}")
         print(f"parallel sampling time: {(dt.now() - start).seconds}")
 
+        start = dt.now()
         sample = DBpediaGATSampler(data, parallel=False)
         print(f"single graph pair count: {len(sample.graph_instances)}")
         print(f"single sampling time: {(dt.now() - start).seconds}")

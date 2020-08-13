@@ -4,6 +4,8 @@ import torch
 from dbpedia_sampler.util import uri_short_extract
 import numpy as np
 from utils.file_loader import *
+from threading import Thread,Lock
+import math
 
 
 __all__ = ['DBpediaGATSampler']
@@ -14,7 +16,8 @@ class DBpediaGATSampler(object):
         super(DBpediaGATSampler, self).__init__()
         self.graph_instances = []
         self.labels = []
-        self._load_from_dbpedia_sample_file(dbpedia_sampled_data)
+        # self._load_from_dbpedia_sample_file(dbpedia_sampled_data)
+        self._load_from_dbpedia_sample_multithread(dbpedia_sampled_data)
 
     def __len__(self):
         """Return the number of graphs in the dataset."""
@@ -174,8 +177,16 @@ class DBpediaGATSampler(object):
                     one_example = dict()
                     one_example['graph1'] = g_claim
                     one_example['graph2'] = g_c
+                    Lock.acquire()
                     self.labels.append(c_label)
                     self.graph_instances.append(one_example)
+                    Lock.release()
+
+    def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
+        num_worker = 3
+        batch_size = math.ceil(len(dbpedia_sampled_data) / 3)
+        data_iter = iter_baskets_contiguous(dbpedia_sampled_data, batch_size)
+        thread_exe(self._load_from_dbpedia_sample_file, data_iter, num_worker, "Multi_thread_gat_sampler\n")
 
 
 if __name__ == '__main__':

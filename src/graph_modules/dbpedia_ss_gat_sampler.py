@@ -4,7 +4,7 @@ import torch
 from dbpedia_sampler.util import uri_short_extract
 import numpy as np
 from utils.file_loader import *
-from threading import Lock
+from threading import Lock, Thread
 import math
 
 
@@ -166,7 +166,10 @@ class DBpediaGATSampler(object):
             return None
 
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
-        with tqdm(total=len(dbpedia_sampled_data), desc=f"converting data to graph type:") as pbar:
+        description = "converting data to graph type:"
+        if self.parallel:
+            description += Thread.getName()
+        with tqdm(total=len(dbpedia_sampled_data), desc=description) as pbar:
             for idx, item in enumerate(dbpedia_sampled_data):
                 claim_graph = item['claim_links']
                 g_claim = self._convert_rel_to_efeature(claim_graph)

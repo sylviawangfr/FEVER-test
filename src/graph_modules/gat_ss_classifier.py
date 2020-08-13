@@ -179,7 +179,6 @@ class GATClassifier(nn.Module):
         bg2.ndata.update({'nbd_align': bg2_align})
         g1 = dgl.unbatch(bg1)
         g2 = dgl.unbatch(bg2)
-        test = dgl.batch(g1)
         len1 = len(g1)
         len2 = len(g2)
         g1.extend(g2)
@@ -212,7 +211,7 @@ def train():
     epoches = 300
     # Create training and test sets.
     data_train, data_dev = concat_tmp_data()
-    trainset = DBpediaGATSampler(data_train)
+    trainset = DBpediaGATSampler(data_train, parallel=True)
     model = GATClassifier(768, 768, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -221,8 +220,8 @@ def train():
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
     if is_cuda:
-        if n_gpu > 1:
-            model = torch.nn.DataParallel(model)
+        # if n_gpu > 1:
+        #     model = torch.nn.DataParallel(model)
         model.to(device)
         loss_func.to(device)
 
@@ -271,11 +270,11 @@ def eval(model, dbpedia_data):
     if model is Path:
         model = torch.load(model)
         if is_cuda:
-            if n_gpu > 1:
-                model = torch.nn.DataParallel(model)
+            # if n_gpu > 1:
+            #     model = torch.nn.DataParallel(model)
             model.to(device)
             loss_func.to(device)
-    testset = DBpediaGATSampler(dbpedia_data)
+    testset = DBpediaGATSampler(dbpedia_data, parallel=True)
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate)
@@ -316,14 +315,13 @@ def eval(model, dbpedia_data):
     return loss_eval_chart, accuracy_argmax, accuracy_sampled
 
 
-
 def concat_tmp_data():
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl")[0:4]
+    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl")
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
-    # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
+    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl")[0:2]
+    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl")[0:200]
     print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 

@@ -179,6 +179,7 @@ class GATClassifier(nn.Module):
         bg2.ndata.update({'nbd_align': bg2_align})
         g1 = dgl.unbatch(bg1)
         g2 = dgl.unbatch(bg2)
+        test = dgl.batch(g1)
         len1 = len(g1)
         len2 = len(g2)
         g1.extend(g2)

@@ -208,7 +208,7 @@ def collate(samples):
 
 def train():
     lr = 1e-4
-    epoches = 300
+    epoches = 200
     # Create training and test sets.
     data_train, data_dev = concat_tmp_data()
     trainset = DBpediaGATSampler(data_train, parallel=True)
@@ -317,7 +317,7 @@ def eval(model, dbpedia_data):
 
 def concat_tmp_data():
     data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl")
-    # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
+    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl"))
     data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
     # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))

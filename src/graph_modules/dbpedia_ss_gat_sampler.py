@@ -17,8 +17,8 @@ class DBpediaGATSampler(object):
         self.graph_instances = []
         self.labels = []
         self.parallel = parallel
-        self._load(dbpedia_sampled_data)
         self.lock = Lock()
+        self._load(dbpedia_sampled_data)
 
     def __len__(self):
         """Return the number of graphs in the dataset."""
@@ -201,5 +201,5 @@ class DBpediaGATSampler(object):
 
 
 if __name__ == '__main__':
-    data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:30]
-    sample = DBpediaGATSampler(data)
+    data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:3]
+    sample = DBpediaGATSampler(data, parallel=True)

@@ -208,7 +208,7 @@ def collate(samples):
 
 def train():
     lr = 0.001
-    epoches = 160
+    epoches = 200
     # Create training and test sets.
     data_train, data_dev = concat_tmp_data()
     trainset = DBpediaGATSampler(data_train)

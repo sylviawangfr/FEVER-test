@@ -23,8 +23,8 @@ class TestDB(unittest.TestCase):
         print(f"parallel sampling time: {(dt.now() - start).seconds}")
 
         sample = DBpediaGATSampler(data, parallel=False)
-        print(f"parallel graph pair count: {len(sample.graph_instances)}")
-        print(f"parallel sampling time: {(dt.now() - start).seconds}")
+        print(f"single graph pair count: {len(sample.graph_instances)}")
+        print(f"single sampling time: {(dt.now() - start).seconds}")
 
 
 if __name__ == '__main__':

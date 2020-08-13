@@ -37,8 +37,8 @@ from pytorch_pretrained_bert.tokenization import BertTokenizer
 from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
 
 from utils.file_loader import read_json_rows
-from BERT_test.bert_data_processor import *
-from BERT_test.nli_eval import eval_nli_and_save
+from BERT_finetune.bert_data_processor import *
+from BERT_finetune.nli_eval import eval_nli_and_save
 import utils.common_types as bert_para
 from data_util.toChart import *
 from utils.file_loader import get_current_time_str

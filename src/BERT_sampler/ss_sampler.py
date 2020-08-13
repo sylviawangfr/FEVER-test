@@ -5,9 +5,9 @@ Neural sentence selector aimed to fine-select sentence for NLI models since NLI 
 """
 
 
-from utils import fever_db, common, c_scorer
+from utils import common, c_scorer
 
-from data_util.data_preperation.tokenize_fever import easy_tokenize
+from tfidf_model import easy_tokenize
 import utils.check_sentences
 import itertools
 import numpy as np

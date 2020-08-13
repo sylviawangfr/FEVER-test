@@ -1,8 +1,7 @@
 from doc_retriv.doc_retrieve import get_doc_ids_and_fever_score
-from utils.file_loader import *
-from sentence_retrieval_esim.drqa_online_tfidf import tfidf_sentense_selection
-from BERT_test.ss_eval import *
-from BERT_test.nli_eval import *
+from tfidf_model.drqa_online_tfidf import tfidf_sentense_selection
+from BERT_finetune.ss_eval import *
+from BERT_finetune.nli_eval import *
 
 time = "june22"
 
@@ -45,16 +44,7 @@ def doc_retriv():
     print("done with tfidf ss for train")
 
 
-def get_doc(input_data_path):
-    print("doc retrieving for dev...")
-    doc_retriv_dev_list = get_doc_ids_and_fever_score(
-        input_data_path,
-        config.RESULT_PATH / f"doc_{input_data_path.name}",
-        top_k=10,
-        eval=True,
-        log_file=config.LOG_PATH / f"doc_{input_data_path.name}.log")
 
-    print("done doc retrieving for dev.")
 
 
 def pred_ss(input_data_path, origin_data_path, output_file):

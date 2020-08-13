@@ -7,7 +7,7 @@ from collections import Counter
 import numpy as np
 from utils.file_loader import *
 from data_util.tokenizers import SpacyTokenizer
-from BERT_test.eval_util import convert_evidence2scoring_format
+from BERT_finetune.eval_util import convert_evidence2scoring_format
 import functools
 import operator
 

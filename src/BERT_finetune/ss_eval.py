@@ -17,7 +17,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
 import torch
 from sklearn.utils.extmath import softmax
 from torch.utils.data import (DataLoader, SequentialSampler,
@@ -29,14 +28,13 @@ from torch.nn import CrossEntropyLoss
 from pytorch_pretrained_bert.modeling import BertForSequenceClassification
 from pytorch_pretrained_bert.tokenization import BertTokenizer
 
-from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, save_file, save_intermidiate_results
+from utils.file_loader import read_json_rows, save_file, save_intermidiate_results
 from typing import Dict
 from utils import c_scorer
-from BERT_test.bert_data_processor import *
-from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
-import config
+from BERT_finetune.bert_data_processor import *
+from tfidf_model.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 import utils.common_types as bert_para
-from BERT_test.eval_util import compute_metrics
+from BERT_finetune.eval_util import compute_metrics
 from data_util.toChart import *
 
 logger = logging.getLogger(__name__)

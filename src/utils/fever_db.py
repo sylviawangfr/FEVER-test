@@ -249,13 +249,4 @@ def hlink_sanity_check():
 
 if __name__ == '__main__':
     hlink_sanity_check()
-    # create_db('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')
-    # save_wiki_pages('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')
-    # iter_over_db('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')
-    # get_all_doc_ids(str(config.FEVER_DB))
 
-    # create_sent_db('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')
-    # build_sentences_table('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')
-    # check_document_id(str(config.FEVER_DB))
-
-    # print(get_all_sent_by_doc_id(get_cursor(), "Whitesnake", with_h_links=True))

@@ -1,11 +1,9 @@
-from utils import common
-import config
 from utils.fever_db import create_db, save_wiki_pages, create_sent_db, build_sentences_table, check_document_id
-from data_util.data_preperation.tokenize_fever import *
-from data_util.data_preperation.build_tfidf import *
 from data_util.data_readers.fever_reader import *
 import fire
 import argparse
+from tfidf_model.tokenize_fever import *
+from tfidf_model.build_tfidf import *
 
 def tokenization():
     print("Start tokenizing dev and training set.")
@@ -34,25 +32,7 @@ def build_tfidf():
     build_and_save_tfidf(args)
 
 
-def build_fever_vocab():
-    input_file = config.T_FEVER_TRAIN_JSONL
-    d_list = load_jsonl(input_file)
-
-    # Dev set
-    input_file = config.T_FEVER_DEV_JSONL
-
-    d_list.extend(load_jsonl(input_file))
-
-    vocab = fever_build_vocab(d_list)
-    print(vocab)
-
-    build_vocab_embeddings(vocab, config.DATA_ROOT / "embeddings/glove.840B.300d.txt",
-                           embd_dim=300, saved_path=config.DATA_ROOT / "vocab_cache" / "nli_basic")
-
-
 if __name__ == '__main__':
     fire.Fire()
-    # tokenization()
-    # build_database()
-    # build_tfidf()
-    build_fever_vocab()
+    build_database()
+    build_tfidf()

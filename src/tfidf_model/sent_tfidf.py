@@ -16,7 +16,7 @@ from functools import partial
 import math
 from data_util.retriever import utils
 
-from data_util.data_preperation.build_tfidf import get_count_matrix, get_tfidf_matrix, get_doc_freqs
+from tfidf_model.build_tfidf import get_count_matrix, get_tfidf_matrix, get_doc_freqs
 from data_util.tokenizers import tokenizer
 
 

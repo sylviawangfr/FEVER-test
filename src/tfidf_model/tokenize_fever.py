@@ -1,8 +1,6 @@
 import json
-
-import config
-from data_util.tokenizers import tokenizer, spacy_tokenizer
-from utils import fever_db, text_clean
+from data_util.tokenizers import spacy_tokenizer
+from utils import text_clean
 from tqdm import tqdm
 
 

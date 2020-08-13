@@ -33,10 +33,10 @@ from pytorch_pretrained_bert.tokenization import BertTokenizer
 from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, save_file, save_intermidiate_results
 from typing import Dict
 from utils import c_scorer
-from BERT_test.bert_data_processor import *
+from BERT_finetune.bert_data_processor import *
 import config
 import utils.common_types as bert_para
-from BERT_test.eval_util import compute_metrics
+from BERT_finetune.eval_util import compute_metrics
 from data_util.toChart import *
 
 

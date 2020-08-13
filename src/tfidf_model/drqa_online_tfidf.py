@@ -1,14 +1,11 @@
 from collections import Counter
 import numpy as np
 
-from sentence_retrieval_esim.sent_tfidf import OnlineTfidfDocRanker
+from tfidf_model.sent_tfidf import OnlineTfidfDocRanker
 from utils import check_sentences
-from utils.sqlite_queue import SQLiteUtil
-from data_util.tokenizers.spacy_tokenizer import *
 from utils import c_scorer
 import utils
 from collections import namedtuple
-from utils.file_loader import *
 import tqdm
 from utils.fever_db import *
 

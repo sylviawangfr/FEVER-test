@@ -1,17 +1,16 @@
-import json
 import random
 import copy
 
-from sentence_retrieval_esim.nn_postprocess_ablation import score_converter_scaled
+
 from utils import fever_db, check_sentences
 import config
 
 from tqdm import tqdm
 from utils import c_scorer, common, text_clean
 
-from data_util.data_preperation.tokenize_fever import easy_tokenize
+from tfidf_model import easy_tokenize
 from utils.file_loader import read_json_rows
-from BERT_test.eval_util import convert_evidence2scoring_format
+from BERT_finetune.eval_util import convert_evidence2scoring_format
 
 
 

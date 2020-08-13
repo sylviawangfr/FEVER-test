@@ -1,4 +1,5 @@
 # elastic search
+# alternative for sqlit , not in use due to slow query speed
 from utils.file_loader import *
 import config
 from elasticsearch import Elasticsearch

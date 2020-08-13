@@ -68,6 +68,7 @@ def bulk_save_sentence_hit(hit):
     # bunk insert es
     ESH.bulk(client, sen_json_l, index=config.FEVER_SEN_INDEX)
 
+
 def init_wikipages():
     # process wikipedia dump file to ES
     thread_number = 5

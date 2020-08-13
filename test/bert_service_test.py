@@ -1,5 +1,5 @@
 import unittest
-import datetime
+from datetime import datetime
 from dbpedia_sampler import bert_similarity
 
 class TestDB(unittest.TestCase):

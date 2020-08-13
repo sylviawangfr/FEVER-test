@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime
 from dbpedia_sampler import bert_similarity
+from tqdm import tqdm
 
 class TestDB(unittest.TestCase):
 
@@ -8,7 +9,7 @@ class TestDB(unittest.TestCase):
         ps = ['Ashley Judd', 'Where the Heart Is', 'Stockard Channing', 'Joan Cusack',
                                'Natalie Portman', '2000', 'Sally Field', 'Keith David', 'Dylan Bruno', 'James Frain']
         start = datetime.now()
-        for i in range(100):
+        for i in tqdm(range(100)):
             bert_similarity.get_phrase_embedding(ps)
         print(f"embedding time: {(datetime.now() - start).seconds}")
 

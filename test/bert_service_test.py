@@ -18,7 +18,7 @@ class TestDB(unittest.TestCase):
 
     def test_gat_sampler(self):
         start = dt.now()
-        data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:10]
+        data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:50]
         sample = DBpediaGATSampler(data, parallel=True)
         print(f"parallel graph pair count: {len(sample.graph_instances)}")
         print(f"parallel sampling time: {(dt.now() - start).seconds}")

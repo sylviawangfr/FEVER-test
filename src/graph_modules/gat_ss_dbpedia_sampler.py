@@ -167,8 +167,8 @@ class DBpediaGATSampler(object):
 
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
         description = "converting data to graph type:"
-        if self.parallel:
-            description += threading.current_thread().getName()
+        # if self.parallel:
+        #     description += threading.current_thread().getName()
         with tqdm(total=len(dbpedia_sampled_data), desc=description) as pbar:
             for idx, item in enumerate(dbpedia_sampled_data):
                 claim_graph = item['claim_links']
@@ -189,12 +189,12 @@ class DBpediaGATSampler(object):
                     one_example = dict()
                     one_example['graph1'] = g_claim
                     one_example['graph2'] = g_c
-                    if self.parallel:
-                        self.lock.acquire()
+                    # if self.parallel:
+                    #     self.lock.acquire()
                     self.labels.append(c_label)
                     self.graph_instances.append(one_example)
-                    if self.parallel:
-                        self.lock.release()
+                    # if self.parallel:
+                    #     self.lock.release()
 
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
         num_worker = 3

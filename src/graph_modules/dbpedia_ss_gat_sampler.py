@@ -4,7 +4,7 @@ import torch
 from dbpedia_sampler.util import uri_short_extract
 import numpy as np
 from utils.file_loader import *
-from threading import Lock, Thread
+import threading
 import math
 
 
@@ -17,7 +17,7 @@ class DBpediaGATSampler(object):
         self.graph_instances = []
         self.labels = []
         self.parallel = parallel
-        self.lock = Lock()
+        self.lock = threading.Lock()
         self._load(dbpedia_sampled_data)
 
     def __len__(self):
@@ -168,7 +168,7 @@ class DBpediaGATSampler(object):
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
         description = "converting data to graph type:"
         if self.parallel:
-            description += Thread.getName()
+            description += threading.current_thread().getName()
         with tqdm(total=len(dbpedia_sampled_data), desc=description) as pbar:
             for idx, item in enumerate(dbpedia_sampled_data):
                 claim_graph = item['claim_links']

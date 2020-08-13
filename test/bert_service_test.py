@@ -7,6 +7,7 @@ from datetime import datetime as dt
 
 class TestDB(unittest.TestCase):
 
+    @unittest.skip(" ")
     def test_bert(self):
         ps = ['Ashley Judd', 'Where the Heart Is', 'Stockard Channing', 'Joan Cusack',
                                'Natalie Portman', '2000', 'Sally Field', 'Keith David', 'Dylan Bruno', 'James Frain']

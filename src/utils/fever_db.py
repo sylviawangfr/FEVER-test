@@ -7,6 +7,7 @@ import json
 import re
 from utils.sqlite_queue import *
 import log_util
+from memory_profiler import profile
 
 
 log = log_util.get_logger("fever_db")
@@ -17,6 +18,7 @@ def get_cursor(save_path=str(config.FEVER_DB)):
     return cursor, conn
 
 
+@profile
 def get_evidence(cursor, doc_id, line_num):
     key = f'{doc_id}(-.-){line_num}'
     # print("SELECT * FROM sentences WHERE id = \"%s\"" % key)

@@ -1,7 +1,7 @@
 import spacy
 from spacy.symbols import nsubj, dobj, pobj, VERB, ADP, AUX, acomp
 from spacy import displacy
-import config
+from memory_profiler import profile
 from spacy.tokens import Doc, Span, Token
 import regex
 
@@ -9,7 +9,7 @@ import regex
 # nlp_eng = spacy.load("en_core_web_lg")
 nlp_eng_spacy = spacy.load("en_core_web_sm")
 
-
+@profile
 def split_claim_spacy(text):
     # doc_multi = nlp_multi(text)
     doc_noun = nlp_eng_spacy(text)
@@ -82,13 +82,6 @@ def get_dependent_verb(sent, phrase_l):
     return phs
 
 
-def get_triple(sent, phrase_l):
-    doc_merged = merge_phrases_as_span(sent, phrase_l)
-    displacy.serve(doc_merged, style='dep')
-    svg = displacy.render(doc_merged, style="dep")
-    return
-
-
 def get_phrase_token_indice(sent_token_l, phrase_token_l):
     i = 0
     j = 0
@@ -119,7 +112,6 @@ if __name__ == '__main__':
 
     text = "Bessie Smith was married on April 15, 1894."
     ph = ['Bessie Smith', 'April 15, 1894']
-    get_triple(text, ph)
 
     print(split_claim_regex(text))
     split_claim_spacy(text)

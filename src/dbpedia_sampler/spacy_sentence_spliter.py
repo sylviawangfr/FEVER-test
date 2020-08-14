@@ -1,6 +1,7 @@
 from utils.tokenizer_simple import *
 from utils import c_scorer, text_clean
 import log_util
+from memory_profiler import profile
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
@@ -10,6 +11,7 @@ STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'indivi
 log = log_util.get_logger('dbpedia_triple_linker')
 
 
+@profile
 def get_phrases(sentence, doc_title=''):
     log.debug(sentence)
     if doc_title != '' and c_scorer.SENT_DOC_TITLE in sentence and sentence.startswith(doc_title):

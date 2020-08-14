@@ -208,7 +208,7 @@ def collate(samples):
 
 def train():
     lr = 1e-4
-    epoches = 300
+    epoches = 340
     dim = 768
     head = 4
     # Create training and test sets.

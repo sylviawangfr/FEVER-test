@@ -1,6 +1,6 @@
 import json
 import sqlite3
-from collections import Counter
+from memory_profiler import profile
 from tqdm import tqdm
 
 
@@ -63,7 +63,7 @@ def load_data(file):
 
     return d_list
 
-
+@profile
 def check_and_clean_evidence(item):
     whole_annotators_evidences = item['evidence']
     # print(evidences)

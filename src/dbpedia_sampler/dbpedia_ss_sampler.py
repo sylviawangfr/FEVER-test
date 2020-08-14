@@ -8,10 +8,11 @@ from dbpedia_sampler import dbpedia_subgraph
 import log_util
 from torch.utils.data import DataLoader
 import threading
-import time
+from memory_profiler import profile
 
 log = log_util.get_logger("dbpedia_ss_sampler")
 
+@profile
 def get_tfidf_sample(paras: bert_para.BERT_para):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
@@ -139,6 +140,7 @@ def collate(samples):
     return samples
 
 
+@profile
 def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3
@@ -159,12 +161,12 @@ def tfidf_to_graph_sampler(tfidf_data):
     return
 
 
-def multi_thread_sampler():
-    data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[40000:50000]
-    # data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:6]
-    data_iter = iter_baskets_contiguous(data, 5000)
-    thread_exe(tfidf_to_graph_sampler, data_iter, 2, "Multi_thread_sampler\n")
-    print("done")
+# def multi_thread_sampler():
+#     data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[40000:50000]
+#     # data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:6]
+#     data_iter = iter_baskets_contiguous(data, 5000)
+#     thread_exe(tfidf_to_graph_sampler, data_iter, 2, "Multi_thread_sampler\n")
+#     print("done")
 
 
 if __name__ == '__main__':

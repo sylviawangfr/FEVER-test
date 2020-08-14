@@ -4,6 +4,7 @@ from utils.tokenizer_simple import get_dependent_verb
 import numpy as np
 import sklearn.metrics.pairwise as pw
 import log_util
+from memory_profiler import profile
 
 
 CANDIDATE_UP_TO = 150
@@ -41,7 +42,7 @@ def construct_subgraph(sentence, doc_title=''):
     # print(json.dumps(merged_result, indent=4))
     return merged_result
 
-
+@profile
 def construct_subgraph_for_claim(claim_text):
     not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text, '')
     phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
@@ -93,6 +94,7 @@ def construct_subgraph_for_claim(claim_text):
     return claim_d
 
 
+@profile()
 def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
     claim_linked_phrases_l = claim_dict['linked_phrases_l']
     claim_graph = claim_dict['graph']
@@ -277,5 +279,5 @@ if __name__ == '__main__':
     s9 = 'Tap Tap was a series of rhythm games by Tapulous available for the iOS of which several versions , both purchasable and free , have been produced .'
     s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
     s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
-    claim_dict = construct_subgraph_for_claim(s8)
-    construct_subgraph_for_candidate(claim_dict, s9, doc_title='Chanhassen High School')
+    # claim_dict = construct_subgraph_for_claim(s8)
+    # construct_subgraph_for_candidate(claim_dict, s9, doc_title='Chanhassen High School')

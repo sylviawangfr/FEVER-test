@@ -6,6 +6,8 @@ import config
 import nltk
 from datetime import datetime
 import log_util
+from memory_profiler import profile
+
 
 DEFAULT_GRAPH = "http://dbpedia.org"
 PREFIX_DBO = "http://dbpedia.org/ontology/"
@@ -18,6 +20,7 @@ RECORD_LIMIT = 200
 log = log_util.get_logger('dbpedia_virtuoso')
 
 
+@profile
 def get_triples(query_str):
     # log.debug("virtuoso query str: " + query_str)
     start = datetime.now()

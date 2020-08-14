@@ -10,6 +10,7 @@ import itertools
 import numpy as np
 import sklearn.metrics.pairwise as pw
 import dateutil.parser as dateutil
+from memory_profiler import profile
 
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
@@ -23,6 +24,7 @@ SCORE_CONFIDENCE_2 = 0.85
 log = log_util.get_logger('dbpedia_triple_linker')
 
 
+@profile()
 def get_phrases(sentence, doc_title=''):
     log.debug(sentence)
     if doc_title != '' and c_scorer.SENT_DOC_TITLE in sentence and sentence.startswith(doc_title):
@@ -104,7 +106,7 @@ def merge_chunks_with_entities(chunks, ents):
             merged.append(c)
     return merged
 
-
+@profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)

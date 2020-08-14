@@ -10,6 +10,7 @@ from nltk.stem.wordnet import WordNetLemmatizer
 # nlp_eng = spacy.load("en_core_web_lg")
 nlp = spacy.load("en_core_web_sm")
 
+# used part of codes from https://github.com/NSchrading/intro-spacy-nlp.git
 
 def split_claim_spacy(text):
     # doc_multi = nlp_multi(text)

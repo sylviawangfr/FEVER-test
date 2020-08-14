@@ -148,9 +148,10 @@ class DBpediaGATSampler(object):
         if len(edge_embeddings) > 0:
             edge_embeddings = edge_embeddings.tolist()
             all_edge_embeddings_l = []
+            feature_dim = len(edge_embeddings[0])
             for idx, p in enumerate(zip(start_nums, end_nums)):
                 if p[0] == p[1]:
-                    all_edge_embeddings_l.append([0] * 768)
+                    all_edge_embeddings_l.append([0] * feature_dim)
                 else:
                     all_edge_embeddings_l.append(edge_embeddings.pop(0))
             all_edge_embeddings = np.array(all_edge_embeddings_l, dtype=np.float32)

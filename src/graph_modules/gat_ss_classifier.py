@@ -153,7 +153,7 @@ class GATLayer(nn.Module):
 class GATClassifier(nn.Module):
     def __init__(self, in_dim, hidden_dim, num_heads, n_classes):
         super(GATClassifier, self).__init__()
-        self.node_alignment = Node_Alignment(768, 768)
+        self.node_alignment = Node_Alignment(in_dim, hidden_dim)
 
         self.gat_layers = nn.ModuleList([
             GATLayer(in_dim, hidden_dim, num_heads),    # aligned node embedding = in_dim
@@ -209,10 +209,12 @@ def collate(samples):
 def train():
     lr = 1e-4
     epoches = 300
+    dim = 768
+    head = 4
     # Create training and test sets.
     data_train, data_dev = concat_tmp_data()
     trainset = DBpediaGATSampler(data_train, parallel=True)
-    model = GATClassifier(768, 768, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
+    model = GATClassifier(dim, dim, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     is_cuda = True if torch.cuda.is_available() else False
@@ -317,7 +319,7 @@ def eval(model, dbpedia_data):
 
 def concat_tmp_data():
     data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl")
-    # data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl"))
+    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_40000.jsonl"))
     data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10000.jsonl"))
     data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
     data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))

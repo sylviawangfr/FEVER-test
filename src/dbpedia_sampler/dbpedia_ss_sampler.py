@@ -173,10 +173,12 @@ def tfidf_to_graph_sampler(tfidf_data):
 def test_memory(tfidf_data):
     # sample_dataloader = DataLoader(tfidf_data, batch_size=10, collate_fn=collate)
     sample_dataloader = BasketIterable(tfidf_data, 10)
+
     for batch, batched_sample in enumerate(sample_dataloader):
-        print(f"{batch}, {len(batched_sample)}")
         t = list(range(1000*1000))
         gc.collect()
+
+    gc.collect()
 
     sample_dataloader = BasketIterable(tfidf_data, 10)
     for batched_sample in sample_dataloader:

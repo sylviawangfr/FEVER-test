@@ -141,6 +141,7 @@ def collate(samples):
     return samples
 
 
+@profile
 def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3

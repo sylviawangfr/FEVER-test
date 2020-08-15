@@ -181,6 +181,11 @@ def test_memory():
 
     gc.collect()
 
+    for batch, batched_sample in enumerate(list(range(5))):
+        t = list(range(1000*1000))
+        gc.collect()
+
+    gc.collect()
 
     for batch, batched_sample in enumerate(range(5)):
         t = list(range(1000*1000))
@@ -191,18 +196,19 @@ def test_memory():
     for batched_sample in range(5):
         t = list(range(1000*1000))
         gc.collect()
+    gc.collect()
     return
 
 
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:50]
-    tfidf_to_graph_sampler(tfidf_dev_data)
-
+    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:50]
+    # tfidf_to_graph_sampler(tfidf_dev_data)
+    #
 
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[52870:60000]
     # tfidf_to_graph_sampler(tfidf_train_data)
     # print(globals())
     # print(json.dumps(globals(), indent=1))
-    # test_memory()
+    test_memory()

@@ -254,7 +254,7 @@ def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l, verb_
     all_date_properties = []
     for res in linked_phrases_l:
         one_hop = get_one_hop(res)
-        for idx_o, tri in enumerate(one_hop):
+        for tri in one_hop:
             if 'datatype' in tri and tri['datatype'] == 'date':
                 all_date_properties.append(tri)
     if len(all_date_properties) < 1:
@@ -306,7 +306,7 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
     embedding1 = keyword_embeddings['not_linked_phrases_l']
     if len(embedding1) == 0:
         with_verbs = []
-        for idx, p in enumerate(not_linked_phrases_l):
+        for p in not_linked_phrases_l:
             if is_date_or_number(p) and p in verb_d:
                 with_verbs.append(verb_d[p]['verb'] + " " + p)
             else:

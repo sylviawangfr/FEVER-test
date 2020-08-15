@@ -155,8 +155,9 @@ def tfidf_to_graph_sampler(tfidf_data):
     # thread_name = threading.current_thread().getName()
     # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
     sample_dataloader = BasketIterable(tfidf_data, batch_size)
+    batch = 0
     with tqdm(total=len(sample_dataloader), desc=f"Sampling") as pbar:
-        for batch, batched_sample in enumerate(sample_dataloader):
+        for batched_sample in sample_dataloader:
             paras.upstream_data = batched_sample
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
@@ -164,6 +165,7 @@ def tfidf_to_graph_sampler(tfidf_data):
             save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
                                     config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
+            batch += 1
             rt = gc.collect()
             print("%d unreachable" % rt)
     return
@@ -191,11 +193,11 @@ def test_memory(tfidf_data):
 if __name__ == '__main__':
     # multi_thread_sampler()
     tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:50]
-    # tfidf_to_graph_sampler(tfidf_dev_data)
+    tfidf_to_graph_sampler(tfidf_dev_data)
 
 
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[52870:60000]
     # tfidf_to_graph_sampler(tfidf_train_data)
     # print(globals())
     # print(json.dumps(globals(), indent=1))
-    test_memory(tfidf_dev_data)
+    # test_memory(tfidf_dev_data)

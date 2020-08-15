@@ -42,7 +42,7 @@ def construct_subgraph(sentence, doc_title=''):
     # print(json.dumps(merged_result, indent=4))
     return merged_result
 
-@profile
+
 def construct_subgraph_for_claim(claim_text):
     not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text, '')
     phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
@@ -94,7 +94,6 @@ def construct_subgraph_for_claim(claim_text):
     return claim_d
 
 
-@profile()
 def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
     claim_linked_phrases_l = claim_dict['linked_phrases_l']
     claim_graph = claim_dict['graph']

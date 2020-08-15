@@ -1,13 +1,11 @@
 from bert_serving.client import BertClient
 import config
-from memory_profiler import profile
 from datetime import datetime
 import log_util
 
 log = log_util.get_logger('bert_similarity')
 
 
-@profile
 def get_phrase_embedding(phrases):
     try:
         start = datetime.now()

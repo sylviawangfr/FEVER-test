@@ -20,7 +20,6 @@ RECORD_LIMIT = 200
 log = log_util.get_logger('dbpedia_virtuoso')
 
 
-@profile
 def get_triples(query_str):
     # log.debug("virtuoso query str: " + query_str)
     start = datetime.now()

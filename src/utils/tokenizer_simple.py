@@ -9,7 +9,7 @@ import regex
 # nlp_eng = spacy.load("en_core_web_lg")
 nlp_eng_spacy = spacy.load("en_core_web_sm")
 
-@profile
+
 def split_claim_spacy(text):
     # doc_multi = nlp_multi(text)
     doc_noun = nlp_eng_spacy(text)

@@ -5,10 +5,7 @@ import config
 from spacy.tokens import Doc, Span, Token
 import regex
 from nltk.stem.wordnet import WordNetLemmatizer
-
-# nlp_eng = spacy.load("en_core_web_md")
-# nlp_eng = spacy.load("en_core_web_lg")
-nlp = spacy.load("en_core_web_sm")
+from utils.tokenizer_simple import nlp_eng_spacy as nlp
 
 # used part of codes from https://github.com/NSchrading/intro-spacy-nlp.git
 

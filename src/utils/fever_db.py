@@ -18,7 +18,6 @@ def get_cursor(save_path=str(config.FEVER_DB)):
     return cursor, conn
 
 
-@profile
 def get_evidence(cursor, doc_id, line_num):
     key = f'{doc_id}(-.-){line_num}'
     # print("SELECT * FROM sentences WHERE id = \"%s\"" % key)

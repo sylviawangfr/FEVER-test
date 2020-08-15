@@ -17,7 +17,7 @@ from utils.common import iter_baskets_contiguous
 log = log_util.get_logger("dbpedia_ss_sampler")
 
 
-@profile
+# @profile
 def get_tfidf_sample(paras: bert_para.BERT_para):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model

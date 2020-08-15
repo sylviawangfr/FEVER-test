@@ -5,13 +5,13 @@ from memory_profiler import profile
 
 import BERT_sampler.ss_sampler as ss_sampler
 import log_util
-from utils import text_clean
 import utils.check_sentences
 import utils.common_types as bert_para
 from dbpedia_sampler import dbpedia_subgraph
 from utils import fever_db, c_scorer
 from utils.file_loader import *
 from utils.iter_basket import BasketIterable
+from utils.text_clean import convert_brc
 
 log = log_util.get_logger("dbpedia_ss_sampler")
 
@@ -82,15 +82,15 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
         all_sent_list = ss_sampler.convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
                                                   id_tokenized=True)
 
-        claim_dict = dbpedia_subgraph.construct_subgraph_for_claim(text_clean.convert_brc(item['claim']))
+        claim_dict = dbpedia_subgraph.construct_subgraph_for_claim(convert_brc(item['claim']))
         example_l = []
         for i, sent_item in enumerate(all_sent_list):
             sent_item['selection_id'] = str(item['id']) + "<##>" + str(sent_item['sid'])
             if 'label' in item.keys():
                 sent_item['claim_label'] = item['label']
-            sentence = text_clean.convert_brc(sent_item['text'])
+            sentence = convert_brc(sent_item['text'])
             doc_title = sent_item['sid'].split(c_scorer.SENT_LINE)[0].replace("_", " ")
-            doc_title = text_clean.convert_brc(doc_title)
+            doc_title = convert_brc(doc_title)
             if sentence.startswith(f"{doc_title} - "):
                 sentence = sentence.replace(f"{doc_title} - ", "")
             sent_item['graph'] = dbpedia_subgraph.construct_subgraph_for_candidate(claim_dict, sentence, doc_title)

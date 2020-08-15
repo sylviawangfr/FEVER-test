@@ -1,19 +1,16 @@
+import copy
 import json
 import random
-import copy
-
-# from nli.mesim_wn_v1_0 import get_actual_data
-from sample_for_nli_esim.tf_idf_sample_v1_0 import select_sent_for_eval
-from sentence_retrieval_esim.nn_postprocess_ablation import score_converter_scaled
-from utils import fever_db, check_sentences
-import config
-import drqa_yixin.tokenizers
-from drqa_yixin.tokenizers import CoreNLPTokenizer
-from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
-from tqdm import tqdm
-from utils import c_scorer, text_clean, common
 from collections import Counter
+
 import numpy as np
+from tqdm import tqdm
+
+import config
+# from nli.mesim_wn_v1_0 import get_actual_data
+from sentence_retrieval_esim.nn_postprocess_ablation import score_converter_scaled
+from utils import c_scorer, common
+from utils import fever_db, check_sentences
 
 
 # def score_converter_scaled_with_bs(org_data_file, full_sent_list, scale_prob=0.5, delete_prob=True):

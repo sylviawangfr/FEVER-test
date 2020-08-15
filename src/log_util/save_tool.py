@@ -1,6 +1,7 @@
 import os
-import config
 from datetime import datetime
+
+import config
 
 
 def gen_file_prefix(model_name, date=None):

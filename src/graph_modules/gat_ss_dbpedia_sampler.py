@@ -1,12 +1,13 @@
-from dbpedia_sampler import bert_similarity
-import dgl
-import torch
-from dbpedia_sampler.util import uri_short_extract
-import numpy as np
-from utils.file_loader import *
-import threading
 import math
+import threading
 
+import dgl
+import numpy as np
+import torch
+
+from dbpedia_sampler import bert_similarity
+from dbpedia_sampler.util import uri_short_extract
+from utils.file_loader import *
 
 __all__ = ['DBpediaGATSampler']
 

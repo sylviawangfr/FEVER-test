@@ -1,5 +1,5 @@
-import sqlite3
 import queue
+import sqlite3
 import threading
 
 

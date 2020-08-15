@@ -2,8 +2,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import matplotlib.ticker
-import numpy as np
 import config
 from utils.file_loader import get_current_time_str
 

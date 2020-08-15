@@ -1,18 +1,18 @@
+import copy
 import json
 import random
-import copy
-
-from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
-from sample_for_nli_esim.adv_sampler_v01 import adv_sample_v1_0
-from utils import fever_db, check_sentences
-import config
-from utils import c_scorer, common
-
 from typing import Dict, List, Tuple
+
 from tqdm import tqdm
 
+import config
 from data_util.data_preperation.tokenize_fever import easy_tokenize
+from sample_for_nli_esim.adv_sampler_v01 import adv_sample_v1_0
+from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
+from utils import c_scorer, common
+from utils import fever_db, check_sentences
 from utils.file_loader import read_json_rows
+
 
 def load_data(file):
     d_list = []

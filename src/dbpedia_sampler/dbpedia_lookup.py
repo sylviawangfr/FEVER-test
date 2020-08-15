@@ -1,11 +1,12 @@
-import requests
-import xmltodict
-import config
-from dbpedia_sampler.dbpedia_virtuoso import uri_short_extract
 import difflib
 from datetime import datetime
+
+import requests
+import xmltodict
+
+import config
 import log_util
-from memory_profiler import profile
+from dbpedia_sampler.dbpedia_virtuoso import uri_short_extract
 
 log = log_util.get_logger('lookup_resource')
 

@@ -1,13 +1,14 @@
+from collections import Counter
+from itertools import chain
+
+import numpy as np
 import six
+
+import config
 import utils
 import utils.check_sentences
-from collections import Counter
-import numpy as np
-from utils.file_loader import save_intermidiate_results, read_json_rows
-import config
 from utils import fever_db
-from itertools import chain
-import os
+from utils.file_loader import save_intermidiate_results, read_json_rows
 
 SENT_LINE = '<SENT_LINE>'
 SENT_DOC_TITLE = ' - '

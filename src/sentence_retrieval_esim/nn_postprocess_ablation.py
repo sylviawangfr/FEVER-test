@@ -1,7 +1,8 @@
+from tqdm import tqdm
+
+import config
 from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 from utils import common, c_scorer
-import config
-from tqdm import tqdm
 from utils.file_loader import read_json_rows
 
 

@@ -1,6 +1,8 @@
-from bert_serving.client import BertClient
-import config
 from datetime import datetime
+
+from bert_serving.client import BertClient
+
+import config
 import log_util
 
 log = log_util.get_logger('bert_similarity')

@@ -6,9 +6,10 @@
 # LICENSE file in the root directory of this source tree.
 """Various retriever utilities."""
 
-import regex
 import unicodedata
+
 import numpy as np
+import regex
 import scipy.sparse as sp
 from sklearn.utils import murmurhash3_32
 

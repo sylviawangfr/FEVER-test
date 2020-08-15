@@ -6,17 +6,20 @@ Requires punkt,
 nltk.download('punkt')
 """
 
+import copy
+
 import nltk
 from nltk import pos_tag
-from nltk.stem import WordNetLemmatizer
-import copy
-from .tokenizer import Tokens, Tokenizer
 from nltk.chunk import tree2conlltags
-from nltk.parse import CoreNLPParser
 from nltk.parse import CoreNLPDependencyParser
+from nltk.parse import CoreNLPParser
+from nltk.stem import WordNetLemmatizer
 
-from nltk.parse.dependencygraph import *
-from nltk.tree import *
+from .tokenizer import Tokens, Tokenizer
+
+
+# from nltk.parse.dependencygraph import *
+# from nltk.tree import *
 
 
 

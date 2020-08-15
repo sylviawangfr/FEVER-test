@@ -1,11 +1,10 @@
-from allennlp.data.fields import MetadataField
 from typing import Dict
 
 import numpy
 import torch
-from overrides import overrides
-
+from allennlp.data.fields import MetadataField
 from allennlp.data.fields.field import Field
+from overrides import overrides
 
 
 class IdField(MetadataField):

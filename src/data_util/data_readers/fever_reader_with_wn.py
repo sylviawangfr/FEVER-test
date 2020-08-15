@@ -1,20 +1,17 @@
+import logging
 from typing import Dict
 
-from overrides import overrides
-import logging
-
+from allennlp.data import Token
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-
-from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.fields import Field, TextField, LabelField, ArrayField
 from allennlp.data.instance import Instance
-from allennlp.data import Token
+from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
+from overrides import overrides
+from wn_featurizer import wn_persistent_api
 
 from data_util.customized_field import IdField
 
 # from pathlib import Path
-
-from wn_featurizer import wn_persistent_api
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 

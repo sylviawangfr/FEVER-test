@@ -9,8 +9,10 @@
 Requires spaCy package and the spaCy english model.
 """
 
-import spacy
 import copy
+
+import spacy
+
 from .tokenizer import Tokens, Tokenizer
 
 

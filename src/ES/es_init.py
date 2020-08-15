@@ -1,10 +1,12 @@
 # elastic search
-from utils.file_loader import *
-import config
-from elasticsearch import Elasticsearch
-import elasticsearch.helpers as ESH
-from elasticsearch_dsl import Search, Q
 import sys
+
+import elasticsearch.helpers as ESH
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search, Q
+
+import config
+from utils.file_loader import *
 
 client = Elasticsearch([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT, 'timeout': 300, 'max_retries': 10, 'retry_on_timeout': True}])
 

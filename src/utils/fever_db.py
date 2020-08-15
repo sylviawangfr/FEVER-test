@@ -1,14 +1,14 @@
-import sqlite3
 from utils.file_loader import *
-from utils import text_clean
-from tqdm import tqdm
-import config
 import json
 import re
-from utils.sqlite_queue import *
-import log_util
-from memory_profiler import profile
 
+from tqdm import tqdm
+
+import config
+import log_util
+from utils import text_clean
+from utils.file_loader import *
+from utils.sqlite_queue import *
 
 log = log_util.get_logger("fever_db")
 # Write some standard API for query information

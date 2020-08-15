@@ -1,6 +1,7 @@
-from utils.text_clean import *
-from utils.common import *
 from pathlib import Path
+
+from utils.common import *
+from utils.text_clean import *
 
 
 def read_json_rows(file):

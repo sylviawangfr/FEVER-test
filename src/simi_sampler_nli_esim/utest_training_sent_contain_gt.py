@@ -1,12 +1,12 @@
 # This is for utest for whether training sentences contain all the sentences.
 from typing import Tuple
 
-import utils.common
 from tqdm import tqdm
-from utils import c_scorer, check_sentences
-import config
-from simi_sampler_nli_esim import simi_sampler
 
+import config
+import utils.common
+from simi_sampler_nli_esim import simi_sampler
+from utils import check_sentences
 
 if __name__ == '__main__':
     train_sent_list = utils.common.load_jsonl("/Users/Eason/RA/FunEver/results/sent_retri_nn/2018_07_20_15-17-59_r/train_sent.jsonl")

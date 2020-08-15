@@ -1,12 +1,12 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-from utils.text_clean import *
+
 import BERT_sampler.nli_nn_sampler as nli_nn_sampler
 import BERT_sampler.nli_tfidf_sampler as nli_tfidf_sampler
 import BERT_sampler.ss_sampler as ss_sampler
 import utils.common_types as bert_para
-
+from utils.text_clean import *
 
 logger = logging.getLogger(__name__)
 

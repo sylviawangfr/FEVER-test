@@ -5,17 +5,17 @@ Neural sentence selector aimed to fine-select sentence for NLI models since NLI 
 """
 
 
-from utils import fever_db, common, c_scorer
-
-from data_util.data_preperation.tokenize_fever import easy_tokenize
-import utils.check_sentences
 import itertools
-import numpy as np
 from collections import Counter
-import log_util
-from utils.file_loader import *
-import utils.common_types as bert_para
 
+import numpy as np
+
+import log_util
+import utils.check_sentences
+import utils.common_types as bert_para
+from data_util.data_preperation.tokenize_fever import easy_tokenize
+from utils import common, c_scorer
+from utils.file_loader import *
 
 logger = log_util.get_logger('ss_sampler')
 

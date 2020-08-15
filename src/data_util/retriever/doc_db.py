@@ -7,8 +7,9 @@
 """Documents, in a sqlite database."""
 
 import sqlite3
-from data_util.retriever import utils
+
 from data_util.retriever import DEFAULTS
+from data_util.retriever import utils
 
 
 class DocDB(object):

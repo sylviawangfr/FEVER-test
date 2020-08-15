@@ -1,11 +1,11 @@
+import functools
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-import numpy as np
-import functools
-
 from allennlp.nn.util import get_lengths_from_binary_sequence_mask
+from torch.autograd import Variable
 
 
 def get_length_and_mask(seq):

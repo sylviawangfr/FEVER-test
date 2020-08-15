@@ -1,24 +1,20 @@
+import logging
+import random
 from typing import Dict, List, Tuple
 
-from overrides import overrides
-import logging
 import numpy as np
-import random
-
-from wn_featurizer.additional_feature import encode_num_in_ltokens
-
+from allennlp.data import Token
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-
-from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.fields import Field, TextField, LabelField, ArrayField
 from allennlp.data.instance import Instance
-from allennlp.data import Token
+from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
+from overrides import overrides
+from wn_featurizer import wn_persistent_api
+from wn_featurizer.additional_feature import encode_num_in_ltokens
 
 from data_util.customized_field import IdField
 
 # from pathlib import Path
-
-from wn_featurizer import wn_persistent_api
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 

@@ -1,24 +1,21 @@
+import os
+
 import torch
+import torch.nn.functional as F
+import torch.optim as optim
 from allennlp.data.iterators import BasicIterator
 from allennlp.data.token_indexers import SingleIdTokenIndexer, ELMoTokenCharactersIndexer
 from allennlp.modules import Embedding, Elmo
 from torch import nn
-
-import os
-
-import config
-from data_util.data_readers.fever_reader import BasicReader
-from data_util.data_preperation.exvocab import load_vocab_embeddings
-
-from log_util import save_tool
-
-from flint import torch_util
-import torch.optim as optim
-import torch.nn.functional as F
 from tqdm import tqdm
 
+import config
+from data_util.data_preperation.exvocab import load_vocab_embeddings
+from data_util.data_readers.fever_reader import BasicReader
+from flint import torch_util
+from log_util import save_tool
 from neural_modules import biDafAttn
-from sample_for_nli_esim.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval, convert_evidence2scoring_format
+from sample_for_nli_esim.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval
 from utils import c_scorer
 
 

@@ -1,14 +1,16 @@
-import utils.check_sentences
 import itertools
-from utils.file_loader import *
-import utils.common_types as bert_para
-import BERT_sampler.ss_sampler as ss_sampler
-from utils import fever_db, c_scorer
-from dbpedia_sampler import dbpedia_subgraph
-import log_util
-from torch.utils.data import DataLoader
-import threading
+
+import gc
 from memory_profiler import profile
+
+import BERT_sampler.ss_sampler as ss_sampler
+import log_util
+import utils.check_sentences
+import utils.common_types as bert_para
+from dbpedia_sampler import dbpedia_subgraph
+from utils import fever_db, c_scorer
+from utils.file_loader import *
+from utils.iter_basket import BasketIterable
 
 log = log_util.get_logger("dbpedia_ss_sampler")
 
@@ -140,38 +142,42 @@ def collate(samples):
     return samples
 
 
-# @profile
 def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3
     paras.pred = False
     batch_size = 10
     dt = get_current_time_str()
-    thread_name = threading.current_thread().getName()
-    sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
-    with tqdm(total=len(sample_dataloader), desc=f"Sampling in {thread_name}") as pbar:
+    # thread_name = threading.current_thread().getName()
+    # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
+    sample_dataloader = BasketIterable(tfidf_data, batch_size)
+    with tqdm(total=len(sample_dataloader), desc=f"Sampling") as pbar:
         for batch, batched_sample in enumerate(sample_dataloader):
             paras.upstream_data = batched_sample
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
             log.info(f"total count: {num}")
-            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{thread_name}_{dt}.jsonl",
-                                    config.LOG_PATH / f"sample_ss_graph_{thread_name}_{dt}.log")
+            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+                                    config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
+            gc.collect()
     return
 
 
-# def multi_thread_sampler():
-#     data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[40000:50000]
-#     # data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:6]
-#     data_iter = iter_baskets_contiguous(data, 5000)
-#     thread_exe(tfidf_to_graph_sampler, data_iter, 2, "Multi_thread_sampler\n")
-#     print("done")
+@profile
+def test_memory(tfidf_data):
+    # sample_dataloader = DataLoader(tfidf_data, batch_size=10, collate_fn=collate)
+    sample_dataloader = iter_baskets_contiguous(tfidf_data, 501)
+    for batch, batched_sample in enumerate(sample_dataloader):
+        print(f"{batch}, {len(batched_sample)}")
+        gc.collect()
+    return
 
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
-    # prepare_train_data_filter_tfidf(tfidf_dev_data)
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[50000:60000]
+    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:500]
+    # tfidf_to_graph_sampler(tfidf_dev_data)
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[60000:70000]
     tfidf_to_graph_sampler(tfidf_train_data)
+    # test_memory(tfidf_dev_data)

@@ -1,7 +1,8 @@
+from utils.check_sentences import check_doc_id
 from utils.fever_db import *
 from utils.file_loader import save_file
 from utils.text_clean import convert_brc
-from utils.check_sentences import check_doc_id
+
 
 def convert_wiki_to_bert_format():
     wiki_data = ''

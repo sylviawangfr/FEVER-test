@@ -2,41 +2,37 @@
 # Aim to improve NLI with document retrieval relatedness score.
 
 # This is the one with shortcut
-import random
+
+import copy
+import os
 
 import torch
+import torch.nn.functional as F
+import torch.optim as optim
 from allennlp.data.iterators import BasicIterator
 from allennlp.data.token_indexers import SingleIdTokenIndexer, ELMoTokenCharactersIndexer
 from allennlp.modules import Embedding, Elmo
-
-from data_util.data_readers.fever_reader_with_wn_simi import WNSIMIReader
-from data_util.data_readers.fever_reader_with_wn_simi_doc import WNDocSIMIReader
-from sample_for_nli_esim.tf_idf_sample_v1_0 import *
-from neural_modules.ema import EMA
-from sample_for_nli_esim.adv_sampler_v01 import get_adv_sampled_data
-from sentence_retrieval_esim.nn_postprocess_ablation import score_converter_scaled
 from torch import nn
-import copy
-from neural_modules.ema import load_ema_to_model, save_ema_to_file
-import os
+from tqdm import tqdm
 
 import config
-
 from data_util.data_preperation.exvocab import load_vocab_embeddings
+from data_util.data_readers.fever_reader_with_wn_simi import WNSIMIReader
+from data_util.data_readers.fever_reader_with_wn_simi_doc import WNDocSIMIReader
+from flint import torch_util
+from log_util import save_tool
+from neural_modules import biDafAttn
+from neural_modules.ema import EMA
+from neural_modules.ema import load_ema_to_model, save_ema_to_file
+from sample_for_nli_esim.tf_idf_sample_v1_0 import *
+from sentence_retrieval_esim.nn_postprocess_ablation import score_converter_scaled
 from simi_sampler_nli_esim.simi_sampler import paired_selection_score_dict, threshold_sampler, \
     select_sent_with_prob_for_eval, adv_simi_sample_with_prob_v1_0, adv_simi_sample_with_prob_v1_1, \
     paired_selection_score_dict_for_doc, adv_simi_sample_with_prob_v1_0_with_doc, select_sent_with_prob_doc_for_eval
+from utils import c_scorer
 from utils import common
 
-from log_util import save_tool
 
-from flint import torch_util
-import torch.optim as optim
-import torch.nn.functional as F
-from tqdm import tqdm
-
-from neural_modules import biDafAttn
-from utils import c_scorer
 # from wn_featurizer import wn_persistent_api
 
 

@@ -1,7 +1,6 @@
-from utils.tokenizer_simple import *
-from utils import c_scorer, text_clean
 import log_util
-from memory_profiler import profile
+from utils import c_scorer, text_clean
+from utils.tokenizer_simple import *
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',

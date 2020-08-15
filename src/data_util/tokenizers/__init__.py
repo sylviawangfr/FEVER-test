@@ -5,19 +5,17 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
-
 # DEFAULTS = {
 #     'corenlp_classpath': os.getenv('CLASSPATH')
 # }
 
 
+from data_util.tokenizers.nltk_tokenizer import NLTKTokenizer
 # def set_default(key, value):
 #     # global DEFAULTS
 #     DEFAULTS[key] = value
 from data_util.tokenizers.regexp_tokenizer import RegexpTokenizer
 from data_util.tokenizers.simple_tokenizer import SimpleTokenizer
-from data_util.tokenizers.nltk_tokenizer import NLTKTokenizer
 
 # Spacy is optional
 try:

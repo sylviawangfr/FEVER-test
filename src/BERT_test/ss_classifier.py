@@ -18,32 +18,25 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import sys
 import random
+import sys
 
-import numpy as np
 import torch
-from sklearn.utils.extmath import softmax
-from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
-                              TensorDataset)
-from torch.utils.data.distributed import DistributedSampler
-from tqdm import tqdm, trange
-
-from torch.nn import CrossEntropyLoss, MSELoss
-from sklearn.metrics import matthews_corrcoef, f1_score
-
 from pytorch_pretrained_bert.file_utils import PYTORCH_PRETRAINED_BERT_CACHE, WEIGHTS_NAME, CONFIG_NAME
-from pytorch_pretrained_bert.modeling import BertForSequenceClassification, BertConfig
-from pytorch_pretrained_bert.tokenization import BertTokenizer
+from pytorch_pretrained_bert.modeling import BertForSequenceClassification
 from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
+from pytorch_pretrained_bert.tokenization import BertTokenizer
+from sklearn.metrics import f1_score
+from torch.nn import CrossEntropyLoss
+from torch.utils.data import (DataLoader, RandomSampler, TensorDataset)
+from torch.utils.data.distributed import DistributedSampler
+from tqdm import tqdm
 
-from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, save_file, save_intermidiate_results
-from BERT_test.bert_data_processor import *
-from BERT_test.nli_eval import eval_nli_and_save
-from BERT_test.ss_eval import eval_ss_and_save
-import config
 import utils.common_types as bert_para
+from BERT_test.bert_data_processor import *
+from BERT_test.ss_eval import eval_ss_and_save
 from data_util.toChart import *
+from utils.file_loader import read_json_rows
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 import json
 import sqlite3
-from memory_profiler import profile
+
 from tqdm import tqdm
 
 

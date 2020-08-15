@@ -18,30 +18,26 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import sys
 import random
 
-import numpy as np
 import torch
+from pytorch_pretrained_bert.file_utils import PYTORCH_PRETRAINED_BERT_CACHE, WEIGHTS_NAME, CONFIG_NAME
+from pytorch_pretrained_bert.modeling import BertForSequenceClassification
+from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
+from pytorch_pretrained_bert.tokenization import BertTokenizer
+from sklearn.metrics import f1_score
+from torch.nn import CrossEntropyLoss
 from torch.utils.data import (DataLoader, RandomSampler,
                               TensorDataset)
 from torch.utils.data.distributed import DistributedSampler
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
-from torch.nn import CrossEntropyLoss
-from sklearn.metrics import f1_score
-
-from pytorch_pretrained_bert.file_utils import PYTORCH_PRETRAINED_BERT_CACHE, WEIGHTS_NAME, CONFIG_NAME
-from pytorch_pretrained_bert.modeling import BertForSequenceClassification
-from pytorch_pretrained_bert.tokenization import BertTokenizer
-from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
-
-from utils.file_loader import read_json_rows
+import utils.common_types as bert_para
 from BERT_test.bert_data_processor import *
 from BERT_test.nli_eval import eval_nli_and_save
-import utils.common_types as bert_para
 from data_util.toChart import *
 from utils.file_loader import get_current_time_str
+from utils.file_loader import read_json_rows
 
 logger = logging.getLogger(__name__)
 

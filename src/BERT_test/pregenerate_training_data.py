@@ -1,16 +1,18 @@
-from argparse import ArgumentParser
-from pathlib import Path
-from tqdm import tqdm, trange
-from tempfile import TemporaryDirectory
-import shelve
-from multiprocessing import Pool
-
-from random import random, randrange, randint, shuffle, choice
-from pytorch_pretrained_bert.tokenization import BertTokenizer
-import numpy as np
-import json
 import collections
+import json
+import shelve
+from argparse import ArgumentParser
+from multiprocessing import Pool
+from pathlib import Path
+from random import random, randrange, randint, shuffle, choice
+from tempfile import TemporaryDirectory
+
+import numpy as np
+from pytorch_pretrained_bert.tokenization import BertTokenizer
+from tqdm import tqdm, trange
+
 import config
+
 
 class DocumentDatabase:
     def __init__(self, reduce_memory=False):

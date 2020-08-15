@@ -1,5 +1,3 @@
-from doc_retriv.doc_retrieve import get_doc_ids_and_fever_score
-from utils.file_loader import *
 from utils.c_scorer import *
 
 time = "aug05_top10_"

@@ -17,28 +17,23 @@
 
 from __future__ import absolute_import, division, print_function
 
+from typing import Dict
 
-import numpy as np
 import torch
+from pytorch_pretrained_bert.modeling import BertForSequenceClassification
+from pytorch_pretrained_bert.tokenization import BertTokenizer
 from sklearn.utils.extmath import softmax
+from torch.nn import CrossEntropyLoss
 from torch.utils.data import (DataLoader, SequentialSampler,
                               TensorDataset)
 from tqdm import tqdm
 
-from torch.nn import CrossEntropyLoss
-
-from pytorch_pretrained_bert.modeling import BertForSequenceClassification
-from pytorch_pretrained_bert.tokenization import BertTokenizer
-
-from utils.file_loader import save_jsonl, read_json_rows, get_current_time_str, save_file, save_intermidiate_results
-from typing import Dict
-from utils import c_scorer
-from BERT_test.bert_data_processor import *
-import config
 import utils.common_types as bert_para
+from BERT_test.bert_data_processor import *
 from BERT_test.eval_util import compute_metrics
 from data_util.toChart import *
-
+from utils import c_scorer
+from utils.file_loader import read_json_rows, save_file, save_intermidiate_results
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,9 @@
-from utils.tokenizer_simple import *
 from ES.es_search import search_and_merge
 from utils.c_scorer import *
+from utils.common import thread_exe
 from utils.fever_db import *
 from utils.file_loader import read_json_rows, get_current_time_str
-from utils.common import thread_exe
+from utils.tokenizer_simple import *
 
 
 def retrieve_docs(claim):

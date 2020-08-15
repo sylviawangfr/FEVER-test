@@ -1,24 +1,20 @@
+import logging
+import random
 from typing import Dict, List, Tuple
 
-from overrides import overrides
-import logging
 import numpy as np
-import random
-
-from allennlp.data.fields import MetadataField
-
-from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-
-from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
-from allennlp.data.fields import Field, TextField, LabelField, ArrayField
-from allennlp.data.instance import Instance
 from allennlp.data import Token
+from allennlp.data.dataset_readers.dataset_reader import DatasetReader
+from allennlp.data.fields import Field, TextField, LabelField, ArrayField
+from allennlp.data.fields import MetadataField
+from allennlp.data.instance import Instance
+from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
+from overrides import overrides
 
 from data_util.customized_field import IdField
+from data_util.paragraph_span import ParagraphSpan
 
 # from pathlib import Path
-
-from data_util.paragraph_span import ParagraphSpan
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 

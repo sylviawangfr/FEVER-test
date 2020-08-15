@@ -1,6 +1,6 @@
 import json
 import sqlite3
-from collections import Counter
+
 from tqdm import tqdm
 
 

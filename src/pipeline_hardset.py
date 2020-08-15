@@ -1,8 +1,7 @@
-from doc_retriv.doc_retrieve import get_doc_ids_and_fever_score
-from utils.file_loader import *
-from sentence_retrieval_esim.drqa_online_tfidf import tfidf_sentense_selection
-from BERT_test.ss_eval import *
 from BERT_test.nli_eval import *
+from BERT_test.ss_eval import *
+from doc_retriv.doc_retrieve import get_doc_ids_and_fever_score
+from sentence_retrieval_esim.drqa_online_tfidf import tfidf_sentense_selection
 
 time = "june22"
 

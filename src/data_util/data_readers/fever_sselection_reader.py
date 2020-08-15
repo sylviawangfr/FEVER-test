@@ -1,14 +1,12 @@
+import logging
 from typing import Dict
 
-from overrides import overrides
-import logging
-
+from allennlp.data import Token
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-
-from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.fields import Field, TextField, LabelField
 from allennlp.data.instance import Instance
-from allennlp.data import Token
+from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
+from overrides import overrides
 
 from data_util.customized_field import IdField
 

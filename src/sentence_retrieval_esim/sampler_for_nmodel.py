@@ -4,17 +4,17 @@ This file contains scripts to build or sample data for neural sentence selector.
 Neural sentence selector aimed to fine-select sentence for NLI models since NLI models are sensitive to data.
 """
 
-import json
+import itertools
 
+import numpy as np
+from tqdm import tqdm
+
+import config
+import utils.check_sentences
+from data_util.data_preperation.tokenize_fever import easy_tokenize
 from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
 from utils import fever_db, common, c_scorer
 from utils.file_loader import read_json_rows, get_current_time_str
-from tqdm import tqdm
-import config
-from data_util.data_preperation.tokenize_fever import easy_tokenize
-import utils.check_sentences
-import itertools
-import numpy as np
 
 
 def get_full_list(tokenized_data_file, additional_data_file, pred=False, top_k=None):

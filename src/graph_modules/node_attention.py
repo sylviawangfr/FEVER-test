@@ -1,7 +1,6 @@
-from torch import nn
 import torch
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import nn
 
 
 class Node_Alignment(nn.Module):

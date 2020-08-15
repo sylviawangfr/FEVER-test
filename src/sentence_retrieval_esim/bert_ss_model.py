@@ -2,40 +2,33 @@
 # The original goal of this file is for bert-as-feature with NSMN on FEVER for NAACL-2019.
 
 
-import torch
-import numpy as np
-from allennlp.data.iterators import BasicIterator
-
-
-from data_util.data_readers.fever_bert_reader import BertReader
-from data_util.data_readers.fever_bert_reader_sselection import BertSSReader
-
-from neural_modules.bert_servant import BertServant
-from torch import nn
 import os
 import random
 
-import config
+import numpy as np
+import torch
+import torch.nn.functional as F
+import torch.optim as optim
+from allennlp.data.iterators import BasicIterator
+from allennlp.modules import ScalarMix
+from torch import nn
+from tqdm import tqdm
 
+import config
 from data_util.data_preperation.exvocab import ExVocabulary
+from data_util.data_readers.fever_bert_reader import BertReader
+from data_util.data_readers.fever_bert_reader_sselection import BertSSReader
+from flint import torch_util
+from log_util import save_tool
+from neural_modules import activation as actf
+from neural_modules import biDafAttn
+from neural_modules.bert_servant import BertServant
 from sentence_retrieval_esim.sampler_for_nmodel import get_full_list
 from simi_sampler_nli_esim.simi_sampler import paired_selection_score_dict, \
     select_sent_with_prob_for_eval, adv_simi_sample_with_prob_v1_1
-from utils import common
-from utils.file_loader import read_json_rows, save_jsonl
-
-from log_util import save_tool
-
-from flint import torch_util
-import torch.optim as optim
-import torch.nn.functional as F
-from tqdm import tqdm
-
-from neural_modules import biDafAttn
-from neural_modules import activation as actf
-from utils import c_scorer
 from simi_sampler_nli_esim.simi_sampler import threshold_sampler_insure_unique
-from allennlp.modules import ScalarMix
+from utils import c_scorer
+from utils.file_loader import read_json_rows, save_jsonl
 
 
 class ESIM(nn.Module):

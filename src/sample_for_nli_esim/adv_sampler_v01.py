@@ -1,16 +1,16 @@
+import copy
 import json
 import random
-import copy
-
-from sentence_retrieval_esim.nn_postprocess_ablation import score_converter_scaled
-from utils import fever_db, check_sentences
-import config
-
-from tqdm import tqdm
-from utils import c_scorer, common, file_loader
 from collections import Counter
+
 import numpy as np
+from tqdm import tqdm
+
+import config
 from data_util.data_preperation.tokenize_fever import easy_tokenize
+from sentence_retrieval_esim.nn_postprocess_ablation import score_converter_scaled
+from utils import c_scorer, common, file_loader
+from utils import fever_db, check_sentences
 
 
 def load_data(file):

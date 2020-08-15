@@ -1,9 +1,6 @@
-import spacy
-from spacy.symbols import nsubj, dobj, pobj, VERB, ADP, AUX, acomp
-from spacy import displacy
-from memory_profiler import profile
-from spacy.tokens import Doc, Span, Token
 import regex
+import spacy
+from spacy.symbols import nsubj, dobj, pobj, VERB
 
 # nlp_eng = spacy.load("en_core_web_md")
 # nlp_eng = spacy.load("en_core_web_lg")

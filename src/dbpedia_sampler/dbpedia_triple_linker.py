@@ -1,17 +1,17 @@
-from utils.tokenizer_simple import *
-from dbpedia_sampler import dbpedia_lookup
-from dbpedia_sampler import dbpedia_virtuoso
-from dbpedia_sampler import bert_similarity
-from dbpedia_sampler import dbpedia_spotlight
-from utils import c_scorer, text_clean
-import log_util
 import difflib
 import itertools
+
+import dateutil.parser as dateutil
 import numpy as np
 import sklearn.metrics.pairwise as pw
-import dateutil.parser as dateutil
-from memory_profiler import profile
 
+import log_util
+from dbpedia_sampler import bert_similarity
+from dbpedia_sampler import dbpedia_lookup
+from dbpedia_sampler import dbpedia_spotlight
+from dbpedia_sampler import dbpedia_virtuoso
+from utils import c_scorer, text_clean
+from utils.tokenizer_simple import *
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
                'we', 'who', 'where', 'what', 'days', 'him', 'her','here', 'there', 'a', 'for',

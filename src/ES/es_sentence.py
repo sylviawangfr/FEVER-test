@@ -1,10 +1,11 @@
 # elastic search
 # alternative for sqlit , not in use due to slow query speed
-from utils.file_loader import *
-import config
-from elasticsearch import Elasticsearch
 import elasticsearch.helpers as ESH
+from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
+
+# import config
+from utils.file_loader import *
 
 es = Elasticsearch([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
 

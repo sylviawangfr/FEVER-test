@@ -1,10 +1,12 @@
 import concurrent.futures
-from tqdm import tqdm
-from utils import text_clean, fever_db
-import config
-import json
-from data_util.tokenizers import spacy_tokenizer
 import datetime
+import json
+
+from tqdm import tqdm
+
+import config
+from data_util.tokenizers import spacy_tokenizer
+from utils import text_clean, fever_db
 
 
 def thread_exe(func, pieces, thd_num, description):
@@ -20,29 +22,24 @@ def get_current_time_str():
 
 def wait_delay(d):
     print(d)
-    d_list = []
-    with open(d, encoding='utf-8', mode='r') as in_f:
-        for line in in_f:
-            item = json.loads(line.strip())
-            d_list.append(item)
-    print(len(d_list))
+    # d_list = []
+    # with open(d, encoding='utf-8', mode='r') as in_f:
+    #     for line in in_f:
+    #         item = json.loads(line.strip())
+    #         d_list.append(item)
+    # print(len(d_list))
 
-
-def test():
-    # print(len(list(config.WIKI_PAGE_PATH.iterdir())))
-    thread_exe(wait_delay, config.WIKI_PAGE_PATH.iterdir(), 5, "testing")
-    print("done")
 
 
 def iter_baskets_contiguous(items, bunch_size):
     item_count = len(items)
-    bunch_number_floor = len(items) // bunch_size
-    bunch_number_celling = bunch_number_floor + 1
-    for i in range(bunch_number_celling):
+    bunch_number = item_count // bunch_size if item_count % bunch_size == 0 else item_count // bunch_size + 1
+    for i in range(bunch_number):
         start = i * bunch_size
         stop = (i + 1) * bunch_size
         stop = item_count if stop > item_count else stop
-        yield [items[j] for j in range(start, stop)]
+        yield items[start:stop]
+
 
 class DocIdDict(object):
     def __init__(self):
@@ -96,3 +93,5 @@ def doc_id_to_tokenized_text(doc_id, including_lemmas=False):
         return tokenize_doc_id(doc_id, tokenizer_spacy)
     else:
         return ' '.join(tokenize_doc_id(doc_id, tokenizer_spacy)[0])
+
+

@@ -1,7 +1,9 @@
-import unicodedata
-import regex
 import re
+import unicodedata
+
+import regex
 from dateutil.parser import parse
+
 from data_util.tokenizers import SpacyTokenizer
 
 tok = SpacyTokenizer()

@@ -10,15 +10,17 @@ Author's code: https://github.com/PetarV-/GAT
 Pytorch implementation: https://github.com/Diego999/pyGAT
 """
 
+import argparse
+
+import dgl
 import numpy as np
 import torch
-import dgl
 import torch.nn.functional as F
-import argparse
-from sklearn.metrics import f1_score
-from graph_modules.gat import GAT
 from dgl.data.ppi import LegacyPPIDataset
+from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
+
+from graph_modules.gat import GAT
 
 
 def collate(sample):

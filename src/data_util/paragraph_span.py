@@ -1,7 +1,9 @@
 from typing import List, Tuple
-import torch
-from flint import torch_util
+
 import numpy as np
+import torch
+
+from flint import torch_util
 
 """
 Key concepts:

@@ -10,8 +10,10 @@ However it is purely in Python, supports robust untokenization, unicode,
 and requires minimal dependencies.
 """
 
-import regex
 import logging
+
+import regex
+
 from .tokenizer import Tokens, Tokenizer
 
 logger = logging.getLogger(__name__)

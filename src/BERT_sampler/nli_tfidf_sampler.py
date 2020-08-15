@@ -1,15 +1,16 @@
-import random
 import copy
-from utils import check_sentences
-
-from utils import c_scorer, common
-from collections import Counter
-import numpy as np
-from utils.file_loader import *
-from data_util.tokenizers import SpacyTokenizer
-from BERT_test.eval_util import convert_evidence2scoring_format
 import functools
 import operator
+import random
+from collections import Counter
+
+import numpy as np
+
+from BERT_test.eval_util import convert_evidence2scoring_format
+from data_util.tokenizers import SpacyTokenizer
+from utils import c_scorer, common
+from utils import check_sentences
+from utils.file_loader import *
 
 tok = SpacyTokenizer()
 

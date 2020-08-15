@@ -1,14 +1,13 @@
-import random
 import copy
-import itertools
-from utils import fever_db, check_sentences
-
-from utils import c_scorer, text_clean, common
+import random
 from collections import Counter
+
 import numpy as np
-from utils.file_loader import *
-import utils
+
 from data_util.tokenizers import SpacyTokenizer
+from utils import c_scorer, common
+from utils import check_sentences
+from utils.file_loader import *
 
 tok = SpacyTokenizer()
 

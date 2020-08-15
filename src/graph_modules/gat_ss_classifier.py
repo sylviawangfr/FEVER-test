@@ -1,15 +1,15 @@
 import dgl
 import dgl.function as fn
-from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
-from dgl.nn.pytorch import *
-from torch.utils.data import DataLoader
-import random
-from torch import nn
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from utils.file_loader import *
+from dgl.nn.pytorch import *
+from torch import nn
+from torch.utils.data import DataLoader
+
 from data_util.toChart import *
+from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
+from utils.file_loader import *
 
 
 class Node_Alignment(nn.Module):

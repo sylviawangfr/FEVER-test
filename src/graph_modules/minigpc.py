@@ -1,10 +1,10 @@
 """A mini synthetic dataset for graph classification benchmark."""
 import math
+import random
+
 import networkx as nx
 import numpy as np
 from dgl import DGLGraph
-from typing import Dict
-import random
 
 __all__ = ['MiniGPCDataset']
 

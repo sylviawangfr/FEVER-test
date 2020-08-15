@@ -7,10 +7,8 @@ Author's code: https://github.com/PetarV-/GAT
 Pytorch implementation: https://github.com/Diego999/pyGAT
 """
 
-import torch
 import torch.nn as nn
-import dgl.function as fn
-from dgl.nn.pytorch import edge_softmax, GATConv
+from dgl.nn.pytorch import GATConv
 
 
 class GAT(nn.Module):

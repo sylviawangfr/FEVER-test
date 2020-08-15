@@ -9,15 +9,17 @@ Pytorch implementation: https://github.com/Diego999/pyGAT
 """
 
 import argparse
-import numpy as np
-import networkx as nx
 import time
+
+import networkx as nx
+import numpy as np
 import torch
 import torch.nn.functional as F
 from dgl import DGLGraph
 from dgl.data import register_data_args, load_data
-from graph_modules.gat import GAT
 from graph_modules.util import EarlyStopping
+
+from graph_modules.gat import GAT
 
 
 def accuracy(logits, labels):

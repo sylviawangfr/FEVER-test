@@ -1,11 +1,13 @@
-import spacy
-from spacy.symbols import nsubj, dobj, pobj, VERB, ADP, AUX, acomp
-from spacy import displacy
-import config
-from spacy.tokens import Doc, Span, Token
+# import spacy
+# from spacy import displacy
+# import config
+# from spacy.tokens import Doc, Span, Token
 import regex
-from nltk.stem.wordnet import WordNetLemmatizer
+from spacy.symbols import nsubj, dobj, pobj, VERB
+
+# from nltk.stem.wordnet import WordNetLemmatizer
 from utils.tokenizer_simple import nlp_eng_spacy as nlp
+
 
 # used part of codes from https://github.com/NSchrading/intro-spacy-nlp.git
 
@@ -298,22 +300,22 @@ def findSVOs(tokens):
     return svos
 
 
-def getAbuserOntoVictimSVOs(tokens):
-    maleAbuser = {'he', 'boyfriend', 'bf', 'father', 'dad', 'husband', 'brother', 'man'}
-    femaleAbuser = {'she', 'girlfriend', 'gf', 'mother', 'mom', 'wife', 'sister', 'woman'}
-    neutralAbuser = {'pastor', 'abuser', 'offender', 'ex', 'x', 'lover', 'church', 'they'}
-    victim = {'me', 'sister', 'brother', 'child', 'kid', 'baby', 'friend', 'her', 'him', 'man', 'woman'}
-
-    svos = findSVOs(tokens)
-    wnl = WordNetLemmatizer()
-    passed = []
-    for s, v, o in svos:
-        s = wnl.lemmatize(s)
-        v = "!" + wnl.lemmatize(v[1:], 'v') if v[0] == "!" else wnl.lemmatize(v, 'v')
-        o = "!" + wnl.lemmatize(o[1:]) if o[0] == "!" else wnl.lemmatize(o)
-        if s in maleAbuser.union(femaleAbuser).union(neutralAbuser) and o in victim:
-            passed.append((s, v, o))
-    return passed
+# def getAbuserOntoVictimSVOs(tokens):
+#     maleAbuser = {'he', 'boyfriend', 'bf', 'father', 'dad', 'husband', 'brother', 'man'}
+#     femaleAbuser = {'she', 'girlfriend', 'gf', 'mother', 'mom', 'wife', 'sister', 'woman'}
+#     neutralAbuser = {'pastor', 'abuser', 'offender', 'ex', 'x', 'lover', 'church', 'they'}
+#     victim = {'me', 'sister', 'brother', 'child', 'kid', 'baby', 'friend', 'her', 'him', 'man', 'woman'}
+#
+#     svos = findSVOs(tokens)
+#     wnl = WordNetLemmatizer()
+#     passed = []
+#     for s, v, o in svos:
+#         s = wnl.lemmatize(s)
+#         v = "!" + wnl.lemmatize(v[1:], 'v') if v[0] == "!" else wnl.lemmatize(v, 'v')
+#         o = "!" + wnl.lemmatize(o[1:]) if o[0] == "!" else wnl.lemmatize(o)
+#         if s in maleAbuser.union(femaleAbuser).union(neutralAbuser) and o in victim:
+#             passed.append((s, v, o))
+#     return passed
 
 def printDeps(toks):
     for tok in toks:

@@ -1,9 +1,10 @@
+import itertools
+
 from elasticsearch import Elasticsearch as es
 from elasticsearch_dsl import Search, Q
-import config
-import itertools
-from utils.tokenizer_simple import *
+
 from utils.file_loader import *
+from utils.tokenizer_simple import *
 
 client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT,
               'timeout': 60, 'max_retries': 5, 'retry_on_timeout': True}])

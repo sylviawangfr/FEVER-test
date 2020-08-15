@@ -1,13 +1,12 @@
-from SPARQLWrapper import SPARQLWrapper, JSON
-import json
 import re
-import validators
-import config
-import nltk
 from datetime import datetime
-import log_util
-from memory_profiler import profile
 
+import nltk
+import validators
+from SPARQLWrapper import SPARQLWrapper, JSON
+
+import config
+import log_util
 
 DEFAULT_GRAPH = "http://dbpedia.org"
 PREFIX_DBO = "http://dbpedia.org/ontology/"

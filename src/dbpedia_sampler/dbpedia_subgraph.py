@@ -1,11 +1,10 @@
-from dbpedia_sampler import dbpedia_triple_linker
-from dbpedia_sampler import bert_similarity
-from utils.tokenizer_simple import get_dependent_verb
 import numpy as np
 import sklearn.metrics.pairwise as pw
-import log_util
-from memory_profiler import profile
 
+import log_util
+from dbpedia_sampler import bert_similarity
+from dbpedia_sampler import dbpedia_triple_linker
+from utils.tokenizer_simple import get_dependent_verb
 
 CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.85

@@ -1,10 +1,12 @@
-import torch
-from pytorch_pretrained_bert import BertTokenizer, BertModel
-from typing import List
-import flint.torch_util as torch_util
-from allennlp.modules import ScalarMix
-import config
 from pathlib import Path
+from typing import List
+
+import torch
+from allennlp.modules import ScalarMix
+from pytorch_pretrained_bert import BertTokenizer, BertModel
+
+import config
+import flint.torch_util as torch_util
 
 
 def symbol_convert(token):

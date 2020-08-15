@@ -3,22 +3,19 @@
 # This file is created on 25 Nov 2018 08:39, modified from fever_bert_reader to read paired sentence claim data to be
 # feeded into verification model.
 
+import logging
+import random
 from typing import Dict, List, Tuple
 
-from overrides import overrides
-import logging
 import numpy as np
-import random
-
-from neural_modules.bert_servant import BertServant
-from allennlp.data.fields import MetadataField
-
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-
 from allennlp.data.fields import Field, LabelField
+from allennlp.data.fields import MetadataField
 from allennlp.data.instance import Instance
+from overrides import overrides
 
 from data_util.customized_field import IdField, BertIndexField
+from neural_modules.bert_servant import BertServant
 
 # from pathlib import Path
 

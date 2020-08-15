@@ -1,9 +1,9 @@
-import spotlight
-import json
-import config
 from datetime import datetime
-import log_util
 
+import spotlight
+
+import config
+import log_util
 
 CONFIDENCE = 0.4
 log = log_util.get_logger('dbpedia_spotlight')

@@ -1,9 +1,7 @@
-from utils.triple_extractor import get_triple
-from tqdm import tqdm
+import config
 from dbpedia_sampler.dbpedia_triple_linker import find_linked_phrases
 from utils import text_clean, file_loader
-import config
-from memory_profiler import profile
+from utils.triple_extractor import get_triple
 
 
 def extract_triples_for_claims(data_iter):

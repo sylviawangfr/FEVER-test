@@ -1,14 +1,14 @@
+import copy
 import json
 import random
-import copy
 
-from utils import fever_db, check_sentences
-import config
 import drqa_yixin.tokenizers
 from drqa_yixin.tokenizers import CoreNLPTokenizer
 from tqdm import tqdm
+
+import config
 from utils import c_scorer, text_clean
-from utils import common
+from utils import fever_db, check_sentences
 
 path_stanford_corenlp_full_2017_06_09 = str(config.PRO_ROOT / 'dep_packages/stanford-corenlp-full-2017-06-09/*')
 print(path_stanford_corenlp_full_2017_06_09)

@@ -1,5 +1,7 @@
 import re
+
 import validators
+
 
 def uri_short_extract(uri):
     lastword = uri.split('/')[-1]

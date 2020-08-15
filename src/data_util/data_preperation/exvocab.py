@@ -3,26 +3,25 @@ A Vocabulary maps strings to integers, allowing for strings to be mapped to an
 out-of-vocabulary token.
 """
 
-from collections import defaultdict
-from pathlib import Path
-from typing import Callable, Any, List, Dict, Union, Sequence, Set, Optional, Iterable
 import codecs
-import logging
-import os
 import gzip
 import hashlib
+import logging
+import os
+from collections import defaultdict
+from enum import Enum
+from pathlib import Path
+from typing import Callable, Any, List, Dict, Union, Sequence, Set, Optional, Iterable
 
 import numpy
 import torch
-from allennlp.common.util import namespace_match
-from allennlp.common.params import Params
 from allennlp.common.checks import ConfigurationError
 from allennlp.common.file_utils import cached_path
+from allennlp.common.params import Params
 from allennlp.common.tqdm import Tqdm
-from allennlp.data import instance as adi  # pylint: disable=unused-import
+from allennlp.common.util import namespace_match
 from allennlp.data import Vocabulary
-
-from enum import Enum
+from allennlp.data import instance as adi  # pylint: disable=unused-import
 from overrides import overrides
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name

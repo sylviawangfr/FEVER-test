@@ -1,12 +1,14 @@
 # This is for utest for whether training sentences contain all the sentences.
 from typing import Tuple, List, Dict
 
-import utils.common
 from tqdm import tqdm
-from utils import c_scorer, check_sentences, fever_db, common
+
 import config
-from simi_sampler_nli_esim import simi_sampler
+import utils.common
 from data_util.data_preperation.tokenize_fever import easy_tokenize
+from simi_sampler_nli_esim import simi_sampler
+from utils import c_scorer, check_sentences, fever_db, common
+
 
 # utils.common.load_jsonl(
 #         "/Users/Eason/RA/FunEver/results/sent_retri_nn/2018_07_20_15-17-59_r/train_sent.jsonl")

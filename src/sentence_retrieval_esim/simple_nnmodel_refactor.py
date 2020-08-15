@@ -6,35 +6,31 @@ The file is refactored from 'simple_nnmodel.py' for further exploration of the e
 We want to control the relatedness score s.t. they will be more useful for the downstream NLI.
 """
 import copy
+import os
+from pathlib import Path
 
 import torch
+import torch.nn.functional as F
+import torch.optim as optim
 from allennlp.data.iterators import BasicIterator
 from allennlp.data.token_indexers import SingleIdTokenIndexer, ELMoTokenCharactersIndexer
 from allennlp.modules import Embedding, Elmo
-from pathlib import Path
 from torch import nn
-import os
-
-import config
-from data_util.data_readers.fever_sselection_reader import SSelectorReader
-from neural_modules.ema import EMA, load_ema_to_model, save_ema_to_file
-from sentence_retrieval_esim.sampler_for_nmodel import get_full_list, post_filter, \
-    get_full_list_from_list_d
-from data_util.data_preperation.exvocab import load_vocab_embeddings
-from utils.file_loader import read_json_rows
-
-from log_util import save_tool
-
-
-from flint import torch_util
-import torch.optim as optim
-import torch.nn.functional as F
 from tqdm import tqdm
 
+import config
+from data_util.data_preperation.exvocab import load_vocab_embeddings
+from data_util.data_readers.fever_sselection_reader import SSelectorReader
+from flint import torch_util
+from log_util import save_tool
 from neural_modules import biDafAttn
-from sample_for_nli_esim.tf_idf_sample_v1_0 import sample_v1_0, select_sent_for_eval, convert_evidence2scoring_format
-from utils import c_scorer, common
+from neural_modules.ema import EMA, load_ema_to_model, save_ema_to_file
+from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_format
+from sentence_retrieval_esim.sampler_for_nmodel import get_full_list, post_filter, \
+    get_full_list_from_list_d
 from simi_sampler_nli_esim import simi_sampler
+from utils import c_scorer
+from utils.file_loader import read_json_rows
 from utils.file_loader import save_jsonl
 
 

@@ -177,6 +177,10 @@ def test_memory(tfidf_data):
         print(f"{batch}, {len(batched_sample)}")
         t = list(range(1000*1000))
         gc.collect()
+
+    for batched_sample in sample_dataloader:
+        t = list(range(1000*1000))
+        gc.collect()
     return
 
 

@@ -148,7 +148,7 @@ def collate(samples):
 @profile
 def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
-    paras.sample_n = 3
+    paras.sample_n = 5
     paras.pred = False
     batch_size = 3
     dt = get_current_time_str()
@@ -182,7 +182,7 @@ def test_memory(tfidf_data):
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:6]
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:10]
     tfidf_to_graph_sampler(tfidf_dev_data)
 
 

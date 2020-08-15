@@ -175,7 +175,7 @@ def test_memory(tfidf_data):
     sample_dataloader = BasketIterable(tfidf_data, 10)
     for batch, batched_sample in enumerate(sample_dataloader):
         print(f"{batch}, {len(batched_sample)}")
-        t = range(100*100)
+        t = list(range(1000*1000))
         gc.collect()
     return
 

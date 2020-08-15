@@ -172,9 +172,10 @@ def tfidf_to_graph_sampler(tfidf_data):
 @profile
 def test_memory(tfidf_data):
     # sample_dataloader = DataLoader(tfidf_data, batch_size=10, collate_fn=collate)
-    sample_dataloader = iter_baskets_contiguous(tfidf_data, 501)
+    sample_dataloader = iter_baskets_contiguous(tfidf_data, 10)
     for batch, batched_sample in enumerate(sample_dataloader):
         print(f"{batch}, {len(batched_sample)}")
+        t = range(100*100)
         gc.collect()
     return
 
@@ -182,12 +183,12 @@ def test_memory(tfidf_data):
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:10]
-    tfidf_to_graph_sampler(tfidf_dev_data)
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:50]
+    # tfidf_to_graph_sampler(tfidf_dev_data)
 
 
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[52870:60000]
     # tfidf_to_graph_sampler(tfidf_train_data)
     # print(globals())
     # print(json.dumps(globals(), indent=1))
-    # test_memory(tfidf_dev_data)
+    test_memory(tfidf_dev_data)

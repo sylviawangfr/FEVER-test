@@ -16,6 +16,7 @@ import utils.common_types as bert_para
 from data_util.data_preperation.tokenize_fever import easy_tokenize
 from utils import common, c_scorer
 from utils.file_loader import *
+from utils.text_clean import convert_brc
 
 logger = log_util.get_logger('ss_sampler')
 
@@ -123,8 +124,8 @@ def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True,
         # print(sent, doc_id, ln)
         if contain_head:
             if not id_tokenized:
-                doc_id_natural_format = fever_db.convert_brc(doc_id).replace('_', ' ')
-                t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format))
+                doc_id_natural_format = convert_brc(doc_id).replace('_', ' ')
+                t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format, common.tokenizer_spacy))
             else:
                 t_doc_id_natural_format = common.doc_id_to_tokenized_text(doc_id)
 

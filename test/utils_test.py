@@ -21,9 +21,12 @@ class TestUtils(unittest.TestCase):
         for n in iter_baskets_contiguous(items, 2):
             print(n)
             # assert
+        print("-------")
         for n in iter_baskets_contiguous(items, 5):
             print(n)
+        print("-------")
         for n in iter_baskets_contiguous(items, 3):
             print(n)
+        print("-------")
         for n in iter_baskets_contiguous(items, 6):
             print(n)

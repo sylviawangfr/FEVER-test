@@ -39,6 +39,7 @@ def iter_baskets_contiguous(items, bunch_size):
         stop = (i + 1) * bunch_size
         stop = item_count if stop > item_count else stop
         yield items[start:stop]
+    return
 
 
 class DocIdDict(object):

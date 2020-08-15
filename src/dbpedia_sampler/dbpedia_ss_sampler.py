@@ -140,7 +140,7 @@ def collate(samples):
     return samples
 
 
-@profile
+# @profile
 def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3
@@ -173,5 +173,5 @@ if __name__ == '__main__':
     # multi_thread_sampler()
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
     # prepare_train_data_filter_tfidf(tfidf_dev_data)
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[50000:50030]
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[50000:60000]
     tfidf_to_graph_sampler(tfidf_train_data)

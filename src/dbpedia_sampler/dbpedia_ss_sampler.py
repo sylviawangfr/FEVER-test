@@ -145,7 +145,7 @@ def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3
     paras.pred = False
-    batch_size = 2
+    batch_size = 10
     dt = get_current_time_str()
     thread_name = threading.current_thread().getName()
     sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)

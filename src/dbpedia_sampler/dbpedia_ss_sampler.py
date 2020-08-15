@@ -13,7 +13,6 @@ from memory_profiler import profile
 log = log_util.get_logger("dbpedia_ss_sampler")
 
 
-@profile
 def get_tfidf_sample(paras: bert_para.BERT_para):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
@@ -146,7 +145,7 @@ def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3
     paras.pred = False
-    batch_size = 10
+    batch_size = 2
     dt = get_current_time_str()
     thread_name = threading.current_thread().getName()
     sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
@@ -174,5 +173,5 @@ if __name__ == '__main__':
     # multi_thread_sampler()
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
     # prepare_train_data_filter_tfidf(tfidf_dev_data)
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[50000:50020]
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[50000:50030]
     tfidf_to_graph_sampler(tfidf_train_data)

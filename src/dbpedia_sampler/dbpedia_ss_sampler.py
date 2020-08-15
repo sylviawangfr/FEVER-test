@@ -150,7 +150,7 @@ def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 5
     paras.pred = False
-    batch_size = 3
+    batch_size = 10
     dt = get_current_time_str()
     # thread_name = threading.current_thread().getName()
     # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
@@ -172,18 +172,23 @@ def tfidf_to_graph_sampler(tfidf_data):
 
 
 @profile
-def test_memory(tfidf_data):
+def test_memory():
     # sample_dataloader = DataLoader(tfidf_data, batch_size=10, collate_fn=collate)
-    sample_dataloader = BasketIterable(tfidf_data, 10)
-
+    sample_dataloader = BasketIterable(range(50), 10)
     for batch, batched_sample in enumerate(sample_dataloader):
         t = list(range(1000*1000))
         gc.collect()
 
     gc.collect()
 
-    sample_dataloader = BasketIterable(tfidf_data, 10)
-    for batched_sample in sample_dataloader:
+
+    for batch, batched_sample in enumerate(range(5)):
+        t = list(range(1000*1000))
+        gc.collect()
+
+    gc.collect()
+
+    for batched_sample in range(5):
         t = list(range(1000*1000))
         gc.collect()
     return
@@ -200,4 +205,4 @@ if __name__ == '__main__':
     # tfidf_to_graph_sampler(tfidf_train_data)
     # print(globals())
     # print(json.dumps(globals(), indent=1))
-    # test_memory(tfidf_dev_data)
+    # test_memory()

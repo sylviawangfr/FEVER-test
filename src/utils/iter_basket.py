@@ -1,4 +1,4 @@
-class BasketIterable:
+class BasketIterable(object):
     """
     this class is a generates a well known sequence of numbers
     """

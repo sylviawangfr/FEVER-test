@@ -173,6 +173,7 @@ def eval_sample_length():
     print(np.max(length_list))
     print(np.mean(length_list))
     print(np.std(length_list))
+    return
 
 
 if __name__ == '__main__':

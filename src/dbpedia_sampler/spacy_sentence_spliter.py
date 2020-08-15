@@ -70,3 +70,4 @@ def merge_chunks_with_entities(chunks, ents):
     for c in chunks:
         if len(list(filter(lambda x: (c in x), ents))) < 1:
             merged.append(c)
+    return

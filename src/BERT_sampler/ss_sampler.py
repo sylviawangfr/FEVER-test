@@ -110,6 +110,7 @@ def trucate_item(d_list, top_k=None):
     for item in d_list:
         if top_k is not None and len(item['predicted_docids']) > top_k:
             item['predicted_docids'] = item['predicted_docids'][:top_k]
+    return
 
 
 def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True, id_tokenized=True):
@@ -256,6 +257,7 @@ def count_truth_examples(sample_list):
         if item['selection_label'] == 'true':
             count_hit += 1
     print(f"truth_count/total_count/rate: , {count_hit}/{len(sample_list)}/{count_hit / len(sample_list)}")
+    return
 
 
 def eval_sample_length(samples):
@@ -270,6 +272,7 @@ def eval_sample_length(samples):
     print(f"max_length: {np.max(length_list)}")
     print(f"mean: {np.mean(length_list)}")
     print(f"std: {np.std(length_list)}")
+    return
 
 
 if __name__ == '__main__':

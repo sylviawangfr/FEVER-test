@@ -5,6 +5,7 @@ from memory_profiler import profile
 
 import BERT_sampler.ss_sampler as ss_sampler
 import log_util
+from utils import text_clean
 import utils.check_sentences
 import utils.common_types as bert_para
 from dbpedia_sampler import dbpedia_subgraph
@@ -15,6 +16,7 @@ from utils.iter_basket import BasketIterable
 log = log_util.get_logger("dbpedia_ss_sampler")
 
 
+@profile
 def get_tfidf_sample(paras: bert_para.BERT_para):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
@@ -97,6 +99,7 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
         one_full_example['claim_links'] = claim_dict['graph']
         one_full_example['examples'] = example_l
         dbpedia_examples_l.append(one_full_example)
+        gc.collect()
 
     cursor.close()
     conn.close()
@@ -142,11 +145,12 @@ def collate(samples):
     return samples
 
 
+@profile
 def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3
     paras.pred = False
-    batch_size = 10
+    batch_size = 3
     dt = get_current_time_str()
     # thread_name = threading.current_thread().getName()
     # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
@@ -160,7 +164,8 @@ def tfidf_to_graph_sampler(tfidf_data):
             save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
                                     config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
-            gc.collect()
+            rt = gc.collect()
+            print("%d unreachable" % rt)
     return
 
 
@@ -174,10 +179,15 @@ def test_memory(tfidf_data):
     return
 
 
+
 if __name__ == '__main__':
     # multi_thread_sampler()
-    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:500]
-    # tfidf_to_graph_sampler(tfidf_dev_data)
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[60000:70000]
-    tfidf_to_graph_sampler(tfidf_train_data)
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:6]
+    tfidf_to_graph_sampler(tfidf_dev_data)
+
+
+    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[52870:60000]
+    # tfidf_to_graph_sampler(tfidf_train_data)
+    # print(globals())
+    # print(json.dumps(globals(), indent=1))
     # test_memory(tfidf_dev_data)

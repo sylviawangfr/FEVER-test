@@ -175,6 +175,7 @@ def format_printing(item):
     # print("Label:", item['label'])
     # print("Evid:", item['evidence'])
     print("-" * 50)
+    return
 
 
 if __name__ == '__main__':

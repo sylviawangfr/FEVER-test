@@ -10,6 +10,7 @@ def prepare_ss_sample_for_ernie(json_data, filename):
         label = 1 if item['selection_label'] == 'true' else 0
         text = text + f"{s1}\t{s2}\t{label}\n"
     save_file(text, filename)
+    return
 
 
 if __name__ == '__main__':

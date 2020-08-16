@@ -170,9 +170,7 @@ def tfidf_to_graph_sampler(tfidf_data):
             pbar.update(1)
             batch += 1
             del sample_tfidf
-            gc.collect()
             del paras
-            gc.collect()
             del batched_sample
             rt = gc.collect()
             print("%d unreachable" % rt)

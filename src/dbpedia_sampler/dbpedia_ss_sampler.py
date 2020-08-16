@@ -170,7 +170,8 @@ def tfidf_to_graph_sampler(tfidf_data):
             #                         config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
-            objgraph.show_refs([y], filename='./sample-graph.png')
+            objgraph.show_refs([sample_tfidf], filename='./sample-graph.png')
+            objgraph.show_backrefs([sample_tfidf], filename='./sample-graph.png')
             del sample_tfidf
             del paras
             del batched_sample

@@ -100,6 +100,7 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
         one_full_example['claim_links'] = claim_dict['graph']
         one_full_example['examples'] = example_l
         dbpedia_examples_l.append(one_full_example)
+        del all_sent_list
         del claim_dict
         gc.collect()
 

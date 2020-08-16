@@ -151,7 +151,7 @@ def collate(samples):
 
 # @profile
 def tfidf_to_graph_sampler(tfidf_data):
-    batch_size = 1
+    batch_size = 10
     dt = get_current_time_str()
     # thread_name = threading.current_thread().getName()
     # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
@@ -166,12 +166,10 @@ def tfidf_to_graph_sampler(tfidf_data):
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
             log.info(f"total count: {num}")
-            # save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
-            #                         config.LOG_PATH / f"sample_ss_graph_{dt}.log")
+            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+                                    config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
-            # objgraph.show_refs([sample_tfidf], filename="/data/sylvia/sample-graph.png")
-            # objgraph.show_backrefs([sample_tfidf], filename='/data/sylvia/sample-graph2.png')
             del sample_tfidf
             del paras
             del batched_sample

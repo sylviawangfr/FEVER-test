@@ -77,6 +77,7 @@ def merge_phrases_l1_to_l2(l1, l2):
             l2.append(i)
     l2 = list(set(l2) - set(to_delete))
     merged = [i for i in l2 if i.lower() not in STOP_WORDS]
+    del to_delete
     return merged
 
 
@@ -90,6 +91,7 @@ def lookup_phrase(phrase):
     return linked_phrase
 
 
+@profile
 def query_resource(uri):
     context = dict()
     outbounds = dbpedia_virtuoso.get_outbounds(uri)

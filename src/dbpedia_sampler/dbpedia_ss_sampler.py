@@ -18,7 +18,7 @@ import objgraph
 log = log_util.get_logger("dbpedia_ss_sampler")
 
 
-@profile
+# @profile
 def get_tfidf_sample(paras: bert_para.BERT_para):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
@@ -149,7 +149,7 @@ def collate(samples):
     return samples
 
 
-@profile
+# @profile
 def tfidf_to_graph_sampler(tfidf_data):
     batch_size = 1
     dt = get_current_time_str()
@@ -170,8 +170,8 @@ def tfidf_to_graph_sampler(tfidf_data):
             #                         config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
-            objgraph.show_refs([sample_tfidf], filename="/data/sylvia/sample-graph.png")
-            objgraph.show_backrefs([sample_tfidf], filename='/data/sylvia/sample-graph2.png')
+            # objgraph.show_refs([sample_tfidf], filename="/data/sylvia/sample-graph.png")
+            # objgraph.show_backrefs([sample_tfidf], filename='/data/sylvia/sample-graph2.png')
             del sample_tfidf
             del paras
             del batched_sample
@@ -207,7 +207,7 @@ def test_memory():
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:2]
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:3]
     tfidf_to_graph_sampler(tfidf_dev_data)
     # #
 

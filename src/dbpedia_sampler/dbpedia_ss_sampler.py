@@ -148,7 +148,7 @@ def collate(samples):
     return samples
 
 
-# @profile
+@profile
 def tfidf_to_graph_sampler(tfidf_data):
     batch_size = 1
     dt = get_current_time_str()

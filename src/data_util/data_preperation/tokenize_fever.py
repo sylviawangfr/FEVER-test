@@ -6,7 +6,7 @@ from data_util.tokenizers import spacy_tokenizer
 from utils import text_clean
 from memory_profiler import profile
 
-@profile
+# @profile
 def easy_tokenize(text, tok):
     return tok.tokenize(text_clean.normalize(text)).words()
 

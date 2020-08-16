@@ -149,7 +149,7 @@ def collate(samples):
     return samples
 
 
-@profile
+# @profile
 def tfidf_to_graph_sampler(tfidf_data):
     batch_size = 1
     dt = get_current_time_str()
@@ -181,7 +181,7 @@ def tfidf_to_graph_sampler(tfidf_data):
     return
 
 
-@profile
+# @profile
 def test_memory():
     t = list(range(500 * 500 * 2))
     tt = BasketIterable(t, 50000)
@@ -207,12 +207,12 @@ def test_memory():
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:3]
-    tfidf_to_graph_sampler(tfidf_dev_data)
+    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:3]
+    # tfidf_to_graph_sampler(tfidf_dev_data)
     # #
 
-    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[56150:60000]
-    # tfidf_to_graph_sampler(tfidf_train_data)
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[56150:60000]
+    tfidf_to_graph_sampler(tfidf_train_data)
     # # print(globals())
     # print(json.dumps(globals(), indent=1))
     # test_memory()

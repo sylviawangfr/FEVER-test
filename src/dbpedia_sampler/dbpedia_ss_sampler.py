@@ -147,9 +147,6 @@ def collate(samples):
 
 @profile
 def tfidf_to_graph_sampler(tfidf_data):
-    paras = bert_para.BERT_para()
-    paras.sample_n = 3
-    paras.pred = False
     batch_size = 1
     dt = get_current_time_str()
     # thread_name = threading.current_thread().getName()
@@ -158,6 +155,9 @@ def tfidf_to_graph_sampler(tfidf_data):
     batch = 0
     with tqdm(total=sample_dataloader.max_bunch_number, desc=f"Sampling") as pbar:
         for batched_sample in sample_dataloader:
+            paras = bert_para.BERT_para()
+            paras.sample_n = 3
+            paras.pred = False
             paras.upstream_data = batched_sample
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
@@ -167,6 +167,8 @@ def tfidf_to_graph_sampler(tfidf_data):
             pbar.update(1)
             batch += 1
             del sample_tfidf
+            gc.collect()
+            del paras
             gc.collect()
             del batched_sample
             rt = gc.collect()

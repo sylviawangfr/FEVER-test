@@ -202,12 +202,12 @@ def save_and_append_results(d_list, total, out_filename: Path, log_filename):
     with open(out_filename, encoding='utf-8', mode='a') as out_f:
         for item in d_list:
             out_f.write(json.dumps(item) + '\n')
-    out_f.close()
+        out_f.close()
 
     with open(log_filename, encoding='utf-8', mode='a') as log_f:
         log_f.write(f"{get_current_time_str()}, from ID: {d_list[0]['id']} to ID {d_list[-1]['id']}, "
                     f"count: {len(d_list)}, total: {total}\n")
-    log_f.close()
+        log_f.close()
 
 
 def append_results(d_list, out_filename: Path):

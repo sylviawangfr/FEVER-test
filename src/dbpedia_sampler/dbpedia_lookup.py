@@ -126,28 +126,28 @@ def lookup_resource_app_label(text_phrase):
 def lookup_resource_app(text_phrase, url):
     start = datetime.now()
     close_matches = []
-    response = requests.get(url, timeout=5)
-    if response.status_code is 200:
-        results1 = xmltodict.parse(response.text)
-        if len(results1['ArrayOfResults']) <= 3:
-            log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup-app-query.")
-            return close_matches
-        else:
-            re = results1['ArrayOfResults']['Result']
-            if isinstance(re, dict):
-                close_matches.append(re)
+    with requests.get(url, timeout=5) as response:
+        if response.status_code is 200:
+            results1 = xmltodict.parse(response.text)
+            if len(results1['ArrayOfResults']) <= 3:
+                log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup-app-query.")
+                return close_matches
             else:
-                for i in re:
-                    if 'Label' in i and i['Label'] is not None:
-                        tmp_label = i['Label'].lower()
-                        text_phrase_lower = text_phrase.lower()
-                        if tmp_label == text_phrase_lower:
-                            close_matches.append(i)
-                            break
-                if len(close_matches) < 1:
-                    close_matches = re
-    else:
-        log.error(f"failed to query lookup-app, response code:{response.status_code}")
+                re = results1['ArrayOfResults']['Result']
+                if isinstance(re, dict):
+                    close_matches.append(re)
+                else:
+                    for i in re:
+                        if 'Label' in i and i['Label'] is not None:
+                            tmp_label = i['Label'].lower()
+                            text_phrase_lower = text_phrase.lower()
+                            if tmp_label == text_phrase_lower:
+                                close_matches.append(i)
+                                break
+                    if len(close_matches) < 1:
+                        close_matches = re
+        else:
+            log.error(f"failed to query lookup-app, response code:{response.status_code}")
     log.debug(f"lookup-app time: {(datetime.now() - start).seconds}")
     return close_matches
 
@@ -158,30 +158,29 @@ def lookup_resource_ref_count(text_phrase):
         return []
     url = config.DBPEDIA_LOOKUP_URL + text_phrase
     # log.debug(f"lookup url: {url}")
-    response = requests.get(url, timeout=5)
     close_matches = []
-
-    if response.status_code is not 200:
-        log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
-        return []
-    else:
-        results = xmltodict.parse(response.text)
-        if len(results['ArrayOfResult']) <= 3:
-            log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
+    with requests.get(url, timeout=5) as response:
+        if response.status_code is not 200:
+            log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
             return []
         else:
-            re = results['ArrayOfResult']['Result']
-            if isinstance(re, dict):
-                close_matches.append(re)
+            results = xmltodict.parse(response.text)
+            if len(results['ArrayOfResult']) <= 3:
+                log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
+                return []
             else:
-                for i in re:
-                    tmp_label = i['Label'].lower()
-                    text_phrase_lower = text_phrase.lower()
-                    if tmp_label == text_phrase_lower:
-                        close_matches.append(i)
-                        break
-                if len(close_matches) < 1:
-                    close_matches = re
+                re = results['ArrayOfResult']['Result']
+                if isinstance(re, dict):
+                    close_matches.append(re)
+                else:
+                    for i in re:
+                        tmp_label = i['Label'].lower()
+                        text_phrase_lower = text_phrase.lower()
+                        if tmp_label == text_phrase_lower:
+                            close_matches.append(i)
+                            break
+                    if len(close_matches) < 1:
+                        close_matches = re
     log.debug(f"lookup time: {(datetime.now() - start).seconds}")
     return close_matches
 

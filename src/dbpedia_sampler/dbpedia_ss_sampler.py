@@ -173,6 +173,7 @@ def tfidf_to_graph_sampler(tfidf_data):
             del batched_sample
             rt = gc.collect()
             print("%d unreachable" % rt)
+    gc.collect()
     return
 
 

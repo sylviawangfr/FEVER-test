@@ -13,23 +13,24 @@ def entity_link(sentence):
     start = datetime.now()
     log.debug("spotlight sent: " + sentence)
     try:
-        annotations = spotlight.annotate(config.DBPEDIA_SPOTLIGHT_URL, sentence,
+        with spotlight.annotate(config.DBPEDIA_SPOTLIGHT_URL, sentence,
                                      confidence=CONFIDENCE,
-                                     support=20)
+                                     support=20) as annotations:
+            entity_list = []
+            for item in annotations:
+                ent = dict()
+                ent['URI'] = item['URI']
+                ent['surfaceForm'] = item['surfaceForm']
+                entity_list.append(ent)
+            log.debug(f"spotlight time: {(datetime.now() - start).seconds}")
+            return entity_list
     except Exception as err:
         log.debug(err)
         return []
 
     # pretty_data = json.dumps(annotations, indent=4)
     # log.debug(pretty_data)
-    entity_list = []
-    for item in annotations:
-        ent = dict()
-        ent['URI'] = item['URI']
-        ent['surfaceForm'] = item['surfaceForm']
-        entity_list.append(ent)
-    log.debug(f"spotlight time: {(datetime.now() - start).seconds}")
-    return entity_list
+
 
 
 

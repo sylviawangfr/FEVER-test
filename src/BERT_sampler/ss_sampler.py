@@ -17,6 +17,8 @@ from data_util.data_preperation.tokenize_fever import easy_tokenize
 from utils import common, c_scorer
 from utils.file_loader import *
 from utils.text_clean import convert_brc
+from memory_profiler import profile
+
 
 logger = log_util.get_logger('ss_sampler')
 
@@ -113,7 +115,7 @@ def trucate_item(d_list, top_k=None):
             item['predicted_docids'] = item['predicted_docids'][:top_k]
     return
 
-
+@profile
 def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True, id_tokenized=True):
     sent_list = []
     for sent, sid in zipped_s_id_list:

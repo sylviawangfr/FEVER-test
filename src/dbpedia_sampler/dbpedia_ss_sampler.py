@@ -13,6 +13,7 @@ from utils.file_loader import *
 from utils.iter_basket import BasketIterable
 from utils.text_clean import convert_brc
 from utils.common import iter_baskets_contiguous
+import objgraph
 
 log = log_util.get_logger("dbpedia_ss_sampler")
 
@@ -169,6 +170,7 @@ def tfidf_to_graph_sampler(tfidf_data):
             #                         config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
+            objgraph.show_refs([y], filename='./sample-graph.png')
             del sample_tfidf
             del paras
             del batched_sample
@@ -204,7 +206,7 @@ def test_memory():
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:3]
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:1]
     tfidf_to_graph_sampler(tfidf_dev_data)
     #
 

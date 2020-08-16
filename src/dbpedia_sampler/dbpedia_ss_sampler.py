@@ -17,7 +17,7 @@ from utils.common import iter_baskets_contiguous
 log = log_util.get_logger("dbpedia_ss_sampler")
 
 
-# @profile
+@profile
 def get_tfidf_sample(paras: bert_para.BERT_para):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
@@ -167,6 +167,8 @@ def tfidf_to_graph_sampler(tfidf_data):
                                     config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
+            del sample_tfidf
+            del batched_sample
             rt = gc.collect()
             print("%d unreachable" % rt)
     return
@@ -175,55 +177,69 @@ def tfidf_to_graph_sampler(tfidf_data):
 @profile
 def test_memory():
     # sample_dataloader = DataLoader(tfidf_data, batch_size=10, collate_fn=collate)
-    sample_generator = iter_baskets_contiguous(range(50), 10)
-    for batched_sample in sample_generator:
-        print(len(batched_sample))
-        t = list(range(1000 * 1000))
+    # for batch, batched_sample in enumerate(list(range(5))):
+    #     print(batched_sample)
+    #     t = list(range(1000*1001))
+    #     del t
+    #     gc.collect()
+    #
+    # gc.collect()
+    # print("-----------------")
+    # for batch, batched_sample in enumerate(range(5)):
+    #     print(batched_sample)
+    #     t = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
+    #     del t
+    #     gc.collect()
+    #
+    # gc.collect()
+    # print("-----------------")
+    # for batched_sample in range(5):
+    #     print(batched_sample)
+    #     t = list(range(1000*1003))
+    #     del t
+    #     gc.collect()
+    #
+    # # gc.collect()
+    # print("-----------------")
+    # sample_generator = iter_baskets_contiguous(read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl"), 1000)
+    # for batched_sample in sample_generator:
+    #     print(len(batched_sample))
+    #     del batched_sample
+    #     gc.collect()
+    #
+    # gc.collect()
+    # print("-----------------")
+    # sample_dataloader = BasketIterable(read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl"), 1000)
+    # for batch, batched_sample in enumerate(sample_dataloader):
+    #     print(len(batched_sample))
+    #     del batched_sample
+    #     gc.collect()
+    #
+    # gc.collect()
+    # print("-----------------")
+
+    t = list(range(500 * 500))
+    tt = BasketIterable(t, 50000)
+    # tt = iter_baskets_contiguous(t, 50000)
+    for _, i in enumerate(tt):
+        print(f"i: {len(i)}")
+        del i
         gc.collect()
-
-
+        print(len(t))
     gc.collect()
     print("-----------------")
-
-    sample_dataloader = BasketIterable(range(50), 10)
-    for batch, batched_sample in enumerate(sample_dataloader):
-        print(len(batched_sample))
-        t = list(range(1000*1000))
-        gc.collect()
-
-    gc.collect()
-    print("-----------------")
-    for batch, batched_sample in enumerate(list(range(5))):
-        print(batched_sample)
-        t = list(range(1000*1000))
-        gc.collect()
-
-    gc.collect()
-    print("-----------------")
-    for batch, batched_sample in enumerate(range(5)):
-        print(batched_sample)
-        t = list(range(1000*1000))
-        gc.collect()
-
-    gc.collect()
-    print("-----------------")
-    for batched_sample in range(5):
-        print(batched_sample)
-        t = list(range(1000*1000))
-        gc.collect()
-    gc.collect()
     return
 
 
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:20]
-    # tfidf_to_graph_sampler(tfidf_dev_data)
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:30]
+    tfidf_to_graph_sampler(tfidf_dev_data)
     #
 
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[52870:60000]
-    tfidf_to_graph_sampler(tfidf_train_data)
-    # print(globals())
+    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[56150:60000]
+    # tfidf_to_graph_sampler(tfidf_train_data)
+    # # print(globals())
     # print(json.dumps(globals(), indent=1))
     # test_memory()

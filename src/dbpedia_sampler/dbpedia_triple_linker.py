@@ -484,7 +484,7 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
             result.append(tri2)
     return result
 
-
+@profile
 def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, top_k=2):
     # get embedding of single_phrase
     if single_phrase in keyword_embeddings:

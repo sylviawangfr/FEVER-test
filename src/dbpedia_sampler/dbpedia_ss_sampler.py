@@ -157,7 +157,7 @@ def tfidf_to_graph_sampler(tfidf_data):
     # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
     sample_dataloader = BasketIterable(tfidf_data, batch_size)
     batch = 0
-    with tqdm(total=sample_dataloader.length, desc=f"Sampling") as pbar:
+    with tqdm(total=sample_dataloader.max_bunch_number, desc=f"Sampling") as pbar:
         for batched_sample in sample_dataloader:
             paras.upstream_data = batched_sample
             sample_tfidf = get_tfidf_sample(paras)

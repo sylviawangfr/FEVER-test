@@ -11,7 +11,7 @@ from memory_profiler import profile
 
 log = log_util.get_logger('lookup_resource')
 
-@profile
+# @profile
 def lookup_resource(text_phrase):
     lookup_rec = combine_lookup(text_phrase)
     if len(lookup_rec) < 1:
@@ -55,7 +55,7 @@ def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
     return top_match
 
 
-@profile
+# @profile
 def combine_lookup(text_phrase):
     lookup_matches = lookup_resource_ref_count(text_phrase)
     exact_match = has_exact_match(text_phrase, lookup_matches)

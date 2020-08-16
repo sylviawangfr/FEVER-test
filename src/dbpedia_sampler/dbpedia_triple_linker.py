@@ -359,7 +359,7 @@ def does_tri_exit_in_list(tri, tri_l):
             return True
     return False
 
-@profile
+# @profile
 def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash,  fuzzy_match=False):
     result = []
     for i in itertools.permutations(linked_phrases_l, 2):
@@ -484,7 +484,7 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
             result.append(tri2)
     return result
 
-@profile
+# @profile
 def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, top_k=2):
     # get embedding of single_phrase
     if single_phrase in keyword_embeddings:

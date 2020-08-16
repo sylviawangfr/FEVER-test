@@ -91,7 +91,7 @@ def lookup_phrase(phrase):
     return linked_phrase
 
 
-@profile
+# @profile
 def query_resource(uri):
     context = dict()
     outbounds = dbpedia_virtuoso.get_outbounds(uri)

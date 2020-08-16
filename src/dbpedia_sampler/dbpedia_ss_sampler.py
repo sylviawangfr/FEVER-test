@@ -206,7 +206,7 @@ def test_memory():
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:1]
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:3]
     tfidf_to_graph_sampler(tfidf_dev_data)
     #
 

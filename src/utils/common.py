@@ -77,7 +77,7 @@ def tokenize_doc_id(doc_id, tokenizer):
     lemmas = tokenized_doc_id.lemmas()
     return t_doc_id_natural_format, lemmas
 
-@profile
+# @profile
 def doc_id_to_tokenized_text(doc_id, including_lemmas=False):
     # global tokenized_doc_id_dict
     # global_doc_id_object.load_dict()

@@ -17,7 +17,7 @@ from utils.common import iter_baskets_contiguous
 log = log_util.get_logger("dbpedia_ss_sampler")
 
 
-# @profile
+@profile
 def get_tfidf_sample(paras: bert_para.BERT_para):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
@@ -100,6 +100,8 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
         one_full_example['claim_links'] = claim_dict['graph']
         one_full_example['examples'] = example_l
         dbpedia_examples_l.append(one_full_example)
+        del claim_dict
+        gc.collect()
 
     cursor.close()
     conn.close()
@@ -145,7 +147,7 @@ def collate(samples):
     return samples
 
 
-@profile
+# @profile
 def tfidf_to_graph_sampler(tfidf_data):
     batch_size = 1
     dt = get_current_time_str()
@@ -203,7 +205,7 @@ def test_memory():
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:5]
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:2]
     tfidf_to_graph_sampler(tfidf_dev_data)
     #
 

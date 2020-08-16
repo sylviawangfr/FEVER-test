@@ -100,7 +100,6 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
         one_full_example['claim_links'] = claim_dict['graph']
         one_full_example['examples'] = example_l
         dbpedia_examples_l.append(one_full_example)
-        gc.collect()
 
     cursor.close()
     conn.close()
@@ -149,9 +148,9 @@ def collate(samples):
 @profile
 def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
-    paras.sample_n = 5
+    paras.sample_n = 3
     paras.pred = False
-    batch_size = 10
+    batch_size = 1
     dt = get_current_time_str()
     # thread_name = threading.current_thread().getName()
     # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
@@ -168,6 +167,7 @@ def tfidf_to_graph_sampler(tfidf_data):
             pbar.update(1)
             batch += 1
             del sample_tfidf
+            gc.collect()
             del batched_sample
             rt = gc.collect()
             print("%d unreachable" % rt)
@@ -176,56 +176,22 @@ def tfidf_to_graph_sampler(tfidf_data):
 
 @profile
 def test_memory():
-    # sample_dataloader = DataLoader(tfidf_data, batch_size=10, collate_fn=collate)
-    # for batch, batched_sample in enumerate(list(range(5))):
-    #     print(batched_sample)
-    #     t = list(range(1000*1001))
-    #     del t
-    #     gc.collect()
-    #
-    # gc.collect()
-    # print("-----------------")
-    # for batch, batched_sample in enumerate(range(5)):
-    #     print(batched_sample)
-    #     t = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")
-    #     del t
-    #     gc.collect()
-    #
-    # gc.collect()
-    # print("-----------------")
-    # for batched_sample in range(5):
-    #     print(batched_sample)
-    #     t = list(range(1000*1003))
-    #     del t
-    #     gc.collect()
-    #
-    # # gc.collect()
-    # print("-----------------")
-    # sample_generator = iter_baskets_contiguous(read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl"), 1000)
-    # for batched_sample in sample_generator:
-    #     print(len(batched_sample))
-    #     del batched_sample
-    #     gc.collect()
-    #
-    # gc.collect()
-    # print("-----------------")
-    # sample_dataloader = BasketIterable(read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl"), 1000)
-    # for batch, batched_sample in enumerate(sample_dataloader):
-    #     print(len(batched_sample))
-    #     del batched_sample
-    #     gc.collect()
-    #
-    # gc.collect()
-    # print("-----------------")
-
     t = list(range(500 * 500))
     tt = BasketIterable(t, 50000)
+    paras = bert_para.BERT_para()
+    paras.sample_n = 3
+    paras.pred = False
+    batch_size = 10
     # tt = iter_baskets_contiguous(t, 50000)
     for _, i in enumerate(tt):
         print(f"i: {len(i)}")
+        paras.upstream_data = list(range(500*500))
         del i
+        # del para
+        paras.upstream_data = []
         gc.collect()
         print(len(t))
+    print(f"gc is enabled: {gc.isenabled()}")
     gc.collect()
     print("-----------------")
     return
@@ -234,7 +200,7 @@ def test_memory():
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:30]
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:5]
     tfidf_to_graph_sampler(tfidf_dev_data)
     #
 

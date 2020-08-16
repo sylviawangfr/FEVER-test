@@ -12,6 +12,7 @@ from dbpedia_sampler import dbpedia_spotlight
 from dbpedia_sampler import dbpedia_virtuoso
 from utils import c_scorer, text_clean
 from utils.tokenizer_simple import *
+from memory_profiler import profile
 
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
                'we', 'who', 'where', 'what', 'days', 'him', 'her','here', 'there', 'a', 'for',
@@ -120,7 +121,7 @@ def find_linked_phrases(sentence):
             continue
     return linked_phrases
 
-
+@profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)
@@ -356,7 +357,7 @@ def does_tri_exit_in_list(tri, tri_l):
             return True
     return False
 
-
+@profile
 def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash,  fuzzy_match=False):
     result = []
     for i in itertools.permutations(linked_phrases_l, 2):

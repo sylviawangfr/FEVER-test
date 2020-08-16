@@ -183,7 +183,7 @@ def tfidf_to_graph_sampler(tfidf_data):
 
 @profile
 def test_memory():
-    t = list(range(500 * 500))
+    t = list(range(500 * 500 * 2))
     tt = BasketIterable(t, 50000)
     paras = bert_para.BERT_para()
     paras.sample_n = 3
@@ -207,9 +207,9 @@ def test_memory():
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:1]
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:2]
     tfidf_to_graph_sampler(tfidf_dev_data)
-    #
+    # #
 
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[56150:60000]
     # tfidf_to_graph_sampler(tfidf_train_data)

@@ -135,6 +135,7 @@ def lookup_resource_app(text_phrase, url):
         response = urllib.request.urlopen(url, timeout=5)
     except Exception as err:
         log.error(err)
+        log.warning(f"{text_phrase}: {url}")
         return close_matches
     # response = requests.get(url, timeout=5) # cause memory leak
     if response.status is 200:
@@ -174,6 +175,7 @@ def lookup_resource_ref_count(text_phrase):
         response = urllib.request.urlopen(url, timeout=5)
     except Exception as err:
         log.error(err)
+        log.warning(f"{text_phrase}: {url}")
         return close_matches
     if response.status is not 200:
         log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")

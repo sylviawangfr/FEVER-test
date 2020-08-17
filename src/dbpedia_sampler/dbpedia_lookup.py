@@ -119,20 +119,18 @@ def has_exact_match(text_phrase, lookup_records):
 
 
 def lookup_resource_app_query(text_phrase):
-    url = config.DBPEDIA_LOOKUP_APP_URL_QUERY + text_phrase
+    url = config.DBPEDIA_LOOKUP_APP_URL_QUERY + quote(text_phrase)
     return lookup_resource_app(text_phrase, url)
 
 
 def lookup_resource_app_label(text_phrase):
-    url = config.DBPEDIA_LOOKUP_APP_URL_LABEL + text_phrase
+    url = config.DBPEDIA_LOOKUP_APP_URL_LABEL + quote(text_phrase)
     return lookup_resource_app(text_phrase, url)
 
 # @profile
 def lookup_resource_app(text_phrase, url):
     start = datetime.now()
     close_matches = []
-    # url = quote(url, "?=\./_-:")
-    url = url.replace(' ', '%20')
     try:
         response = urllib.request.urlopen(url, timeout=5)
     except Exception as err:
@@ -169,9 +167,7 @@ def lookup_resource_ref_count(text_phrase):
     start = datetime.now()
     if '%' in text_phrase:
         return []
-    url = config.DBPEDIA_LOOKUP_URL + text_phrase
-    # url = quote(url, "?=\./_-:")
-    url = url.replace(' ', '%20')
+    url = config.DBPEDIA_LOOKUP_URL + quote(text_phrase)
     # log.debug(f"lookup url: {url}")
     close_matches = []
     try:

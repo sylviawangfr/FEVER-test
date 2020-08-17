@@ -151,7 +151,7 @@ def collate(samples):
 
 # @profile
 def tfidf_to_graph_sampler(tfidf_data):
-    batch_size = 10
+    batch_size = 1
     dt = get_current_time_str()
     # thread_name = threading.current_thread().getName()
     # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)

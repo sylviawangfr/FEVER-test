@@ -7,6 +7,7 @@ import xmltodict
 import config
 import log_util
 from dbpedia_sampler.uri_util import uri_short_extract
+from memory_profiler import profile
 
 
 
@@ -125,7 +126,7 @@ def lookup_resource_app_label(text_phrase):
     url = config.DBPEDIA_LOOKUP_APP_URL_LABEL + text_phrase
     return lookup_resource_app(text_phrase, url)
 
-
+@profile
 def lookup_resource_app(text_phrase, url):
     start = datetime.now()
     close_matches = []
@@ -157,7 +158,7 @@ def lookup_resource_app(text_phrase, url):
     log.debug(f"lookup-app time: {(datetime.now() - start).seconds}")
     return close_matches
 
-# @profile
+@profile
 def lookup_resource_ref_count(text_phrase):
     start = datetime.now()
     if '%' in text_phrase:
@@ -209,11 +210,17 @@ def to_triples(record_json):
 
 
 if __name__ == "__main__":
-    lookup_resource('Howard Eugene Johnson')
-    lookup_resource('cultists')
-    lookup_resource('Italian')
-    lookup_resource('Even')
-    lookup_resource('Giada Pamela De Laurentiis')
+    t = ['Howard Eugene Johnson', 'cultists','Italian', 'Even', 'Giada Pamela De Laurentiis']
+    for i in t:
+        lookup_resource(i)
+        lookup_resource(i)
+        lookup_resource(i)
+
+    # lookup_resource('Howard Eugene Johnson')
+    # lookup_resource('cultists')
+    # lookup_resource('Italian')
+    # lookup_resource('Even')
+    # lookup_resource('Giada Pamela De Laurentiis')
     # lookup_resource('American')
     # lookup_resource('UK')
     # lookup_resource('Bloomington')

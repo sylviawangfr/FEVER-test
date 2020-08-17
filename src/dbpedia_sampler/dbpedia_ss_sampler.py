@@ -160,8 +160,8 @@ def tfidf_to_graph_sampler(tfidf_data):
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
             log.info(f"total count: {num}")
-            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
-                                    config.LOG_PATH / f"sample_ss_graph_{dt}.log")
+            # save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+            #                         config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
             del batched_sample

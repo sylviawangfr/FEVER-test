@@ -172,23 +172,23 @@ def lookup_resource_ref_count(text_phrase):
             log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
         else:
             xml = response.text
-            results = xmltodict.parse(xml)
-            if len(results['ArrayOfResult']) <= 3:
-                log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
-                return []
-            else:
-                re = results['ArrayOfResult']['Result']
-                if isinstance(re, dict):
-                    close_matches.append(re)
-                else:
-                    for i in re:
-                        tmp_label = i['Label'].lower()
-                        text_phrase_lower = text_phrase.lower()
-                        if tmp_label == text_phrase_lower:
-                            close_matches.append(i)
-                            break
-                    if len(close_matches) < 1:
-                        close_matches = re
+            # results = xmltodict.parse(xml)
+            # if len(results['ArrayOfResult']) <= 3:
+            #     log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
+            #     return []
+            # else:
+            #     re = results['ArrayOfResult']['Result']
+            #     if isinstance(re, dict):
+            #         close_matches.append(re)
+            #     else:
+            #         for i in re:
+            #             tmp_label = i['Label'].lower()
+            #             text_phrase_lower = text_phrase.lower()
+            #             if tmp_label == text_phrase_lower:
+            #                 close_matches.append(i)
+            #                 break
+            #         if len(close_matches) < 1:
+            #             close_matches = re
             del xml
         response.close()
         session.close()

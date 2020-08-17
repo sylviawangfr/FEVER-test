@@ -9,6 +9,7 @@ from utils import fever_db, c_scorer
 from utils.file_loader import *
 from utils.iter_basket import BasketIterable
 from utils.text_clean import convert_brc
+import gc
 
 
 log = log_util.get_logger("dbpedia_ss_sampler")
@@ -142,9 +143,9 @@ def collate(samples):
     return samples
 
 
-# @profile
+@profile
 def tfidf_to_graph_sampler(tfidf_data):
-    batch_size = 10
+    batch_size = 1
     dt = get_current_time_str()
     paras = bert_para.BERT_para()
     paras.sample_n = 3
@@ -163,6 +164,8 @@ def tfidf_to_graph_sampler(tfidf_data):
             pbar.update(1)
             batch += 1
             del batched_sample
+            del sample_tfidf
+            gc.collect()
     return
 
 # test_globle = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
@@ -191,12 +194,12 @@ def tfidf_to_graph_sampler(tfidf_data):
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:8]
-    # tfidf_to_graph_sampler(tfidf_dev_data)
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:3]
+    tfidf_to_graph_sampler(tfidf_dev_data)
     # #
 
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[60840:70000]
-    tfidf_to_graph_sampler(tfidf_train_data)
+    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[60840:70000]
+    # tfidf_to_graph_sampler(tfidf_train_data)
     # # print(globals())
     # print(json.dumps(globals(), indent=1))
     # test_memory()

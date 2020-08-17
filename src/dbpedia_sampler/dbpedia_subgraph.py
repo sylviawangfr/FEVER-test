@@ -5,6 +5,7 @@ import log_util
 from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_triple_linker
 from utils.tokenizer_simple import get_dependent_verb
+from memory_profiler import profile
 
 CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.85
@@ -41,7 +42,7 @@ def construct_subgraph(sentence, doc_title=''):
     # print(json.dumps(merged_result, indent=4))
     return merged_result
 
-# @profile
+@profile
 def construct_subgraph_for_claim(claim_text):
     not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text, '')
     phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]

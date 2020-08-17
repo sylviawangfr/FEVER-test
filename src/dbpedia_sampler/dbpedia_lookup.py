@@ -189,6 +189,7 @@ def lookup_resource_ref_count(text_phrase):
                             break
                     if len(close_matches) < 1:
                         close_matches = re
+            del xml
         response.close()
         session.close()
     log.debug(f"lookup time: {(datetime.now() - start).seconds}")

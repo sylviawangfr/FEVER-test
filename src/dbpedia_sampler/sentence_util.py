@@ -2,7 +2,8 @@ import log_util
 from utils import c_scorer, text_clean
 from utils.tokenizer_simple import *
 
-STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'we', 'who', 'where', 'what',
+STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
+               'we', 'who', 'where', 'what', 'days', 'him', 'her','here', 'there', 'a', 'for',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
               'third']
 
@@ -61,8 +62,12 @@ def merge_phrases_l1_to_l2(l1, l2):
         if not is_dup:
             l2.append(i)
     l2 = list(set(l2) - set(to_delete))
-    merged = [i for i in l2 if i.lower() not in STOP_WORDS]
-    return merged
+    for i in l2:
+        if i.lower() in STOP_WORDS:
+            l2.remove(i)
+
+    del to_delete
+    return l2
 
 
 def merge_chunks_with_entities(chunks, ents):

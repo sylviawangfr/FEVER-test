@@ -17,6 +17,11 @@ def split_claim_spacy(text):
     return nouns, ents
 
 
+def count_words(sent):
+    doc_w = nlp_eng_spacy(sent)
+    return len(doc_w)
+
+
 def split_claim_regex(text):
     # get capital phrases
     # REGEX = r'(?<![.])([A-Z]+[\w]*\s)*([A-Z][\w]+)'

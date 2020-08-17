@@ -10,75 +10,16 @@ from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_lookup
 from dbpedia_sampler import dbpedia_spotlight
 from dbpedia_sampler import dbpedia_virtuoso
+from dbpedia_sampler.sentence_util import *
 from utils import c_scorer, text_clean
-from utils.tokenizer_simple import *
 from memory_profiler import profile
 
-STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
-               'we', 'who', 'where', 'what', 'days', 'him', 'her','here', 'there', 'a', 'for',
-              'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
-              'third']
+
 CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE_1 = 0.6
 SCORE_CONFIDENCE_2 = 0.85
 
 log = log_util.get_logger('dbpedia_triple_linker')
-
-
-def get_phrases(sentence, doc_title=''):
-    log.debug(sentence)
-    if doc_title != '' and c_scorer.SENT_DOC_TITLE in sentence and sentence.startswith(doc_title):
-        title_and_sen = sentence.split(c_scorer.SENT_DOC_TITLE, 1)
-        sent = title_and_sen[1]
-    else:
-        sent = sentence
-
-    chunks, ents = split_claim_spacy(sent)
-    entities = [en[0] for en in ents]
-    capitalized_phrased = split_claim_regex(sent)
-    log.debug(f"chunks: {chunks}")
-    log.debug(f"entities: {entities}")
-    log.debug(f"capitalized phrases: {capitalized_phrased}")
-    merged_entities = merge_phrases_l1_to_l2(capitalized_phrased, entities)
-    if not doc_title == '':
-        merged_entities = list(set(merged_entities) | set([doc_title]))
-    merged_entities = [i for i in merged_entities if i.lower() not in STOP_WORDS]
-    other_chunks = delete_ents_from_chunks(merged_entities, chunks)
-    log.debug(f"merged entities: {merged_entities}")
-    log.debug(f"other phrases: {other_chunks}")
-    return merged_entities, other_chunks
-
-
-def delete_ents_from_chunks(ents: list, chunks: list):
-    to_delete = []
-    for i in ents:
-        for j in chunks:
-            if j in i or j.lower() in STOP_WORDS:
-                to_delete.append(j)
-    chunks = list(set(chunks) - set(to_delete))
-    return chunks
-
-
-def is_date_or_number(str):
-    return text_clean.is_date(str) or text_clean.is_number(str)
-
-
-def merge_phrases_l1_to_l2(l1, l2):
-    to_delete = []
-    for i in l1:
-        is_dup = False
-        for j in l2:
-            if i in j:
-                is_dup = True
-                break
-            if j in i:
-                to_delete.append(j)
-        if not is_dup:
-            l2.append(i)
-    l2 = list(set(l2) - set(to_delete))
-    merged = [i for i in l2 if i.lower() not in STOP_WORDS]
-    del to_delete
-    return merged
 
 
 def lookup_phrase(phrase):
@@ -101,14 +42,6 @@ def query_resource(uri):
     return context
 
 
-def merge_chunks_with_entities(chunks, ents):
-    merged = ents
-    for c in chunks:
-        if len(list(filter(lambda x: (c in x), ents))) < 1:
-            merged.append(c)
-    return merged
-
-
 def find_linked_phrases(sentence):
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, "")
@@ -122,6 +55,7 @@ def find_linked_phrases(sentence):
             linked_phrases.append(p)
             continue
     return linked_phrases
+
 
 # @profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):

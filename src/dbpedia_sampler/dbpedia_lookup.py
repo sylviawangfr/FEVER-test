@@ -6,7 +6,7 @@ import xmltodict
 
 import config
 import log_util
-from dbpedia_sampler.dbpedia_virtuoso import uri_short_extract
+from dbpedia_sampler.uri_util import uri_short_extract
 from memory_profiler import profile
 
 log = log_util.get_logger('lookup_resource')

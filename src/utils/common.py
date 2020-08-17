@@ -78,7 +78,7 @@ def tokenize_doc_id(doc_id, tokenizer):
     return t_doc_id_natural_format, lemmas
 
 # @profile
-def doc_id_to_tokenized_text(doc_id, including_lemmas=False):
+def doc_id_to_tokenized_text(doc_id):
     # global tokenized_doc_id_dict
     # global_doc_id_object.load_dict()
     # tokenized_doc_id_dict = global_doc_id_object.tokenized_doc_id_dict
@@ -90,10 +90,6 @@ def doc_id_to_tokenized_text(doc_id, including_lemmas=False):
     #     return tokenized_doc_id_dict[doc_id]['words'], tokenized_doc_id_dict[doc_id]['lemmas']
     #
     # return ' '.join(tokenized_doc_id_dict[doc_id]['words'])
-
-    if including_lemmas:
-        return tokenize_doc_id(doc_id, tokenizer_spacy)
-    else:
-        return ' '.join(tokenize_doc_id(doc_id, tokenizer_spacy)[0])
+    return ' '.join(tokenize_doc_id(doc_id, tokenizer_spacy)[0])
 
 

@@ -144,9 +144,9 @@ def collate(samples):
     return samples
 
 
-@profile
+# @profile
 def tfidf_to_graph_sampler(tfidf_data):
-    batch_size = 1
+    batch_size = 10
     dt = get_current_time_str()
     paras = bert_para.BERT_para()
     paras.sample_n = 3
@@ -160,8 +160,8 @@ def tfidf_to_graph_sampler(tfidf_data):
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
             log.info(f"total count: {num}")
-            # save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
-            #                         config.LOG_PATH / f"sample_ss_graph_{dt}.log")
+            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+                                    config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
             del batched_sample
@@ -195,12 +195,12 @@ def tfidf_to_graph_sampler(tfidf_data):
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:5]
-    tfidf_to_graph_sampler(tfidf_dev_data)
+    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:5]
+    # tfidf_to_graph_sampler(tfidf_dev_data)
     # #
 
-    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[60840:70000]
-    # tfidf_to_graph_sampler(tfidf_train_data)
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[60840:70000]
+    tfidf_to_graph_sampler(tfidf_train_data)
     # # print(globals())
     # print(json.dumps(globals(), indent=1))
     # test_memory()

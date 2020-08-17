@@ -101,8 +101,6 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
         one_full_example['claim_links'] = claim_dict['graph']
         one_full_example['examples'] = example_l
         dbpedia_examples_l.append(one_full_example)
-        del all_sent_list
-        del claim_dict
 
     cursor.close()
     conn.close()
@@ -168,7 +166,6 @@ def tfidf_to_graph_sampler(tfidf_data):
             #                         config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
-            del sample_tfidf
             del batched_sample
             rt = gc.collect()
             # print("%d unreachable" % rt)

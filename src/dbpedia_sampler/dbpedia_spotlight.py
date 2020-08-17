@@ -33,7 +33,6 @@ def entity_link(sentence):
 
 
 
-
 if __name__ == "__main__":
     # entity_link("President Obama on Monday will call for a new minimum tax rate for individuals making more "
     #             "than $1 million a year to ensure that they pay at least the same percentage of their earnings "

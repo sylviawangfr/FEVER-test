@@ -151,21 +151,13 @@ def collate(samples):
 
 # @profile
 def tfidf_to_graph_sampler(tfidf_data):
-    batch_size = 1
+    batch_size = 10
     dt = get_current_time_str()
-    # thread_name = threading.current_thread().getName()
     # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
     sample_dataloader = BasketIterable(tfidf_data, batch_size)
     batch = 0
-    previous_num_objects = len(gc.get_objects())
     with tqdm(total=sample_dataloader.max_bunch_number, desc=f"Sampling") as pbar:
         for batched_sample in sample_dataloader:
-
-            current_num_objects = len(gc.get_objects())
-            new_objects = current_num_objects - previous_num_objects
-            print( f"{batch} This: {current_num_objects}, New: {new_objects}, Garbage: {len(gc.garbage)}, Collection Counts: {gc.get_count()}")
-            previous_num_objects = current_num_objects
-
             paras = bert_para.BERT_para()
             paras.sample_n = 3
             paras.pred = False
@@ -173,50 +165,50 @@ def tfidf_to_graph_sampler(tfidf_data):
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
             log.info(f"total count: {num}")
-            # save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
-            #                         config.LOG_PATH / f"sample_ss_graph_{dt}.log")
+            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+                                    config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
             del sample_tfidf
             del paras
             del batched_sample
             rt = gc.collect()
-            print("%d unreachable" % rt)
+            # print("%d unreachable" % rt)
     gc.collect()
     return
 
-test_globle = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
+# test_globle = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
 
-@profile
-def test_memory():
-    t = list(range(25000*2))
-    tt = BasketIterable(t, 25000)
-    paras = bert_para.BERT_para()
-    paras.sample_n = 3
-    paras.pred = False
-    for i in tt:
-        print(f"i: {len(i)}")
-        paras.upstream_data = test_globle.tokenize("Here is a dog")
-        del i
-        # del para
-        paras.upstream_data = []
-        r = gc.collect()
-        print(len(t), r)
-    print(f"gc is enabled: {gc.isenabled()}")
-    gc.collect()
-    print("-----------------")
-    return
+# @profile
+# def test_memory():
+#     t = list(range(25000*2))
+#     tt = BasketIterable(t, 25000)
+#     paras = bert_para.BERT_para()
+#     paras.sample_n = 3
+#     paras.pred = False
+#     for i in tt:
+#         print(f"i: {len(i)}")
+#         paras.upstream_data = test_globle.tokenize("Here is a dog")
+#         del i
+#         # del para
+#         paras.upstream_data = []
+#         r = gc.collect()
+#         print(len(t), r)
+#     print(f"gc is enabled: {gc.isenabled()}")
+#     gc.collect()
+#     print("-----------------")
+#     return
 
 
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:8]
-    tfidf_to_graph_sampler(tfidf_dev_data)
+    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:8]
+    # tfidf_to_graph_sampler(tfidf_dev_data)
     # #
 
-    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[56150:60000]
-    # tfidf_to_graph_sampler(tfidf_train_data)
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[60000:70000]
+    tfidf_to_graph_sampler(tfidf_train_data)
     # # print(globals())
     # print(json.dumps(globals(), indent=1))
     # test_memory()

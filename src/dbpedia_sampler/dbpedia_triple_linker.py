@@ -12,6 +12,7 @@ from dbpedia_sampler import dbpedia_spotlight
 from dbpedia_sampler import dbpedia_virtuoso
 from dbpedia_sampler.sentence_util import *
 from utils import c_scorer, text_clean
+from memory_profiler import profile
 
 
 CANDIDATE_UP_TO = 150
@@ -56,7 +57,7 @@ def find_linked_phrases(sentence):
     return linked_phrases
 
 
-# @profile
+@profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)

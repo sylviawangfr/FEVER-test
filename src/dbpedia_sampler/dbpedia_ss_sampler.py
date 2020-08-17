@@ -103,7 +103,6 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
         dbpedia_examples_l.append(one_full_example)
         del all_sent_list
         del claim_dict
-        gc.collect()
 
     cursor.close()
     conn.close()
@@ -153,28 +152,26 @@ def collate(samples):
 def tfidf_to_graph_sampler(tfidf_data):
     batch_size = 10
     dt = get_current_time_str()
+    paras = bert_para.BERT_para()
+    paras.sample_n = 3
+    paras.pred = False
     # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
     sample_dataloader = BasketIterable(tfidf_data, batch_size)
     batch = 0
     with tqdm(total=sample_dataloader.max_bunch_number, desc=f"Sampling") as pbar:
         for batched_sample in sample_dataloader:
-            paras = bert_para.BERT_para()
-            paras.sample_n = 3
-            paras.pred = False
             paras.upstream_data = batched_sample
             sample_tfidf = get_tfidf_sample(paras)
             num = batch * batch_size + len(batched_sample)
             log.info(f"total count: {num}")
-            save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
-                                    config.LOG_PATH / f"sample_ss_graph_{dt}.log")
+            # save_and_append_results(sample_tfidf, num, config.RESULT_PATH / f"sample_ss_graph_{dt}.jsonl",
+            #                         config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
             del sample_tfidf
-            del paras
             del batched_sample
             rt = gc.collect()
             # print("%d unreachable" % rt)
-    gc.collect()
     return
 
 # test_globle = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
@@ -207,7 +204,7 @@ if __name__ == '__main__':
     # tfidf_to_graph_sampler(tfidf_dev_data)
     # #
 
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[60840:70000]
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[60840:60860]
     tfidf_to_graph_sampler(tfidf_train_data)
     # # print(globals())
     # print(json.dumps(globals(), indent=1))

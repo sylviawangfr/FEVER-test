@@ -13,7 +13,7 @@ from memory_profiler import profile
 
 log = log_util.get_logger('lookup_resource')
 
-# @profile
+@profile
 def lookup_resource(text_phrase):
     lookup_rec = combine_lookup(text_phrase)
     if len(lookup_rec) < 1:
@@ -126,7 +126,7 @@ def lookup_resource_app_label(text_phrase):
     url = config.DBPEDIA_LOOKUP_APP_URL_LABEL + text_phrase
     return lookup_resource_app(text_phrase, url)
 
-@profile
+# @profile
 def lookup_resource_app(text_phrase, url):
     start = datetime.now()
     close_matches = []
@@ -158,7 +158,7 @@ def lookup_resource_app(text_phrase, url):
     log.debug(f"lookup-app time: {(datetime.now() - start).seconds}")
     return close_matches
 
-@profile
+# @profile
 def lookup_resource_ref_count(text_phrase):
     start = datetime.now()
     if '%' in text_phrase:

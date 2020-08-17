@@ -9,6 +9,7 @@ from utils import fever_db, c_scorer
 from utils.file_loader import *
 from utils.iter_basket import BasketIterable
 from utils.text_clean import convert_brc
+from memory_profiler import profile
 import gc
 
 

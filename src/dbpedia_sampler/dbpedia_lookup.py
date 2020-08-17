@@ -57,7 +57,7 @@ def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
     return top_match
 
 
-@profile
+# @profile
 def combine_lookup(text_phrase):
     lookup_matches = lookup_resource_ref_count(text_phrase)
     exact_match = has_exact_match(text_phrase, lookup_matches)
@@ -158,7 +158,7 @@ def lookup_resource_app(text_phrase, url):
     log.debug(f"lookup-app time: {(datetime.now() - start).seconds}")
     return close_matches
 
-# @profile
+@profile
 def lookup_resource_ref_count(text_phrase):
     start = datetime.now()
     if '%' in text_phrase:
@@ -171,7 +171,8 @@ def lookup_resource_ref_count(text_phrase):
         if response.status_code is not 200:
             log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
         else:
-            results = xmltodict.parse(response.text)
+            xml = response.text
+            results = xmltodict.parse(xml)
             if len(results['ArrayOfResult']) <= 3:
                 log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
                 return []

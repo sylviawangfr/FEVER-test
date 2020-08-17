@@ -11,7 +11,7 @@ STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'indivi
 
 log = log_util.get_logger('dbpedia_triple_linker')
 
-@profile
+# @profile
 def get_phrases(sentence, doc_title=''):
     log.debug(sentence)
     if doc_title != '' and c_scorer.SENT_DOC_TITLE in sentence and sentence.startswith(doc_title):

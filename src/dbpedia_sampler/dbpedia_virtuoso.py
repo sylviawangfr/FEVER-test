@@ -4,7 +4,7 @@ from datetime import datetime
 from SPARQLWrapper import SPARQLWrapper, JSON
 from dbpedia_sampler.uri_util import *
 from utils.tokenizer_simple import count_words
-
+from memory_profiler import profile
 import config
 import log_util
 
@@ -18,7 +18,7 @@ RECORD_LIMIT = 200
 
 log = log_util.get_logger('dbpedia_virtuoso')
 
-# @profile
+@profile
 def get_triples(query_str):
     # log.debug("virtuoso query str: " + query_str)
     start = datetime.now()
@@ -48,6 +48,7 @@ def get_triples(query_str):
                 log.debug(f"extra long obj or empty str: {record['object']['value']}")
         # print(json.dumps(triples, indent=4))
         log.debug(f"sparql time: {(datetime.now() - start).seconds}")
+
         return triples
     except Exception as err:
         log.warning("failed to query dbpedia virtuoso...")

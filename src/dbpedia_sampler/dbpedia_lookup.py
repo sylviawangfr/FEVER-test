@@ -1,7 +1,8 @@
 import difflib
 from datetime import datetime
 
-import requests
+import urllib.request
+from urllib.parse import quote, quote_plus
 import xmltodict
 
 import config
@@ -130,68 +131,77 @@ def lookup_resource_app_label(text_phrase):
 def lookup_resource_app(text_phrase, url):
     start = datetime.now()
     close_matches = []
-    with requests.session() as session:
-        response = session.get(url, timeout=5)
-        # response = requests.get(url, timeout=5) # cause memory leak
-        if response.status_code is 200:
-            results1 = xmltodict.parse(response.text)
-            if len(results1['ArrayOfResults']) <= 3:
-                log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup-app-query.")
-            else:
-                re = results1['ArrayOfResults']['Result']
-                if isinstance(re, dict):
-                    close_matches.append(re)
-                else:
-                    for i in re:
-                        if 'Label' in i and i['Label'] is not None:
-                            tmp_label = i['Label'].lower()
-                            text_phrase_lower = text_phrase.lower()
-                            if tmp_label == text_phrase_lower:
-                                close_matches.append(i)
-                                break
-                    if len(close_matches) < 1:
-                        close_matches = re
+    # url = quote(url, "?=\./_-:")
+    url = url.replace(' ', '%20')
+    try:
+        response = urllib.request.urlopen(url, timeout=5)
+    except Exception as err:
+        log.error(err)
+        return close_matches
+    # response = requests.get(url, timeout=5) # cause memory leak
+    if response.status is 200:
+        xml = response.read().decode('utf-8')
+        results1 = xmltodict.parse(xml)
+        if len(results1['ArrayOfResults']) <= 3:
+            log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup-app-query.")
         else:
-            log.error(f"failed to query lookup-app, response code:{response.status_code}")
-        response.close()
-        session.close()
+            re = results1['ArrayOfResults']['Result']
+            if isinstance(re, dict):
+                close_matches.append(re)
+            else:
+                for i in re:
+                    if 'Label' in i and i['Label'] is not None:
+                        tmp_label = i['Label'].lower()
+                        text_phrase_lower = text_phrase.lower()
+                        if tmp_label == text_phrase_lower:
+                            close_matches.append(i)
+                            break
+                if len(close_matches) < 1:
+                    close_matches = re
+    else:
+        log.error(f"failed to query lookup-app, response code:{response.status_code}")
+    response.close()
     log.debug(f"lookup-app time: {(datetime.now() - start).seconds}")
     return close_matches
 
-@profile
+# @profile
 def lookup_resource_ref_count(text_phrase):
     start = datetime.now()
     if '%' in text_phrase:
         return []
     url = config.DBPEDIA_LOOKUP_URL + text_phrase
+    # url = quote(url, "?=\./_-:")
+    url = url.replace(' ', '%20')
     # log.debug(f"lookup url: {url}")
     close_matches = []
-    with requests.session() as session:
-        response = session.get(url, timeout=5)
-        if response.status_code is not 200:
-            log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
+    try:
+        response = urllib.request.urlopen(url, timeout=5)
+    except Exception as err:
+        log.error(err)
+        return close_matches
+    if response.status is not 200:
+        log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
+    else:
+        xml = response.read().decode('utf-8')
+        results = xmltodict.parse(xml)
+        if len(results['ArrayOfResult']) <= 3:
+            log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
+            return []
         else:
-            xml = response.text
-            # results = xmltodict.parse(xml)
-            # if len(results['ArrayOfResult']) <= 3:
-            #     log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
-            #     return []
-            # else:
-            #     re = results['ArrayOfResult']['Result']
-            #     if isinstance(re, dict):
-            #         close_matches.append(re)
-            #     else:
-            #         for i in re:
-            #             tmp_label = i['Label'].lower()
-            #             text_phrase_lower = text_phrase.lower()
-            #             if tmp_label == text_phrase_lower:
-            #                 close_matches.append(i)
-            #                 break
-            #         if len(close_matches) < 1:
-            #             close_matches = re
-            del xml
-        response.close()
-        session.close()
+            re = results['ArrayOfResult']['Result']
+            if isinstance(re, dict):
+                close_matches.append(re)
+            else:
+                for i in re:
+                    tmp_label = i['Label'].lower()
+                    text_phrase_lower = text_phrase.lower()
+                    if tmp_label == text_phrase_lower:
+                        close_matches.append(i)
+                        break
+                if len(close_matches) < 1:
+                    close_matches = re
+        del xml
+    response.close()
     log.debug(f"lookup time: {(datetime.now() - start).seconds}")
     return close_matches
 

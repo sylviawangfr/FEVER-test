@@ -12,7 +12,6 @@ from dbpedia_sampler import dbpedia_spotlight
 from dbpedia_sampler import dbpedia_virtuoso
 from dbpedia_sampler.sentence_util import *
 from utils import c_scorer, text_clean
-from memory_profiler import profile
 
 
 CANDIDATE_UP_TO = 150

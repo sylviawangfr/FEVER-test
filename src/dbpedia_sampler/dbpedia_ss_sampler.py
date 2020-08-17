@@ -1,8 +1,5 @@
 import itertools
 
-import gc
-from memory_profiler import profile
-
 import BERT_sampler.ss_sampler as ss_sampler
 import log_util
 import utils.check_sentences
@@ -12,8 +9,7 @@ from utils import fever_db, c_scorer
 from utils.file_loader import *
 from utils.iter_basket import BasketIterable
 from utils.text_clean import convert_brc
-from utils.common import iter_baskets_contiguous
-import objgraph
+
 
 log = log_util.get_logger("dbpedia_ss_sampler")
 

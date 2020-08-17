@@ -7,7 +7,6 @@ from utils.tokenizer_simple import count_words
 
 import config
 import log_util
-from memory_profiler import profile
 
 DEFAULT_GRAPH = "http://dbpedia.org"
 PREFIX_DBO = "http://dbpedia.org/ontology/"

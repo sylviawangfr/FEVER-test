@@ -5,7 +5,6 @@ import log_util
 from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_triple_linker
 from utils.tokenizer_simple import get_dependent_verb
-from memory_profiler import profile
 
 CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.85

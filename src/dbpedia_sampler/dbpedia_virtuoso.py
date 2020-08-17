@@ -188,7 +188,6 @@ def get_outbounds(resource_uri):
     log.debug(f"outbound re: {len(tris)}")
     for i in to_delete:
         tris.remove(i)
-    del to_delete
     return tris
 
 

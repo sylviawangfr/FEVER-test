@@ -167,8 +167,6 @@ def tfidf_to_graph_sampler(tfidf_data):
             pbar.update(1)
             batch += 1
             del batched_sample
-            rt = gc.collect()
-            # print("%d unreachable" % rt)
     return
 
 # test_globle = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')

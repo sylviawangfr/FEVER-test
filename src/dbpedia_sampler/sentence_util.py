@@ -65,8 +65,6 @@ def merge_phrases_l1_to_l2(l1, l2):
     for i in l2:
         if i.lower() in STOP_WORDS:
             l2.remove(i)
-
-    del to_delete
     return l2
 
 

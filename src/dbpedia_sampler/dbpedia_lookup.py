@@ -150,7 +150,6 @@ def lookup_resource_app(text_phrase, url):
                                 break
                     if len(close_matches) < 1:
                         close_matches = re
-            del results1
         else:
             log.error(f"failed to query lookup-app, response code:{response.status_code}")
     log.debug(f"lookup-app time: {(datetime.now() - start).seconds}")

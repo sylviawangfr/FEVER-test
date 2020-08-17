@@ -21,7 +21,7 @@ SCORE_CONFIDENCE_2 = 0.85
 
 log = log_util.get_logger('dbpedia_triple_linker')
 
-
+# @profile
 def lookup_phrase(phrase):
     linked_phrase = dict()
     resource_dict = dbpedia_lookup.lookup_resource(phrase)
@@ -482,32 +482,33 @@ if __name__ == '__main__':
     # embedding2 = bert_similarity.get_phrase_embedding(['Pranksters'])
     # out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
     # text = "Autonomous cars shift insurance liability toward manufacturers"
-    claim = "Roman Atwood is a content creator."
-    sentence1 = "Brett Atwood is a website editor , content strategist and former print and online journalist whose " \
-               "writings have appeared in Billboard , Rolling Stone , Vibe , " \
-               "The Hollywood Reporter and other publications "
-    sentence2 = "Roman Bernard Atwood (born May 28, 1983) is an American YouTube personality and prankster."
-    s1 = "Narrative can be organized in a number of thematic or formal categories : non-fiction -LRB- such as " \
-         "definitively including creative non-fiction , biography , journalism , transcript poetry , " \
-         "and historiography -RRB- ; fictionalization of historical events -LRB- such as anecdote , myth , " \
-         "legend , and historical fiction -RRB- ; and fiction proper -LRB- such as literature in prose and " \
-         "sometimes poetry , such as short stories , novels , and narrative poems and songs , and imaginary narratives " \
-         "as portrayed in other textual forms , games , or live or recorded performances -RRB- ."
-    s2 = "'History of art includes architecture, dance, sculpture, music, painting, poetry " \
-         "literature, theatre, narrative, film, photography and graphic arts.'"
-
-    s3 = "'Graphic arts - Graphic art further includes calligraphy , photography , painting , typography , " \
-         "computer graphics , and bindery .'"
-
-    s4 = "Homeland is an American spy thriller television series developed by Howard Gordon and Alex Gansa based on" \
-         " the Israeli series Prisoners of War ( Original title חטופים Hatufim , literally `` Abductees '' ) , " \
-         "which was created by Gideon Raff .."
-    s5 = "He is best known for hosting the talent competition show American Idol , " \
-         "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
-    s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
-    s7 = "Firefox is a computer game."
+    # claim = "Roman Atwood is a content creator."
+    # sentence1 = "Brett Atwood is a website editor , content strategist and former print and online journalist whose " \
+    #            "writings have appeared in Billboard , Rolling Stone , Vibe , " \
+    #            "The Hollywood Reporter and other publications "
+    # sentence2 = "Roman Bernard Atwood (born May 28, 1983) is an American YouTube personality and prankster."
+    # s1 = "Narrative can be organized in a number of thematic or formal categories : non-fiction -LRB- such as " \
+    #      "definitively including creative non-fiction , biography , journalism , transcript poetry , " \
+    #      "and historiography -RRB- ; fictionalization of historical events -LRB- such as anecdote , myth , " \
+    #      "legend , and historical fiction -RRB- ; and fiction proper -LRB- such as literature in prose and " \
+    #      "sometimes poetry , such as short stories , novels , and narrative poems and songs , and imaginary narratives " \
+    #      "as portrayed in other textual forms , games , or live or recorded performances -RRB- ."
+    # s2 = "'History of art includes architecture, dance, sculpture, music, painting, poetry " \
+    #      "literature, theatre, narrative, film, photography and graphic arts.'"
+    #
+    # s3 = "'Graphic arts - Graphic art further includes calligraphy , photography , painting , typography , " \
+    #      "computer graphics , and bindery .'"
+    #
+    # s4 = "Homeland is an American spy thriller television series developed by Howard Gordon and Alex Gansa based on" \
+    #      " the Israeli series Prisoners of War ( Original title חטופים Hatufim , literally `` Abductees '' ) , " \
+    #      "which was created by Gideon Raff .."
+    # s5 = "He is best known for hosting the talent competition show American Idol , " \
+    #      "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
+    # s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
+    # s7 = "Firefox is a computer game."
     s8 = "Where the Heart Is ( 2000 film ) - The filmstars Natalie Portman , Stockard Channing , Ashley Judd , and Joan Cusack with supporting roles done by James Frain , Dylan Bruno , Keith David , and Sally Field ."
     no_l, l = link_sentence(s8, doc_title='')
+
     # all_phrases = no_l + [i['text'] for i in l]
     # verb_d = get_dependent_verb(s6, all_phrases)
 

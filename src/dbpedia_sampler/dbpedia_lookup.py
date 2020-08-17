@@ -8,6 +8,8 @@ import config
 import log_util
 from dbpedia_sampler.uri_util import uri_short_extract
 from memory_profiler import profile
+import gc
+
 
 log = log_util.get_logger('lookup_resource')
 
@@ -148,12 +150,14 @@ def lookup_resource_app(text_phrase, url):
                                 break
                     if len(close_matches) < 1:
                         close_matches = re
+            del results1
+            gc.collect()
         else:
             log.error(f"failed to query lookup-app, response code:{response.status_code}")
     log.debug(f"lookup-app time: {(datetime.now() - start).seconds}")
     return close_matches
 
-
+# @profile
 def lookup_resource_ref_count(text_phrase):
     start = datetime.now()
     if '%' in text_phrase:
@@ -164,11 +168,14 @@ def lookup_resource_ref_count(text_phrase):
     with requests.get(url, timeout=5) as response:
         if response.status_code is not 200:
             log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
+            del response
             return []
         else:
             results = xmltodict.parse(response.text)
             if len(results['ArrayOfResult']) <= 3:
                 log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
+                del results
+                del response
                 return []
             else:
                 re = results['ArrayOfResult']['Result']
@@ -183,6 +190,9 @@ def lookup_resource_ref_count(text_phrase):
                             break
                     if len(close_matches) < 1:
                         close_matches = re
+                del results
+            del response
+            gc.collect()
     log.debug(f"lookup time: {(datetime.now() - start).seconds}")
     return close_matches
 
@@ -204,14 +214,18 @@ def to_triples(record_json):
 
 if __name__ == "__main__":
     lookup_resource('Howard Eugene Johnson')
+    gc.collect()
     lookup_resource('cultists')
+    gc.collect()
     lookup_resource('Italian')
+    gc.collect()
     lookup_resource('Even')
+    gc.collect()
     lookup_resource('Giada Pamela De Laurentiis')
-    lookup_resource('American')
-    lookup_resource('UK')
-    lookup_resource('Bloomington')
-    lookup_resource('Indiana')
-    lookup_resource('film')
-    lookup_resource('music')
+    # lookup_resource('American')
+    # lookup_resource('UK')
+    # lookup_resource('Bloomington')
+    # lookup_resource('Indiana')
+    # lookup_resource('film')
+    # lookup_resource('music')
 

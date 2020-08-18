@@ -6,6 +6,7 @@ from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_triple_linker
 from utils.tokenizer_simple import get_dependent_verb
 from memory_profiler import profile
+import gc
 
 CANDIDATE_UP_TO = 150
 SCORE_CONFIDENCE = 0.85
@@ -268,15 +269,27 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
 
     return sent_graph
 
+@profile
+def test_claim():
+    cc1 = "Michelin Guides are published by George Lucas."
+    for i in range(1):
+        t = construct_subgraph_for_claim(cc1)
+        del t
+        gc.collect()
+    gc.collect()
+    return
+
+
 
 if __name__ == '__main__':
-    cc1 = "Michelin Guides are published by George Lucas."
-    s9 = "The term normally refers to the annually published Michelin Red Guide , the oldest European hotel and restaurant reference guide , which awards Michelin stars for excellence to a select few establishments ."
-    s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
-    s7 = "Howard Eugene Johnson -LRB- 30 January 1915 -- 28 May 2000 -RRB- , better known as `` Stretch \'\' Johnson , was a tap dancer and social activist ."
-    s8 = "Magic Johnson was a tap dancer"
-    s9 = 'Tap Tap was a series of rhythm games by Tapulous available for the iOS of which several versions , both purchasable and free , have been produced .'
-    s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
-    s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
+    # cc1 = "Michelin Guides are published by George Lucas."
+    # s9 = "The term normally refers to the annually published Michelin Red Guide , the oldest European hotel and restaurant reference guide , which awards Michelin stars for excellence to a select few establishments ."
+    # s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
+    # s7 = "Howard Eugene Johnson -LRB- 30 January 1915 -- 28 May 2000 -RRB- , better known as `` Stretch \'\' Johnson , was a tap dancer and social activist ."
+    # s8 = "Magic Johnson was a tap dancer"
+    # s9 = 'Tap Tap was a series of rhythm games by Tapulous available for the iOS of which several versions , both purchasable and free , have been produced .'
+    # s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
+    # s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
     # claim_dict = construct_subgraph_for_claim(s8)
     # construct_subgraph_for_candidate(claim_dict, s9, doc_title='Chanhassen High School')
+    test_claim()

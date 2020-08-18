@@ -272,9 +272,14 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
 @profile
 def test_claim():
     cc1 = "Michelin Guides are published by George Lucas."
-    for i in range(40):
+    s9 = "The term normally refers to the annually published Michelin Red Guide , the oldest " \
+         "European hotel and restaurant reference guide , which awards Michelin stars for excellence " \
+         "to a select few establishments ."
+    for i in range(1):
         t = construct_subgraph_for_claim(cc1)
+        s = construct_subgraph_for_candidate(t, s9, "")
         del t
+        del s
         gc.collect()
     gc.collect()
     return

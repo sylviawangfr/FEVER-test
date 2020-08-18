@@ -276,7 +276,7 @@ def test_claim():
          "European hotel and restaurant reference guide , which awards Michelin stars for excellence " \
          "to a select few establishments ."
     t = construct_subgraph_for_claim(cc1)
-    for i in range(5):
+    for i in range(20):
         s = construct_subgraph_for_candidate(t, s9, "")
         del s
         gc.collect()

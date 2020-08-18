@@ -269,7 +269,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
 
     return sent_graph
 
-@profile
+# @profile
 def test_claim():
     cc1 = "Michelin Guides are published by George Lucas."
     s9 = "The term normally refers to the annually published Michelin Red Guide , the oldest " \

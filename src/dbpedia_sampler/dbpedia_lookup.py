@@ -9,7 +9,8 @@ import config
 import log_util
 from dbpedia_sampler.uri_util import uri_short_extract
 from memory_profiler import profile
-
+import time
+import gc
 
 
 log = log_util.get_logger('lookup_resource')
@@ -184,7 +185,6 @@ def lookup_resource_ref_count(text_phrase):
         results = xmltodict.parse(xml)
         if len(results['ArrayOfResult']) <= 3:
             log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
-            return []
         else:
             re = results['ArrayOfResult']['Result']
             if isinstance(re, dict):
@@ -219,12 +219,30 @@ def to_triples(record_json):
     return triples
 
 
-if __name__ == "__main__":
-    t = ['Howard Eugene Johnson', 'cultists','Italian', 'Even', 'Giada Pamela De Laurentiis']
+# @profile
+def test():
+    t = ['Howard Eugene Johnson', 'cultists', 'Italian', 'Even', 'Giada Pamela De Laurentiis', 'American',
+         'Bloomington']
     for i in t:
-        lookup_resource(i)
-        lookup_resource(i)
-        lookup_resource(i)
+        s = lookup_resource(i)
+        del s
+        gc.collect()
+
+    for i in t:
+        s = lookup_resource(i)
+        del s
+        gc.collect()
+
+    for i in t:
+        s = lookup_resource(i)
+        del s
+        gc.collect()
+
+    return
+
+
+if __name__ == "__main__":
+    test()
 
     # lookup_resource('Howard Eugene Johnson')
     # lookup_resource('cultists')

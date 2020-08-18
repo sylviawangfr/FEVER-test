@@ -171,7 +171,7 @@ def tfidf_to_graph_sampler(tfidf_data):
 
 test_globle = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
 
-@profile
+# @profile
 def test_memory():
     # t = list(range(25000*2))
     # tt = BasketIterable(t, 25000)
@@ -199,8 +199,8 @@ if __name__ == '__main__':
     # tfidf_to_graph_sampler(tfidf_dev_data)
     # # #
     #
-    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[63140:70000]
-    # tfidf_to_graph_sampler(tfidf_train_data)
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[63140:70000]
+    tfidf_to_graph_sampler(tfidf_train_data)
     # # # print(globals())
     # print(json.dumps(globals(), indent=1))
-    test_memory()
+    # test_memory()

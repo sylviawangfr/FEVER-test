@@ -272,7 +272,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
 @profile
 def test_claim():
     cc1 = "Michelin Guides are published by George Lucas."
-    for i in range(20):
+    for i in range(40):
         t = construct_subgraph_for_claim(cc1)
         del t
         gc.collect()

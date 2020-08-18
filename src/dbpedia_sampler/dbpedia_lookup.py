@@ -219,7 +219,7 @@ def to_triples(record_json):
     return triples
 
 
-# @profile
+@profile
 def test():
     t = ['Howard Eugene Johnson', 'cultists', 'Italian', 'Even', 'Giada Pamela De Laurentiis', 'American',
          'Bloomington']
@@ -242,6 +242,7 @@ def test():
 
 
 if __name__ == "__main__":
+    test()
     test()
 
     # lookup_resource('Howard Eugene Johnson')

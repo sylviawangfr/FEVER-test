@@ -46,7 +46,7 @@ S_TFIDF_RETRV_DEV = RESULT_PATH / "dev_s_tfidf_retrieve.jsonl"
 DOC_RETRV_TEST = RESULT_PATH / "test_doc_retrieve.jsonl"
 
 # ------------------------HOSTS-----------------------
-LOCALHOST = "10.1.100.101" if socket.gethostname() == 'vanadium' else "localhost"
+LOCALHOST = "localhost" if socket.gethostname() == 'vanadium' else "localhost"
 DBPEDIA_LOOKUP_PORT = 1111 if platform.system() == 'Linux' else 5001
 DBPEDIA_LOOKUP_URL = f"http://{LOCALHOST}:{DBPEDIA_LOOKUP_PORT}/api/search/KeywordSearch?QueryString="
 

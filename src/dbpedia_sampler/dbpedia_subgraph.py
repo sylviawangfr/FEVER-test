@@ -94,7 +94,7 @@ def construct_subgraph_for_claim(claim_text):
     claim_d['lookup_hash'] = lookup_hash
     return claim_d
 
-@profile
+# @profile
 def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
     claim_linked_phrases_l = claim_dict['linked_phrases_l']
     claim_graph = claim_dict['graph']
@@ -276,7 +276,7 @@ def test_claim():
          "European hotel and restaurant reference guide , which awards Michelin stars for excellence " \
          "to a select few establishments ."
 
-    for i in range(20):
+    for i in range(5):
         t = construct_subgraph_for_claim(cc1)
         s = construct_subgraph_for_candidate(t, s9, "")
         del s

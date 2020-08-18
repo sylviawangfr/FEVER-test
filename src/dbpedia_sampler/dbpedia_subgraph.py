@@ -279,9 +279,7 @@ def test_claim():
     for i in range(10):
         t = construct_subgraph_for_claim(cc1)
         s = construct_subgraph_for_candidate(t, s9, "")
-        del s
         gc.collect()
-    del t
     gc.collect()
     return
 

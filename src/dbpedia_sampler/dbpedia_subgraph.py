@@ -275,8 +275,9 @@ def test_claim():
     s9 = "The term normally refers to the annually published Michelin Red Guide , the oldest " \
          "European hotel and restaurant reference guide , which awards Michelin stars for excellence " \
          "to a select few establishments ."
-    t = construct_subgraph_for_claim(cc1)
-    for i in range(10):
+
+    for i in range(3):
+        t = construct_subgraph_for_claim(cc1)
         s = construct_subgraph_for_candidate(t, s9, "")
         del s
         gc.collect()

@@ -8,6 +8,7 @@ from dbpedia_sampler import dbpedia_subgraph
 from utils import fever_db, c_scorer
 from utils.file_loader import *
 from utils.iter_basket import BasketIterable
+from torch.utils.data import DataLoader
 from utils.text_clean import convert_brc
 from memory_profiler import profile
 import gc
@@ -151,8 +152,8 @@ def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3
     paras.pred = False
-    # sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
-    sample_dataloader = BasketIterable(tfidf_data, batch_size)
+    sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
+    # sample_dataloader = BasketIterable(tfidf_data, batch_size)
     batch = 0
     with tqdm(total=sample_dataloader.max_bunch_number, desc=f"Sampling") as pbar:
         for batched_sample in sample_dataloader:

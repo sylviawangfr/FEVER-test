@@ -34,7 +34,7 @@ def lookup_phrase(phrase):
     return linked_phrase
 
 
-# @profile
+@profile
 def query_resource(uri):
     context = dict()
     outbounds = dbpedia_virtuoso.get_outbounds(uri)
@@ -59,7 +59,7 @@ def find_linked_phrases(sentence):
     return linked_phrases
 
 
-@profile
+# @profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)
@@ -479,7 +479,7 @@ def get_one_hop(linked_dict):
     return one_hop
 
 
-# @profile
+@profile
 def test():
     s2 = "'History of art includes architecture, dance, sculpture, music, painting, poetry " \
              "literature, theatre, narrative, film, photography and graphic arts.'"
@@ -497,7 +497,7 @@ def test():
         del x
         del y
         gc.collect()
-        time.sleep(1)
+        time.sleep(10)
 
 
 

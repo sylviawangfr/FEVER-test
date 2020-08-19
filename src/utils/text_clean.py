@@ -88,7 +88,10 @@ def is_date(string, fuzzy=False):
     try:
         parse(string, fuzzy=fuzzy)
         return True
-    except Exception:
+    except ValueError:
+        return False
+    except TypeError:
+        print(f"type error: {string}")
         return False
 
 

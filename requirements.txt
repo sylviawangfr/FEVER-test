@@ -2,7 +2,7 @@ elasticsearch-dsl>=6.0.0
 elasticsearch>=6.3.0
 tqdm
 nltk
-spacy
+spacy>=2.3.2
 pytorch_pretrained_bert
 matplotlib
 pyspotlight
@@ -10,3 +10,5 @@ validators>=0.15.0
 SPARQLWrapper>=1.8.5
 xmltodict
 sklearn
+tensorflow-gpu
+memory_profiler

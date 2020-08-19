@@ -196,12 +196,12 @@ def test_memory():
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:5]
-    tfidf_to_graph_sampler(tfidf_dev_data)
+    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:5]
+    # tfidf_to_graph_sampler(tfidf_dev_data)
     # # #
     #
-    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[67150:70000]
-    # tfidf_to_graph_sampler(tfidf_train_data)
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[70000:80000]
+    tfidf_to_graph_sampler(tfidf_train_data)
     # # # print(globals())
     # print(json.dumps(globals(), indent=1))
     # test_memory()

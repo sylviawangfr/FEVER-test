@@ -13,6 +13,8 @@ from dbpedia_sampler import dbpedia_virtuoso
 from dbpedia_sampler.sentence_util import *
 from utils import c_scorer, text_clean
 from memory_profiler import profile
+import time
+import gc
 
 
 CANDIDATE_UP_TO = 150
@@ -57,7 +59,7 @@ def find_linked_phrases(sentence):
     return linked_phrases
 
 
-# @profile
+@profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)
@@ -477,7 +479,30 @@ def get_one_hop(linked_dict):
     return one_hop
 
 
+# @profile
+def test():
+    s2 = "'History of art includes architecture, dance, sculpture, music, painting, poetry " \
+             "literature, theatre, narrative, film, photography and graphic arts.'"
+
+    s3 = "'Graphic arts - Graphic art further includes calligraphy , photography , painting , typography , " \
+         "computer graphics , and bindery .'"
+
+    s4 = "Homeland is an American spy thriller television series developed by Howard Gordon and Alex Gansa based on" \
+         " the Israeli series Prisoners of War ( Original title חטופים Hatufim , literally `` Abductees '' ) , " \
+         "which was created by Gideon Raff .."
+    s5 = "He is best known for hosting the talent competition show American Idol , "
+    s_l = [s2, s3, s4, s5]
+    for i in s_l:
+        x, y = link_sentence(i)
+        del x
+        del y
+        gc.collect()
+        time.sleep(1)
+
+
+
 if __name__ == '__main__':
+    test()
     # embedding1 = bert_similarity.get_phrase_embedding(['Advertising'])
     # embedding2 = bert_similarity.get_phrase_embedding(['Pranksters'])
     # out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
@@ -506,9 +531,8 @@ if __name__ == '__main__':
     #      "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
     # s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
     # s7 = "Firefox is a computer game."
-    s8 = "Where the Heart Is ( 2000 film ) - The filmstars Natalie Portman , Stockard Channing , Ashley Judd , and Joan Cusack with supporting roles done by James Frain , Dylan Bruno , Keith David , and Sally Field ."
-    no_l, l = link_sentence(s8, doc_title='')
+    # s8 = "Where the Heart Is ( 2000 film ) - The filmstars Natalie Portman , Stockard Channing , Ashley Judd , and Joan Cusack with supporting roles done by James Frain , Dylan Bruno , Keith David , and Sally Field ."
+    # no_l, l = link_sentence(s8, doc_title='')
 
     # all_phrases = no_l + [i['text'] for i in l]
     # verb_d = get_dependent_verb(s6, all_phrases)
-

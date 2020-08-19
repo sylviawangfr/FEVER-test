@@ -218,20 +218,20 @@ def to_triples(record_json):
     return triples
 
 
-# @profile
+@profile
 def test():
     t = ['Howard Eugene Johnson', 'cultists', 'Italian', 'Even', 'Giada Pamela De Laurentiis', 'American',
-         'Bloomington']
+         'Bloomington', 'music school', 'China capital city']
     for i in t:
         s = lookup_resource_ref_count(i)
         del s
-        gc.collect()
     return
 
 
 if __name__ == "__main__":
-    for i in range(20):
+    for i in range(50):
         test()
+        gc.collect()
 
 
 

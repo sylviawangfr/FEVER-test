@@ -40,5 +40,5 @@ if __name__ == "__main__":
     # text1 = "Roman Atwood is a content creator."
     text1 = "Magic Johnson did not play for the Lakers."
     # text1 = 'Don Bradman retired from soccer.'
-    entity_link(text1)
+    print(entity_link(text1))
 

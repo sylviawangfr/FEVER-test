@@ -503,6 +503,7 @@ def test():
 
 if __name__ == '__main__':
     test()
+    test()
     # embedding1 = bert_similarity.get_phrase_embedding(['Advertising'])
     # embedding2 = bert_similarity.get_phrase_embedding(['Pranksters'])
     # out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457

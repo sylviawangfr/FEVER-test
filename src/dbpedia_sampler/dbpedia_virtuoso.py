@@ -294,7 +294,6 @@ def does_reach_max_length(text):
 
 
 if __name__ == "__main__":
-    uri_short_extract('*')
     # res = "http://dbpedia.org/resource/Magic_Johnson"
     res = "http://dbpedia.org/resource/Tap_dancer"
     print(get_disambiguates_outbounds(res))

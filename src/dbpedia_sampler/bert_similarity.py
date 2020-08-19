@@ -27,7 +27,7 @@ def get_phrase_embedding(phrases):
 
 
 if __name__ == '__main__':
-    p1 = ['Neil Armstrong', 'moon buggy', 'human', 'rocket']
+    p1 = ['Neil Armstrong', 'moon buggy', 'human', 'rocket', 'Naval installations', 'Military terminology']
     p2 = ['spacecraft', 'Birthday', 'game', 'fire', 'man']
     print(get_phrase_embedding(p1))
 

@@ -28,7 +28,8 @@ def get_triples(query_str):
     sparql.setReturnFormat(JSON)
     triples = []
     try:
-        results = sparql.query().convert()
+        response = sparql.query()
+        results = response.convert()
         if len(results["results"]["bindings"]) > 500:
             log.debug('extra large bindings in DBpedia, ignore')
             return triples
@@ -47,8 +48,8 @@ def get_triples(query_str):
             else:
                 log.debug(f"extra long obj or empty str: {record['object']['value']}")
         # print(json.dumps(triples, indent=4))
+        response.response.close()
         log.debug(f"sparql time: {(datetime.now() - start).seconds}")
-
         return triples
     except Exception as err:
         log.warning("failed to query dbpedia virtuoso...")
@@ -158,7 +159,7 @@ def get_ontology_linked_values_inbound(resource_uri):
     log.debug(f"inbound re: {len(tris)}")
     return tris
 
-
+@profile
 def get_outbounds(resource_uri):
     query_str_outbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
         f"SELECT distinct (<{resource_uri}> AS ?subject) ?relation ?object " \

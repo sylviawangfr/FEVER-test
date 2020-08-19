@@ -497,7 +497,7 @@ def test():
         del x
         del y
         gc.collect()
-        time.sleep(10)
+        time.sleep(5)
 
 
 

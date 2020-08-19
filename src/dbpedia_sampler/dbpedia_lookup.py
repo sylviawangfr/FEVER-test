@@ -198,7 +198,6 @@ def lookup_resource_ref_count(text_phrase):
                         break
                 if len(close_matches) < 1:
                     close_matches = re
-        del xml
     response.close()
     log.debug(f"lookup time: {(datetime.now() - start).seconds}")
     return close_matches
@@ -219,31 +218,22 @@ def to_triples(record_json):
     return triples
 
 
-@profile
+# @profile
 def test():
     t = ['Howard Eugene Johnson', 'cultists', 'Italian', 'Even', 'Giada Pamela De Laurentiis', 'American',
          'Bloomington']
     for i in t:
-        s = lookup_resource(i)
+        s = lookup_resource_ref_count(i)
         del s
         gc.collect()
-
-    for i in t:
-        s = lookup_resource(i)
-        del s
-        gc.collect()
-
-    for i in t:
-        s = lookup_resource(i)
-        del s
-        gc.collect()
-
     return
 
 
 if __name__ == "__main__":
-    test()
-    test()
+    for i in range(20):
+        test()
+
+
 
     # lookup_resource('Howard Eugene Johnson')
     # lookup_resource('cultists')

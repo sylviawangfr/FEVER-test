@@ -17,7 +17,7 @@ def split_claim_spacy(text):
     # print(ents)
     return nouns, ents
 
-@profile
+# @profile
 def count_words(sent):
     doc_w = nlp_eng_spacy(sent)
     l = len(doc_w)

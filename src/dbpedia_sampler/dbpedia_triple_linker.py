@@ -59,7 +59,7 @@ def find_linked_phrases(sentence):
     return linked_phrases
 
 
-@profile
+# @profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)

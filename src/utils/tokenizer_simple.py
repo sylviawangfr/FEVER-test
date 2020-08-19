@@ -1,6 +1,7 @@
 import regex
 import spacy
 from spacy.symbols import nsubj, dobj, pobj, VERB
+from memory_profiler import profile
 
 # nlp_eng = spacy.load("en_core_web_md")
 # nlp_eng = spacy.load("en_core_web_lg")
@@ -16,10 +17,12 @@ def split_claim_spacy(text):
     # print(ents)
     return nouns, ents
 
-
+@profile
 def count_words(sent):
     doc_w = nlp_eng_spacy(sent)
-    return len(doc_w)
+    l = len(doc_w)
+    del doc_w
+    return l
 
 
 def split_claim_regex(text):

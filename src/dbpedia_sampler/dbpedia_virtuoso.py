@@ -159,7 +159,7 @@ def get_ontology_linked_values_inbound(resource_uri):
     log.debug(f"inbound re: {len(tris)}")
     return tris
 
-@profile
+# @profile
 def get_outbounds(resource_uri):
     query_str_outbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
         f"SELECT distinct (<{resource_uri}> AS ?subject) ?relation ?object " \

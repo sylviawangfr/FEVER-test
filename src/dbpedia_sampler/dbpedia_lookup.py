@@ -139,7 +139,7 @@ def lookup_resource_app(text_phrase, url):
         log.warning(f"{text_phrase}: {url}")
         return close_matches
     # response = requests.get(url, timeout=5) # cause memory leak
-    if response.status is 200:
+    if response.status == 200:
         xml = response.read().decode('utf-8')
         results1 = xmltodict.parse(xml)
         if len(results1['ArrayOfResults']) <= 3:
@@ -178,7 +178,7 @@ def lookup_resource_ref_count(text_phrase):
         log.error(err)
         log.warning(f"{text_phrase}: {url}")
         return close_matches
-    if response.status is not 200:
+    if response.status != 200:
         log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
     else:
         xml = response.read().decode('utf-8')
@@ -218,7 +218,7 @@ def to_triples(record_json):
     return triples
 
 
-@profile
+# @profile
 def test():
     t = ['Howard Eugene Johnson', 'cultists', 'Italian', 'Even', 'Giada Pamela De Laurentiis', 'American',
          'Bloomington', 'music school', 'China capital city']

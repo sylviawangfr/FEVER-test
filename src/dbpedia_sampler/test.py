@@ -33,20 +33,20 @@ def test3():
     start = datetime.now()
     p1 = ['Neil Armstrong', 'moon buggy', 'human', 'rocket', 'Naval installations', 'Military terminology']
     get_phrase_embedding(p1)
-    print(f"embedding time: {(datetime.now() - start).microseconds}")
+    print(f"embedding time: {datetime.now() - start}")
 
     start = datetime.now()
     entity_link("President Obama on Monday will call for a new minimum tax rate for individuals making more "
                             "than $1 million a year to ensure that they pay at least the same percentage of their earnings "
                             "as other taxpayers, according to administration officials.")
-    print(f"spotlight time: {(datetime.now() - start).microseconds}")
+    print(f"spotlight time: {datetime.now() - start}")
 
     start = datetime.now()
     res1 = "http://dbpedia.org/resource/Magic_Johnson"
     res2 = "http://dbpedia.org/resource/Tap_dancer"
     get_outbounds(res1)
     get_disambiguates_outbounds(res2)
-    print(f"virtuoso time: {(datetime.now() - start).microseconds}")
+    print(f"virtuoso time: {datetime.now() - start}")
 
     t = ['Howard Eugene Johnson', 'cultists', 'Italian', 'Even', 'Giada Pamela De Laurentiis', 'American',
          'Bloomington', 'music school', 'China capital city']
@@ -58,7 +58,7 @@ def test3():
         del s
         del y
         del x
-    print(f"lookup time: {(datetime.now() - start).microseconds}")
+    print(f"lookup time: {datetime.now() - start}")
 
     start = datetime.now()
     for i in t:
@@ -66,9 +66,9 @@ def test3():
         x = lookup_resource_app_label(i)
         del y
         del x
-    print(f"lookup-app time: {(datetime.now() - start).microseconds}")
+    print(f"lookup-app time: {datetime.now() - start}")
 
-    print(f"all time: {(datetime.now() - start_all).microseconds}")
+    print(f"all time: {datetime.now() - start_all}")
 
 
 @profile

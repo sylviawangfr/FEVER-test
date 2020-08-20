@@ -224,12 +224,13 @@ def test():
          'Bloomington', 'music school', 'China capital city']
     for i in t:
         s = lookup_resource_ref_count(i)
+        print(s)
         del s
     return
 
 
 if __name__ == "__main__":
-    for i in range(50):
+    for i in range(1):
         test()
         gc.collect()
 

@@ -29,6 +29,7 @@ def test1():
 
 
 def test3():
+    start_all = datetime.now()
     start = datetime.now()
     p1 = ['Neil Armstrong', 'moon buggy', 'human', 'rocket', 'Naval installations', 'Military terminology']
     get_phrase_embedding(p1)
@@ -66,6 +67,8 @@ def test3():
         del y
         del x
     print(f"lookup-app time: {(datetime.now() - start).microseconds}")
+
+    print(f"all time: {(datetime.now() - start_all).microseconds}")
 
 
 @profile

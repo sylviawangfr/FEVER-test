@@ -2,7 +2,7 @@ import xmltodict
 from memory_profiler import profile
 import urllib.request
 import gc
-import datetime
+import datetime as datetime
 from dbpedia_sampler.bert_similarity import get_phrase_embedding
 from dbpedia_sampler.dbpedia_spotlight import entity_link
 from dbpedia_sampler.dbpedia_virtuoso import get_disambiguates_outbounds, get_outbounds

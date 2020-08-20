@@ -52,18 +52,18 @@ def test3():
     start = datetime.now()
     for i in t:
         s = lookup_resource_ref_count(i)
-        t = lookup_resource_app_query(i)
+        y = lookup_resource_app_query(i)
         x = lookup_resource_app_label(i)
         del s
-        del t
+        del y
         del x
     print(f"lookup time: {(datetime.now() - start).microseconds}")
 
     start = datetime.now()
     for i in t:
-        t = lookup_resource_app_query(i)
+        y = lookup_resource_app_query(i)
         x = lookup_resource_app_label(i)
-        del t
+        del y
         del x
     print(f"lookup-app time: {(datetime.now() - start).microseconds}")
 

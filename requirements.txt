@@ -12,3 +12,5 @@ xmltodict
 sklearn
 tensorflow-gpu
 memory_profiler
+bert-serving-server
+bert-serving-client

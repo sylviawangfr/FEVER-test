@@ -200,7 +200,8 @@ if __name__ == '__main__':
     # tfidf_to_graph_sampler(tfidf_dev_data)
     # # #
     #
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[73420:80000]
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[90000:100000]
+    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[73420:80000]
     tfidf_to_graph_sampler(tfidf_train_data)
     # # # print(globals())
     # print(json.dumps(globals(), indent=1))

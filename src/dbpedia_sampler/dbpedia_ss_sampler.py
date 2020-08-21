@@ -165,7 +165,7 @@ def tfidf_to_graph_sampler(tfidf_data):
                                     config.LOG_PATH / f"sample_ss_graph_{dt}.log")
             pbar.update(1)
             batch += 1
-            del batched_sample
+            # del batched_sample
             del sample_tfidf
             gc.collect()
     return
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     # tfidf_to_graph_sampler(tfidf_dev_data)
     # # #
     #
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[90000:100000]
+    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[100000:110000]
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[73420:80000]
     tfidf_to_graph_sampler(tfidf_train_data)
     # # # print(globals())

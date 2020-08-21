@@ -11,6 +11,7 @@ from dbpedia_sampler import dbpedia_lookup
 from dbpedia_sampler import dbpedia_spotlight
 from dbpedia_sampler import dbpedia_virtuoso
 from dbpedia_sampler.sentence_util import *
+from bert_serving.client import BertClient
 from utils import c_scorer, text_clean
 from memory_profiler import profile
 import time
@@ -238,7 +239,7 @@ def filter_date_vs_property(sents, not_linked_phrases_l, linked_phrases_l, verb_
     return similarity_match
 
 
-def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embeddings, verb_d):
+def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embeddings, verb_d, bc:BertClient=None):
     if len(not_linked_phrases_l) > CANDIDATE_UP_TO or len(not_linked_phrases_l) < 1:
         return []
 
@@ -250,7 +251,7 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
                 with_verbs.append(verb_d[p]['verb'] + " " + p)
             else:
                 with_verbs.append(p)
-        embedding1 = bert_similarity.get_phrase_embedding(with_verbs)
+        embedding1 = bert_similarity.get_phrase_embedding(with_verbs, bc)
         keyword_embeddings['not_linked_phrases_l'] = embedding1
 
     tmp_result = []
@@ -261,7 +262,7 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
         embedding2 = keyword_embeddings[i['text']]['one_hop']
         if len(embedding2) == 0:
             tri_keywords_l2 = [' '.join(tri['keywords']) for tri in candidates2]
-            embedding2 = bert_similarity.get_phrase_embedding(tri_keywords_l2)
+            embedding2 = bert_similarity.get_phrase_embedding(tri_keywords_l2, bc)
             keyword_embeddings[i['text']]['one_hop'] = embedding2
 
         if len(embedding1) == 0 or len(embedding2) == 0:
@@ -296,7 +297,7 @@ def does_tri_exit_in_list(tri, tri_l):
     return False
 
 # @profile
-def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash,  fuzzy_match=False):
+def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash,  fuzzy_match=False, bc:BertClient=None):
     result = []
     for i in itertools.permutations(linked_phrases_l, 2):
         resource1 = i[0]         # key
@@ -324,7 +325,7 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_ha
         if fuzzy_match and not uri_matched:
             if len(keyword_embeddings['linked_phrases_l']) < 1:
                 linked_phrases_text_l = [i['text'] for i in linked_phrases_l]
-                linked_text_embedding = bert_similarity.get_phrase_embedding(linked_phrases_text_l)
+                linked_text_embedding = bert_similarity.get_phrase_embedding(linked_phrases_text_l, bc)
                 keyword_embeddings['linked_phrases_l'] = linked_text_embedding
                 if len(linked_text_embedding) < 1:
                     continue
@@ -338,7 +339,7 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings, relative_ha
     return result
 
 
-def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash, fuzzy_match=False):
+def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_hash, fuzzy_match=False, bc:BertClient=None):
     result = []
     for i in itertools.combinations(linked_phrases_l, 2):
         resource1 = i[0]
@@ -368,14 +369,14 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, relative_has
                         item2['URI'] = resource2['URI']
                         result.append(item2)
         if fuzzy_match and not exact_match:
-            top_k_pairs = get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=3)
+            top_k_pairs = get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=3, bc=bc)
             for item in top_k_pairs:
                 if not does_tri_exit_in_list(item, result):
                     result.append(item)
     return result
 
 
-def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
+def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5, bc:BertClient=None):
     candidates1 = get_one_hop(resource1)
     candidates2 = get_one_hop(resource2)
 
@@ -387,10 +388,10 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
     embedding1 = keyword_embeddings[resource1['text']]['one_hop']
     embedding2 = keyword_embeddings[resource2['text']]['one_hop']
     if not len(embedding1) == len(candidates1):
-        embedding1 = bert_similarity.get_phrase_embedding(tri_keywords_l1)
+        embedding1 = bert_similarity.get_phrase_embedding(tri_keywords_l1, bc)
         keyword_embeddings[resource1['text']]['one_hop'] = embedding1
     if not len(embedding2) == len(candidates2):
-        embedding2 = bert_similarity.get_phrase_embedding(tri_keywords_l2)
+        embedding2 = bert_similarity.get_phrase_embedding(tri_keywords_l2, bc)
         keyword_embeddings[resource2['text']]['one_hop'] = embedding2
 
     if len(embedding1) == 0 or len(embedding2) == 0:
@@ -421,12 +422,12 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
     return result
 
 # @profile
-def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, top_k=2):
+def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, top_k=2, bc:BertClient=None):
     # get embedding of single_phrase
     if single_phrase in keyword_embeddings:
         keyword_vec = keyword_embeddings[single_phrase]['phrase']
         if len(keyword_vec) == 0:
-            tmp_embedding = bert_similarity.get_phrase_embedding([single_phrase])
+            tmp_embedding = bert_similarity.get_phrase_embedding([single_phrase], bc)
             if len(tmp_embedding) > 0:
                 keyword_vec = tmp_embedding[0]
                 keyword_embeddings[single_phrase]['phrase'] = keyword_vec
@@ -445,10 +446,11 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
         tri_keywords_l = [' '.join(tri['keywords']) for tri in candidates]
     except Exception as err:
         log.error(err)
+        tri_keywords_l = []
 
     triple_vec_l = keyword_embeddings[linked_phrase['text']]['one_hop']
     if not len(triple_vec_l) == len(candidates):
-        triple_vec_l = bert_similarity.get_phrase_embedding(tri_keywords_l)
+        triple_vec_l = bert_similarity.get_phrase_embedding(tri_keywords_l, bc)
         keyword_embeddings[linked_phrase['text']]['one_hop'] = triple_vec_l
 
     if keyword_vec == [] or triple_vec_l == []:   #failed to get phrase embeddings

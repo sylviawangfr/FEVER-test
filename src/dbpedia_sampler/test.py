@@ -3,6 +3,8 @@ from memory_profiler import profile
 import urllib.request
 import gc
 from datetime import datetime
+from bert_serving.client import BertClient
+import config
 from dbpedia_sampler.bert_similarity import get_phrase_embedding
 from dbpedia_sampler.dbpedia_spotlight import entity_link
 from dbpedia_sampler.dbpedia_virtuoso import get_disambiguates_outbounds, get_outbounds
@@ -23,9 +25,16 @@ def ip():
 def bert_embedding_test():
     start = datetime.now()
     p1 = ['Neil Armstrong', 'moon buggy', 'human', 'rocket', 'Naval installations', 'Military terminology']
-    for i in range(10):
+    for i in range(5):
         get_phrase_embedding(p1)
-    print(f"embedding time: {datetime.now() - start}")
+    print(f"embedding time1: {datetime.now() - start}")
+
+    start = datetime.now()
+    bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+    for i in range(5):
+        get_phrase_embedding(p1, bc)
+    bc.close()
+    print(f"embedding time2: {datetime.now() - start}")
 
 
 # @profile

@@ -8,15 +8,19 @@ import log_util
 log = log_util.get_logger('bert_similarity')
 
 
-def get_phrase_embedding(phrases):
+def get_phrase_embedding(phrases, bc:BertClient=None):
     try:
+        cleanup = False
         start = datetime.now()
         log.debug(f"embedding: {phrases}")
         if phrases is None or len(phrases) < 1:
             return []
-
-        bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+        if bc is None:
+            bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+            cleanup = True
         re = bc.encode(phrases)
+        if cleanup:
+            bc.close()
         log.debug(f"embedding time: {datetime.now() - start}")
         return re
         # return []
@@ -24,7 +28,6 @@ def get_phrase_embedding(phrases):
         log.warning(f"failed to get embedding for phrases...{phrases}")
         log.error(err)
         return []
-
 
 if __name__ == '__main__':
     p1 = ['Neil Armstrong', 'moon buggy', 'human', 'rocket', 'Naval installations', 'Military terminology']

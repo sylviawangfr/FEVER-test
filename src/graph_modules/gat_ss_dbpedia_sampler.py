@@ -4,9 +4,9 @@ import threading
 import dgl
 import numpy as np
 import torch
-
+from bert_serving.client import BertClient
 from dbpedia_sampler import bert_similarity
-from dbpedia_sampler.util import uri_short_extract
+from dbpedia_sampler.uri_util import uri_short_extract
 from utils.file_loader import *
 
 __all__ = ['DBpediaGATSampler']
@@ -49,7 +49,6 @@ class DBpediaGATSampler(object):
             self._load_from_dbpedia_sample_multithread(dbpedia_sampled_data)
         else:
             self._load_from_dbpedia_sample_file(dbpedia_sampled_data)
-
 
 
     def _pair_existed(self, src, dst, pairs):
@@ -109,7 +108,7 @@ class DBpediaGATSampler(object):
         else:
             return None
 
-    def _convert_rel_to_efeature(self, triple_l):
+    def _convert_rel_to_efeature(self, triple_l, bc:BertClient):
         cleaned_tris = []
         for tri in triple_l:
             cleaned_t = []
@@ -143,8 +142,8 @@ class DBpediaGATSampler(object):
             start_nums.append(i)
             end_nums.append(i)
 
-        all_node_embeddings = bert_similarity.get_phrase_embedding(all_nodes)
-        edge_embeddings = bert_similarity.get_phrase_embedding(edges_text)
+        all_node_embeddings = bert_similarity.get_phrase_embedding(all_nodes, bc)
+        edge_embeddings = bert_similarity.get_phrase_embedding(edges_text, bc)
         all_edge_embeddings = []
         if len(edge_embeddings) > 0:
             edge_embeddings = edge_embeddings.tolist()
@@ -169,12 +168,13 @@ class DBpediaGATSampler(object):
 
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
         description = "converting data to graph type:"
+        bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
         if self.parallel:
             description += threading.current_thread().getName()
         with tqdm(total=len(dbpedia_sampled_data), desc=description) as pbar:
             for idx, item in enumerate(dbpedia_sampled_data):
                 claim_graph = item['claim_links']
-                g_claim = self._convert_rel_to_efeature(claim_graph)
+                g_claim = self._convert_rel_to_efeature(claim_graph, bc)
                 pbar.update(1)
                 if g_claim is None:
                     continue
@@ -184,7 +184,7 @@ class DBpediaGATSampler(object):
                     c_graph = c['graph']
                     if c_graph is None or len(c_graph) < 1:
                         continue
-                    g_c = self._convert_rel_to_efeature(c_graph)
+                    g_c = self._convert_rel_to_efeature(c_graph, bc)
                     if g_c is None:
                         continue
                     c_label = 1 if c['selection_label'] == 'true' else 0
@@ -197,6 +197,7 @@ class DBpediaGATSampler(object):
                     self.graph_instances.append(one_example)
                     if self.parallel:
                         self.lock.release()
+        bc.close()
 
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
         num_worker = 3
@@ -206,5 +207,5 @@ class DBpediaGATSampler(object):
 
 
 if __name__ == '__main__':
-    data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:3]
+    data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:12]
     sample = DBpediaGATSampler(data, parallel=True)

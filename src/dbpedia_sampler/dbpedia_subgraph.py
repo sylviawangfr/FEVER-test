@@ -6,6 +6,7 @@ from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_triple_linker
 from utils.tokenizer_simple import get_dependent_verb
 from memory_profiler import profile
+from bert_serving.client import BertClient
 import gc
 
 CANDIDATE_UP_TO = 150
@@ -44,7 +45,7 @@ def construct_subgraph(sentence, doc_title=''):
     return merged_result
 
 # @profile
-def construct_subgraph_for_claim(claim_text):
+def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
     not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text, '')
     phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
 
@@ -56,16 +57,16 @@ def construct_subgraph_for_claim(claim_text):
 
     all_phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
     verb_d = get_dependent_verb(claim_text, all_phrases)
-    merged_result = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d)
+    merged_result = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d, bc=bc)
     r1 = dbpedia_triple_linker.filter_date_vs_property(claim_text, not_linked_phrases_l, linked_phrases_l, verb_d)
-    r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash, fuzzy_match=True)
+    r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash, fuzzy_match=True, bc=bc)
     no_exact_found = []
     # only keyword-match on those no exact match triples
     for i in linked_phrases_l:
         relatives = relative_hash[i['text']]
         if len(relatives) == 0:
             no_exact_found.append(i)
-    r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_exact_found, embeddings_hash, relative_hash, fuzzy_match=True)
+    r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_exact_found, embeddings_hash, relative_hash, fuzzy_match=True, bc=bc)
     for i in r1 + r2 + r3:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
             merged_result.append(i)
@@ -95,7 +96,7 @@ def construct_subgraph_for_claim(claim_text):
     return claim_d
 
 # @profile
-def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
+def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title='', bc:BertClient=None):
     claim_linked_phrases_l = claim_dict['linked_phrases_l']
     claim_graph = claim_dict['graph']
 
@@ -116,16 +117,16 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
                                'categories': i['categories']}})
     all_phrases = not_linked_phrases_l + [i['text'] for i in linked_phrases_l]
     verb_d = get_dependent_verb(candidate_sent, all_phrases)
-    sent_graph = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d)
+    sent_graph = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d, bc=bc)
     r1 = dbpedia_triple_linker.filter_date_vs_property(candidate_sent, not_linked_phrases_l, linked_phrases_l, verb_d)
-    r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash, fuzzy_match=True)
+    r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, relative_hash, fuzzy_match=True, bc=bc)
     no_exact_found = []
     # only keyword-match on those no exact match triples
     for i in linked_phrases_l:
         relatives = relative_hash[i['text']]
         if len(relatives) == 0:
             no_exact_found.append(i)
-    r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_exact_found, embeddings_hash, relative_hash, fuzzy_match=False)
+    r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_exact_found, embeddings_hash, relative_hash, fuzzy_match=False, bc=bc)
     for i in r1 + r2 + r3:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
             sent_graph.append(i)
@@ -163,7 +164,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
             claim_not_in_sent_nodes_embedding.append(claim_node_embedding)
     if len(empty_embedding_idx) > 0:
         claim_not_in_sent_nodes_text = [i['text'] for i in claim_not_in_sent_nodes]
-        claim_not_in_sent_nodes_embedding = bert_similarity.get_phrase_embedding(claim_not_in_sent_nodes_text)
+        claim_not_in_sent_nodes_embedding = bert_similarity.get_phrase_embedding(claim_not_in_sent_nodes_text, bc=bc)
         if len(claim_not_in_sent_nodes_embedding) > 0:
             for j in empty_embedding_idx:
                 node_text = claim_not_in_sent_nodes[j]['text']
@@ -180,7 +181,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
             sent_not_in_claim_nodes_embedding.append(sent_node_embedding)
     if len(empty_embedding_idx) > 0:
         sent_not_in_claim_nodes_text = [i['text'] for i in sent_not_in_claim_nodes]
-        sent_not_in_claim_nodes_embedding = bert_similarity.get_phrase_embedding(sent_not_in_claim_nodes_text)
+        sent_not_in_claim_nodes_embedding = bert_similarity.get_phrase_embedding(sent_not_in_claim_nodes_text, bc=bc)
         if len(sent_not_in_claim_nodes_embedding) > 0:
             for j in empty_embedding_idx:
                 node_text = sent_not_in_claim_nodes[j]['text']
@@ -196,7 +197,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
                 continue
             one_hop_embedding = embeddings_hash[i['text']]['one_hop']
             if len(one_hop_embedding) < 1:
-                one_hop_embedding = bert_similarity.get_phrase_embedding(one_hop_keywords)
+                one_hop_embedding = bert_similarity.get_phrase_embedding(one_hop_keywords, bc=bc)
                 embeddings_hash[i['text']]['one_hop'] = one_hop_embedding
             if len(one_hop_embedding) < 1:
                 continue
@@ -235,7 +236,7 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title=''):
 
             c_one_hop_embedding = claim_dict['embedding'][i['text']]['one_hop']
             if len(c_one_hop_embedding) < 1:
-                c_one_hop_embedding = bert_similarity.get_phrase_embedding(c_one_hop_keywords)
+                c_one_hop_embedding = bert_similarity.get_phrase_embedding(c_one_hop_keywords, bc=bc)
                 claim_dict['embedding'][i['text']]['one_hop'] = c_one_hop_embedding
 
             top_k = 3

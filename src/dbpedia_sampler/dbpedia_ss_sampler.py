@@ -5,6 +5,7 @@ import log_util
 import utils.check_sentences
 import utils.common_types as bert_para
 from dbpedia_sampler import dbpedia_subgraph
+from bert_serving.client import BertClient
 from utils import fever_db, c_scorer
 from utils.file_loader import *
 from utils.iter_basket import BasketIterable
@@ -152,6 +153,7 @@ def tfidf_to_graph_sampler(tfidf_data):
     paras = bert_para.BERT_para()
     paras.sample_n = 3
     paras.pred = False
+    paras.bert_client = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     sample_dataloader = DataLoader(tfidf_data, batch_size=batch_size, collate_fn=collate)
     # sample_dataloader = BasketIterable(tfidf_data, batch_size)
     batch = 0
@@ -168,41 +170,42 @@ def tfidf_to_graph_sampler(tfidf_data):
             # del batched_sample
             del sample_tfidf
             gc.collect()
+    paras.bert_client.close()
     return
 
-test_globle = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
-
-# @profile
-def test_memory():
-    # t = list(range(25000*2))
-    # tt = BasketIterable(t, 25000)
-    # paras = bert_para.BERT_para()
-    # paras.sample_n = 3
-    # paras.pred = False
-    for i in range(5):
-
-        tt = test_globle.tokenize("Here is a dog")
-        t = list(range(500*500))
-        del t
-        del tt
-        r = gc.collect()
-        print(r)
-    print(f"gc is enabled: {gc.isenabled()}")
-    gc.collect()
-    print("-----------------")
-    return
+# test_globle = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
+#
+# # @profile
+# def test_memory():
+#     # t = list(range(25000*2))
+#     # tt = BasketIterable(t, 25000)
+#     # paras = bert_para.BERT_para()
+#     # paras.sample_n = 3
+#     # paras.pred = False
+#     for i in range(5):
+#
+#         tt = test_globle.tokenize("Here is a dog")
+#         t = list(range(500*500))
+#         del t
+#         del tt
+#         r = gc.collect()
+#         print(r)
+#     print(f"gc is enabled: {gc.isenabled()}")
+#     gc.collect()
+#     print("-----------------")
+#     return
 
 
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:1]
-    # tfidf_to_graph_sampler(tfidf_dev_data)
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:1]
+    tfidf_to_graph_sampler(tfidf_dev_data)
     # # #
     #
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[93420:100000]
-    # # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[73420:80000]
-    tfidf_to_graph_sampler(tfidf_train_data)
+    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[93420:100000]
+    # # # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[73420:80000]
+    # tfidf_to_graph_sampler(tfidf_train_data)
     # # # print(globals())
     # print(json.dumps(globals(), indent=1))
     # test_memory()

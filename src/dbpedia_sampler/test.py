@@ -20,6 +20,14 @@ def ip():
     return b
 
 
+def bert_embedding_test():
+    start = datetime.now()
+    p1 = ['Neil Armstrong', 'moon buggy', 'human', 'rocket', 'Naval installations', 'Military terminology']
+    for i in range(10):
+        get_phrase_embedding(p1)
+    print(f"embedding time: {datetime.now() - start}")
+
+
 # @profile
 def test1():
     for i in range(30):
@@ -90,4 +98,4 @@ def test2():
 
     return
 
-test3()
+bert_embedding_test()

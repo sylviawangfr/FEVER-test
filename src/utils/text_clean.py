@@ -159,6 +159,7 @@ def reverse_convert_brc(string):
 
 if __name__ == '__main__':
     # is_date('October 18 , 2008')
+    is_date('1980-83')
     is_number('first')
     is_number('sixty two')
     pass

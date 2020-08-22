@@ -141,7 +141,13 @@ def lookup_resource_app(text_phrase, url):
     # response = requests.get(url, timeout=5) # cause memory leak
     if response.status == 200:
         xml = response.read().decode('utf-8')
-        results1 = xmltodict.parse(xml)
+        try:
+            results1 = xmltodict.parse(xml)
+        except Exception as err:
+            log.error(err)
+            log.warning(f"{text_phrase}: {url}")
+            response.close()
+            return close_matches
         if len(results1['ArrayOfResults']) <= 3:
             log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup-app-query.")
         else:
@@ -181,8 +187,15 @@ def lookup_resource_ref_count(text_phrase):
     if response.status != 200:
         log.error(f"failed to query lookup, response code: {response.status_code}, phrase: {text_phrase})")
     else:
-        xml = response.read().decode('utf-8')
-        results = xmltodict.parse(xml)
+        try:
+            xml = response.read().decode('utf-8')
+            results = xmltodict.parse(xml)
+        except Exception as err:
+            log.error(err)
+            log.warning(f"{text_phrase}: {url}")
+            response.close()
+            return close_matches
+
         if len(results['ArrayOfResult']) <= 3:
             log.debug(f"lookup phrase: {text_phrase}, no matching found by lookup ref.")
         else:

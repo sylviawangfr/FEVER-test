@@ -117,7 +117,7 @@ def is_number(str):
         tokens = [i.lower() for i in tokens if re.match(r'(\w)+', i)]
         is_num = True
         for i in tokens:
-            if i not in NUMERIC_WORDS:
+            if i not in NUMERIC_WORDS and not i.isnumeric():
                 is_num = False
                 break
     return is_num
@@ -160,7 +160,7 @@ def reverse_convert_brc(string):
 if __name__ == '__main__':
     # is_date('October 18 , 2008')
     is_date('1980-83')
-    is_number('first')
+    is_number('1980-83')
     is_number('sixty two')
     pass
     # print(filter_word("what is going on"))

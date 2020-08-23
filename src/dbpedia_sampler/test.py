@@ -25,13 +25,13 @@ def ip():
 def bert_embedding_test():
     start = datetime.now()
     p1 = ['Neil Armstrong', 'moon buggy', 'human', 'rocket', 'Naval installations', 'Military terminology']
-    for i in range(5):
+    for i in range(50):
         get_phrase_embedding(p1)
     print(f"embedding time1: {datetime.now() - start}")
 
     start = datetime.now()
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
-    for i in range(5):
+    for i in range(50):
         get_phrase_embedding(p1, bc)
     bc.close()
     print(f"embedding time2: {datetime.now() - start}")

@@ -200,13 +200,14 @@ def tfidf_to_graph_sampler(tfidf_data):
 if __name__ == '__main__':
     # multi_thread_sampler()
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:1]
-    # tfidf_to_graph_sampler(tfidf_dev_data)
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+    tfidf_to_graph_sampler(tfidf_dev_data)
     # # #
     #
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[93420:100000]
-    tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[84840:90000]
-    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[110210:120000]
-    tfidf_to_graph_sampler(tfidf_train_data)
+    # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[84840:90000]
+    # # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[110210:120000]
+    # tfidf_to_graph_sampler(tfidf_train_data)
     # # # print(globals())
     # print(json.dumps(globals(), indent=1))
     # test_memory()

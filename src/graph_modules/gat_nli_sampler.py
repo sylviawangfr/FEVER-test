@@ -13,13 +13,14 @@ def extract_triples_for_claims(data_iter):
 
 
 def test1():
-    data = file_loader.read_json_rows(config.FEVER_DEV_JSONL)[0:5]
+    data = file_loader.read_json_rows(config.FEVER_DEV_JSONL)[5:10]
     extract_triples_for_claims(data)
 
 def test2():
-    sent = "Fox 2000 Pictures released the film Soul Food."
+    # sent = "Andrew Kevin Walker is only Chinese."
+    sent = "Damon Albarn's debut album was released in 2011."
     phrases = find_linked_phrases(sent)
     get_triple(sent, phrases)
 
 
-test2()
+test1()

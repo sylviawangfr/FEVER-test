@@ -1,7 +1,10 @@
-from utils.triple_extractor import printDeps, nlp
+from utils.triple_extractor import printDeps, nlp, findSVOs, get_triple
+from utils.file_loader import read_json_rows
 import unittest
+import config
 
 class TestDB(unittest.TestCase):
+    @unittest.skip(" ")
     def testSVOs(self):
         # tok = nlp("making $12 an hour? where am i going to go? i have no other financial assistance available and he certainly won't provide support.")
         # svos = findSVOs(tok)
@@ -9,12 +12,12 @@ class TestDB(unittest.TestCase):
         # assert set(svos) == {('i', '!have', 'assistance'), ('he', '!provide', 'support')}
         # print(svos)
 
-        print("--------------------------------------------------")
-        tok = nlp("he told me i would die alone with nothing but my career someday")
-        svos = findSVOs(tok)
-        printDeps(tok)
-        print(svos)
-        assert set(svos) == {('he', 'told', 'me')}
+        # print("--------------------------------------------------")
+        # tok = nlp("he told me i would die alone with nothing but my career someday")
+        # svos = findSVOs(tok)
+        # printDeps(tok)
+        # print(svos)
+        # assert set(svos) == {('he', 'told', 'me')}
 
         tok = nlp("i don't have other assistance")
         svos = findSVOs(tok)

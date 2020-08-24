@@ -1,5 +1,5 @@
 # import spacy
-# from spacy import displacy
+from spacy import displacy
 # import config
 # from spacy.tokens import Doc, Span, Token
 import regex
@@ -106,10 +106,11 @@ def get_dependent_verb(sent, phrase_l):
 
 SUBJECTS = ["nsubj", "nsubjpass", "csubj", "csubjpass", "agent", "expl"]
 OBJECTS = ["dobj", "dative", "attr", "oprd", "pobj"]
+Noun = ['propn', 'noun']
 
 def get_triple(sent, phrase_l):
     doc_merged = merge_phrases_as_span(sent, phrase_l)
-    # displacy.serve(doc_merged, style='dep')
+    displacy.serve(doc_merged, style='dep')
     # svg = displacy.render(doc_merged, style="dep")
     svos = findSVOs(doc_merged)
     print(svos)
@@ -253,6 +254,7 @@ def getAllObjs(v):
         v = potentialNewVerb
     if len(objs) > 0:
         objs.extend(getObjsFromConjunctions(objs))
+        objs.extend(find_appos_for_nouns(objs))
     return v, objs
 
 
@@ -264,6 +266,16 @@ def find_ADP_for_obj(obj):
         return head.head
     else:
         return None
+
+def find_appos_for_nouns(toks):
+    appos = []
+    for tok in toks:
+        rights = list(tok.rights)
+        for i in rights:
+            if i.pos_ == 'PROPN' and i.dep_ == 'appos':  # the film Soul Food
+                appos.append(i)
+    return appos
+
 
 
 # fell asleep
@@ -322,16 +334,17 @@ def printDeps(toks):
         print(tok.orth_, tok.dep_, tok.pos_, tok.head.orth_, [t.orth_ for t in tok.lefts], [t.orth_ for t in tok.rights])
 
 if __name__ == '__main__':
+    get_triple("", [])
     # testSVOs()
     # d_l = ['two', 'three', 'four', 'six', 'one', 'two', 'thirty', 'one', 'two']
     # p_l = ['one', 'two']
     # get_phrase_token_indice(d_l, p_l)
 
     # text = "Bessie Smith was hired by Ken on April 15, 1894."
-    ph = ['Bessie Smith', 'April 15, 1894']
+    # ph = ['Bessie Smith', 'April 15, 1894']
     # get_triple(text, [])
     # text = "When sitting in the chair, Bessie Smith fell asleep on April 15, 1894."
-    text = "Bessie Smith go to school with Ken on April 15, 1894."
+    # text = "Bessie Smith go to school with Ken on April 15, 1894."
     # text = "Bessie Smith fell in love with Ken on April 15, 1894."
     # printDeps(nlp(text))
-    get_triple(text, ph)
+    # get_triple(text, ph)

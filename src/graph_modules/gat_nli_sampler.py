@@ -12,5 +12,14 @@ def extract_triples_for_claims(data_iter):
         get_triple(claim, phrases)
 
 
-data = file_loader.read_json_rows(config.FEVER_DEV_JSONL)[0:5]
-extract_triples_for_claims(data)
+def test1():
+    data = file_loader.read_json_rows(config.FEVER_DEV_JSONL)[0:5]
+    extract_triples_for_claims(data)
+
+def test2():
+    sent = "Fox 2000 Pictures released the film Soul Food."
+    phrases = find_linked_phrases(sent)
+    get_triple(sent, phrases)
+
+
+test2()

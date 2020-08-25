@@ -200,8 +200,9 @@ def tfidf_to_graph_sampler(tfidf_data):
 if __name__ == '__main__':
     # multi_thread_sampler()
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "ss_tfidf_error_data.jsonl")[0:1]
-    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
-    tfidf_dev_data = tfidf_dev_data[130000:len(tfidf_dev_data)]
+    tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[6980:130000]
+    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+    # tfidf_dev_data = tfidf_dev_data[130000:len(tfidf_dev_data)]
     tfidf_to_graph_sampler(tfidf_dev_data)
     # # #
     #

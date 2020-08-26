@@ -201,9 +201,17 @@ class DBpediaGATSampler(object):
 
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
         num_worker = 3
-        batch_size = math.ceil(len(dbpedia_sampled_data) / 3)
-        data_iter = iter_baskets_contiguous(dbpedia_sampled_data, batch_size)
-        thread_exe(self._load_from_dbpedia_sample_file, data_iter, num_worker, "Multi_thread_gat_sampler\n")
+        if isinstance(dbpedia_sampled_data, list):
+            batch_size = math.ceil(len(dbpedia_sampled_data) / num_worker)
+            data_iter = iter_baskets_contiguous(dbpedia_sampled_data, batch_size)
+            thread_exe(self._load_from_dbpedia_sample_file, data_iter, num_worker, "Multi_thread_gat_sampler\n")
+        else:
+            for data in dbpedia_sampled_data:
+                batch_size = math.ceil(len(data) / 3)
+                data_iter = iter_baskets_contiguous(data, batch_size)
+                thread_exe(self._load_from_dbpedia_sample_file, data_iter, num_worker, "Multi_thread_gat_sampler\n")
+                del data_iter
+
 
 
 if __name__ == '__main__':

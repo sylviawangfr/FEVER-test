@@ -11,6 +11,7 @@ from pathlib import PosixPath
 from data_util.toChart import *
 from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
 from utils.file_loader import read_json_rows, read_and_concat_files
+from memory_profiler import profile
 
 
 class Node_Alignment(nn.Module):
@@ -332,11 +333,24 @@ def test_load_model():
 def concat_tmp_data():
     data_train = read_and_concat_files(config.RESULT_PATH / "sample_ss_graph_train")
     data_dev = read_and_concat_files(config.RESULT_PATH / "sample_ss_graph_dev")
-    print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
+    # print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
+
+@profile
+def test_data():
+    t, d = concat_tmp_data()
+    for i in t:
+        print(len(i))
+        del i
+
+    for j in d:
+        print(len(j))
+        del j
+    return
 
 
 if __name__ == '__main__':
     # test_load_model()
     # train()
-    concat_tmp_data()
+    # concat_tmp_data()
+    test_data()

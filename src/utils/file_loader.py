@@ -223,10 +223,9 @@ def append_results(d_list, out_filename: Path):
 
 
 def read_and_concat_files(path):
-    all_data = []
     for entry in os.listdir(path):
-        all_data.extend(read_json_rows(path / entry))
-    return all_data
+        yield read_json_rows(path / entry)
+
 
 
 def get_current_time_str():

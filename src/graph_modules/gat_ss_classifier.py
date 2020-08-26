@@ -12,6 +12,7 @@ from data_util.toChart import *
 from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
 from utils.file_loader import read_json_rows, read_and_concat_files
 from memory_profiler import profile
+import gc
 
 
 class Node_Alignment(nn.Module):
@@ -342,10 +343,12 @@ def test_data():
     for i in t:
         print(len(i))
         del i
+        gc.collect()
 
     for j in d:
         print(len(j))
         del j
+        gc.collect()
     return
 
 

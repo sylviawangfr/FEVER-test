@@ -110,7 +110,7 @@ Noun = ['propn', 'noun']
 
 def get_triple(sent, phrase_l):
     doc_merged = merge_phrases_as_span(sent, phrase_l)
-    displacy.serve(doc_merged, style='dep')
+    # displacy.serve(doc_merged, style='dep')
     # svg = displacy.render(doc_merged, style="dep")
     svos = findSVOs(doc_merged)
     print(svos)
@@ -183,10 +183,17 @@ def findSVs(tokens):
                 svs.append((sub.orth_, "!" + v.orth_ if verbNegated else v.orth_))
     return svs
 
+def get_verb_modifier(tok):
+    # lefts = list(tok.lefts)
+    rights = list(tok.rights)
+    r_modifier = [tok for tok in rights if tok.dep_ in ['advmod']]
+    return r_modifier
+
+
 def getObjsFromPrepositions(deps):
     objs = []
     for dep in deps:
-        if dep.pos_ == "ADP" and (dep.dep_ == "prep" or dep.dep_ == "agent"):
+        if dep.pos_ == "ADP" and (dep.dep_ in ["prep", "agent"]):
             objs.extend([tok for tok in dep.rights if tok.dep_ in OBJECTS or (tok.pos_ == "PRON" and tok.lower_ == "me")])
     return objs
 
@@ -247,14 +254,12 @@ def getAllObjs(v):
     #if potentialNewVerb is not None and potentialNewObjs is not None and len(potentialNewObjs) > 0:
     #    objs.extend(potentialNewObjs)
     #    v = potentialNewVerb
-
     potentialNewVerb, potentialNewObjs = getObjFromAComp(rights)
     if potentialNewVerb is not None and potentialNewObjs is not None and len(potentialNewObjs) > 0:
         objs.extend(potentialNewObjs)
         v = potentialNewVerb
     if len(objs) > 0:
         objs.extend(getObjsFromConjunctions(objs))
-        objs.extend(find_appos_for_nouns(objs))
     return v, objs
 
 
@@ -267,15 +272,19 @@ def find_ADP_for_obj(obj):
     else:
         return None
 
-def find_appos_for_nouns(toks):
-    appos = []
-    for tok in toks:
-        rights = list(tok.rights)
-        for i in rights:
-            if i.pos_ == 'PROPN' and i.dep_ == 'appos':  # the film Soul Food
-                appos.append(i)
-    return appos
-
+def find_modifiers_for_noun(tok):
+    modifiers = []
+    lefts = list(tok.lefts)
+    rights = list(tok.rights)
+    for i in lefts:
+        if i.pos_.lower() in Noun and i.dep_ in ['poss', 'compound']:
+            modifiers.append(i)
+    for i in rights:
+        if i.pos_ == 'PROPN' and i.dep_ == 'appos':  # the film Soul Food
+            modifiers.append(i)
+        if i.pos_ == "ADP" and (i.dep_ in ["prep", "agent"]):
+            modifiers.extend([t for t in i.rights if t.dep_ in OBJECTS])
+    return modifiers
 
 
 # fell asleep
@@ -285,7 +294,7 @@ def find_vert_ADJ(v):
 
 
 def find_verbs(tokens):
-    verbs = [tok for tok in tokens if (tok.dep_ != "aux") and (tok.pos_ in ["VERB", "ROOT", "AUX"])]
+    verbs = [tok for tok in tokens if (tok.dep_ not in ["aux", 'auxpass']) and (tok.pos_ in ["VERB", "ROOT", "AUX"])]
     return verbs
 
 
@@ -304,11 +313,20 @@ def findSVOs(tokens):
                     rel_text = "!" + v.lower_ if verbNegated or objNegated else v.lower_
                     relADP = find_ADP_for_obj(obj)
                     verb_adj = find_vert_ADJ(v)
+                    verb_adv = get_verb_modifier(v)
                     if len(verb_adj) > 0:
                         rel_text = rel_text + " " + verb_adj[0].lower_
+                    if len(verb_adv) > 0:
+                        rel_text = rel_text + " " + verb_adv[0].lower_
                     if relADP is not None:
                         rel_text = rel_text + " " + relADP.lower_
                     svos.append((sub.lower_, rel_text, obj.lower_))
+                    obj_modifiers = find_modifiers_for_noun(obj)
+                    for i in obj_modifiers:
+                        svos.append((obj.lower_, '?', i.lower_))
+                sub_modifiers = find_modifiers_for_noun(sub)
+                for i in sub_modifiers:
+                    svos.append((sub.lower_, '?', i.lower_))
     return svos
 
 

@@ -6,10 +6,11 @@ import torch.optim as optim
 from dgl.nn.pytorch import *
 from torch import nn
 from torch.utils.data import DataLoader
-
+from tqdm import tqdm
+from pathlib import PosixPath
 from data_util.toChart import *
 from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
-from utils.file_loader import *
+from utils.file_loader import read_json_rows, read_and_concat_files
 
 
 class Node_Alignment(nn.Module):
@@ -208,7 +209,8 @@ def collate(samples):
 
 def train():
     lr = 1e-4
-    epoches = 400
+    # epoches = 400
+    epoches = 10
     dim = 768
     head = 4
     # Create training and test sets.
@@ -258,24 +260,28 @@ def train():
     loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)
     draw_loss_epoches(loss_eval_chart, f"gat_ss_eval_loss_{lr}_epoch{epoches}_{dt}.png")
 
-    model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+    # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
     output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{lr}_epoch{epoches}_{dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"
-    torch.save(model_to_save.state_dict(), output_model_file)
+    torch.save(model.state_dict(), output_model_file)
 
 
-def eval(model, dbpedia_data):
+def eval(model_or_path, dbpedia_data):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False
     device = torch.device("cuda:1" if is_cuda else "cpu")
     n_gpu = torch.cuda.device_count()
+    dim = 768
     print(f"device: {device} n_gpu: {n_gpu}")
-    if model is Path:
-        model = torch.load(model)
+    if isinstance(model_or_path, PosixPath):
+        model = GATClassifier(dim, dim, 4, 2)
+        model.load_state_dict(torch.load(model_or_path))
         if is_cuda:
             # if n_gpu > 1:
             #     model = torch.nn.DataParallel(model)
             model.to(device)
             loss_func.to(device)
+    else:
+        model = model_or_path
     testset = DBpediaGATSampler(dbpedia_data, parallel=True)
     model.eval()
     # Convert a list of tuples to two lists
@@ -317,18 +323,20 @@ def eval(model, dbpedia_data):
     return loss_eval_chart, accuracy_argmax, accuracy_sampled
 
 
+def test_load_model():
+    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch10_2020_08_26_20:15:12_50.000_100.000'
+    data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_train' / 'sample_ss_graph_ThreadPoolExecutor-0_0_2020_08_10_09:59:55.jsonl')
+    eval(model_path, data)
+
+
 def concat_tmp_data():
-    data_train = read_json_rows(config.RESULT_PATH / "sample_ss_graph_20000.jsonl")
-    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_40000.jsonl"))
-    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_10000.jsonl"))
-    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_25000.jsonl"))
-    data_train.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_50000.jsonl"))
-    data_dev = read_json_rows(config.RESULT_PATH / "sample_ss_graph_10180.jsonl")
-    data_dev.extend(read_json_rows(config.RESULT_PATH / "sample_ss_graph_26020.jsonl"))
+    data_train = read_and_concat_files(config.RESULT_PATH / "sample_ss_graph_train")
+    data_dev = read_and_concat_files(config.RESULT_PATH / "sample_ss_graph_dev")
     print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 
 
 if __name__ == '__main__':
-    train()
-    # concat_tmp_data()
+    # test_load_model()
+    # train()
+    concat_tmp_data()

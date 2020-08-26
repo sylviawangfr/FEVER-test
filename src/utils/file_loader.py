@@ -2,6 +2,8 @@ from pathlib import Path
 
 from utils.common import *
 from utils.text_clean import *
+import glob
+import os
 
 
 def read_json_rows(file):
@@ -220,11 +222,18 @@ def append_results(d_list, out_filename: Path):
     out_f.close()
 
 
+def read_and_concat_files(path):
+    all_data = []
+    for entry in os.listdir(path):
+        all_data.extend(read_json_rows(path / entry))
+    return all_data
+
+
 def get_current_time_str():
     return str(datetime.datetime.now().strftime('%Y_%m_%d_%H:%M:%S'))
 
 if __name__ == '__main__':
-    pass
+    read_and_concat_files(config.RESULT_PATH / 'sample_ss_graph_train')
 
 
 

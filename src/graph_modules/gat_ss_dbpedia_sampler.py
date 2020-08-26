@@ -169,6 +169,8 @@ class DBpediaGATSampler(object):
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
         description = "converting data to graph type:"
         bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+        tmp_lables = []
+        tmp_graph_instance = []
         if self.parallel:
             description += threading.current_thread().getName()
         with tqdm(total=len(dbpedia_sampled_data), desc=description) as pbar:
@@ -191,12 +193,14 @@ class DBpediaGATSampler(object):
                     one_example = dict()
                     one_example['graph1'] = g_claim
                     one_example['graph2'] = g_c
-                    if self.parallel:
-                        self.lock.acquire()
-                    self.labels.append(c_label)
-                    self.graph_instances.append(one_example)
-                    if self.parallel:
-                        self.lock.release()
+                    tmp_lables.append(c_label)
+                    tmp_graph_instance.append(one_example)
+        if self.parallel:
+            self.lock.acquire()
+        self.labels.extend(tmp_lables)
+        self.graph_instances.extend(tmp_graph_instance)
+        if self.parallel:
+            self.lock.release()
         bc.close()
 
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
@@ -211,7 +215,7 @@ class DBpediaGATSampler(object):
                 data_iter = iter_baskets_contiguous(data, batch_size)
                 thread_exe(self._load_from_dbpedia_sample_file, data_iter, num_worker, "Multi_thread_gat_sampler\n")
                 del data_iter
-
+                del data
 
 
 if __name__ == '__main__':

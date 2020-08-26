@@ -20,6 +20,8 @@ class TestUtils(unittest.TestCase):
         items = range(5)
         for n in iter_baskets_contiguous(items, 2):
             print(n)
+            del n
+            print(items)
             # assert
         print("-------")
         for n in iter_baskets_contiguous(items, 5):

@@ -166,15 +166,15 @@ class DBpediaGATSampler(object):
         else:
             return None
 
-    def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
+    def _load_from_list(self, list_data):
         description = "converting data to graph type:"
+        if self.parallel:
+            description += threading.current_thread().getName()
         bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
         tmp_lables = []
         tmp_graph_instance = []
-        if self.parallel:
-            description += threading.current_thread().getName()
-        with tqdm(total=len(dbpedia_sampled_data), desc=description) as pbar:
-            for idx, item in enumerate(dbpedia_sampled_data):
+        with tqdm(total=len(list_data), desc=description) as pbar:
+            for idx, item in enumerate(list_data):
                 claim_graph = item['claim_links']
                 g_claim = self._convert_rel_to_efeature(claim_graph, bc)
                 pbar.update(1)
@@ -195,13 +195,28 @@ class DBpediaGATSampler(object):
                     one_example['graph2'] = g_c
                     tmp_lables.append(c_label)
                     tmp_graph_instance.append(one_example)
-        if self.parallel:
-            self.lock.acquire()
-        self.labels.extend(tmp_lables)
-        self.graph_instances.extend(tmp_graph_instance)
-        if self.parallel:
-            self.lock.release()
         bc.close()
+        return tmp_graph_instance, tmp_lables
+
+    def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
+        if isinstance(dbpedia_sampled_data, list):
+            graphs, labels = self._load_from_list(dbpedia_sampled_data)
+            if self.parallel:
+                self.lock.acquire()
+            self.labels.extend(labels)
+            self.graph_instances.extend(graphs)
+            if self.parallel:
+                self.lock.release()
+        else:
+            for idx, items in enumerate(dbpedia_sampled_data):
+                graphs, labels = self._load_from_list(items)
+                if self.parallel:
+                    self.lock.acquire()
+                self.labels.extend(labels)
+                self.graph_instances.extend(graphs)
+                if self.parallel:
+                    self.lock.release()
+
 
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
         num_worker = 3

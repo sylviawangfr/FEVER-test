@@ -211,14 +211,15 @@ def collate(samples):
 
 def train():
     lr = 1e-4
-    # epoches = 400
-    epoches = 10
+    epoches = 400
+    # epoches = 10
     dim = 768
     head = 4
+    parallel = True
     # Create training and test sets.
     data_train, data_dev = concat_tmp_data()
-    trainset = DBpediaGATSampler(data_train, parallel=False)
-    model = GATClassifier(dim, dim, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
+    trainset = DBpediaGATSampler(data_train, parallel=parallel)
+    model = GATClassifier(dim, dim, head, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     is_cuda = True if torch.cuda.is_available() else False

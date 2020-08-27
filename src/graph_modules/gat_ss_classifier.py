@@ -217,7 +217,7 @@ def train():
     head = 4
     # Create training and test sets.
     data_train, data_dev = concat_tmp_data()
-    trainset = DBpediaGATSampler(data_train, parallel=True)
+    trainset = DBpediaGATSampler(data_train, parallel=False)
     model = GATClassifier(dim, dim, 4, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -284,7 +284,7 @@ def eval(model_or_path, dbpedia_data):
             loss_func.to(device)
     else:
         model = model_or_path
-    testset = DBpediaGATSampler(dbpedia_data, parallel=True)
+    testset = DBpediaGATSampler(dbpedia_data, parallel=False)
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate)

@@ -154,6 +154,7 @@ def read_data_in_file_batch():
     return data_train, data_dev
 
 
+@profile
 def train_and_eval():
     data_train, data_dev = read_data_in_file_batch()
     paras = GAT_para()

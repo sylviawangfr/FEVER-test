@@ -202,7 +202,7 @@ class DBpediaGATSampler(object):
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
         if isinstance(dbpedia_sampled_data, list):
             graphs, labels = self._load_from_list(dbpedia_sampled_data)
-            print(f"finished sampling one batch of files; count of examples: {len(labels)}")
+            print(f"finished sampling one batch of data; count of examples: {len(labels)}")
             if self.parallel:
                 self.lock.acquire()
             self.labels.extend(labels)
@@ -212,7 +212,7 @@ class DBpediaGATSampler(object):
         else:
             for idx, items in enumerate(dbpedia_sampled_data):
                 graphs, labels = self._load_from_list(items)
-                print(f"finished sampling one batch of files; count of examples: {len(labels)}")
+                print(f"finished sampling one batch of data; count of examples: {len(labels)}")
                 if self.parallel:
                     self.lock.acquire()
                 self.labels.extend(labels)

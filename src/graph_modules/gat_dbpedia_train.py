@@ -24,8 +24,8 @@ def collate_with_dgl(dgl_samples):
 
 def train():
     lr = 1e-4
-    # epoches = 400
-    epoches = 10
+    epoches = 400
+    # epoches = 10
     dim = 768
     head = 4
     parallel = True
@@ -98,7 +98,7 @@ def eval(model_or_path, dbpedia_data):
             loss_func.to(device)
     else:
         model = model_or_path
-    testset = DBpediaGATSampler(dbpedia_data, parallel=False)
+    testset = DBpediaGATSampler(dbpedia_data, parallel=True)
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl)
@@ -146,8 +146,8 @@ def test_load_model():
 
 
 def read_data_in_file_batch():
-    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_test")
-    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
+    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_part2")
+    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev")
     # print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 
@@ -163,7 +163,7 @@ def test_data():
 
 
 if __name__ == '__main__':
-    test_load_model()
-    # train()
+    # test_load_model()
+    train()
     # concat_tmp_data()
     # test_data()

@@ -198,7 +198,7 @@ class DBpediaGATSampler(object):
         bc.close()
         return tmp_graph_instance, tmp_lables
 
-    @profile
+    # @profile
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
         if isinstance(dbpedia_sampled_data, list):
             graphs, labels = self._load_from_list(dbpedia_sampled_data)
@@ -220,7 +220,7 @@ class DBpediaGATSampler(object):
                 if self.parallel:
                     self.lock.release()
 
-    @profile
+    # @profile
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
         num_worker = 3
         if isinstance(dbpedia_sampled_data, list):

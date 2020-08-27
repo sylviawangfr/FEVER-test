@@ -45,7 +45,7 @@ def train_dbpedia():
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoader(data_train, batch_size=16, shuffle=True, collate_fn=collate_convert_to_dgl)
+    train_data_loader = DataLoader(data_train, batch_size=8, shuffle=True, collate_fn=collate_convert_to_dgl)
 
     model.train()
     epoch_losses = []

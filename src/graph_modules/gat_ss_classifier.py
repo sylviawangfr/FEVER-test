@@ -338,7 +338,7 @@ def concat_tmp_data():
     # print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 
-@profile
+# @profile
 def test_data():
     t, d = concat_tmp_data()
     trainset = DBpediaGATSampler(t, parallel=True)
@@ -350,6 +350,6 @@ def test_data():
 
 if __name__ == '__main__':
     # test_load_model()
-    train()
+    # train()
     # concat_tmp_data()
-    # test_data()
+    test_data()

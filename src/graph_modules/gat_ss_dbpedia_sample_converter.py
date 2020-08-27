@@ -143,7 +143,7 @@ class DBpediaGATSampleConverter(object):
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
         if isinstance(dbpedia_sampled_data, list):
             graphs, labels = self._load_from_list(dbpedia_sampled_data)
-            print(f"finished sampling one batch of files; count of examples: {len(labels)}")
+            # print(f"finished sampling one batch of files; count of examples: {len(labels)}")
             if self.parallel:
                 self.lock.acquire()
             self.labels.extend(labels)
@@ -153,7 +153,7 @@ class DBpediaGATSampleConverter(object):
         else:
             for idx, items in enumerate(dbpedia_sampled_data):
                 graphs, labels = self._load_from_list(items)
-                print(f"finished sampling one batch of files; count of examples: {len(labels)}")
+                # print(f"finished sampling one batch of files; count of examples: {len(labels)}")
                 if self.parallel:
                     self.lock.acquire()
                 self.labels.extend(labels)
@@ -166,12 +166,12 @@ class DBpediaGATSampleConverter(object):
         if isinstance(dbpedia_sampled_data, list):
             batch_size = math.ceil(len(dbpedia_sampled_data) / self.num_worker)
             data_iter = iter_baskets_contiguous(dbpedia_sampled_data, batch_size)
-            thread_exe(self._load_from_dbpedia_sample_file, data_iter, self.num_worker, "Multi_thread_gat_sampler\n")
+            thread_exe_local(self._load_from_dbpedia_sample_file, data_iter, self.num_worker)
         else:
             for data in dbpedia_sampled_data:
                 batch_size = math.ceil(len(data) / self.num_worker)
                 data_iter = iter_baskets_contiguous(data, batch_size)
-                thread_exe(self._load_from_dbpedia_sample_file, data_iter, self.num_worker, "Multi_thread_gat_sampler\n")
+                thread_exe_local(self._load_from_dbpedia_sample_file, data_iter, self.num_worker)
                 # thread_exe(list, data_iter, num_worker, "Multi_thread_gat_sampler\n")
                 del data_iter
                 del data
@@ -186,7 +186,15 @@ class DBpediaGATSampleConverter(object):
         return self.graph_instances, self.labels
 
 
+def thread_exe_local(func, pieces, thd_num):
+    with concurrent.futures.ThreadPoolExecutor(thd_num) as executor:
+        to_be_done = {executor.submit(func, param): param for param in pieces}
+        for t in concurrent.futures.as_completed(to_be_done):
+            to_be_done[t]
+
+
 if __name__ == '__main__':
     data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:12]
     converter = DBpediaGATSampleConverter()
     g, l = converter.convert_dbpedia_to_dgl(data, parallel=True, num_worker=3)
+    print(len(l))

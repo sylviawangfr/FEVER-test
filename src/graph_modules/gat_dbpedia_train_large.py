@@ -13,26 +13,26 @@ from memory_profiler import profile
 import gc
 
 
-def collate_with_dgl(dgl_samples):
-    # The input `samples` is a list of pairs
-    # random.shuffle(samples)
-    graph_pairs, labels = map(list, zip(*dgl_samples))
+def collate_convert_to_dgl(dbpedia_samples):
+    converter = DBpediaGATSampleConverter()
+    graph_pairs, labels = converter.convert_dbpedia_to_dgl(dbpedia_samples, parallel=True, num_worker=3)
     g1_l = [i['graph1'] for i in graph_pairs]
     g2_l = [i['graph2'] for i in graph_pairs]
     return dgl.batch(g1_l), dgl.batch(g2_l), torch.tensor(labels)
 
 
-def train():
+def train_dbpedia():
     lr = 1e-4
-    epoches = 400
-    # epoches = 10
+    # epoches = 400
+    epoches = 10
     dim = 768
     head = 4
     parallel = True
+    train_data_path = config.RESULT_PATH / "sample_ss_graph_train_test"
+    dev_data_path = config.RESULT_PATH / "sample_ss_graph_dev_test"
     # Create training and test sets.
-    data_train, data_dev = read_data_in_file_batch()
-    trainset = DBpediaGATSampler(data_train, parallel=parallel)
-    model = GATClassifier(dim, dim, head, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
+    data_train = DBpediaGATReader(train_data_path)
+    model = GATClassifier(dim, dim, head, 2)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     is_cuda = True if torch.cuda.is_available() else False
@@ -45,7 +45,7 @@ def train():
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate_with_dgl)
+    train_data_loader = DataLoader(data_train, batch_size=8, shuffle=True, collate_fn=collate_convert_to_dgl)
 
     model.train()
     epoch_losses = []
@@ -53,7 +53,6 @@ def train():
         epoch_loss = 0
         with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
             for batch, graphs_and_labels in enumerate(train_data_loader):
-                # graph1_batched, graph2_batched, label = graphs_and_labels
                 if is_cuda:
                     graphs_and_labels = tuple(t.to(device) for t in graphs_and_labels)
                     graph1_batched, graph2_batched, label = graphs_and_labels
@@ -72,8 +71,8 @@ def train():
 
     dt = get_current_time_str()
     draw_loss_epoches(epoch_losses, f"gat_ss_train_loss_{lr}_epoch{epoches}_{dt}.png")
-
-    loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)
+    data_dev = DBpediaGATReader(dev_data_path)
+    loss_eval_chart, accuracy_argmax, accuracy_sampled = eval_dbpedia(model, data_dev)
     draw_loss_epoches(loss_eval_chart, f"gat_ss_eval_loss_{lr}_epoch{epoches}_{dt}.png")
 
     # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -81,7 +80,7 @@ def train():
     torch.save(model.state_dict(), output_model_file)
 
 
-def eval(model_or_path, dbpedia_data):
+def eval_dbpedia(model_or_path, dbpedia_data):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False
     device = torch.device("cuda:1" if is_cuda else "cpu")
@@ -98,10 +97,10 @@ def eval(model_or_path, dbpedia_data):
             loss_func.to(device)
     else:
         model = model_or_path
-    testset = DBpediaGATSampler(dbpedia_data, parallel=False)
+
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl)
+    test_data_loader = DataLoader(dbpedia_data, batch_size=20, shuffle=True, collate_fn=collate_convert_to_dgl)
     all_sampled_y_t = 0
     all_argmax_y_t = 0
     test_len = 0
@@ -143,23 +142,6 @@ def test_load_model():
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch10_2020_08_26_20:15:12_50.000_100.000'
     data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_train' / 'sample_ss_graph_ThreadPoolExecutor-0_0_2020_08_10_09:59:55.jsonl')
     eval(model_path, data)
-
-
-def read_data_in_file_batch():
-    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train")
-    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev")
-    # print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
-    return data_train, data_dev
-
-
-# @profile
-def test_data():
-    t, d = read_data_in_file_batch()
-    trainset = DBpediaGATSampler(t, parallel=False)
-    devset = DBpediaGATSampler(d, parallel=True)
-    del trainset
-    del devset
-    return
 
 
 if __name__ == '__main__':

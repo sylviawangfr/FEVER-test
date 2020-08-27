@@ -161,6 +161,7 @@ def train_and_eval():
     paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=6)
     paras.epoches = 10
     model = train(paras)
+    paras.data = []
     loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)
     # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
     output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{paras.lr}_epoch{paras.epoches}_{paras.dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"

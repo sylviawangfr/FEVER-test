@@ -45,7 +45,7 @@ def train_dbpedia():
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoader(data_train, batch_size=8, shuffle=True, collate_fn=collate_convert_to_dgl)
+    train_data_loader = DataLoader(data_train, batch_size=16, shuffle=True, collate_fn=collate_convert_to_dgl)
 
     model.train()
     epoch_losses = []
@@ -100,7 +100,7 @@ def eval_dbpedia(model_or_path, dbpedia_data):
 
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoader(dbpedia_data, batch_size=20, shuffle=True, collate_fn=collate_convert_to_dgl)
+    test_data_loader = DataLoader(dbpedia_data, batch_size=40, shuffle=True, collate_fn=collate_convert_to_dgl)
     all_sampled_y_t = 0
     all_argmax_y_t = 0
     test_len = 0

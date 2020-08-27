@@ -350,6 +350,6 @@ def test_data():
 
 if __name__ == '__main__':
     # test_load_model()
-    train()
+    # train()
     # concat_tmp_data()
-    # test_data()
+    test_data()

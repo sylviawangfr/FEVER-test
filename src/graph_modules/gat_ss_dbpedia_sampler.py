@@ -213,7 +213,8 @@ class DBpediaGATSampler(object):
             for data in dbpedia_sampled_data:
                 batch_size = math.ceil(len(data) / 3)
                 data_iter = iter_baskets_contiguous(data, batch_size)
-                thread_exe(self._load_from_dbpedia_sample_file, data_iter, num_worker, "Multi_thread_gat_sampler\n")
+                # thread_exe(self._load_from_dbpedia_sample_file, data_iter, num_worker, "Multi_thread_gat_sampler\n")
+                thread_exe(len, data_iter, num_worker, "Multi_thread_gat_sampler\n")
                 del data_iter
                 del data
 

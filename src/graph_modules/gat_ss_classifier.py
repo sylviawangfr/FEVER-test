@@ -341,12 +341,14 @@ def concat_tmp_data():
 def test_data():
     t, d = concat_tmp_data()
     trainset = DBpediaGATSampler(t, parallel=True)
+    devset = DBpediaGATSampler(d, parallel=True)
     del trainset
+    del devset
     return
 
 
 if __name__ == '__main__':
     # test_load_model()
-    train()
+    # train()
     # concat_tmp_data()
-    # test_data()
+    test_data()

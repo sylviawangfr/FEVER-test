@@ -31,7 +31,7 @@ def train():
     parallel = True
     # Create training and test sets.
     data_train, data_dev = read_data_in_file_batch()
-    trainset = DBpediaGATSampler(data_train, parallel=parallel)
+    trainset = DBpediaGATSampler(data_train, parallel=parallel, num_worker=6)
     model = GATClassifier(dim, dim, head, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -98,7 +98,7 @@ def eval(model_or_path, dbpedia_data):
             loss_func.to(device)
     else:
         model = model_or_path
-    testset = DBpediaGATSampler(dbpedia_data, parallel=True)
+    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=6)
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl)

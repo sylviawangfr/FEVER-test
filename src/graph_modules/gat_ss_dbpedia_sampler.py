@@ -13,11 +13,12 @@ __all__ = ['DBpediaGATSampler']
 
 
 class DBpediaGATSampler(object):
-    def __init__(self, dbpedia_sampled_data, parallel=False):
+    def __init__(self, dbpedia_sampled_data, parallel=False, num_worker=3):
         super(DBpediaGATSampler, self).__init__()
         self.graph_instances = []
         self.labels = []
         self.parallel = parallel
+        self.num_worker = num_worker
         self.lock = threading.Lock()
         self._load(dbpedia_sampled_data)
 
@@ -222,16 +223,15 @@ class DBpediaGATSampler(object):
 
     # @profile
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
-        num_worker = 3
         if isinstance(dbpedia_sampled_data, list):
-            batch_size = math.ceil(len(dbpedia_sampled_data) / num_worker)
+            batch_size = math.ceil(len(dbpedia_sampled_data) / self.num_worker)
             data_iter = iter_baskets_contiguous(dbpedia_sampled_data, batch_size)
-            thread_exe(self._load_from_dbpedia_sample_file, data_iter, num_worker, "Multi_thread_gat_sampler\n")
+            thread_exe(self._load_from_dbpedia_sample_file, data_iter, self.num_worker, "Multi_thread_gat_sampler\n")
         else:
             for data in dbpedia_sampled_data:
                 batch_size = math.ceil(len(data) / 3)
                 data_iter = iter_baskets_contiguous(data, batch_size)
-                thread_exe(self._load_from_dbpedia_sample_file, data_iter, num_worker, "Multi_thread_gat_sampler\n")
+                thread_exe(self._load_from_dbpedia_sample_file, data_iter, self.num_worker, "Multi_thread_gat_sampler\n")
                 # thread_exe(list, data_iter, num_worker, "Multi_thread_gat_sampler\n")
                 del data_iter
                 del data

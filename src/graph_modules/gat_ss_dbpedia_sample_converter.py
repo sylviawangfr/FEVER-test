@@ -116,28 +116,26 @@ class DBpediaGATSampleConverter(object):
         bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
         tmp_lables = []
         tmp_graph_instance = []
-        with tqdm(total=len(list_data), desc=description) as pbar:
-            for idx, item in enumerate(list_data):
-                claim_graph = item['claim_links']
-                g_claim = self._convert_rel_to_efeature(claim_graph, bc)
-                pbar.update(1)
-                if g_claim is None:
-                    continue
 
-                candidates = item['examples']
-                for c in candidates:
-                    c_graph = c['graph']
-                    if c_graph is None or len(c_graph) < 1:
-                        continue
-                    g_c = self._convert_rel_to_efeature(c_graph, bc)
-                    if g_c is None:
-                        continue
-                    c_label = 1 if c['selection_label'] == 'true' else 0
-                    one_example = dict()
-                    one_example['graph1'] = g_claim
-                    one_example['graph2'] = g_c
-                    tmp_lables.append(c_label)
-                    tmp_graph_instance.append(one_example)
+        for idx, item in enumerate(list_data):
+            claim_graph = item['claim_links']
+            g_claim = self._convert_rel_to_efeature(claim_graph, bc)
+            if g_claim is None:
+                continue
+            candidates = item['examples']
+            for c in candidates:
+                c_graph = c['graph']
+                if c_graph is None or len(c_graph) < 1:
+                    continue
+                g_c = self._convert_rel_to_efeature(c_graph, bc)
+                if g_c is None:
+                    continue
+                c_label = 1 if c['selection_label'] == 'true' else 0
+                one_example = dict()
+                one_example['graph1'] = g_claim
+                one_example['graph2'] = g_c
+                tmp_lables.append(c_label)
+                tmp_graph_instance.append(one_example)
         bc.close()
         return tmp_graph_instance, tmp_lables
 

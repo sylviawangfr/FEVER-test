@@ -13,6 +13,7 @@ from memory_profiler import profile
 import gc
 
 
+
 def collate_with_dgl(dgl_samples):
     # The input `samples` is a list of pairs
     # random.shuffle(samples)
@@ -22,17 +23,24 @@ def collate_with_dgl(dgl_samples):
     return dgl.batch(g1_l), dgl.batch(g2_l), torch.tensor(labels)
 
 
-def train():
+class GAT_para(object):
+    data = None
     lr = 1e-4
     epoches = 400
+    dt = get_current_time_str()
+
+
+def train(paras: GAT_para):
+    lr = paras.lr
+    epoches = paras.epoches
     # epoches = 10
     dim = 768
     head = 4
-    parallel = True
+    trainset = paras.data
+    dt = paras.dt
     # Create training and test sets.
-    data_train, data_dev = read_data_in_file_batch()
-    trainset = DBpediaGATSampler(data_train, parallel=parallel, num_worker=6)
-    model = GATClassifier(dim, dim, head, trainset.num_classes)   # out: (4 heads + 1 edge feature) * 2 graphs
+
+    model = GATClassifier(dim, dim, head, 2)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     is_cuda = True if torch.cuda.is_available() else False
@@ -69,16 +77,10 @@ def train():
             epoch_loss /= (batch + 1)
             pbar.set_postfix_str('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
             epoch_losses.append(epoch_loss)
-
-    dt = get_current_time_str()
     draw_loss_epoches(epoch_losses, f"gat_ss_train_loss_{lr}_epoch{epoches}_{dt}.png")
+    return model
 
-    loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)
-    draw_loss_epoches(loss_eval_chart, f"gat_ss_eval_loss_{lr}_epoch{epoches}_{dt}.png")
 
-    # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-    output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{lr}_epoch{epoches}_{dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"
-    torch.save(model.state_dict(), output_model_file)
 
 
 def eval(model_or_path, dbpedia_data):
@@ -146,10 +148,24 @@ def test_load_model():
 
 
 def read_data_in_file_batch():
-    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_part2")
-    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev")
+    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_test")
+    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
     # print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
+
+
+def train_and_eval():
+    data_train, data_dev = read_data_in_file_batch()
+    paras = GAT_para()
+    paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=6)
+    paras.epoches = 10
+    model = train(paras)
+    loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)
+    # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+    output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{paras.lr}_epoch{paras.epoches}_{paras.dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"
+    torch.save(model.state_dict(), output_model_file)
+
+
 
 
 # @profile
@@ -164,6 +180,6 @@ def test_data():
 
 if __name__ == '__main__':
     # test_load_model()
-    train()
+    train_and_eval()
     # concat_tmp_data()
     # test_data()

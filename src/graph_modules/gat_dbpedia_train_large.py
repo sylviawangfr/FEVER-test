@@ -100,7 +100,7 @@ def eval_dbpedia(model_or_path, dbpedia_data):
 
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoader(dbpedia_data, batch_size=40, shuffle=True, collate_fn=collate_convert_to_dgl)
+    test_data_loader = DataLoader(dbpedia_data, batch_size=20, shuffle=True, collate_fn=collate_convert_to_dgl)
     all_sampled_y_t = 0
     all_argmax_y_t = 0
     test_len = 0

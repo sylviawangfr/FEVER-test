@@ -53,7 +53,7 @@ def train(paras: GAT_para):
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate_with_dgl)
+    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate_with_dgl, drop_last=True)
 
     model.train()
     epoch_losses = []
@@ -148,7 +148,7 @@ def test_load_model():
 
 
 def read_data_in_file_batch():
-    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_test")
+    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_part1")
     data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
     # print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
@@ -159,7 +159,7 @@ def train_and_eval():
     data_train, data_dev = read_data_in_file_batch()
     paras = GAT_para()
     paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=6)
-    paras.epoches = 40
+    paras.epoches = 400
     model = train(paras)
     paras.data = []
     loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)

@@ -53,7 +53,7 @@ def train(paras:GAT_para):
         loss_func.to(device)
 
     train_data_loader = DataLoader(train_data, batch_size=32, shuffle=True, collate_fn=collate_convert_to_dgl,
-                                   num_workers=8, pin_memory=True, drop_last=True)
+                                   num_workers=12, pin_memory=True, drop_last=True)
     model.train()
     epoch_losses = []
     for epoch in range(epoches):

@@ -44,7 +44,7 @@ def train(paras: GAT_para):
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     is_cuda = True if torch.cuda.is_available() else False
-    device = torch.device("cuda:1" if is_cuda else "cpu")
+    device = torch.device("cuda:0" if is_cuda else "cpu")
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
     if is_cuda:
@@ -166,8 +166,6 @@ def train_and_eval():
     # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
     output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{paras.lr}_epoch{paras.epoches}_{paras.dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"
     torch.save(model.state_dict(), output_model_file)
-
-
 
 
 # @profile

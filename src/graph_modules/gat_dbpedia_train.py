@@ -53,7 +53,8 @@ def train(paras: GAT_para):
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate_with_dgl, drop_last=True)
+    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate_with_dgl,
+                                   pin_memory=True, num_workers=4, drop_last=True)
 
     model.train()
     epoch_losses = []
@@ -103,7 +104,8 @@ def eval(model_or_path, dbpedia_data):
     testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=9)
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl)
+    test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl,
+                                  pin_memory=True, num_workers=4)
     all_sampled_y_t = 0
     all_argmax_y_t = 0
     test_len = 0
@@ -148,8 +150,8 @@ def test_load_model():
 
 
 def read_data_in_file_batch():
-    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train")
-    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev")
+    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_test")
+    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
     # print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 

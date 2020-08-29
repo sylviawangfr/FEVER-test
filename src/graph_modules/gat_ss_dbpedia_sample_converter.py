@@ -7,6 +7,7 @@ import torch
 from bert_serving.client import BertClient
 from dbpedia_sampler import bert_similarity
 from dbpedia_sampler.uri_util import uri_short_extract
+from graph_modules.gat_ss_dbpedia_reader import DBpediaGATReader
 from utils.file_loader import *
 
 __all__ = ['DBpediaGATSampleConverter']
@@ -17,9 +18,8 @@ class DBpediaGATSampleConverter(object):
         super(DBpediaGATSampleConverter, self).__init__()
         self.graph_instances = []
         self.labels = []
-        self.parallel = True
-        self.num_worker = 3
-        self.lock = threading.Lock()
+        self.num_worker = False
+        self.parallel = 1
 
     def __len__(self):
         """Return the number of graphs in the dataset."""
@@ -39,19 +39,18 @@ class DBpediaGATSampleConverter(object):
         """
         return self.graph_instances[idx], self.labels[idx]
 
-
     @property
     def num_classes(self):
         """Number of classes."""
         return 2
 
-    def _pair_existed(self, src, dst, pairs):
+    def __pair_existed(self, src, dst, pairs):
         if len(list(filter(lambda x: (src == x[0] and dst == x[1]), pairs))) < 1:
             return False
         else:
             return True
 
-    def _convert_rel_to_efeature(self, triple_l, bc:BertClient):
+    def __convert_rel_to_efeature(self, triple_l, bc:BertClient):
         cleaned_tris = []
         for tri in triple_l:
             cleaned_t = []
@@ -109,80 +108,54 @@ class DBpediaGATSampleConverter(object):
         else:
             return None
 
-    def _load_from_list(self, list_data):
+    def __convert_from_list(self, graphs_and_labels):
+        original_graphs, original_labels = map(list, zip(*graphs_and_labels))
         description = "converting data to graph type:"
         if self.parallel:
             description += threading.current_thread().getName()
         bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
-        tmp_lables = []
         tmp_graph_instance = []
-
-        for idx, item in enumerate(list_data):
-            claim_graph = item['claim_links']
-            g_claim = self._convert_rel_to_efeature(claim_graph, bc)
-            if g_claim is None:
+        tmp_labels = []
+        for idx, item in enumerate(original_graphs):
+            graph1 = item['graph1']
+            graph2 = item['graph2']
+            g1 = self.__convert_rel_to_efeature(graph1, bc)
+            if g1 is None:
                 continue
-            candidates = item['examples']
-            for c in candidates:
-                c_graph = c['graph']
-                if c_graph is None or len(c_graph) < 1:
-                    continue
-                g_c = self._convert_rel_to_efeature(c_graph, bc)
-                if g_c is None:
-                    continue
-                c_label = 1 if c['selection_label'] == 'true' else 0
-                one_example = dict()
-                one_example['graph1'] = g_claim
-                one_example['graph2'] = g_c
-                tmp_lables.append(c_label)
-                tmp_graph_instance.append(one_example)
+            g2 = self.__convert_rel_to_efeature(graph2, bc)
+            if g2 is None:
+                continue
+            one_example = dict()
+            one_example['graph1'] = g1
+            one_example['graph2'] = g2
+            tmp_graph_instance.append(one_example)
+            tmp_labels.append(original_labels[idx])
         bc.close()
-        return tmp_graph_instance, tmp_lables
+        return tmp_graph_instance, tmp_labels
 
     # @profile
-    def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
-        if isinstance(dbpedia_sampled_data, list):
-            graphs, labels = self._load_from_list(dbpedia_sampled_data)
-            # print(f"finished sampling one batch of files; count of examples: {len(labels)}")
-            if self.parallel:
-                self.lock.acquire()
-            self.labels.extend(labels)
-            self.graph_instances.extend(graphs)
-            if self.parallel:
-                self.lock.release()
-        else:
-            for idx, items in enumerate(dbpedia_sampled_data):
-                graphs, labels = self._load_from_list(items)
-                # print(f"finished sampling one batch of files; count of examples: {len(labels)}")
-                if self.parallel:
-                    self.lock.acquire()
-                self.labels.extend(labels)
-                self.graph_instances.extend(graphs)
-                if self.parallel:
-                    self.lock.release()
+    def __convert(self, graphs_and_labels):
+        graphs, labels = self.__convert_from_list(graphs_and_labels)
+        if self.parallel:
+            self.lock.acquire()
+        self.graph_instances.extend(graphs)
+        self.labels.extend(labels)
+        if self.parallel:
+            self.lock.release()
 
     # @profile
-    def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):
-        if isinstance(dbpedia_sampled_data, list):
-            batch_size = math.ceil(len(dbpedia_sampled_data) / self.num_worker)
-            data_iter = iter_baskets_contiguous(dbpedia_sampled_data, batch_size)
-            thread_exe_local(self._load_from_dbpedia_sample_file, data_iter, self.num_worker)
-        else:
-            for data in dbpedia_sampled_data:
-                batch_size = math.ceil(len(data) / self.num_worker)
-                data_iter = iter_baskets_contiguous(data, batch_size)
-                thread_exe_local(self._load_from_dbpedia_sample_file, data_iter, self.num_worker)
-                # thread_exe(list, data_iter, num_worker, "Multi_thread_gat_sampler\n")
-                del data_iter
-                del data
+    def __convert_multithread(self, graphs_and_labels):
+        batch_size = math.ceil(len(graphs_and_labels) / self.num_worker)
+        data_iter = iter_baskets_contiguous(graphs_and_labels, batch_size)
+        thread_exe_local(self.__convert, data_iter, self.num_worker)
 
-    def convert_dbpedia_to_dgl(self, dbpedia_sampled_data, parallel=True, num_worker=3):
+    def convert_dbpedia_to_dgl(self, graphs_and_labels, parallel=False, num_worker=1):
         self.parallel = parallel
         self.num_worker = num_worker
         if self.parallel:
-            self._load_from_dbpedia_sample_multithread(dbpedia_sampled_data)
+            self.__convert_multithread(graphs_and_labels)
         else:
-            self._load_from_dbpedia_sample_file(dbpedia_sampled_data)
+            self.__convert(graphs_and_labels)
         return self.graph_instances, self.labels
 
 
@@ -195,6 +168,7 @@ def thread_exe_local(func, pieces, thd_num):
 
 if __name__ == '__main__':
     data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:12]
+    datareader = DBpediaGATReader(data)
     converter = DBpediaGATSampleConverter()
-    g, l = converter.convert_dbpedia_to_dgl(data, parallel=True, num_worker=3)
-    print(len(l))
+    # g, l = converter.convert_dbpedia_to_dgl(data, parallel=False, num_worker=3)
+    # print(len(l))

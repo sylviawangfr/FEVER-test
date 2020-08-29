@@ -82,8 +82,6 @@ def train(paras: GAT_para):
     return model
 
 
-
-
 def eval(model_or_path, dbpedia_data):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False

@@ -54,7 +54,7 @@ def train(paras: GAT_para):
         loss_func.to(device)
 
     train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate_with_dgl,
-                                   pin_memory=True, num_workers=4, drop_last=True)
+                                   pin_memory=True, num_workers=8, drop_last=True)
 
     model.train()
     epoch_losses = []
@@ -105,7 +105,7 @@ def eval(model_or_path, dbpedia_data):
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl,
-                                  pin_memory=True, num_workers=4)
+                                  pin_memory=True, num_workers=8)
     all_sampled_y_t = 0
     all_argmax_y_t = 0
     test_len = 0

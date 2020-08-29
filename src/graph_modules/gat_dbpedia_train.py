@@ -53,7 +53,7 @@ def train(paras: GAT_para):
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoader(trainset, batch_size=32, shuffle=True, collate_fn=collate_with_dgl,
+    train_data_loader = DataLoader(trainset, batch_size=64, shuffle=True, collate_fn=collate_with_dgl,
                                    pin_memory=True, num_workers=8, drop_last=True)
 
     model.train()

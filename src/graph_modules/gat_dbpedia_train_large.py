@@ -27,6 +27,9 @@ class GAT_para(object):
     lr = 1e-4
     epoches = 400
     dt = get_current_time_str()
+    batch_size = 64
+    data_num_workers =16
+
 
 
 def train(paras:GAT_para):
@@ -52,8 +55,8 @@ def train(paras:GAT_para):
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoader(train_data, batch_size=64, shuffle=True, collate_fn=collate_convert_to_dgl,
-                                   num_workers=12, pin_memory=True, drop_last=True)
+    train_data_loader = DataLoader(train_data, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_convert_to_dgl,
+                                   num_workers=paras.data_num_workers, pin_memory=True, drop_last=True)
     model.train()
     epoch_losses = []
     for epoch in range(epoches):
@@ -101,7 +104,8 @@ def eval(model_or_path, dbpedia_data):
 
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoader(dbpedia_data, batch_size=80, shuffle=True, collate_fn=collate_convert_to_dgl)
+    test_data_loader = DataLoader(dbpedia_data, batch_size=160, shuffle=True,
+                                  collate_fn=collate_convert_to_dgl, drop_last=True, num_workers=16)
     all_sampled_y_t = 0
     all_argmax_y_t = 0
     test_len = 0
@@ -145,6 +149,8 @@ def train_and_eval():
     paras = GAT_para()
     paras.data = DBpediaGATReader(train_data_path)
     paras.epoches = 40
+    paras.batch_size = 64
+    paras.data_num_workers = 16
     model = train(paras)
     paras.data = []
     loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, DBpediaGATReader(dev_data_path))

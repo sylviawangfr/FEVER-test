@@ -28,7 +28,8 @@ class GAT_para(object):
     lr = 1e-4
     epoches = 400
     dt = get_current_time_str()
-
+    batch_size = 64
+    data_num_workers = 16
 
 def train(paras: GAT_para):
     lr = paras.lr
@@ -53,8 +54,8 @@ def train(paras: GAT_para):
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoader(trainset, batch_size=128, shuffle=True, collate_fn=collate_with_dgl,
-                                   pin_memory=True, num_workers=16, drop_last=True)
+    train_data_loader = DataLoader(trainset, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_with_dgl,
+                                   pin_memory=True, num_workers=paras.data_num_workers, drop_last=True)
 
     model.train()
     epoch_losses = []
@@ -158,8 +159,10 @@ def read_data_in_file_batch():
 def train_and_eval():
     data_train, data_dev = read_data_in_file_batch()
     paras = GAT_para()
-    paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=12)
-    paras.epoches = 400
+    paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=16)
+    paras.epoches = 40
+    paras.batch_size = 64
+    paras.data_num_workers = 16
     model = train(paras)
     paras.data = []
     loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)

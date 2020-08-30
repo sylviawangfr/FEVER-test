@@ -1,4 +1,5 @@
 from torch.utils.data import DataLoader
+from graph_modules.DataLoaderX import DataLoaderX
 from tqdm import tqdm
 from pathlib import PosixPath
 from datetime import datetime
@@ -56,7 +57,7 @@ def train(paras:GAT_para):
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoader(train_data, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_convert_to_dgl,
+    train_data_loader = DataLoaderX(train_data, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_convert_to_dgl,
                                    num_workers=paras.data_num_workers, pin_memory=True, drop_last=True)
     model.train()
     epoch_losses = []
@@ -105,7 +106,7 @@ def eval(model_or_path, dbpedia_data):
 
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoader(dbpedia_data, batch_size=160, shuffle=True, num_workers=8,
+    test_data_loader = DataLoaderX(dbpedia_data, batch_size=160, shuffle=True, num_workers=8,
                                   collate_fn=collate_convert_to_dgl, drop_last=True)
     all_sampled_y_t = 0
     all_argmax_y_t = 0
@@ -150,7 +151,7 @@ def train_and_eval():
     dev_data_path = config.RESULT_PATH / "sample_ss_graph_dev_test"
     paras = GAT_para()
     paras.data = DBpediaGATReader(train_data_path)
-    paras.epoches = 40
+    paras.epoches = 10
     paras.batch_size = 128
     paras.data_num_workers = 16
     model = train(paras)

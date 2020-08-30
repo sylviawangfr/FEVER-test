@@ -168,7 +168,7 @@ class DBpediaGATSampler(object):
         else:
             return None
 
-    @profile
+    # @profile
     def _load_from_list(self, list_data):
         description = "converting data to graph type:"
         if self.parallel:

@@ -167,13 +167,13 @@ def train_and_eval():
     paras.batch_size = 64
     paras.data_num_workers = 16
     model = train(paras)
+    print(f"train time: {datetime.now() - start}")
     paras.data = []
     loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)
     # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
     output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{paras.lr}_epoch{paras.epoches}_{paras.dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"
     torch.save(model.state_dict(), output_model_file)
-    start = datetime.now()
-
+    print(f"total time: {datetime.now() - start}")
 
 # @profile
 def test_data():

@@ -244,5 +244,5 @@ def thread_exe_local(func, pieces, thd_num):
 
 
 if __name__ == '__main__':
-    data = read_json_rows(config.RESULT_PATH / "sample_ss_graph.jsonl")[0:12]
+    data = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_part1")
     sample = DBpediaGATSampler(data, parallel=True)

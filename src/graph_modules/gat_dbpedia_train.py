@@ -1,5 +1,5 @@
-# from torch.utils.data import DataLoader
-from graph_modules.DataLoaderX import DataLoaderX
+from torch.utils.data import DataLoader
+# from graph_modules.DataLoaderX import DataLoaderX
 from tqdm import tqdm
 from pathlib import PosixPath
 from datetime import datetime
@@ -56,7 +56,7 @@ def train(paras: GAT_para):
         model.to(device)
         loss_func.to(device)
 
-    train_data_loader = DataLoaderX(trainset, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_with_dgl,
+    train_data_loader = DataLoader(trainset, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_with_dgl,
                                    pin_memory=True, num_workers=paras.data_num_workers, drop_last=True)
 
     model.train()
@@ -105,7 +105,7 @@ def eval(model_or_path, dbpedia_data):
     testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=9)
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoaderX(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl,
+    test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl,
                                   pin_memory=True, num_workers=8)
     all_sampled_y_t = 0
     all_argmax_y_t = 0

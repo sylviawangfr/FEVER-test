@@ -247,7 +247,7 @@ def thread_exe_local(func, pieces, thd_num):
 
 if __name__ == '__main__':
     data = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_test")
-    sample = DBpediaGATSampler(data, parallel=True, num_worker=8)
+    sample = DBpediaGATSampler(data, parallel=False, num_worker=8)
     print(f"sample size {sys.getsizeof(sample)}")
     print(f"sample labels size {sys.getsizeof(sample.labels)}")
     print(f"sample graphs size {sys.getsizeof(sample.graph_instances)}")

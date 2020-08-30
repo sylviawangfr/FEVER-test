@@ -149,7 +149,7 @@ def train_and_eval():
     paras = GAT_para()
     paras.data = DBpediaGATReader(train_data_path)
     paras.epoches = 40
-    paras.batch_size = 128
+    paras.batch_size = 64
     paras.data_num_workers = 16
     model = train(paras)
     paras.data = []

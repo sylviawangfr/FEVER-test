@@ -226,15 +226,21 @@ class DBpediaGATSampler(object):
         if isinstance(dbpedia_sampled_data, list):
             batch_size = math.ceil(len(dbpedia_sampled_data) / self.num_worker)
             data_iter = iter_baskets_contiguous(dbpedia_sampled_data, batch_size)
-            thread_exe(self._load_from_dbpedia_sample_file, data_iter, self.num_worker, "Multi_thread_gat_sampler\n")
+            thread_exe_local(self._load_from_dbpedia_sample_file, data_iter, self.num_worker)
         else:
             for data in dbpedia_sampled_data:
                 batch_size = math.ceil(len(data) / self.num_worker)
                 data_iter = iter_baskets_contiguous(data, batch_size)
-                thread_exe(self._load_from_dbpedia_sample_file, data_iter, self.num_worker, "Multi_thread_gat_sampler\n")
-                # thread_exe(list, data_iter, num_worker, "Multi_thread_gat_sampler\n")
+                thread_exe_local(self._load_from_dbpedia_sample_file, data_iter, self.num_worker)
                 del data_iter
                 del data
+
+
+def thread_exe_local(func, pieces, thd_num):
+    with concurrent.futures.ThreadPoolExecutor(thd_num) as executor:
+        to_be_done = {executor.submit(func, param): param for param in pieces}
+        for t in concurrent.futures.as_completed(to_be_done):
+            to_be_done[t]
 
 
 if __name__ == '__main__':

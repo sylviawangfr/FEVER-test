@@ -149,8 +149,8 @@ def train_and_eval():
     paras = GAT_para()
     paras.data = DBpediaGATReader(train_data_path)
     paras.epoches = 40
-    paras.batch_size = 64
-    paras.data_num_workers = 8
+    paras.batch_size = 128
+    paras.data_num_workers = 16
     model = train(paras)
     paras.data = []
     loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, DBpediaGATReader(dev_data_path))

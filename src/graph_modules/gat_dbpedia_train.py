@@ -102,11 +102,11 @@ def eval(model_or_path, dbpedia_data):
             loss_func.to(device)
     else:
         model = model_or_path
-    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=9)
+    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8)
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoaderX(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl,
-                                  pin_memory=True, num_workers=8)
+                                  pin_memory=True, num_workers=8, drop_last=True)
     all_sampled_y_t = 0
     all_argmax_y_t = 0
     test_len = 0
@@ -162,7 +162,7 @@ def train_and_eval():
     start = datetime.now()
     data_train, data_dev = read_data_in_file_batch()
     paras = GAT_para()
-    paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=16)
+    paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=8)
     paras.epoches = 10
     paras.batch_size = 64
     paras.data_num_workers = 16

@@ -1,6 +1,7 @@
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from pathlib import PosixPath
+from datetime import datetime
 from data_util.toChart import *
 import dgl
 import torch
@@ -144,6 +145,7 @@ def eval(model_or_path, dbpedia_data):
 
 
 def train_and_eval():
+    start = datetime.now()
     train_data_path = config.RESULT_PATH / "sample_ss_graph_train_test"
     dev_data_path = config.RESULT_PATH / "sample_ss_graph_dev_test"
     paras = GAT_para()
@@ -157,6 +159,7 @@ def train_and_eval():
     # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
     output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{paras.lr}_epoch{paras.epoches}_{paras.dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"
     torch.save(model.state_dict(), output_model_file)
+    print(f"total time: {datetime.now() - start}")
 
 
 def test_load_model():

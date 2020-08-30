@@ -2,6 +2,7 @@
 from graph_modules.DataLoaderX import DataLoaderX
 from tqdm import tqdm
 from pathlib import PosixPath
+from datetime import datetime
 from data_util.toChart import *
 import dgl
 import torch
@@ -158,6 +159,7 @@ def read_data_in_file_batch():
 
 # @profile
 def train_and_eval():
+    start = datetime.now()
     data_train, data_dev = read_data_in_file_batch()
     paras = GAT_para()
     paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=16)
@@ -170,6 +172,7 @@ def train_and_eval():
     # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
     output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{paras.lr}_epoch{paras.epoches}_{paras.dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"
     torch.save(model.state_dict(), output_model_file)
+    start = datetime.now()
 
 
 # @profile

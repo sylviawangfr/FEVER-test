@@ -8,6 +8,7 @@ from bert_serving.client import BertClient
 from dbpedia_sampler import bert_similarity
 from dbpedia_sampler.uri_util import uri_short_extract
 from utils.file_loader import *
+import sys
 
 __all__ = ['DBpediaGATSampler']
 
@@ -244,5 +245,6 @@ def thread_exe_local(func, pieces, thd_num):
 
 
 if __name__ == '__main__':
-    data = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_part1")
+    data = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_test")
     sample = DBpediaGATSampler(data, parallel=True)
+    print(sys.getsizeof(sample))

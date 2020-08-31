@@ -18,7 +18,7 @@ import gc
 def collate_convert_to_dgl(instance_and_labels):
     # paired_g, labels = map(list, zip(*instance_and_labels))
     converter = DBpediaGATSampleConverter()
-    dglgraph_pairs, labels = converter.convert_dbpedia_to_dgl(instance_and_labels, parallel=False)
+    dglgraph_pairs, labels = converter.convert_dbpedia_to_dgl(instance_and_labels, parallel=True)
     g1_l = [i['graph1'] for i in dglgraph_pairs]
     g2_l = [i['graph2'] for i in dglgraph_pairs]
     return dgl.batch(g1_l), dgl.batch(g2_l), torch.tensor(labels)
@@ -58,7 +58,7 @@ def train(paras:GAT_para):
         loss_func.to(device)
 
     train_data_loader = DataLoader(train_data, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_convert_to_dgl,
-                                   num_workers=paras.data_num_workers, pin_memory=True, drop_last=True)
+                                   drop_last=True)
     model.train()
     epoch_losses = []
     for epoch in range(epoches):
@@ -106,7 +106,7 @@ def eval(model_or_path, dbpedia_data):
 
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoader(dbpedia_data, batch_size=160, shuffle=True, num_workers=8,
+    test_data_loader = DataLoader(dbpedia_data, batch_size=160, shuffle=True,
                                   collate_fn=collate_convert_to_dgl, drop_last=True)
     all_sampled_y_t = 0
     all_argmax_y_t = 0

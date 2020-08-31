@@ -43,6 +43,7 @@ def train(paras: GAT_para):
     dt = paras.dt
     # Create training and test sets.
 
+    torch.backends.cudnn.benchmark = True
     model = GATClassifier(dim, dim, head, 2)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)

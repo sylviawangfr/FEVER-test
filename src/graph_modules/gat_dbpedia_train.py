@@ -43,7 +43,6 @@ def train(paras: GAT_para):
     dt = paras.dt
     # Create training and test sets.
 
-    torch.backends.cudnn.benchmark = True
     model = GATClassifier(dim, dim, head, 2)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -54,6 +53,7 @@ def train(paras: GAT_para):
     if is_cuda:
         # if n_gpu > 1:
         #     model = torch.nn.DataParallel(model)
+        torch.backends.cudnn.benchmark = True
         model.to(device)
         loss_func.to(device)
 
@@ -164,8 +164,8 @@ def train_and_eval():
     data_train, data_dev = read_data_in_file_batch()
     paras = GAT_para()
     paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=8)
-    paras.epoches = 40
-    paras.batch_size = 128
+    paras.epoches = 400
+    paras.batch_size = 64
     paras.data_num_workers = 8
     model = train(paras)
     print(f"train time: {datetime.now() - start}")
@@ -179,8 +179,8 @@ def train_and_eval():
 # @profile
 def test_data():
     t, d = read_data_in_file_batch()
-    trainset = DBpediaGATSampler(t, parallel=False)
-    devset = DBpediaGATSampler(d, parallel=True)
+    trainset = DBpediaGATSampler(t, parallel=True, num_worker=8)
+    devset = DBpediaGATSampler(d, parallel=True, num_worker=8)
     del trainset
     del devset
     return

@@ -180,7 +180,7 @@ class GATClassifier2(nn.Module):
         # h = bgp.in_degrees().view(-1, 1).float()
         for i, gnn in enumerate(self.gat_layers):
             h_n1, h_e1 = gnn(h_n1, h_e1, bg1)
-            h_n2, h_e3 = gnn(h_n2, h_e2, bg2)
+            h_n2, h_e2 = gnn(h_n2, h_e2, bg2)
 
         bg1.ndata['h'] = h_n1
         bg2.ndata['h'] = h_n2

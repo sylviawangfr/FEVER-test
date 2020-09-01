@@ -4,8 +4,6 @@ from tqdm import tqdm
 from pathlib import PosixPath
 from datetime import datetime
 from data_util.toChart import *
-import dgl
-import torch
 from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
 from graph_modules.gat_ss_dbpedia_sample_converter import DBpediaGATSampleConverter
 from graph_modules.gat_ss_dbpedia_reader import DBpediaGATReader
@@ -70,7 +68,7 @@ def train(paras: GAT_para):
         dist.init_process_group(backend='nccl')
         model = convert_syncbn_model(model).to(device)
         model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
-        model = DistributedDataParallel(model, delay_allreduce=True)
+        model = DistributedDataParallel(model, delay_allreduce=True, device_ids=[paras.local_rank])
         # model.to(device)
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[25, 50, 75], gamma=0.2)
         loss_func.to(device)

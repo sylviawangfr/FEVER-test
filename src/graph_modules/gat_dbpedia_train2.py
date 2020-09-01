@@ -165,7 +165,7 @@ def train_and_eval():
     paras = GAT_para()
     paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=8)
     paras.epoches = 400
-    paras.batch_size = 64
+    paras.batch_size = 32
     paras.data_num_workers = 8
     model = train(paras)
     print(f"train time: {datetime.now() - start}")

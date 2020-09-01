@@ -115,20 +115,20 @@ def train(paras: GAT_para, args):
             epoch_losses.append(epoch_loss)
 
 
-            # TensorBoard
-            if paras.local_rank == 0:
-                writer.add_scalars('Loss/training', {
-                    'train_loss': epoch_losses,
-                }, epoch + 1)
-
-                writer.add_scalars('Metrics/validation', {
-                    'dice': dice,
-                    'iou': iou
-                }, epoch + 1)
-
-                writer.add_images('Label/ground_truth', labels[:, :, 0, :, :], epoch + 1)
-                if paras.local_rank == 0:
-                    torch.save(model, f'unet3d-epoch{epoch + 1}.pth')
+            # # TensorBoard
+            # if paras.local_rank == 0:
+            #     writer.add_scalars('Loss/training', {
+            #         'train_loss': epoch_losses,
+            #     }, epoch + 1)
+            #
+            #     writer.add_scalars('Metrics/validation', {
+            #         'dice': dice,
+            #         'iou': iou
+            #     }, epoch + 1)
+            #
+            #     writer.add_images('Label/ground_truth', labels[:, :, 0, :, :], epoch + 1)
+            #     if paras.local_rank == 0:
+            #         torch.save(model, f'unet3d-epoch{epoch + 1}.pth')
     draw_loss_epoches(epoch_losses, f"gat_ss_train_loss_{lr}_epoch{epoches}_{dt}.png")
 
 

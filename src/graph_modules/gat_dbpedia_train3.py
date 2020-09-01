@@ -88,9 +88,9 @@ def train(paras: GAT_para, args):
 
     model.train()
     epoch_losses = []
-    writer = SummaryWriter(
-        log_dir=f'writer_{datetime.datetime.now()}'
-    )
+    # writer = SummaryWriter(
+    #     log_dir=f'writer_{datetime.datetime.now()}'
+    # )
     for epoch in range(epoches):
         epoch_loss = 0
         with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:

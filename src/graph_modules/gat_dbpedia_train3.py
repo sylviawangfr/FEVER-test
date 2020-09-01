@@ -1,5 +1,5 @@
-# from torch.utils.data import DataLoader
-from graph_modules.DataLoaderX import DataLoaderX
+from torch.utils.data import DataLoader
+# from graph_modules.DataLoaderX import DataLoaderX
 from tqdm import tqdm
 from pathlib import PosixPath
 from datetime import datetime
@@ -13,7 +13,12 @@ from graph_modules.gat_ss_classifier2 import *
 from utils.file_loader import read_json_rows, read_files_one_by_one, read_all_files
 from memory_profiler import profile
 import gc
-
+from apex import amp
+import torch.distributed as dist
+from torch import distributed
+from apex.parallel import convert_syncbn_model
+from apex.parallel import DistributedDataParallel
+from torch.utils.tensorboard import SummaryWriter
 
 
 def collate_with_dgl(dgl_samples):
@@ -33,6 +38,12 @@ class GAT_para(object):
     batch_size = 64
     data_num_workers = 16
 
+def reduce_tensor(tensor: torch.Tensor) -> torch.Tensor:
+    rt = tensor.clone()
+    distributed.all_reduce(rt, op=distributed.reduce_op.SUM)
+    rt /= distributed.get_world_size()
+    return rt
+
 def train(paras: GAT_para):
     lr = paras.lr
     epoches = paras.epoches
@@ -43,25 +54,35 @@ def train(paras: GAT_para):
     dt = paras.dt
     # Create training and test sets.
 
-    torch.backends.cudnn.benchmark = True
-    model = GATClassifier2(dim, dim, head, 2)   # out: (4 heads + 1 edge feature) * 2 graphs
-    loss_func = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=lr)
     is_cuda = True if torch.cuda.is_available() else False
     device = torch.device("cuda:1" if is_cuda else "cpu")
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
+
+    torch.backends.cudnn.benchmark = True
+    model = GATClassifier2(dim, dim, head, 2)   # out: (4 heads + 1 edge feature) * 2 graphs
+    loss_func = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=lr)
     if is_cuda:
         # if n_gpu > 1:
         #     model = torch.nn.DataParallel(model)
-        model.to(device)
+        dist.init_process_group(backend='nccl')
+        model = convert_syncbn_model(model).to(device)
+        model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
+        model = DistributedDataParallel(model, delay_allreduce=True)
+        # model.to(device)
+        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[25, 50, 75], gamma=0.2)
         loss_func.to(device)
 
-    train_data_loader = DataLoaderX(trainset, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_with_dgl,
-                                   pin_memory=True, num_workers=paras.data_num_workers, drop_last=True)
+    train_sampler = torch.utils.data.distributed.DistributedSampler(trainset)
+    train_data_loader = DataLoader(trainset, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_with_dgl,
+                                   pin_memory=True, num_workers=paras.data_num_workers, drop_last=True, sampler=train_sampler)
 
     model.train()
     epoch_losses = []
+    writer = SummaryWriter(
+        log_dir=f'writer_{datetime.datetime.now()}'
+    )
     for epoch in range(epoches):
         epoch_loss = 0
         with tqdm(total=len(train_data_loader), desc=f"Epoch {epoch}") as pbar:
@@ -77,12 +98,33 @@ def train(paras: GAT_para):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                epoch_loss += loss.detach().item()
+                scheduler.step()
+                reduced_loss = reduce_tensor(loss.data)
+                epoch_loss += reduced_loss.item()
                 pbar.update(1)
             epoch_loss /= (batch + 1)
             pbar.set_postfix_str('Epoch {}, loss {:.4f}'.format(epoch, epoch_loss))
             epoch_losses.append(epoch_loss)
+
+
+            # TensorBoard
+            if paras.local_rank == 0:
+                writer.add_scalars('Loss/training', {
+                    'train_loss': epoch_losses,
+                }, epoch + 1)
+
+                writer.add_scalars('Metrics/validation', {
+                    'dice': dice,
+                    'iou': iou
+                }, epoch + 1)
+
+                writer.add_images('Label/ground_truth', labels[:, :, 0, :, :], epoch + 1)
+                if paras.local_rank == 0:
+                    torch.save(model, f'unet3d-epoch{epoch + 1}.pth')
     draw_loss_epoches(epoch_losses, f"gat_ss_train_loss_{lr}_epoch{epoches}_{dt}.png")
+
+
+
     return model
 
 
@@ -106,7 +148,7 @@ def eval(model_or_path, dbpedia_data):
     testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8)
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoaderX(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl,
+    test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl,
                                   pin_memory=True, num_workers=8, drop_last=True)
     all_sampled_y_t = 0
     all_argmax_y_t = 0

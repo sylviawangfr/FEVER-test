@@ -17,6 +17,8 @@ from torch import distributed
 from apex.parallel import convert_syncbn_model
 from apex.parallel import DistributedDataParallel
 from torch.utils.tensorboard import SummaryWriter
+import argparse
+import os
 
 
 def collate_with_dgl(dgl_samples):
@@ -43,7 +45,7 @@ def reduce_tensor(tensor: torch.Tensor) -> torch.Tensor:
     rt /= distributed.get_world_size()
     return rt
 
-def train(paras: GAT_para):
+def train(paras: GAT_para, args):
     lr = paras.lr
     epoches = paras.epoches
     # epoches = 10
@@ -58,20 +60,27 @@ def train(paras: GAT_para):
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
 
-    torch.backends.cudnn.benchmark = True
+
     model = GATClassifier2(dim, dim, head, 2)   # out: (4 heads + 1 edge feature) * 2 graphs
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    if args.distributed:
+        # FOR DISTRIBUTED:  Set the device according to local_rank.
+        torch.cuda.set_device(args.local_rank)
+        torch.distributed.init_process_group(backend='nccl',
+                                             init_method='env://')
+    torch.backends.cudnn.benchmark = True
     if is_cuda:
         # if n_gpu > 1:
         #     model = torch.nn.DataParallel(model)
-        dist.init_process_group(backend='nccl')
         model = convert_syncbn_model(model).to(device)
         model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
-        model = DistributedDataParallel(model, delay_allreduce=True, device_ids=[paras.local_rank])
+        model = DistributedDataParallel(model, delay_allreduce=True)
         # model.to(device)
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[25, 50, 75], gamma=0.2)
         loss_func.to(device)
+
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(trainset)
     train_data_loader = DataLoader(trainset, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_with_dgl,
@@ -201,6 +210,14 @@ def read_data_in_file_batch():
 
 # @profile
 def train_and_eval():
+    parser = argparse.ArgumentParser()
+    # FOR DISTRIBUTED:  Parse for the local_rank argument, which will be supplied
+    # automatically by torch.distributed.launch.
+    parser.add_argument("--local_rank", default=0, type=int)
+    args = parser.parse_args()
+    if 'WORLD_SIZE' in os.environ:
+        args.distributed = int(os.environ['WORLD_SIZE']) > 1
+
     start = datetime.now()
     data_train, data_dev = read_data_in_file_batch()
     paras = GAT_para()
@@ -208,7 +225,7 @@ def train_and_eval():
     paras.epoches = 400
     paras.batch_size = 64
     paras.data_num_workers = 8
-    model = train(paras)
+    model = train(paras, args)
     print(f"train time: {datetime.now() - start}")
     paras.data = []
     loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)

@@ -37,6 +37,7 @@ class GAT_para(object):
     dt = get_current_time_str()
     batch_size = 64
     data_num_workers = 16
+    local_rank = 0
 
 def reduce_tensor(tensor: torch.Tensor) -> torch.Tensor:
     rt = tensor.clone()

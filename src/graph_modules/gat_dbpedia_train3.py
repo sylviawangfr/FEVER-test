@@ -83,7 +83,7 @@ def train(paras: GAT_para, args):
 
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(trainset)
-    train_data_loader = DataLoader(trainset, batch_size=paras.batch_size, shuffle=True, collate_fn=collate_with_dgl,
+    train_data_loader = DataLoader(trainset, batch_size=paras.batch_size, collate_fn=collate_with_dgl,
                                    pin_memory=True, num_workers=paras.data_num_workers, drop_last=True, sampler=train_sampler)
 
     model.train()

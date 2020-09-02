@@ -10,6 +10,7 @@ from dbpedia_sampler.uri_util import uri_short_extract
 from utils.file_loader import *
 from torch.utils.data import Dataset
 import sys
+from collections import Counter
 
 __all__ = ['DBpediaGATSampler']
 
@@ -187,6 +188,7 @@ class DBpediaGATSampler(Dataset):
 
                 candidates = item['examples']
                 for c in candidates:
+
                     c_graph = c['graph']
                     if c_graph is None or len(c_graph) < 1:
                         continue
@@ -199,6 +201,8 @@ class DBpediaGATSampler(Dataset):
                     one_example['graph2'] = g_c
                     tmp_lables.append(c_label)
                     tmp_graph_instance.append(one_example)
+                    if c['claim_label'] == 'NOT ENOUGH INFO':
+                        break
         bc.close()
         return tmp_graph_instance, tmp_lables
 
@@ -245,10 +249,14 @@ def thread_exe_local(func, pieces, thd_num):
         for t in concurrent.futures.as_completed(to_be_done):
             to_be_done[t]
 
+def count_truth(labels):
+    truth = labels.count(1)
+    return truth / len(labels)
 
 if __name__ == '__main__':
     data = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_test")
     sample = DBpediaGATSampler(data, parallel=True, num_worker=8)
+    print(f"truth: {count_truth(sample.labels)}")
     print(f"sample size {sys.getsizeof(sample)}")
     print(f"sample labels size {sys.getsizeof(sample.labels)}")
     print(f"sample graphs size {sys.getsizeof(sample.graph_instances)}")

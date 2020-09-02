@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from utils.text_clean import convert_brc
 from memory_profiler import profile
 import gc
+from collections import Counter
 
 
 log = log_util.get_logger("dbpedia_ss_sampler")

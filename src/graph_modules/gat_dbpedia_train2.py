@@ -32,6 +32,7 @@ class GAT_para(object):
     dt = get_current_time_str()
     batch_size = 64
     data_num_workers = 16
+    gpu_num = 0
 
 def train(paras: GAT_para):
     lr = paras.lr
@@ -48,7 +49,7 @@ def train(paras: GAT_para):
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     is_cuda = True if torch.cuda.is_available() else False
-    device = torch.device("cuda:4" if is_cuda else "cpu")
+    device = torch.device(f"cuda:{paras.gpu_num}" if is_cuda else "cpu")
     n_gpu = torch.cuda.device_count()
     print(f"device: {device} n_gpu: {n_gpu}")
     if is_cuda:
@@ -86,10 +87,10 @@ def train(paras: GAT_para):
     return model
 
 
-def eval(model_or_path, dbpedia_data):
+def eval(model_or_path, dbpedia_data, gpu):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False
-    device = torch.device("cuda:4" if is_cuda else "cpu")
+    device = torch.device(f"cuda:{gpu}" if is_cuda else "cpu")
     n_gpu = torch.cuda.device_count()
     dim = 768
     print(f"device: {device} n_gpu: {n_gpu}")
@@ -167,10 +168,11 @@ def train_and_eval():
     paras.epoches = 40
     paras.batch_size = 32
     paras.data_num_workers = 8
+    paras.gpu_num = 4
     model = train(paras)
     print(f"train time: {datetime.now() - start}")
     paras.data = []
-    loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev)
+    loss_eval_chart, accuracy_argmax, accuracy_sampled = eval(model, data_dev, paras.gpu_num)
     # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
     output_model_file = config.SAVED_MODELS_PATH / f"gat_ss_{paras.lr}_epoch{paras.epoches}_{paras.dt}_{accuracy_sampled:.3f}_{accuracy_argmax:.3f}"
     torch.save(model.state_dict(), output_model_file)

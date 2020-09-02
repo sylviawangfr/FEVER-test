@@ -75,7 +75,7 @@ def train(paras: GAT_para, args):
         # if n_gpu > 1:
         #     model = torch.nn.DataParallel(model)
         model = convert_syncbn_model(model).to(device)
-        model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
+        model, optimizer = amp.initialize(model, optimizer, opt_level='O0')
         model = DistributedDataParallel(model, delay_allreduce=True)
         # model.to(device)
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[25, 50, 75], gamma=0.2)

@@ -202,7 +202,7 @@ class DBpediaGATSampler(Dataset):
                     tmp_lables.append(c_label)
                     tmp_graph_instance.append(one_example)
                     tmp_count += 1
-                    if c['claim_label'] == 'NOT ENOUGH INFO' and tmp_count > 0:
+                    if c['claim_label'] == 'NOT ENOUGH INFO' and tmp_count > 1:
                         break
         bc.close()
         return tmp_graph_instance, tmp_lables

@@ -153,8 +153,8 @@ def test_load_model():
 
 
 def read_data_in_file_batch():
-    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train")
-    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev")
+    data_train = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_test")
+    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
     # print(f"train data len: {len(data_train)}; eval data len: {len(data_dev)}\n")
     return data_train, data_dev
 
@@ -164,8 +164,8 @@ def train_and_eval():
     start = datetime.now()
     data_train, data_dev = read_data_in_file_batch()
     paras = GAT_para()
-    paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=8)
-    paras.epoches = 40
+    paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=16)
+    paras.epoches = 10
     paras.batch_size = 64
     paras.data_num_workers = 8
     paras.gpu_num = 4

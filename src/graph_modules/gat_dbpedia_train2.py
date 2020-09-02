@@ -166,7 +166,7 @@ def train_and_eval():
     paras = GAT_para()
     paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=16)
     paras.epoches = 400
-    paras.batch_size = 64
+    paras.batch_size = 32
     paras.data_num_workers = 8
     paras.gpu_num = 7
     model = train(paras)

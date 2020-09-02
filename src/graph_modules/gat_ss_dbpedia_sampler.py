@@ -187,8 +187,8 @@ class DBpediaGATSampler(Dataset):
                     continue
 
                 candidates = item['examples']
+                tmp_count = 0
                 for c in candidates:
-
                     c_graph = c['graph']
                     if c_graph is None or len(c_graph) < 1:
                         continue
@@ -201,7 +201,8 @@ class DBpediaGATSampler(Dataset):
                     one_example['graph2'] = g_c
                     tmp_lables.append(c_label)
                     tmp_graph_instance.append(one_example)
-                    if c['claim_label'] == 'NOT ENOUGH INFO':
+                    tmp_count += 1
+                    if c['claim_label'] == 'NOT ENOUGH INFO' and tmp_count > 1:
                         break
         bc.close()
         return tmp_graph_instance, tmp_lables

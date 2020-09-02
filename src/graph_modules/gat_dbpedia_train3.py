@@ -81,7 +81,6 @@ def train(paras: GAT_para, args):
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[25, 50, 75], gamma=0.2)
         loss_func.to(device)
 
-
     train_sampler = torch.utils.data.distributed.DistributedSampler(trainset)
     train_data_loader = DataLoader(trainset, batch_size=paras.batch_size, collate_fn=collate_with_dgl,
                                    pin_memory=True, num_workers=paras.data_num_workers, sampler=train_sampler)
@@ -104,7 +103,9 @@ def train(paras: GAT_para, args):
                 prediction = model(graph1_batched, graph2_batched)
                 loss = loss_func(prediction, label)
                 optimizer.zero_grad()
-                loss.backward()
+                with amp.scale_loss(loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
+                # loss.backward()
                 optimizer.step()
                 scheduler.step()
                 reduced_loss = reduce_tensor(loss.data)

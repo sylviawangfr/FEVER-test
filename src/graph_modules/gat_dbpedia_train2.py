@@ -147,7 +147,7 @@ def eval(model_or_path, dbpedia_data, gpu):
 
 
 def test_load_model():
-    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch10_2020_08_27_20:51:50_89.346_94.953'
+    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     data = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_dev_test')
     eval(model_path, data)
 
@@ -189,7 +189,7 @@ def test_data():
 
 
 if __name__ == '__main__':
-    # test_load_model()
-    train_and_eval()
+    test_load_model()
+    # train_and_eval()
     # concat_tmp_data()
     # test_data()

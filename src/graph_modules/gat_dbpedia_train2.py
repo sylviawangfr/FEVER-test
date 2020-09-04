@@ -149,7 +149,7 @@ def eval(model_or_path, dbpedia_data, gpu):
 def test_load_model():
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     data = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_dev_test')
-    eval(model_path, data)
+    eval(model_path, data, gpu=7)
 
 
 def read_data_in_file_batch():
@@ -165,7 +165,7 @@ def train_and_eval():
     data_train, data_dev = read_data_in_file_batch()
     paras = GAT_para()
     paras.data = DBpediaGATSampler(data_train, parallel=True, num_worker=16)
-    paras.epoches = 40
+    paras.epoches = 400
     paras.batch_size = 64
     paras.data_num_workers = 8
     paras.gpu_num = 7

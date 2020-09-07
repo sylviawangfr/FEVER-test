@@ -114,7 +114,7 @@ def eval(model_or_path, dbpedia_data, gpu):
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoaderX(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl,
-                                  pin_memory=True, num_workers=4, drop_last=True)
+                                  pin_memory=True, num_workers=0, drop_last=True)
     all_sampled_y_t = 0
     all_argmax_y_t = 0
     test_len = 0

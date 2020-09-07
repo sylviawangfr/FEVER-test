@@ -272,8 +272,8 @@ if __name__ == '__main__':
     data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     # data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
-    pred_prob(model_path, data_dev)
-    # test_load_model()
+    # pred_prob(model_path, data_dev)
+    test_load_model()
     # train_and_eval()
     # concat_tmp_data()
     # test_data()

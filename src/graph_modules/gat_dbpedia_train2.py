@@ -240,7 +240,7 @@ def train_and_eval():
     paras.epoches = 400
     paras.batch_size = 64
     paras.data_num_workers = 8
-    paras.gpu_num = 7
+    paras.gpu_num = 0
     model = train(paras)
     print(f"train time: {datetime.now() - start}")
     paras.data = []

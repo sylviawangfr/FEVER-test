@@ -255,7 +255,7 @@ def count_truth(labels):
     return truth / len(labels)
 
 if __name__ == '__main__':
-    data = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_train_test")
+    data = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
     sample = DBpediaGATSampler(data, parallel=True, num_worker=8)
     print(f"truth: {count_truth(sample.labels)}")
     print(f"sample size {sys.getsizeof(sample)}")

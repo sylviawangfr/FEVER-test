@@ -11,7 +11,7 @@ from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
 from graph_modules.gat_ss_dbpedia_sample_converter import DBpediaGATSampleConverter
 from graph_modules.gat_ss_dbpedia_reader import DBpediaGATReader
 from graph_modules.gat_ss_classifier2 import *
-from utils.file_loader import read_json_rows, read_files_one_by_one, save_file
+from utils.file_loader import read_json_rows, read_files_one_by_one, save_file, read_all_files
 from memory_profiler import profile
 import gc
 import utils.common_types as model_para
@@ -165,7 +165,8 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
             model.to(device)
             loss_func.to(device)
         else:
-            model.load_state_dict(torch.load(model_or_path, map_location="cpu"))
+            model_or_path = open(model_or_path, 'rb')
+            model.load_state_dict(torch.load(model_or_path, map_location=torch.device('cpu')))
     else:
         model = model_or_path
     testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8)

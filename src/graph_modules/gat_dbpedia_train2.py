@@ -221,7 +221,7 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
 def test_load_model():
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
-    eval(model_path, data, gpu=7)
+    eval(model_path, data, gpu=0)
 
 
 def read_data_in_file_batch():

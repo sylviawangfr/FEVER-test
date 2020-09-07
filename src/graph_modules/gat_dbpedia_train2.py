@@ -162,10 +162,11 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
         model = GATClassifier2(dim, dim, 4, 2)
         model.load_state_dict(torch.load(model_or_path))
         if is_cuda:
-            # if n_gpu > 1:
-            #     model = torch.nn.DataParallel(model)
+            model.load_state_dict(torch.load(model_or_path, map_location=f"cuda:{gpu}"))
             model.to(device)
             loss_func.to(device)
+        else:
+            model.load_state_dict(torch.load(model_or_path, map_location="cpu"))
     else:
         model = model_or_path
     testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8)
@@ -266,8 +267,8 @@ if __name__ == '__main__':
     data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     # data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
-    # pred_prob(model_path, data_dev)
-    test_load_model()
+    pred_prob(model_path, data_dev)
+    # test_load_model()
     # train_and_eval()
     # concat_tmp_data()
     # test_data()

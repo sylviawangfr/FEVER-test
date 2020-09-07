@@ -160,7 +160,6 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
     print(f"device: {device} n_gpu: {n_gpu}")
     if isinstance(model_or_path, PosixPath):
         model = GATClassifier2(dim, dim, 4, 2)
-        model.load_state_dict(torch.load(model_or_path))
         if is_cuda:
             model.load_state_dict(torch.load(model_or_path, map_location=f"cuda:{gpu}"))
             model.to(device)

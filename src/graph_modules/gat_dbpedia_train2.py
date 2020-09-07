@@ -1,4 +1,4 @@
-# from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader
 from graph_modules.DataLoaderX import DataLoaderX
 from tqdm import tqdm
 import numpy as np
@@ -173,7 +173,7 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
     print("done with sampling")
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoaderX(testset, batch_size=80, shuffle=False, collate_fn=collate_with_dgl,
+    test_data_loader = DataLoader(testset, batch_size=80, shuffle=False, collate_fn=collate_with_dgl,
                                   pin_memory=True, num_workers=1, drop_last=True)
     preds = []
     for graphs_and_labels in tqdm(test_data_loader):

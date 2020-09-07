@@ -152,7 +152,7 @@ def eval(model_or_path, dbpedia_data, gpu):
     return loss_eval_chart, accuracy_argmax, accuracy_sampled
 
 
-def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
+def pred_prob(model_or_path, original_data, dbpedia_data, gpu=0, thredhold=0.4):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False
     device = torch.device(f"cuda:{gpu}" if is_cuda else "cpu")
@@ -213,7 +213,7 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
     save_intermidiate_results(dict_to_list, config.RESULT_PATH / "gat_ss.jsonl")
     paras = model_para.PipelineParas()
     paras.output_folder = "gat_pred_ss_" + get_current_time_str()
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    paras.original_data = original_data
     paras.mode = 'dev'
     paras.pred = False
     paras.top_n = [10, 5]
@@ -270,10 +270,11 @@ def test_data():
 if __name__ == '__main__':
     # data_dev = read_all_files(config.RESULT_PATH / "sample_ss_graph_train_test")
     data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
+    original_data = read_json_rows(config.RESULT_PATH / 'ss_error_10.jsonl')
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     # data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
-    # pred_prob(model_path, data_dev)
-    test_load_model()
+    pred_prob(model_path, original_data, data_dev)
+    # test_load_model()
     # train_and_eval()
     # concat_tmp_data()
     # test_data()

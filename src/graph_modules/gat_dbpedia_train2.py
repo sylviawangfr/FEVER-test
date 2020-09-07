@@ -268,7 +268,7 @@ def test_data():
 
 
 if __name__ == '__main__':
-    data_dev = read_all_files(config.RESULT_PATH / "sample_ss_graph_dev")
+    data_dev = read_all_files(config.RESULT_PATH / "sample_ss_graph_train_test")
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     # data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
     pred_prob(model_path, data_dev)

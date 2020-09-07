@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 import config
 import log_util
-from utils import text_clean
+from utils.text_clean import *
 from utils.file_loader import *
 from utils.sqlite_queue import *
 

@@ -227,12 +227,20 @@ def read_files_one_by_one(path):
         yield read_json_rows(path / entry)
 
 
-def read_all_files(path):
+def read_all_files_gen(path):
     for entry in os.listdir(path):
         one_file_data = read_json_rows(path / entry)
         for i in one_file_data:
             yield i
 
+
+
+def read_all_files(path):
+    all_rows = []
+    for entry in os.listdir(path):
+        one_file_data = read_json_rows(path / entry)
+        all_rows.extend(one_file_data)
+    return all_rows
 
 
 def get_current_time_str():

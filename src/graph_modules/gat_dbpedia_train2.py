@@ -12,7 +12,7 @@ from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
 from graph_modules.gat_ss_dbpedia_sample_converter import DBpediaGATSampleConverter
 from graph_modules.gat_ss_dbpedia_reader import DBpediaGATReader
 from graph_modules.gat_ss_classifier2 import *
-from utils.file_loader import read_json_rows, read_files_one_by_one, save_file, read_all_files
+from utils.file_loader import read_json_rows, read_files_one_by_one, save_intermidiate_results, read_all_files
 from memory_profiler import profile
 import gc
 import utils.common_types as model_para
@@ -175,7 +175,7 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoader(testset, batch_size=80, shuffle=False, collate_fn=collate_with_dgl,
-                                  pin_memory=True, num_workers=4)
+                                  pin_memory=True, num_workers=0)
     preds = []
     for graphs_and_labels in tqdm(test_data_loader):
         if is_cuda:
@@ -193,18 +193,16 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
 
         # test_y = test_y.clone().detach().float().view(-1, 1)
         if len(preds) == 0:
-            preds.append(pred_y.detach().cpu().numpy())
+            preds = pred_y.detach().cpu()
         else:
-            preds[0] = np.append(
-                preds[0], pred_y.detach().cpu().numpy(), axis=0)
-    preds = preds[0]
-    probs = F.softmax(preds)
-    probs = probs[:, 0].tolist()
-    scores = preds[:, 0].tolist()
+            preds = torch.cat((preds, pred_y.detach().cpu()), dim=0)
+    probs = torch.softmax(preds, 1)
+    probs = probs[:, 1].tolist()
+    scores = preds[:, 1].tolist()
     preds = np.argmax(preds, axis=1)
     dbpedia_data_d = dict()
     for example in dbpedia_data:
-        for candidate in example:
+        for candidate in example['examples']:
             dbpedia_data_d[candidate['selection_id']] = candidate
     graph_instances = testset.graph_instances
     for i in range(len(testset)):
@@ -212,7 +210,7 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
         dbpedia_data_d[selection_id]['score'] = scores[i]
         dbpedia_data_d[selection_id]['prob'] = probs[i]
     dict_to_list = list(dbpedia_data_d.values())
-    save_file(dict_to_list, config.RESULT_PATH / "gat_ss.jsonl")
+    save_intermidiate_results(dict_to_list, config.RESULT_PATH / "gat_ss.jsonl")
     paras = model_para.PipelineParas()
     paras.output_folder = "gat_pred_ss_" + get_current_time_str()
     paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
@@ -260,17 +258,21 @@ def test_data():
     t, d = read_data_in_file_batch()
     trainset = DBpediaGATSampler(t, parallel=False)
     devset = DBpediaGATSampler(d, parallel=True)
+    dataloader = DataLoader(devset, batch_size=2, shuffle=False, collate_fn=collate_with_dgl,
+                                  pin_memory=True, num_workers=2)
+    for i in dataloader:
+        print(len(i))
     del trainset
     del devset
     return
 
 
 if __name__ == '__main__':
-    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
-    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
+    data_dev = read_all_files(config.RESULT_PATH / "sample_ss_graph_dev_test")
+    model_path = config.SAVED_MODELS_PATH / 'gat_ss'
     # data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
-    # pred_prob(model_path, data_dev)
-    test_load_model()
+    pred_prob(model_path, data_dev)
+    # test_load_model()
     # train_and_eval()
     # concat_tmp_data()
     # test_data()

@@ -3,6 +3,7 @@ from graph_modules.DataLoaderX import DataLoaderX
 from tqdm import tqdm
 import numpy as np
 from pathlib import PosixPath
+import torch.nn.functional as F
 from datetime import datetime
 from data_util.toChart import *
 import dgl
@@ -173,8 +174,8 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
     print("done with sampling")
     model.eval()
     # Convert a list of tuples to two lists
-    test_data_loader = DataLoader(testset, batch_size=80, shuffle=True, collate_fn=collate_with_dgl,
-                                  pin_memory=True, num_workers=8, drop_last=True)
+    test_data_loader = DataLoader(testset, batch_size=80, shuffle=False, collate_fn=collate_with_dgl,
+                                  pin_memory=True, num_workers=0, drop_last=True)
     preds = []
     for graphs_and_labels in tqdm(test_data_loader):
         if is_cuda:
@@ -197,7 +198,7 @@ def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
             preds[0] = np.append(
                 preds[0], pred_y.detach().cpu().numpy(), axis=0)
     preds = preds[0]
-    probs = softmax(preds)
+    probs = F.softmax(preds)
     probs = probs[:, 0].tolist()
     scores = preds[:, 0].tolist()
     preds = np.argmax(preds, axis=1)

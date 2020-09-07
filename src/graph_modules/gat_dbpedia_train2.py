@@ -99,12 +99,14 @@ def eval(model_or_path, dbpedia_data, gpu):
     print(f"device: {device} n_gpu: {n_gpu}")
     if isinstance(model_or_path, PosixPath):
         model = GATClassifier2(dim, dim, 4, 2)
-        model.load_state_dict(torch.load(model_or_path))
         if is_cuda:
             # if n_gpu > 1:
             #     model = torch.nn.DataParallel(model)
+            model.load_state_dict(torch.load(model_or_path, map_location=f"cuda:{gpu}"))
             model.to(device)
             loss_func.to(device)
+        else:
+            model.load_state_dict(torch.load(model_or_path, map_location="cpu"))
     else:
         model = model_or_path
     testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8)

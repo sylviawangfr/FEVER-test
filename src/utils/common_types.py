@@ -1,7 +1,7 @@
 import config
 
 
-class BERT_para(object):
+class PipelineParas(object):
     original_data = None
     upstream_data = None
     output_folder = None

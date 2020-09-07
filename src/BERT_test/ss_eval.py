@@ -39,7 +39,7 @@ from utils.file_loader import read_json_rows, save_file, save_intermidiate_resul
 logger = logging.getLogger(__name__)
 
 
-def eval_ss_and_save(paras : bert_para.BERT_para):
+def eval_ss_and_save(paras : bert_para.PipelineParas):
     model = BertForSequenceClassification.from_pretrained(paras.BERT_model, num_labels=2)
     tokenizer = BertTokenizer.from_pretrained(paras.BERT_tokenizer, do_lower_case=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -125,7 +125,7 @@ def eval_ss_and_save(paras : bert_para.BERT_para):
     ss_f1_score_and_save(paras, eval_list)
 
 
-def pred_ss_and_save(paras : bert_para.BERT_para):
+def pred_ss_and_save(paras : bert_para.PipelineParas):
     model = BertForSequenceClassification.from_pretrained(paras.BERT_model, num_labels=2)
     tokenizer = BertTokenizer.from_pretrained(paras.BERT_tokenizer, do_lower_case=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -235,7 +235,7 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
             sents = augmented_dict[int(item['id'])].values()
             # Modify some mechaism here to selection sentence whether by some score or label
             for sent_i in sents:
-                if sent_i['prob'] >= prob_threshold:
+                if 'prob' in sent_i and sent_i['prob'] >= prob_threshold:
                     cur_predicted_sentids.append((sent_i['sid'], sent_i['score'],
                                                   sent_i['prob']))  # Important sentences for scaling training. Jul 21.
                 # del sent_i['prob']
@@ -250,7 +250,7 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
     return d_list
 
 
-def ss_f1_score_and_save(paras: bert_para.BERT_para, upstream_eval_list, save_data=True):
+def ss_f1_score_and_save(paras: bert_para.PipelineParas, upstream_eval_list, save_data=True):
 
     if not isinstance(paras.prob_thresholds, list):
         prob_thresholds = [paras.prob_thresholds]
@@ -300,7 +300,7 @@ def softmax_test(z):
 
 
 if __name__ == "__main__":
-    paras = bert_para.BERT_para()
+    paras = bert_para.PipelineParas()
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[2:5]
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
     # paras.pred = False

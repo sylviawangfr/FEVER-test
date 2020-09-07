@@ -198,6 +198,7 @@ class DBpediaGATSampler(Dataset):
                     one_example = dict()
                     one_example['graph1'] = g_claim
                     one_example['graph2'] = g_c
+                    one_example['selection_id'] = c['selection_id']
                     tmp_lables.append(c_label)
                     tmp_graph_instance.append(one_example)
                     tmp_count += 1

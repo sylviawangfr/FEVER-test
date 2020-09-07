@@ -288,7 +288,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
         tokenizer.save_vocabulary(output_dir)
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
-        paras = bert_para.BERT_para()
+        paras = bert_para.PipelineParas()
         paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
         paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
         paras.pred = False

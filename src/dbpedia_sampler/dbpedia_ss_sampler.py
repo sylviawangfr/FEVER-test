@@ -20,7 +20,7 @@ log = log_util.get_logger("dbpedia_ss_sampler")
 
 
 # @profile
-def get_tfidf_sample(paras: bert_para.BERT_para):
+def get_tfidf_sample(paras: bert_para.PipelineParas):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
     :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
@@ -111,7 +111,7 @@ def get_tfidf_sample(paras: bert_para.BERT_para):
 
 
 def prepare_train_data_filter_full_list():
-    paras2 = bert_para.BERT_para()
+    paras2 = bert_para.PipelineParas()
     train_upstream_data = read_json_rows(config.DOC_RETRV_TRAIN)[5:15]
     paras2.upstream_data = train_upstream_data
     paras2.pred = False
@@ -151,7 +151,7 @@ def collate(samples):
 def tfidf_to_graph_sampler(tfidf_data):
     batch_size = 10
     dt = get_current_time_str()
-    paras = bert_para.BERT_para()
+    paras = bert_para.PipelineParas()
     paras.sample_n = 3
     paras.pred = False
     paras.bert_client = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)

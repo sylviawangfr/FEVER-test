@@ -38,7 +38,7 @@ from utils.file_loader import read_json_rows, save_file, save_intermidiate_resul
 logger = logging.getLogger(__name__)
 
 
-def nli_eval_fever_score(paras : bert_para.BERT_para, predicted_list):
+def nli_eval_fever_score(paras : bert_para.PipelineParas, predicted_list):
     if paras.mode == 'dev':
         eval_mode = {'check_sent_id_correct': True, 'standard': True}
 
@@ -65,7 +65,7 @@ def nli_eval_fever_score(paras : bert_para.BERT_para, predicted_list):
         save_intermidiate_results(clean_result, paras.get_eval_data_file('nli'))
 
 
-def eval_nli_and_save(paras : bert_para.BERT_para):
+def eval_nli_and_save(paras : bert_para.PipelineParas):
     model = BertForSequenceClassification.from_pretrained(paras.BERT_model, num_labels=3)
     tokenizer = BertTokenizer.from_pretrained(paras.BERT_tokenizer, do_lower_case=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     #
     # eval_nli_and_save(paras)
 
-    paras = bert_para.BERT_para()
+    paras = bert_para.PipelineParas()
     paras.pred = True
     paras.mode = 'dev'
     paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)

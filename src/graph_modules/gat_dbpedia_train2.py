@@ -1,6 +1,7 @@
 # from torch.utils.data import DataLoader
 from graph_modules.DataLoaderX import DataLoaderX
 from tqdm import tqdm
+import numpy as np
 from pathlib import PosixPath
 from datetime import datetime
 from data_util.toChart import *
@@ -10,9 +11,11 @@ from graph_modules.gat_ss_dbpedia_sampler import DBpediaGATSampler
 from graph_modules.gat_ss_dbpedia_sample_converter import DBpediaGATSampleConverter
 from graph_modules.gat_ss_dbpedia_reader import DBpediaGATReader
 from graph_modules.gat_ss_classifier2 import *
-from utils.file_loader import read_json_rows, read_files_one_by_one, read_all_files
+from utils.file_loader import read_json_rows, read_files_one_by_one, save_file
 from memory_profiler import profile
 import gc
+import utils.common_types as model_para
+from BERT_test.ss_eval import ss_f1_score_and_save
 
 
 
@@ -146,9 +149,78 @@ def eval(model_or_path, dbpedia_data, gpu):
     return loss_eval_chart, accuracy_argmax, accuracy_sampled
 
 
+def pred_prob(model_or_path, dbpedia_data, gpu=0, thredhold=0.4):
+    loss_func = nn.CrossEntropyLoss()
+    is_cuda = True if torch.cuda.is_available() else False
+    device = torch.device(f"cuda:{gpu}" if is_cuda else "cpu")
+    n_gpu = torch.cuda.device_count()
+    dim = 768
+    print(f"device: {device} n_gpu: {n_gpu}")
+    if isinstance(model_or_path, PosixPath):
+        model = GATClassifier2(dim, dim, 4, 2)
+        model.load_state_dict(torch.load(model_or_path))
+        if is_cuda:
+            # if n_gpu > 1:
+            #     model = torch.nn.DataParallel(model)
+            model.to(device)
+            loss_func.to(device)
+    else:
+        model = model_or_path
+    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8)
+    model.eval()
+    # Convert a list of tuples to two lists
+    test_data_loader = DataLoaderX(testset, batch_size=80, shuffle=False, collate_fn=collate_with_dgl,
+                                  pin_memory=True, num_workers=8, drop_last=True)
+    preds = []
+    for graphs_and_labels in tqdm(test_data_loader):
+        if is_cuda:
+            batch = tuple(t.to(device) for t in graphs_and_labels)
+            test_bg1, test_bg2, test_y = batch
+        else:
+            test_bg1, test_bg2, test_y = graphs_and_labels
+
+        pred_y = model(test_bg1, test_bg2)
+
+        # tmp_eval_loss = loss_func(pred_y, test_y).detach().item()
+        # loss_eval_chart.append(tmp_eval_loss)
+        # loss_eval += tmp_eval_loss
+        # nb_eval_steps += 1
+
+        # test_y = test_y.clone().detach().float().view(-1, 1)
+        if len(preds) == 0:
+            preds.append(pred_y.detach().cpu().numpy())
+        else:
+            preds[0] = np.append(
+                preds[0], pred_y.detach().cpu().numpy(), axis=0)
+    preds = preds[0]
+    probs = softmax(preds)
+    probs = probs[:, 0].tolist()
+    scores = preds[:, 0].tolist()
+    preds = np.argmax(preds, axis=1)
+    dbpedia_data_d = dict()
+    for example in dbpedia_data:
+        for candidate in example:
+            dbpedia_data_d[candidate['selection_id']] = candidate
+    graph_instances = testset.graph_instances
+    for i in range(len(testset)):
+        selection_id = graph_instances[i]['selection_id']
+        dbpedia_data_d[selection_id]['score'] = scores[i]
+        dbpedia_data_d[selection_id]['prob'] = probs[i]
+    dict_to_list = list(dbpedia_data_d.values())
+    save_file(dict_to_list, config.RESULT_PATH / "gat_ss.jsonl")
+    paras = model_para.PipelineParas()
+    paras.output_folder = "gat_pred_ss_" + get_current_time_str()
+    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    paras.mode = 'dev'
+    paras.pred = False
+    paras.top_n = [10, 5]
+    paras.prob_thresholds = 0.4
+    ss_f1_score_and_save(paras, dict_to_list)
+
+
 def test_load_model():
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
-    data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.json')
+    data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
     eval(model_path, data, gpu=7)
 
 
@@ -189,6 +261,10 @@ def test_data():
 
 
 if __name__ == '__main__':
+    data_dev = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
+    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
+    # data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
+    # pred_prob(model_path, data_dev)
     test_load_model()
     # train_and_eval()
     # concat_tmp_data()

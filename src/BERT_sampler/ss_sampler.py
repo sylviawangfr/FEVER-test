@@ -23,7 +23,7 @@ from memory_profiler import profile
 logger = log_util.get_logger('ss_sampler')
 
 
-def get_full_list_sample(paras: bert_para.BERT_para):
+def get_full_list_sample(paras: bert_para.PipelineParas):
     """
     This method will select all the sentence from upstream doc retrieval and label the correct evident as true
     :param tokenized_data_file: Remember this is tokenized data with original format containing 'evidence'
@@ -168,7 +168,7 @@ def post_filter(d_list, keep_prob=0.75, seed=12):
 #     fever_db.get_all_sent_by_doc_id(cursor, doc_id)
 
 
-def get_tfidf_sample(paras: bert_para.BERT_para):
+def get_tfidf_sample(paras: bert_para.PipelineParas):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
     :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
@@ -280,7 +280,7 @@ def eval_sample_length(samples):
 
 if __name__ == '__main__':
     logger.info("test")
-    paras = bert_para.BERT_para()
+    paras = bert_para.PipelineParas()
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[5:10]
     paras.sample_n = 3
     paras.pred = False
@@ -288,7 +288,7 @@ if __name__ == '__main__':
     eval_sample_length(sample_tfidf)
     count_truth_examples(sample_tfidf)
 
-    paras2 = bert_para.BERT_para()
+    paras2 = bert_para.PipelineParas()
     dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[5:10]
     paras2.upstream_data = dev_upstream_data
     paras2.pred = False

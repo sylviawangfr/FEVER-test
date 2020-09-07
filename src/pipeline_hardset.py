@@ -57,7 +57,7 @@ def get_doc(input_data_path):
 
 
 def pred_ss(input_data_path, origin_data_path, output_file):
-    paras = bert_para.BERT_para()
+    paras = bert_para.PipelineParas()
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
 
@@ -72,7 +72,7 @@ def pred_ss(input_data_path, origin_data_path, output_file):
 
 
 def nli(input_data_path, origin_data_path, output_file):
-    paras = bert_para.BERT_para()
+    paras = bert_para.PipelineParas()
     paras.pred = True
     paras.mode = 'dev'
     paras.original_data = read_json_rows(origin_data_path)

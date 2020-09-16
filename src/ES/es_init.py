@@ -21,8 +21,9 @@ def init_index():
         try:
             client.indices.create(index=config.WIKIPAGE_INDEX, body=wiki_mapping)
             print("ES index for wiki pages has been created successfully")
-        except:
+        except Exception as err:
             print("exception happened: ")
+            print(err)
             e = sys.exc_info()[0]
 
 

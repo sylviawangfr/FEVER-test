@@ -1,9 +1,14 @@
-from ES.es_search import search_and_merge
+from ES.es_search import search_and_merge, search_doc_id
 from utils.c_scorer import *
 from utils.common import thread_exe
 from utils.fever_db import *
 from utils.file_loader import read_json_rows, get_current_time_str
 from utils.tokenizer_simple import *
+from dbpedia_sampler.dbpedia_lookup import lookup_resource
+from dbpedia_sampler.dbpedia_triple_linker import link_sent_to_resources
+from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
+import difflib
+from utils.text_clean import convert_brc
 
 
 def retrieve_docs(claim):
@@ -11,17 +16,49 @@ def retrieve_docs(claim):
     cap_phrases = split_claim_regex(claim)
     ents_list = [i[0] for i in entities]
     nouns = list(set(nouns) | set(cap_phrases))
-    # print(claim)
-    # print(nouns)
-
-    # ['Colin Kaepernick', 'a starting quarterback', 'the 49ers', '63rd season', 'the National Football League']
-    # [('Colin Kaepernick', 'PERSON'), ('the 49ers 63rd season', 'DATE'), ('the National Football League', 'ORG')]
-    result = search_and_merge(ents_list, nouns)
+    result_es = search_and_merge(ents_list, nouns)
+    result_dbpedia = search_dbpedia(claim)
+    result = merge_es_and_dbpedia(result_es, result_dbpedia)
     if len(result) > 10:
         result = result[:10]
-    # reshape = [x.update({'claim_id': claim}) for x in result]
-    # return reshape
     return result
+
+
+def merge_es_and_dbpedia(r_es, r_db):
+    r_es_ids = [i['id'] for i in r_es]
+    r_db_ids = [i['id'] for i in r_db]
+    for idx_i, i in enumerate(r_es_ids):
+        for idx_j, j in enumerate(r_db_ids):
+            if i == j and len(r_es[idx_i]['phrases']) > 1:
+                r_es[idx_i]['score'] += r_db[idx_j]['score']
+    merged = r_es
+    for idx, i in enumerate(r_db_ids):
+        if i not in r_es_ids:
+            p = r_db[idx]['phrases'][0].lower()
+            doc_id = convert_brc(r_db[idx]['id']).replace('_', ' ').lower()
+            ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
+            if ratio > 0.85:
+                r_db[idx]['score'] *= 2
+            merged.append(r_db[idx])
+    merged.sort(key=lambda x: x.get('score'), reverse=True)
+    return merged
+
+
+def search_dbpedia(claim):
+    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources(claim, with_spotlight=False)
+    docs = []
+    for resource in linked_phrases_l:
+        resource_uri = resource['URI']
+        wiki_links = get_resource_wiki_page(resource_uri)
+        if wiki_links is None or len(wiki_links) < 1:
+            continue
+        for item in wiki_links:
+            possible_doc_id = item.split('/')[-1]
+            verified_id_es = search_doc_id(possible_doc_id)
+            for r_es in verified_id_es:
+                if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
+                    docs.append({'id': r_es['id'], 'score': r_es['score'], 'phrases': [resource['text']]})
+    return docs
 
 
 def retri_doc_and_update_item(item):
@@ -37,7 +74,7 @@ def retri_doc_and_update_item(item):
 
 def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file=None):
     d_list = read_json_rows(in_file)
-    thread_number = 5
+    thread_number = 2
     print("total items: ", len(d_list))
     thread_exe(retri_doc_and_update_item, iter(d_list), thread_number, "query wiki pages")
     save_intermidiate_results(d_list, out_file)
@@ -75,10 +112,10 @@ if __name__ == '__main__':
     #                             config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl", top_k=10)
     #
     # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
-    # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.DOC_RETRV_DEV)
+    get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"doc_dev.jsonl")
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
     # print(retrieve_docs("Brian Wilson was part of the Beach Boys."))
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST / get_current_time_str())
     # a_list = read_json_rows(config.DOC_RETRV_DEV)
     # fever_doc_only(a_list, a_list, analysis_log=config.LOG_PATH / f"{get_current_time_str()}_doc_retri_no_hits_.jsonl")
-    rerun_failed_items(config.DOC_RETRV_TEST, [49649, 24225, 149500,202840,64863], config.RESULT_PATH / 'test_update.jsonl')
+    # rerun_failed_items(config.DOC_RETRV_TEST, [49649, 24225, 149500,202840,64863], config.RESULT_PATH / 'test_update.jsonl')

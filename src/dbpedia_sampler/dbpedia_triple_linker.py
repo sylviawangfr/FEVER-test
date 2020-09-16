@@ -62,6 +62,13 @@ def find_linked_phrases(sentence):
 
 # @profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):
+    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources(sentence, doc_title=doc_title, lookup_hash=lookup_hash)
+    add_categories(linked_phrases_l)
+    return not_linked_phrases_l, linked_phrases_l
+
+
+# @profile
+def link_sent_to_resources(sentence, doc_title='', lookup_hash=None, with_spotlight=True):
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)
     not_linked_phrases_l = []
@@ -87,36 +94,32 @@ def link_sentence(sentence, doc_title='', lookup_hash=None):
         else:
             linked_phrases_l.append(linked_phrase)
 
-    spotlight_links = dbpedia_spotlight.entity_link(sentence)
-    spotlight_resources = []
-    for i in spotlight_links:
-        surface = i['surfaceForm']
-        if surface in STOP_WORDS:
-            break
-        i_URI = i['URI']
-        if len(list(filter(lambda x: (surface in x['text'] and i_URI == x['URI']), linked_phrases_l))) == 0:
-            linked_i = dict()
-            linked_i['text'] = surface
-            linked_i['URI'] = i_URI
-            spotlight_resources.append(linked_i)
+    if with_spotlight:
+        spotlight_links = dbpedia_spotlight.entity_link(sentence)
+        spotlight_resources = []
+        for i in spotlight_links:
+            surface = i['surfaceForm']
+            if surface in STOP_WORDS:
+                break
+            i_URI = i['URI']
+            if len(list(filter(lambda x: (surface in x['text'] and i_URI == x['URI']), linked_phrases_l))) == 0:
+                linked_i = dict()
+                linked_i['text'] = surface
+                linked_i['URI'] = i_URI
+                spotlight_resources.append(linked_i)
+        merged_links_step1 = merge_linked_l1_to_l2(spotlight_resources, linked_phrases_l)
+        linked_phrases_l = merge_linked_l1_to_l2(merged_links_step1, [])
+    else:
+        linked_phrases_l = merge_linked_l1_to_l2(linked_phrases_l, [])
+    return not_linked_phrases_l, linked_phrases_l
 
-    merged_links_step1 = merge_linked_l1_to_l2(spotlight_resources, linked_phrases_l)
-    linked_phrases_l = merge_linked_l1_to_l2(merged_links_step1, [])
 
-    tmp_delete = []
-    for i in linked_phrases_l:
-        for j in not_linked_phrases_l:
-            if i['text'] in j or j in i['text']:
-                tmp_delete.append(j)
-    not_linked_phrases_l = list(set(not_linked_phrases_l) - set(tmp_delete))
-
-    for i in linked_phrases_l:
+def add_categories(linked_ps):
+    for i in linked_ps:
         if 'outbounds' not in i:
             i.update(query_resource(i['URI']))
         if 'categories' not in i:
             i['categories'] = dbpedia_virtuoso.get_categories(i['URI'])
-
-    return not_linked_phrases_l, linked_phrases_l
 
 
 def keyword_matching(text, str_l):

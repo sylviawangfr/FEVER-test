@@ -174,6 +174,7 @@ def tfidf_to_graph_sampler(tfidf_data):
     paras.bert_client.close()
     return
 
+
 # test_globle = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
 #
 # # @profile

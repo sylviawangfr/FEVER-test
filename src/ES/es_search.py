@@ -47,6 +47,24 @@ def search_doc(phrases):
         return []
 
 
+def search_doc_id(possible_id):
+    try:
+        search = Search(using=client, index=config.WIKIPAGE_INDEX)
+        search = search.query('match_phrase', id=possible_id). \
+                 sort({'_score': {"order": "desc"}}). \
+                 source(include=['id'])[0:3]
+        response = search.execute()
+        r_list = []
+        for hit in response['hits']['hits']:
+            score = hit['_score']
+            id = hit['_source']['id']
+            doc_dic = {'score': score, 'phrases': [possible_id], 'id': id, 'lines': ""}
+            r_list.append(doc_dic)
+        return r_list
+    except:
+        return []
+
+
 # in case there is no co-existing all phrases in one doc:
 # search in pairs and merge
 
@@ -99,7 +117,6 @@ def search_and_merge(entities, nouns):
     # print("done with r5")
     result6 = search_single_entity(nouns)
     # print("done with r6")
-
     return merge_result(result1 + result3 + result2 + result4 + result5 + result6)
 
 
@@ -110,14 +127,11 @@ def merge_result(result):
         if not has_doc_id(id, merged):
             merged.append(i)
         else:
-            ph_set = set(ph)
             for m in merged:
-                m_set = set(m.get("phrases"))
-                # has_phrase_covered(m_set, ph_set) and
                 if id == m.get("id") and score > m.get("score"):
                     merged.remove(m)
                     merged.append(i)
-
+                    break
     merged.sort(key=lambda x: x.get('score'), reverse=True)
     return merged
 

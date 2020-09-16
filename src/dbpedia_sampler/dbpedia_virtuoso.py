@@ -112,6 +112,17 @@ def get_properties(resource_uri):
         tris.remove(i)
     return tris
 
+def get_resource_wiki_page(resource_uri):
+    query_str = f"PREFIX dbr: <{PREFIX_DBR}> " \
+        f"SELECT distinct (<{resource_uri}> AS ?subject) " \
+        f"(<http://xmlns.com/foaf/0.1/isPrimaryTopicOf> AS ?relation) ?object " \
+        "FROM <http://dbpedia.org> WHERE { " \
+        f"<{resource_uri}> <http://xmlns.com/foaf/0.1/isPrimaryTopicOf> ?object . " \
+        "} LIMIT 10"
+    tris = get_triples(query_str)
+    wikis = [i['object'] for i in tris]
+    return wikis
+
 
 def get_ontology_linked_values_outbound(resource_uri):
     query_str = f"PREFIX dbo: <{PREFIX_DBO}> " \

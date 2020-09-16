@@ -19,7 +19,7 @@ def init_index():
         print("Creating elasticsearch index for wiki pages...")
         wiki_mapping = read_json(config.WIKIPAGE_MAPPING)
         try:
-            client.indices.create(index=config.WIKIPAGE_INDEX, ignore=400, body=wiki_mapping)
+            client.indices.create(index=config.WIKIPAGE_INDEX, body=wiki_mapping)
             print("ES index for wiki pages has been created successfully")
         except:
             print("exception happened: ")

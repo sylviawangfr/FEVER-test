@@ -37,7 +37,7 @@ def merge_es_and_dbpedia(r_es, r_db):
             p = r_db[idx]['phrases'][0].lower()
             doc_id = convert_brc(r_db[idx]['id']).replace('_', ' ').lower()
             ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
-            if ratio > 0.85:
+            if ratio > 0.7:
                 r_db[idx]['score'] *= 2
             merged.append(r_db[idx])
     merged.sort(key=lambda x: x.get('score'), reverse=True)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     #                             config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl", top_k=10)
     #
     # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
-    get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"doc_dev.jsonl")
+    get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"doc_dev_{get_current_time_str()}.jsonl")
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
     # print(retrieve_docs("Brian Wilson was part of the Beach Boys."))
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST / get_current_time_str())

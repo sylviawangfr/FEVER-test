@@ -37,7 +37,7 @@ def merge_es_and_dbpedia(r_es, r_db):
             p = r_db[idx]['phrases'][0].lower()
             doc_id = convert_brc(r_db[idx]['id']).replace('_', ' ').lower()
             ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
-            if ratio > 0.7:
+            if ratio > 0.6:
                 r_db[idx]['score'] *= 2
             merged.append(r_db[idx])
     merged.sort(key=lambda x: x.get('score'), reverse=True)

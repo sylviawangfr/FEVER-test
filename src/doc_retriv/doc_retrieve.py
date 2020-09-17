@@ -104,6 +104,7 @@ def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
 
 if __name__ == '__main__':
     i = retrieve_docs("A German-American fashion model starred in The Host.")
+    print(i)
     # j = retrieve_docs("Trouble with the Curve")
     # print(j)
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))

@@ -103,11 +103,10 @@ def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
 
 
 if __name__ == '__main__':
-    i = retrieve_docs("A German-American fashion model starred in The Host.")
-    print(i)
-    # j = retrieve_docs("Trouble with the Curve")
-    # print(j)
-    # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
+    # i = retrieve_docs("A German-American fashion model starred in The Host.")
+    # print(i)
+    j = retrieve_docs("Trouble with the Curve")
+    print(j)
     # get_doc_ids_and_fever_score(config.LOG_PATH / "test.jsonl", config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl")
     # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL,
     #                             config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl", top_k=10)

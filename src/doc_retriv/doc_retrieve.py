@@ -3,20 +3,16 @@ from utils.c_scorer import *
 from utils.common import thread_exe
 from utils.fever_db import *
 from utils.file_loader import read_json_rows, get_current_time_str
-from utils.tokenizer_simple import *
-from dbpedia_sampler.dbpedia_lookup import lookup_resource
-from dbpedia_sampler.dbpedia_triple_linker import link_sent_to_resources
+from dbpedia_sampler.dbpedia_triple_linker import link_sent_to_resources_multi
 from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
+from dbpedia_sampler.sentence_util import get_phrases
 import difflib
 from utils.text_clean import convert_brc
 
 
 def retrieve_docs(claim):
-    nouns, entities = split_claim_spacy(claim)
-    cap_phrases = split_claim_regex(claim)
-    ents_list = [i[0] for i in entities]
-    nouns = list(set(nouns) | set(cap_phrases))
-    result_es = search_and_merge(ents_list, nouns)
+    entities, nouns = get_phrases(claim)
+    result_es = search_and_merge(entities, nouns)
     result_dbpedia = search_dbpedia(claim)
     result = merge_es_and_dbpedia(result_es, result_dbpedia)
     if len(result) > 10:
@@ -36,7 +32,7 @@ def merge_es_and_dbpedia(r_es, r_db):
                     p = r_db[idx_j]['phrases'][0].lower()
                     doc_id = convert_brc(r_db[idx_j]['id']).replace('_', ' ').lower()
                     ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
-                    if ratio > 0.75:
+                    if ratio > 0.8:
                         r_es[idx_i]['score'] += r_db[idx_j]['score'] * 0.5
     merged = r_es
     for idx, i in enumerate(r_db_ids):
@@ -44,7 +40,7 @@ def merge_es_and_dbpedia(r_es, r_db):
             p = r_db[idx]['phrases'][0].lower()
             doc_id = convert_brc(r_db[idx]['id']).replace('_', ' ').lower()
             ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
-            if ratio > 0.75:
+            if ratio > 0.8:
                 r_db[idx]['score'] *= 2
             merged.append(r_db[idx])
     merged.sort(key=lambda x: x.get('score'), reverse=True)
@@ -52,7 +48,7 @@ def merge_es_and_dbpedia(r_es, r_db):
 
 
 def search_dbpedia(claim):
-    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources(claim, with_spotlight=False)
+    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources_multi(claim)
     docs = []
     for resource in linked_phrases_l:
         resource_uri = resource['URI']
@@ -110,10 +106,8 @@ def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
     save_intermidiate_results(r_list, updated_file_name)
 
 
-
-
 if __name__ == '__main__':
-    # i = retrieve_docs("Jayasudha is an actor that stars in Daag.")
+    # i = retrieve_docs("The Dark Tower is a fantasy film.")
     # print(i)
     # j = retrieve_docs("Trouble with the Curve")
     # print(j)

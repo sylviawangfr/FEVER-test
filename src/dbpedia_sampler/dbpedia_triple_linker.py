@@ -35,6 +35,12 @@ def lookup_phrase(phrase):
     return linked_phrase
 
 
+def lookup_phrase_multiple_result(phrase):
+    resources = dbpedia_lookup.lookup_resource_no_filter(phrase)
+    for i in resources:
+        i['text'] = phrase
+    return resources
+
 # @profile
 def query_resource(uri):
     context = dict()
@@ -111,6 +117,32 @@ def link_sent_to_resources(sentence, doc_title='', lookup_hash=None, with_spotli
         linked_phrases_l = merge_linked_l1_to_l2(merged_links_step1, [])
     else:
         linked_phrases_l = merge_linked_l1_to_l2(linked_phrases_l, [])
+    return not_linked_phrases_l, linked_phrases_l
+
+
+def link_sent_to_resources_multi(sentence):
+    sentence = text_clean.convert_brc(sentence)
+    entities, chunks = get_phrases(sentence)
+    not_linked_phrases_l = []
+    linked_phrases_l = []
+    # if len(entities) < 2:
+    #     phrases = list(set(entities) | set(chunks))
+    # else:
+    #     phrases = entities
+    phrases = merge_chunks_with_entities(chunks, entities)
+    log.debug(f"all phrases to be linked: {phrases}")
+
+    for p in phrases:
+        if is_date_or_number(p):
+            not_linked_phrases_l.append(p)
+            continue
+
+        linked_phrases = lookup_phrase_multiple_result(p)
+
+        if len(linked_phrases) == 0:
+            not_linked_phrases_l.append(p)
+        else:
+            linked_phrases_l.extend(linked_phrases)
     return not_linked_phrases_l, linked_phrases_l
 
 

@@ -5,6 +5,7 @@ from elasticsearch_dsl import Search, Q
 
 from utils.file_loader import *
 from utils.tokenizer_simple import *
+from dbpedia_sampler.sentence_util import merge_chunks_with_entities
 
 client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT,
               'timeout': 60, 'max_retries': 5, 'retry_on_timeout': True}])
@@ -15,15 +16,15 @@ def search_doc(phrases):
     try:
         search = Search(using=client, index=config.WIKIPAGE_INDEX)
         must = []
-    # should = []
+        should = []
         for ph in phrases:
             if ph.lower().startswith('the ') or ph.lower().startswith("a ") or ph.lower().startswith("an "):
                 ph = ph.split(' ', 1)[1]
         # must.append({'match_phrase': {'lines': ph}})
-        # should.append({'match_phrase': {'id': {'query': ph, 'boost': 2}}})
-            must.append({'multi_match': {'query': ph, "type": "phrase", 'fields': ['id^2', 'lines']}})
+            should.append({'multi_match': {'query': ph, "type": "most_fields", 'fields': ['id^2', 'lines']}})
+            must.append({'multi_match': {'query': ph, "type": "phrase", 'fields': ['id^2', 'lines'], 'slop': 3}})
 
-        search = search.query(Q('bool', must=must)). \
+        search = search.query(Q('bool', must=must, should=should)). \
                  highlight('lines', number_of_fragments=0). \
                  sort({'_score': {"order": "desc"}}). \
                  source(include=['id'])[0:5]
@@ -52,7 +53,7 @@ def search_doc_id(possible_id):
         search = Search(using=client, index=config.WIKIPAGE_INDEX)
         search = search.query('match_phrase', id=possible_id). \
                  sort({'_score': {"order": "desc"}}). \
-                 source(include=['id'])[0:3]
+                 source(include=['id'])[0:10]
         response = search.execute()
         r_list = []
         for hit in response['hits']['hits']:
@@ -76,7 +77,7 @@ def search_subsets(phrases):
     searched_subsets = []
 
     if l > 1:
-        l = 5 if l > 4 else l
+        l = 5 if l > 4 else l + 1
         for i in reversed(range(2, l)):
             sub_sets = itertools.combinations(phrases, i)
             for s in sub_sets:
@@ -104,6 +105,7 @@ def search_subsets(phrases):
 def search_and_merge(entities, nouns):
     # print("entities:", entities)
     # print("nouns:", nouns)
+    result0, not_covered0 = search_subsets(merge_chunks_with_entities(nouns, entities))
 
     result1, not_covered1 = search_subsets(entities)
     # print("done with r1")
@@ -116,8 +118,10 @@ def search_and_merge(entities, nouns):
     result5 = search_single_entity(entities)
     # print("done with r5")
     result6 = search_single_entity(nouns)
+
+    result7 = search_single_entity(not_covered0)
     # print("done with r6")
-    return merge_result(result1 + result3 + result2 + result4 + result5 + result6)
+    return merge_result(result0 + result1 + result3 + result2 + result4 + result5 + result6 + result7)
 
 
 def merge_result(result):

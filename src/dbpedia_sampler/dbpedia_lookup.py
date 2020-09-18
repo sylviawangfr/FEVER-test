@@ -39,8 +39,33 @@ def lookup_resource(text_phrase):
         return record
 
 
+def lookup_resource_no_filter(text_phrase):
+    lookup_matches_ref = lookup_resource_ref_count(text_phrase)
+    lookup_app_matches_label = lookup_resource_app_label(text_phrase)
+    lookup_app_matches_query = lookup_resource_app_query(text_phrase)
+    merged = []
+    merge_resources(merged, lookup_matches_ref)
+    merge_resources(merged, lookup_app_matches_label)
+    merge_resources(merged, lookup_app_matches_query)
+    keyword_matching_score = [difflib.SequenceMatcher(None, text_phrase,
+                                                      i['Label'] if i['Label'] is not None else '').ratio()
+                              for i in merged]
+    sorted_matching_index = sorted(range(len(keyword_matching_score)), key=lambda k: keyword_matching_score[k],
+                                   reverse=True)
+    result = [merged[i] for i in sorted_matching_index]
+    return result[:20]
+
+
+def merge_resources(merged_l, to_merge):
+    for i in to_merge:
+        if len(list(filter(lambda x: (x['URI'] == i['URI']), merged_l))) < 1:
+            merged_l.append(i)
+
+
+
 def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
     top_match = []
+    keyword_matching_score = []
     try:
         keyword_matching_score = [difflib.SequenceMatcher(None, text_phrase,
                                                           i['Label'] if i['Label'] is not None else '').ratio()
@@ -48,7 +73,7 @@ def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
     except Exception as err:
         log.error(err)
         print(text_phrase)
-    if keyword_matching_score is None:
+    if keyword_matching_score is None or len(keyword_matching_score) < 1:
         return top_match
 
     sorted_matching_index = sorted(range(len(keyword_matching_score)), key=lambda k: keyword_matching_score[k],

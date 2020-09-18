@@ -33,7 +33,11 @@ def merge_es_and_dbpedia(r_es, r_db):
                 if len(r_es[idx_i]['phrases']) > 1:
                     r_es[idx_i]['score'] += r_db[idx_j]['score']
                 else:
-                    r_es[idx_i]['score'] += r_db[idx_j]['score'] * 0.5
+                    p = r_db[idx_j]['phrases'][0].lower()
+                    doc_id = convert_brc(r_db[idx_j]['id']).replace('_', ' ').lower()
+                    ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
+                    if ratio > 0.75:
+                        r_es[idx_i]['score'] += r_db[idx_j]['score'] * 0.5
     merged = r_es
     for idx, i in enumerate(r_db_ids):
         if i not in r_es_ids:

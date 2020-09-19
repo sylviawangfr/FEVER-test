@@ -68,6 +68,11 @@ def search_doc_id(possible_id):
 
 # in case there is no co-existing all phrases in one doc:
 # search in pairs and merge
+def has_overlap(str_l):
+    for i in str_l:
+        if len(list(filter(lambda x: (i in x), str_l))) > 1:
+            return True
+    return False
 
 def search_subsets(phrases):
     l = len(phrases)
@@ -81,7 +86,8 @@ def search_subsets(phrases):
         for i in reversed(range(2, l)):
             sub_sets = itertools.combinations(phrases, i)
             for s in sub_sets:
-                if isSubset(s, searched_subsets):
+                # if isSubset(s, searched_subsets) or has_overlap(s):
+                if has_overlap(s):
                     # print("skip ", s)
                     continue
 
@@ -89,10 +95,10 @@ def search_subsets(phrases):
                 if len(r) > 0:
                     # print("has hits ", s)
                     covered_set = covered_set | set(s)
-                    searched_subsets.append(s)
+                    # searched_subsets.append(s)
                     result = result + r
-                    if phrase_set == covered_set:
-                        return result, set([])
+                    # if phrase_set == covered_set:
+                    #     return result, set([])
                 # else:
                     # print("no hits ", s)
 
@@ -101,6 +107,8 @@ def search_subsets(phrases):
 
     return result, not_covered
 
+def test():
+    phrases = ['1']
 
 def search_and_merge(entities, nouns):
     # print("entities:", entities)
@@ -122,6 +130,16 @@ def search_and_merge(entities, nouns):
     result7 = search_single_entity(not_covered0)
     # print("done with r6")
     return merge_result(result0 + result1 + result3 + result2 + result4 + result5 + result6 + result7)
+
+
+def search_and_merge2(entities_and_nouns):
+    # print("entities:", entities)
+    # print("nouns:", nouns)
+    result0, not_covered0 = search_subsets(entities_and_nouns)
+    result7 = search_single_entity(not_covered0)
+    # print("done with r6")
+    return merge_result(result0 + result7)
+
 
 
 def merge_result(result):

@@ -36,6 +36,28 @@ def get_phrases(sentence, doc_title=''):
     return merged_entities, other_chunks
 
 
+def get_phrases_and_nouns(sentence):
+    doc_noun = nlp_eng_spacy(sentence)
+    noun_tokens = []
+    for token in doc_noun:
+        if token.pos_.lower() in ['propn', 'noun']:
+            noun_tokens.append(token.text)
+    nouns_chunks = [chunk.text for chunk in doc_noun.noun_chunks]
+    ents = [ent.text for ent in doc_noun.ents]
+    capitalized_phrased = split_claim_regex(sentence)
+    merged = capitalized_phrased
+    for i in nouns_chunks:
+        if i not in capitalized_phrased:
+            merged.append(i)
+    for i in noun_tokens:
+        if i not in capitalized_phrased:
+            merged.append(i)
+    for i in ents:
+        if i not in capitalized_phrased:
+            merged.append(i)
+    return merged
+
+
 def delete_ents_from_chunks(ents: list, chunks: list):
     to_delete = []
     for i in ents:

@@ -11,11 +11,11 @@ nlp_eng_spacy = spacy.load("en_core_web_sm")
 def split_claim_spacy(text):
     # doc_multi = nlp_multi(text)
     doc_noun = nlp_eng_spacy(text)
-    nouns = [chunk.text for chunk in doc_noun.noun_chunks]
+    nouns_chunks = [chunk.text for chunk in doc_noun.noun_chunks]
     ents = ([(ent.text, ent.label_) for ent in doc_noun.ents])
     # print(nouns)
     # print(ents)
-    return nouns, ents
+    return nouns_chunks, ents
 
 # @profile
 def count_words(sent):

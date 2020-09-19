@@ -28,7 +28,7 @@ def count_words(sent):
 def split_claim_regex(text):
     # get capital phrases
     # REGEX = r'(?<![.])([A-Z]+[\w]*\s)*([A-Z][\w]+)'
-    REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\s)*' \
+    REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\s)*(.?)' \
             r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(and\s)*(with\s)*(the\s)*' \
             r'(-?)(\d*\s)*)*(?<!-\s)([A-Z]+[\w]*(\s\d+)*)'
     regexp = regex.compile(REGEX)
@@ -116,6 +116,7 @@ if __name__ == '__main__':
     # get_phrase_token_indice(d_l, p_l)
 
     text = "Bessie Smith was married on April 15, 1894."
+    text1 = "L.A. Reid has served as the president of a record label."
     ph = ['Bessie Smith', 'April 15, 1894']
 
     print(split_claim_regex(text))

@@ -352,7 +352,7 @@ def printDeps(toks):
         print(tok.orth_, tok.dep_, tok.pos_, tok.head.orth_, [t.orth_ for t in tok.lefts], [t.orth_ for t in tok.rights])
 
 if __name__ == '__main__':
-    get_triple("", [])
+    # get_triple("", [])
     # testSVOs()
     # d_l = ['two', 'three', 'four', 'six', 'one', 'two', 'thirty', 'one', 'two']
     # p_l = ['one', 'two']
@@ -363,6 +363,6 @@ if __name__ == '__main__':
     # get_triple(text, [])
     # text = "When sitting in the chair, Bessie Smith fell asleep on April 15, 1894."
     # text = "Bessie Smith go to school with Ken on April 15, 1894."
-    # text = "Bessie Smith fell in love with Ken on April 15, 1894."
-    # printDeps(nlp(text))
+    text = "Bessie Smith was with Ken on April 15, 1894."
+    printDeps(nlp(text))
     # get_triple(text, ph)

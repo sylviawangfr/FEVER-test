@@ -5,7 +5,7 @@ from utils.fever_db import *
 from utils.file_loader import read_json_rows, get_current_time_str
 from dbpedia_sampler.dbpedia_triple_linker import link_sent_to_resources_multi
 from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
-from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns
+from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns_and_verbs
 import difflib
 from utils.text_clean import convert_brc
 
@@ -13,8 +13,8 @@ from utils.text_clean import convert_brc
 def retrieve_docs(claim):
     # entities, nouns = get_phrases(claim)
     # result_es = search_and_merge(entities, nouns)
-    nouns = get_phrases_and_nouns(claim)
-    result_es = search_and_merge2(nouns)
+    nouns, verbs = get_phrases_and_nouns_and_verbs(claim)
+    result_es = search_and_merge2(list(set(nouns) | set(verbs)))
     result_dbpedia = search_dbpedia(claim)
     result = merge_es_and_dbpedia(result_es, result_dbpedia)
     if len(result) > 10:
@@ -110,8 +110,8 @@ def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
 
 
 if __name__ == '__main__':
-    # i = retrieve_docs("Tool has won three Oscars.")
-    # print(i)
+    i = retrieve_docs("L.A. Reid has served as the president of a record label.")
+    print(i)
     # j = retrieve_docs("Trouble with the Curve")
     # print(j)
     # get_doc_ids_and_fever_score(config.LOG_PATH / "test.jsonl", config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl")
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     #                             config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl", top_k=10)
     #
     # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
-    get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"doc_dev_{get_current_time_str()}.jsonl")
+    # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"doc_dev_{get_current_time_str()}.jsonl")
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
     # print(retrieve_docs("Brian Wilson was part of the Beach Boys."))
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST / get_current_time_str())

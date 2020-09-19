@@ -5,7 +5,7 @@ from utils.fever_db import *
 from utils.file_loader import read_json_rows, get_current_time_str
 from dbpedia_sampler.dbpedia_triple_linker import link_sent_to_resources_multi
 from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
-from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns_and_verbs
+from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns
 import difflib
 from utils.text_clean import convert_brc
 
@@ -13,7 +13,7 @@ from utils.text_clean import convert_brc
 def retrieve_docs(claim):
     # entities, nouns = get_phrases(claim)
     # result_es = search_and_merge(entities, nouns)
-    nouns, verbs = get_phrases_and_nouns_and_verbs(claim)
+    nouns = get_phrases_and_nouns(claim)
     result_es = search_and_merge2(nouns)
     result_dbpedia = search_dbpedia(claim)
     result = merge_es_and_dbpedia(result_es, result_dbpedia)

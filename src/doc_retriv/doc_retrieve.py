@@ -92,11 +92,12 @@ def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file
 
 
 def eval_doc_preds(doc_list, top_k, log_file):
+    dt = get_current_time_str()
     print(fever_doc_only(doc_list, doc_list, max_evidence=top_k,
-                         analysis_log=config.LOG_PATH / f"{get_current_time_str()}_doc_retri_no_hits.jsonl"))
+                         analysis_log=config.LOG_PATH / f"{dt}_doc_retri_no_hits.jsonl"))
     eval_mode = {'check_doc_id_correct': True, 'standard': False}
     if log_file is None:
-        log_file = config.LOG_PATH / f"{utils.get_current_time_str()}_analyze_doc_retri.log"
+        log_file = config.LOG_PATH / f"{dt}_analyze_doc_retri.log"
     print(fever_score(doc_list, doc_list, mode=eval_mode, error_analysis_file=log_file))
 
 

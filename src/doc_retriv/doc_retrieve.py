@@ -85,7 +85,7 @@ def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file
     #     retri_doc_and_update_item(i)
     thread_number = 4
     thread_exe(retri_doc_and_update_item, iter(d_list), thread_number, "query wiki pages")
-    # save_intermidiate_results(d_list, out_file)
+    save_intermidiate_results(d_list, out_file)
     if eval:
         eval_doc_preds(d_list, top_k, log_file)
     return d_list

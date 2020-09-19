@@ -14,7 +14,7 @@ def retrieve_docs(claim):
     # entities, nouns = get_phrases(claim)
     # result_es = search_and_merge(entities, nouns)
     nouns, verbs = get_phrases_and_nouns_and_verbs(claim)
-    result_es = search_and_merge2(list(set(nouns) | set(verbs)))
+    result_es = search_and_merge2(nouns)
     result_dbpedia = search_dbpedia(claim)
     result = merge_es_and_dbpedia(result_es, result_dbpedia)
     if len(result) > 10:

@@ -163,14 +163,12 @@ def has_phrase_covered(phrase_set1, phrase_set2):
     for i in phrase_set1:
         covered = False
         for j in phrase_set2:
-
             if i in j:
                 covered = True
                 break
         if not covered:
             return covered
     return covered
-
 
 
 def has_doc_id(id, merged_list):

@@ -49,34 +49,33 @@ def get_phrases_and_nouns(sentence):
     nouns_chunks = [chunk.text for chunk in doc_noun.noun_chunks]
     ents = [ent.text for ent in doc_noun.ents]
     capitalized_phrased = split_claim_regex(sentence)
-    # merged_nouns = [i for i in capitalized_phrased]
-    # for i in nouns_chunks:
-    #     if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1:
-    #         merged_nouns.append(i)
-    # for i in noun_tokens:
-    #     if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1:
-    #         merged_nouns.append(i)
-    # for i in ents:
-    #     if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1:
-    #         merged_nouns.append(i)
-    merged = capitalized_phrased
+    merged = [i for i in capitalized_phrased]
     for i in nouns_chunks:
-        if i not in capitalized_phrased:
+        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in merged:
             merged.append(i)
     for i in noun_tokens:
-        if i not in capitalized_phrased:
+        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in merged:
             merged.append(i)
     for i in ents:
-        if i not in capitalized_phrased:
+        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in merged:
             merged.append(i)
-    return merged
+    # merged = capitalized_phrased
+    # for i in nouns_chunks:
+    #     if i not in capitalized_phrased:
+    #         merged.append(i)
+    # for i in noun_tokens:
+    #     if i not in capitalized_phrased:
+    #         merged.append(i)
+    # for i in ents:
+    #     if i not in capitalized_phrased:
+    #         merged.append(i)
     to_delete = []
-    for i in merged_nouns:
-        if 'the ' + i in merged_nouns or 'a ' + i in merged_nouns:
+    for i in merged:
+        if 'the ' + i in merged or 'a ' + i in merged:
             to_delete.append(i)
     for i in to_delete:
-        merged_nouns.remove(i)
-    return merged_nouns
+        merged.remove(i)
+    return merged
 
 
 def delete_ents_from_chunks(ents: list, chunks: list):

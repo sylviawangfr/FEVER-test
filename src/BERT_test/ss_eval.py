@@ -327,7 +327,7 @@ if __name__ == "__main__":
     paras.pred = True
     paras.top_n = [10]
     paras.mode = 'dev'
-    paras.sample_n = 20
+    paras.sample_n = 10
     paras.prob_thresholds = 0.1
     pred_ss_and_save(paras)
 

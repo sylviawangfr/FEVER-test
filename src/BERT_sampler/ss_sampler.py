@@ -44,7 +44,7 @@ def get_full_list_sample(paras: bert_para.PipelineParas):
 
     cursor, conn = fever_db.get_cursor()
     err_log_f = config.LOG_PATH / f"{utils.get_current_time_str()}_analyze_sample.log"
-    for item in tqdm(d_list):
+    for item in tqdm(d_list, desc="Sampling:"):
         doc_ids = item["predicted_docids"]
 
         if not paras.pred:

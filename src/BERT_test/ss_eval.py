@@ -325,7 +325,9 @@ if __name__ == "__main__":
     paras.upstream_data = read_json_rows(config.RESULT_PATH / 'doc_dev.jsonl')
     paras.mode = 'dev'
     paras.pred = True
-    paras.top_n = [20]
+    paras.top_n = [10]
+    paras.mode = 'dev'
+    paras.sample_n = 20
     paras.prob_thresholds = 0.1
     pred_ss_and_save(paras)
 

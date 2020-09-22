@@ -187,6 +187,7 @@ def convert_to_graph_sampler(upstream_data, output_file, pred=False):
         for batched_sample in sample_dataloader:
             paras.upstream_data = batched_sample
             if pred:
+                paras.sample_n = 10
                 samples = get_full_list_from_upstream_ss(paras)
             else:
                 paras.sample_n = 3
@@ -203,11 +204,11 @@ def convert_to_graph_sampler(upstream_data, output_file, pred=False):
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")[0:1]
+    dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")[0:5000]
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[6980:13000]
-    # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+    # dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:1]
     # tfidf_dev_data = tfidf_dev_data[13000:len(tfidf_dev_data)]
-    convert_to_graph_sampler(dev_data, config.RESULT_PATH / "sample_ss_graph_dev_pred" / f"0_{get_current_time_str()}.jsonl", pred=True)
+    convert_to_graph_sampler(dev_data, config.RESULT_PATH / "sample_ss_graph_dev_pred" / f"1_{get_current_time_str()}.jsonl", pred=True)
     # # #
     #
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[93420:100000]

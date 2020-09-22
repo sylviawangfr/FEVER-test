@@ -204,10 +204,10 @@ def convert_to_graph_sampler(upstream_data, output_file, pred=False):
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
+    dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")[10000:15000]
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[6980:13000]
     # dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:1]
-    dev_data = dev_data[15000:len(dev_data)]
+    # dev_data = dev_data[15000:len(dev_data)]
     convert_to_graph_sampler(dev_data, config.RESULT_PATH / "sample_ss_graph_dev_pred" / f"4_{get_current_time_str()}.jsonl", pred=True)
     # # #
     #

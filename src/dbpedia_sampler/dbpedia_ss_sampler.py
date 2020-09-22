@@ -230,7 +230,7 @@ def convert_to_graph_sampler(upstream_data, output_file, pred=False):
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")[0:1]
+    dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")[5000:10000]
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[6980:13000]
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
     # tfidf_dev_data = tfidf_dev_data[13000:len(tfidf_dev_data)]

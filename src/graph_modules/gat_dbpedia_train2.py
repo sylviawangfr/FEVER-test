@@ -217,7 +217,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, gpu=0, thredhold=0.4):
     paras.mode = 'dev'
     paras.pred = False
     paras.top_n = [10, 5]
-    paras.prob_thresholds = 0.4
+    paras.prob_thresholds = thredhold
     ss_f1_score_and_save(paras, dict_to_list)
 
 

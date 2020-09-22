@@ -174,7 +174,7 @@ def collate(samples):
 
 
 # @profile
-def convert_to_graph_sampler(upstream_data, pred=False):
+def convert_to_graph_sampler(upstream_data, output_file, pred=False):
     batch_size = 10
     dt = get_current_time_str()
     paras = bert_para.PipelineParas()
@@ -230,11 +230,11 @@ def convert_to_graph_sampler(upstream_data, pred=False):
 
 if __name__ == '__main__':
     # multi_thread_sampler()
-    dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")[0:10]
+    dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")[0:5000]
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[6980:13000]
     # tfidf_dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
     # tfidf_dev_data = tfidf_dev_data[13000:len(tfidf_dev_data)]
-    convert_to_graph_sampler(dev_data)
+    convert_to_graph_sampler(dev_data, config.RESULT_PATH / f"sample_dev_ss_graph1_{get_current_time_str()}.jsonl")
     # # #
     #
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[93420:100000]

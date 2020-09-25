@@ -209,8 +209,8 @@ if __name__ == '__main__':
     # dev_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:1]
     # dev_data = dev_data[15000:len(dev_data)]
     dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
-    dev_data = dev_data[14430:15000]
-    convert_to_graph_sampler(dev_data, config.RESULT_PATH / "sample_ss_graph_dev_pred" / f"5_{get_current_time_str()}.jsonl", pred=True)
+    dev_data = dev_data[19550:]
+    convert_to_graph_sampler(dev_data, config.RESULT_PATH / "sample_ss_graph_dev_pred" / f"6_{get_current_time_str()}.jsonl", pred=True)
     # # #
     #
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[93420:100000]

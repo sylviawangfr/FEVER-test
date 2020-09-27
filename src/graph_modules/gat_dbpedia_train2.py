@@ -215,7 +215,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, gpu=0, thredhold=0.4, 
         paras = model_para.PipelineParas()
         paras.output_folder = "gat_pred_ss_test_" + get_current_time_str()
         paras.original_data = original_data
-        paras.mode = 'test'
+        paras.mode = 'dev'
         paras.pred = False
         paras.top_n = [10]
         paras.prob_thresholds = thredhold

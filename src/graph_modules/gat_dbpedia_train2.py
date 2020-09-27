@@ -269,8 +269,8 @@ def test_data():
 
 if __name__ == '__main__':
     # data_dev = read_all_files(config.RESULT_PATH / "sample_ss_graph_train_test")
-    data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
-    original_data = read_json_rows(config.RESULT_PATH / 'ss_error_10.jsonl')
+    data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_dev_pred')
+    original_data = read_json_rows(config.FEVER_DEV_JSONL)
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     # data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
     pred_prob(model_path, original_data, data_dev)

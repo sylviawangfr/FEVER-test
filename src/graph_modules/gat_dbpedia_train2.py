@@ -152,7 +152,7 @@ def eval(model_or_path, dbpedia_data, gpu):
     return loss_eval_chart, accuracy_argmax, accuracy_sampled
 
 
-def pred_prob(model_or_path, original_data, dbpedia_data, gpu=0, thredhold=0.4):
+def pred_prob(model_or_path, original_data, dbpedia_data, gpu=0, thredhold=0.4, test_mode=False):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False
     device = torch.device(f"cuda:{gpu}" if is_cuda else "cpu")
@@ -210,15 +210,16 @@ def pred_prob(model_or_path, original_data, dbpedia_data, gpu=0, thredhold=0.4):
         dbpedia_data_d[selection_id]['score'] = scores[i]
         dbpedia_data_d[selection_id]['prob'] = probs[i]
     dict_to_list = list(dbpedia_data_d.values())
-    save_intermidiate_results(dict_to_list, config.RESULT_PATH / "gat_ss.jsonl")
-    paras = model_para.PipelineParas()
-    paras.output_folder = "gat_pred_ss_" + get_current_time_str()
-    paras.original_data = original_data
-    paras.mode = 'dev'
-    paras.pred = False
-    paras.top_n = [10]
-    paras.prob_thresholds = thredhold
-    ss_f1_score_and_save(paras, dict_to_list)
+    save_intermidiate_results(dict_to_list, config.RESULT_PATH / "gat_ss_test.jsonl")
+    if not test_mode:
+        paras = model_para.PipelineParas()
+        paras.output_folder = "gat_pred_ss_test_" + get_current_time_str()
+        paras.original_data = original_data
+        paras.mode = 'test'
+        paras.pred = False
+        paras.top_n = [10]
+        paras.prob_thresholds = thredhold
+        ss_f1_score_and_save(paras, dict_to_list)
 
 
 def test_load_model():
@@ -269,11 +270,11 @@ def test_data():
 
 if __name__ == '__main__':
     # data_dev = read_all_files(config.RESULT_PATH / "sample_ss_graph_train_test")
-    data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_dev_pred')
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_test_pred')
+    original_data = read_json_rows(config.FEVER_TEST_JSONL)
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     # data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
-    pred_prob(model_path, original_data, data_dev, thredhold=0.1)
+    pred_prob(model_path, original_data, data_dev, thredhold=0.1, test_mode=True)
     # test_load_model()
     # train_and_eval()
     # concat_tmp_data()

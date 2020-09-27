@@ -216,7 +216,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, gpu=0, thredhold=0.4):
     paras.original_data = original_data
     paras.mode = 'dev'
     paras.pred = False
-    paras.top_n = [10, 5]
+    paras.top_n = [10]
     paras.prob_thresholds = thredhold
     ss_f1_score_and_save(paras, dict_to_list)
 
@@ -273,7 +273,7 @@ if __name__ == '__main__':
     original_data = read_json_rows(config.FEVER_DEV_JSONL)
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     # data = read_json_rows(config.RESULT_PATH / 'sample_ss_graph.jsonl')
-    pred_prob(model_path, original_data, data_dev)
+    pred_prob(model_path, original_data, data_dev, thredhold=0.1)
     # test_load_model()
     # train_and_eval()
     # concat_tmp_data()

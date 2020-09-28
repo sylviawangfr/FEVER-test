@@ -205,6 +205,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_file, gpu=0, th
         for candidate in example['examples']:
             dbpedia_data_d[candidate['selection_id']] = candidate
     graph_instances = testset.graph_instances
+
     print(f"graph_instance len: {len(graph_instances)}")
     print(f"dbpeida_data len: {len(dbpedia_data_d)}")
     for i in range(len(testset)):
@@ -217,13 +218,22 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_file, gpu=0, th
         dbpedia_data_d[selection_id]['score'] = scores[i]
         dbpedia_data_d[selection_id]['prob'] = probs[i]
     dict_to_list = list(dbpedia_data_d.values())
-    save_intermidiate_results(dict_to_list, output_file)
+    # save_intermidiate_results(dict_to_list, output_file)
     if not test_mode:
         paras = model_para.PipelineParas()
-        paras.output_folder = "gat_pred_ss_dev_" + get_current_time_str()
+        paras.output_folder = output_dir
         paras.original_data = original_data
         paras.mode = 'dev'
         paras.pred = False
+        paras.top_n = [10]
+        paras.prob_thresholds = thredhold
+        ss_f1_score_and_save(paras, dict_to_list)
+    else:
+        paras = model_para.PipelineParas()
+        paras.output_folder = output_dir
+        paras.original_data = original_data
+        paras.mode = 'test'
+        paras.pred = True
         paras.top_n = [10]
         paras.prob_thresholds = thredhold
         ss_f1_score_and_save(paras, dict_to_list)
@@ -279,18 +289,19 @@ if __name__ == '__main__':
     # data_dev = read_all_files(config.RESULT_PATH / "sample_ss_graph_train_test")
 
     # local cpu
-    # data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_test_pred' / '1_2020_09_23_09:39:06.jsonl')[0:2]
-    # original_data = read_json_rows(config.FEVER_TEST_JSONL)[0:2]
+    data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_test_pred' / '1_2020_09_23_09:39:06.jsonl')[0:2]
+    original_data = read_json_rows(config.FEVER_TEST_JSONL)[0:2]
     # model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch10_2020_08_26'
-    # output_dir = config.RESULT_PATH / 'sample_ss_graph_test_pred' / 'gat_ss_10.jsonl'
-    # pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, test_mode=True, gpu=2)
+    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
+    output_dir = config.RESULT_PATH / 'test000'
+    pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, test_mode=True, gpu=0)
 
     # test set
-    data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_test_pred')
-    original_data = read_json_rows(config.FEVER_TEST_JSONL)
-    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
-    output_dir = config.RESULT_PATH / 'sample_ss_graph_test_pred' / 'gat_ss_10.jsonl'
-    pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, test_mode=True, gpu=0)
+    # data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_test_pred')
+    # original_data = read_json_rows(config.FEVER_TEST_JSONL)
+    # model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
+    # output_dir = config.RESULT_PATH / 'sample_ss_graph_test_pred'
+    # pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, test_mode=True, gpu=2)
 
     #dev set
     # data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_dev_pred')

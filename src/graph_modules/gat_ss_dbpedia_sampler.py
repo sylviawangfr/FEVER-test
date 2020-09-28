@@ -223,6 +223,7 @@ class DBpediaGATSampler(Dataset):
                 self.lock.acquire()
             self.labels.extend(labels)
             self.graph_instances.extend(graphs)
+            self.failed_count += failed
             if self.parallel:
                 self.lock.release()
         else:

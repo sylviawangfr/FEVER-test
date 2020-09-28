@@ -152,7 +152,7 @@ def eval(model_or_path, dbpedia_data, gpu):
     return loss_eval_chart, accuracy_argmax, accuracy_sampled
 
 
-def pred_prob(model_or_path, original_data, dbpedia_data, output_file, gpu=0, thredhold=0.4, test_mode=False):
+def pred_prob(model_or_path, original_data, dbpedia_data, output_file, gpu=0, thredhold=0.4, pred=False, eval=True):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False
     device = torch.device(f"cuda:{gpu}" if is_cuda else "cpu")
@@ -170,7 +170,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_file, gpu=0, th
             model.load_state_dict(torch.load(model_or_path, map_location=torch.device('cpu')))
     else:
         model = model_or_path
-    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8, pred=test_mode)
+    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8, pred=pred)
     print(f"done with sampling, data count: {testset.__len__()}")
     model.eval()
     # Convert a list of tuples to two lists
@@ -219,24 +219,17 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_file, gpu=0, th
         dbpedia_data_d[selection_id]['prob'] = probs[i]
     dict_to_list = list(dbpedia_data_d.values())
     # save_intermidiate_results(dict_to_list, output_file)
-    if not test_mode:
-        paras = model_para.PipelineParas()
-        paras.output_folder = output_dir
-        paras.original_data = original_data
+    paras = model_para.PipelineParas()
+    paras.output_folder = output_dir
+    paras.original_data = original_data
+    paras.pred = pred
+    paras.top_n = [10]
+    paras.prob_thresholds = thredhold
+    if eval:
         paras.mode = 'dev'
-        paras.pred = False
-        paras.top_n = [10]
-        paras.prob_thresholds = thredhold
-        ss_f1_score_and_save(paras, dict_to_list)
     else:
-        paras = model_para.PipelineParas()
-        paras.output_folder = output_dir
-        paras.original_data = original_data
         paras.mode = 'test'
-        paras.pred = True
-        paras.top_n = [10]
-        paras.prob_thresholds = thredhold
-        ss_f1_score_and_save(paras, dict_to_list)
+    ss_f1_score_and_save(paras, dict_to_list)
 
 
 def test_load_model():
@@ -290,11 +283,11 @@ if __name__ == '__main__':
 
     # local cpu
     data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_test_pred' / '1_2020_09_23_09:39:06.jsonl')[0:200]
-    original_data = read_json_rows(config.FEVER_TEST_JSONL)[0:200]
+    original_data = read_json_rows(config.FEVER_TEST_JSONL)[0:2000]
     # model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch10_2020_08_26'
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     output_dir = config.RESULT_PATH / 'test000'
-    pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, test_mode=True, gpu=0)
+    pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, pred=True, gpu=0)
 
     # test set
     # data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_test_pred')

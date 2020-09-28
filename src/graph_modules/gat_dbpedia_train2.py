@@ -205,6 +205,13 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_file, gpu=0, th
         for candidate in example['examples']:
             dbpedia_data_d[candidate['selection_id']] = candidate
     graph_instances = testset.graph_instances
+    print(f"graph_instance len: {len(graph_instances)}")
+    print(f"dbpeida_data len: {len(dbpedia_data_d)}")
+    for i in range(len(testset)):
+        selection_id = graph_instances[i]['selection_id']
+        if selection_id not in dbpedia_data_d:
+            print(selection_id)
+
     for i in range(len(testset)):
         selection_id = graph_instances[i]['selection_id']
         dbpedia_data_d[selection_id]['score'] = scores[i]

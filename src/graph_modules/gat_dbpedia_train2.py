@@ -208,6 +208,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_dir, gpu=0, thr
 
     print(f"graph_instance len: {len(graph_instances)}")
     print(f"dbpeida_data len: {len(dbpedia_data_d)}")
+    print(f"testset len: {len(testset)}")
     for i in range(len(testset)):
         selection_id = graph_instances[i]['selection_id']
         if selection_id not in dbpedia_data_d:

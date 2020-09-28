@@ -189,6 +189,7 @@ class DBpediaGATSampler(Dataset):
                 pbar.update(1)
                 if g_claim is None:
                     failed += len(item['examples'])
+                    print(f"failed count:{failed}")
                     continue
 
                 candidates = item['examples']
@@ -198,10 +199,12 @@ class DBpediaGATSampler(Dataset):
                     c_graph = c['graph']
                     if c_graph is None or len(c_graph) < 1:
                         failed += 1
+                        print(f"failed count:{failed}")
                         continue
                     g_c = self._convert_rel_to_efeature(c_graph, bc)
                     if g_c is None:
                         failed += 1
+                        print(f"failed count:{failed}")
                         continue
                     c_label = 1 if c['selection_label'] == 'true' else 0
                     one_example = dict()
@@ -215,7 +218,7 @@ class DBpediaGATSampler(Dataset):
                     if (not self.pred) and c['claim_label'] == 'NOT ENOUGH INFO' and tmp_count > 1:
                         break
         bc.close()
-        print(f"list examples: {total_count}; converted examples: {converted_count}")
+        print(f"list examples: {total_count}; converted examples: {converted_count}; failed examples: {failed}")
         return tmp_graph_instance, tmp_lables, failed
 
     # @profile

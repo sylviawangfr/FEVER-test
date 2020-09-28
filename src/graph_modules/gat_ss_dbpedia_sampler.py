@@ -180,6 +180,8 @@ class DBpediaGATSampler(Dataset):
         bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
         tmp_lables = []
         tmp_graph_instance = []
+        total_count = 0
+        converted_count = 0
         with tqdm(total=len(list_data), desc=description) as pbar:
             for idx, item in enumerate(list_data):
                 claim_graph = item['claim_links']
@@ -192,6 +194,7 @@ class DBpediaGATSampler(Dataset):
                 candidates = item['examples']
                 tmp_count = 0
                 for c in candidates:
+                    total_count += 1
                     c_graph = c['graph']
                     if c_graph is None or len(c_graph) < 1:
                         failed += 1
@@ -208,9 +211,11 @@ class DBpediaGATSampler(Dataset):
                     tmp_lables.append(c_label)
                     tmp_graph_instance.append(one_example)
                     tmp_count += 1
+                    converted_count += 1
                     if (not self.pred) and c['claim_label'] == 'NOT ENOUGH INFO' and tmp_count > 1:
                         break
         bc.close()
+        print(f"list examples: {total_count}; converted examples: {converted_count}")
         return tmp_graph_instance, tmp_lables, failed
 
     # @profile

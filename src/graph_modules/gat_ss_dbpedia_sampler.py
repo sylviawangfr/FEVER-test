@@ -16,7 +16,7 @@ __all__ = ['DBpediaGATSampler']
 
 
 class DBpediaGATSampler(Dataset):
-    def __init__(self, dbpedia_sampled_data, parallel=False, num_worker=3, pred=False):
+    def __init__(self, dbpedia_sampled_data, parallel=True, num_worker=3, pred=False):
         super(DBpediaGATSampler, self).__init__()
         self.graph_instances = []
         self.labels = []
@@ -218,24 +218,20 @@ class DBpediaGATSampler(Dataset):
         if isinstance(dbpedia_sampled_data, list):
             graphs, labels, failed = self._load_from_list(dbpedia_sampled_data)
             # print(f"finished sampling one batch of data; count of examples: {len(labels)}")
-            if self.parallel:
-                self.lock.acquire()
+            self.lock.acquire()
             self.labels.extend(labels)
             self.graph_instances.extend(graphs)
             self.failed_count += failed
-            if self.parallel:
-                self.lock.release()
+            self.lock.release()
         else:
             for idx, items in enumerate(dbpedia_sampled_data):
                 graphs, labels, failed = self._load_from_list(items)
                 # print(f"finished sampling one batch of data; count of examples: {len(labels)}")
-                if self.parallel:
-                    self.lock.acquire()
+                self.lock.acquire()
                 self.labels.extend(labels)
                 self.graph_instances.extend(graphs)
                 self.failed_count += failed
-                if self.parallel:
-                    self.lock.release()
+                self.lock.release()
 
     # @profile
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):

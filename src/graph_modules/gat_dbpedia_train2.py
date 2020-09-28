@@ -287,7 +287,7 @@ if __name__ == '__main__':
     # model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch10_2020_08_26'
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     output_dir = config.RESULT_PATH / 'test000'
-    pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, pred=True, gpu=0, eval=False)
+    pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, pred=True, gpu=2, eval=False)
 
     # test set
     # data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_test_pred')

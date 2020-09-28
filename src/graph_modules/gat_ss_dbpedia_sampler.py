@@ -111,7 +111,6 @@ class DBpediaGATSampler(Dataset):
             g.add_edges(start_nums, end_nums)
             return g
         else:
-            self.failed_count += 1
             return None
 
     def _convert_rel_to_efeature(self, triple_l, bc:BertClient):

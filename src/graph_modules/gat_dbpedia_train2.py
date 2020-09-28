@@ -152,7 +152,7 @@ def eval(model_or_path, dbpedia_data, gpu):
     return loss_eval_chart, accuracy_argmax, accuracy_sampled
 
 
-def pred_prob(model_or_path, original_data, dbpedia_data, output_dir, gpu=0, thredhold=0.4, pred=False, eval=True):
+def pred_prob(model_or_path, original_data, dbpedia_data, output_dir, gpu=0, thredhold=0.4, pred=True, eval=True):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False
     device = torch.device(f"cuda:{gpu}" if is_cuda else "cpu")
@@ -171,7 +171,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_dir, gpu=0, thr
     else:
         model = model_or_path
     testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8, pred=pred)
-    print(f"done with sampling, data count: {testset.__len__()}")
+    print(f"done with sampling, data count: {testset.__len__()}, failed count: {testset.failed_count}")
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoader(testset, batch_size=80, shuffle=False, collate_fn=collate_with_dgl,
@@ -301,4 +301,4 @@ if __name__ == '__main__':
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
     # model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     # output_dir = config.RESULT_PATH / 'sample_ss_graph_dev_pred' / 'gat_ss_10.jsonl'
-    # pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, test_mode=True, gpu=0)
+    # pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, pred=True, eval=False, gpu=0)

@@ -25,6 +25,7 @@ class DBpediaGATSampler(Dataset):
         self.pred = pred
         self.lock = threading.Lock()
         self._load(dbpedia_sampled_data)
+        self.failed_count = 0
 
     def __len__(self):
         """Return the number of graphs in the dataset."""
@@ -110,6 +111,7 @@ class DBpediaGATSampler(Dataset):
             g.add_edges(start_nums, end_nums)
             return g
         else:
+            self.failed_count += 1
             return None
 
     def _convert_rel_to_efeature(self, triple_l, bc:BertClient):
@@ -172,6 +174,7 @@ class DBpediaGATSampler(Dataset):
 
     # @profile
     def _load_from_list(self, list_data):
+        failed = 0
         description = "converting data to graph type:"
         if self.parallel:
             description += threading.current_thread().getName()
@@ -184,6 +187,7 @@ class DBpediaGATSampler(Dataset):
                 g_claim = self._convert_rel_to_efeature(claim_graph, bc)
                 pbar.update(1)
                 if g_claim is None:
+                    failed += len(item['examples'])
                     continue
 
                 candidates = item['examples']
@@ -191,9 +195,11 @@ class DBpediaGATSampler(Dataset):
                 for c in candidates:
                     c_graph = c['graph']
                     if c_graph is None or len(c_graph) < 1:
+                        failed += 1
                         continue
                     g_c = self._convert_rel_to_efeature(c_graph, bc)
                     if g_c is None:
+                        failed += 1
                         continue
                     c_label = 1 if c['selection_label'] == 'true' else 0
                     one_example = dict()
@@ -206,12 +212,12 @@ class DBpediaGATSampler(Dataset):
                     if (not self.pred) and c['claim_label'] == 'NOT ENOUGH INFO' and tmp_count > 1:
                         break
         bc.close()
-        return tmp_graph_instance, tmp_lables
+        return tmp_graph_instance, tmp_lables, failed
 
     # @profile
     def _load_from_dbpedia_sample_file(self, dbpedia_sampled_data):
         if isinstance(dbpedia_sampled_data, list):
-            graphs, labels = self._load_from_list(dbpedia_sampled_data)
+            graphs, labels, failed = self._load_from_list(dbpedia_sampled_data)
             # print(f"finished sampling one batch of data; count of examples: {len(labels)}")
             if self.parallel:
                 self.lock.acquire()
@@ -221,12 +227,13 @@ class DBpediaGATSampler(Dataset):
                 self.lock.release()
         else:
             for idx, items in enumerate(dbpedia_sampled_data):
-                graphs, labels = self._load_from_list(items)
+                graphs, labels, failed = self._load_from_list(items)
                 # print(f"finished sampling one batch of data; count of examples: {len(labels)}")
                 if self.parallel:
                     self.lock.acquire()
                 self.labels.extend(labels)
                 self.graph_instances.extend(graphs)
+                self.failed_count += failed
                 if self.parallel:
                     self.lock.release()
 

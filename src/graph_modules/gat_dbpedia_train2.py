@@ -282,8 +282,8 @@ if __name__ == '__main__':
     # data_dev = read_all_files(config.RESULT_PATH / "sample_ss_graph_train_test")
 
     # local cpu
-    data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_test_pred' / '1_2020_09_23_09:39:06.jsonl')[0:2000]
-    original_data = read_json_rows(config.FEVER_TEST_JSONL)[0:2000]
+    data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_test_pred' / '1_2020_09_23_09:39:06.jsonl')
+    original_data = read_json_rows(config.FEVER_TEST_JSONL)
     # model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch10_2020_08_26'
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     output_dir = config.RESULT_PATH / 'test000'

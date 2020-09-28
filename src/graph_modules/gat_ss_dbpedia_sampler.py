@@ -218,20 +218,18 @@ class DBpediaGATSampler(Dataset):
         if isinstance(dbpedia_sampled_data, list):
             graphs, labels, failed = self._load_from_list(dbpedia_sampled_data)
             # print(f"finished sampling one batch of data; count of examples: {len(labels)}")
-            self.lock.acquire()
-            self.labels.extend(labels)
-            self.graph_instances.extend(graphs)
-            self.failed_count += failed
-            self.lock.release()
+            with self.lock:
+                self.labels.extend(labels)
+                self.graph_instances.extend(graphs)
+                self.failed_count += failed
         else:
             for idx, items in enumerate(dbpedia_sampled_data):
                 graphs, labels, failed = self._load_from_list(items)
                 # print(f"finished sampling one batch of data; count of examples: {len(labels)}")
-                self.lock.acquire()
-                self.labels.extend(labels)
-                self.graph_instances.extend(graphs)
-                self.failed_count += failed
-                self.lock.release()
+                with self.lock:
+                    self.labels.extend(labels)
+                    self.graph_instances.extend(graphs)
+                    self.failed_count += failed
 
     # @profile
     def _load_from_dbpedia_sample_multithread(self, dbpedia_sampled_data):

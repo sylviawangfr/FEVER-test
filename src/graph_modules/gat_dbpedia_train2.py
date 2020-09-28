@@ -170,8 +170,8 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_file, gpu=0, th
             model.load_state_dict(torch.load(model_or_path, map_location=torch.device('cpu')))
     else:
         model = model_or_path
-    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8)
-    print("done with sampling")
+    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8, pred=test_mode)
+    print(f"done with sampling, data count: {testset.__len__()}")
     model.eval()
     # Convert a list of tuples to two lists
     test_data_loader = DataLoader(testset, batch_size=80, shuffle=False, collate_fn=collate_with_dgl,

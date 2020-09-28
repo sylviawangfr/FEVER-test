@@ -16,12 +16,13 @@ __all__ = ['DBpediaGATSampler']
 
 
 class DBpediaGATSampler(Dataset):
-    def __init__(self, dbpedia_sampled_data, parallel=False, num_worker=3):
+    def __init__(self, dbpedia_sampled_data, parallel=False, num_worker=3, pred=False):
         super(DBpediaGATSampler, self).__init__()
         self.graph_instances = []
         self.labels = []
         self.parallel = parallel
         self.num_worker = num_worker
+        self.pred = pred
         self.lock = threading.Lock()
         self._load(dbpedia_sampled_data)
 
@@ -202,7 +203,7 @@ class DBpediaGATSampler(Dataset):
                     tmp_lables.append(c_label)
                     tmp_graph_instance.append(one_example)
                     tmp_count += 1
-                    if c['claim_label'] == 'NOT ENOUGH INFO' and tmp_count > 1:
+                    if (not self.pred) and c['claim_label'] == 'NOT ENOUGH INFO' and tmp_count > 1:
                         break
         bc.close()
         return tmp_graph_instance, tmp_lables
@@ -255,8 +256,8 @@ def count_truth(labels):
     return truth / len(labels)
 
 if __name__ == '__main__':
-    data = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_dev_test")
-    sample = DBpediaGATSampler(data, parallel=True, num_worker=8)
+    data = read_files_one_by_one(config.RESULT_PATH / "sample_ss_graph_test_pred")
+    sample = DBpediaGATSampler(data, parallel=True, num_worker=2, pred=True)
     print(f"truth: {count_truth(sample.labels)}")
     print(f"sample size {sys.getsizeof(sample)}")
     print(f"sample labels size {sys.getsizeof(sample.labels)}")

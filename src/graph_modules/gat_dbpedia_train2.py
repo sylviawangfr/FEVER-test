@@ -283,19 +283,19 @@ if __name__ == '__main__':
     # data_dev = read_all_files(config.RESULT_PATH / "sample_ss_graph_train_test")
 
     # local cpu
-    data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_test_pred' / '6_2020_09_25_10:26:33.jsonl')
-    original_data = read_json_rows(config.FEVER_TEST_JSONL)
+    # data_dev = read_json_rows(config.RESULT_PATH / 'sample_ss_graph_test_pred' / '6_2020_09_25_10:26:33.jsonl')
+    # original_data = read_json_rows(config.FEVER_TEST_JSONL)
     # model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch10_2020_08_26'
-    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
-    output_dir = config.RESULT_PATH / 'test000'
-    pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, pred=True, gpu=2, eval=False)
+    # model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
+    # output_dir = config.RESULT_PATH / 'test000'
+    # pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, pred=True, gpu=2, eval=False)
 
     # test set
-    # data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_test_pred')
-    # original_data = read_json_rows(config.FEVER_TEST_JSONL)
-    # model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
-    # output_dir = config.RESULT_PATH / 'sample_ss_graph_test_pred'
-    # pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, pred=True, eval=False, gpu=2)
+    data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_test_pred')
+    original_data = read_json_rows(config.FEVER_TEST_JSONL)
+    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
+    output_dir = config.RESULT_PATH / 'sample_ss_graph_test_pred'
+    pred_prob(model_path, original_data, data_dev, output_dir, thredhold=0.1, pred=True, eval=False, gpu=2)
 
     #dev set
     # data_dev = read_files_one_by_one(config.RESULT_PATH / 'sample_ss_graph_dev_pred')

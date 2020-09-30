@@ -287,6 +287,7 @@ def ss_f1_score_and_save(paras: bert_para.PipelineParas, upstream_eval_list, sav
             if save_data:
                 save_intermidiate_results(results_list, paras.get_eval_data_file(f'ss_{n}'))
                 save_intermidiate_results(upstream_eval_list, paras.get_eval_item_file(f'ss_{n}'))
+                print(f"results saved at: {paras.output_folder}")
 
 
 def softmax_test(z):

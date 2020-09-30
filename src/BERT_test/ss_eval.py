@@ -147,7 +147,7 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     all_input_ids = torch.tensor([f.input_ids for f in eval_features], dtype=torch.long)
     all_input_mask = torch.tensor([f.input_mask for f in eval_features], dtype=torch.long)
     all_segment_ids = torch.tensor([f.segment_ids for f in eval_features], dtype=torch.long)
-    if paras.mode is 'dev':
+    if paras.mode == 'dev':
         all_label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
     else:
         all_label_ids = torch.tensor([-1] * len(eval_features), dtype=torch.long)
@@ -190,7 +190,7 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     probs = probs[:, 0].tolist()
     scores = preds[:, 0].tolist()
     preds = np.argmax(preds, axis=1)
-    if paras.mode is 'dev':
+    if paras.mode == 'dev':
         logger.info("***** Eval results *****")
         result = compute_metrics(preds, all_label_ids.numpy())
         result['eval_loss'] = eval_loss
@@ -271,7 +271,7 @@ def ss_f1_score_and_save(paras: bert_para.PipelineParas, upstream_eval_list, sav
             results_list = ss_score_converter(paras.original_data, upstream_eval_list,
                                           prob_threshold=scal_prob,
                                           top_n=n)
-            if paras.mode is 'dev':
+            if paras.mode == 'dev':
                 eval_mode = {'check_sent_id_correct': True, 'standard': False}
                 strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(results_list,
                                                                     paras.original_data,

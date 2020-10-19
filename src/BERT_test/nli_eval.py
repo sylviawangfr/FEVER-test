@@ -238,7 +238,7 @@ if __name__ == "__main__":
     paras = bert_para.PipelineParas()
     paras.pred = True
     paras.mode = 'test'
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    paras.original_data = read_json_rows(config.FEVER_TEST_JSONL)
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "bert_gat_merged_ss_test_5/eval_data_bert_gat_ss_5_test_0.1_top[5].jsonl")
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"

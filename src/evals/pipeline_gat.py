@@ -8,9 +8,10 @@ from ss_combined.ss_bert_gat import eval_and_save, score_for_ss_evidence_list
 from BERT_test.bert_data_processor import *
 from BERT_test.nli_eval import eval_nli_and_save
 from evals.submmit import create_submmission
+from evals.pipeline_hardset import eval_three_classes
 
 def dev_gat_eval():
-    threshold = 0.3
+    threshold = 0.4
     bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     print("eval bert + gat dev result")
@@ -34,6 +35,9 @@ def dev_gat_eval():
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.output_folder = 'nli_dev_bert_gat'
     eval_nli_and_save(paras)
+    print('-------------------------------\n')
+    nli_data = read_json_rows(config.RESULT_PATH / "nli_dev_bert_gat/eval_data_nli_dev_0.5_top[5].jsonl")
+    eval_three_classes(nli_data)
 
 
 def test_eval():

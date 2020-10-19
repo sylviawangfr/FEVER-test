@@ -25,7 +25,7 @@ def get_gat_prob(gat_dict:dict, id, sent_id):
     return 0
 
 
-def eval_and_save(bert_data, gat_data, output_folder, top_n=5, eval=True, save=True):
+def eval_and_save(bert_data, gat_data, output_folder, top_n=5, thresholds=0.1, eval=True, save=True):
     merged = []
     bert_dict = dict()
     gat_dict = dict()
@@ -62,10 +62,10 @@ def eval_and_save(bert_data, gat_data, output_folder, top_n=5, eval=True, save=T
                         "predicted_evidence": predicted_evidence}
         merged.append(new_item)
     dev_original = read_json_rows(config.FEVER_DEV_JSONL)
-    score_for_ss_evidence_list(merged, dev_original, output_folder, eval=eval, thresholds=0.1, top_n=top_n, save=save)
+    score_for_ss_evidence_list(merged, dev_original, output_folder, eval=eval, thresholds=thresholds, top_n=[top_n], save=save)
 
 
-def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_dir, eval=True, thresholds=0.1, top_n=5, save=False):
+def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_dir, eval=True, thresholds=0.1, top_n=[5], save=False):
     paras = model_para.PipelineParas()
     paras.output_folder = output_dir
     paras.original_data = original_data
@@ -103,21 +103,21 @@ if __name__ == '__main__':
     bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     print("eval bert + gat dev result")
-    eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_dev_5', save=True)
+    eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_dev_5', thresholds=0.3, save=True)
 
     print('-------------------------------\n')
     print("eval bert dev result")
-    score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', top_n=[10, 5])
+    score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', thresholds=0.3, top_n=[10, 5])
 
     print('-------------------------------\n')
     print("eval gat dev result")
-    score_for_ss_evidence_list(gat_data, gat_data, 'gat_ss_dev_10', top_n=[10, 5])
+    score_for_ss_evidence_list(gat_data, gat_data, 'gat_ss_dev_10', thresholds=0.3, top_n=[10, 5])
 
     print('-------------------------------\n')
     bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_test_10/eval_data_ss_10_test_0.1_top[10].jsonl")
     gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_test_10/eval_data_ss_10_test_0.1_top[10].jsonl")
     print("eval bert + gat test result, calculating")
-    eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_test_5', eval=False, save=True)
+    eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_test_5', thresholds=0.3, eval=False, save=True)
     print("done")
 
 

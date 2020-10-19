@@ -27,6 +27,7 @@ from torch.nn import CrossEntropyLoss
 from torch.utils.data import (DataLoader, SequentialSampler,
                               TensorDataset)
 from tqdm import tqdm
+import numpy as np
 
 import utils.common_types as bert_para
 from BERT_test.bert_data_processor import *
@@ -210,17 +211,27 @@ if __name__ == "__main__":
     #
     # eval_nli_and_save(paras)
 
+    # paras = bert_para.PipelineParas()
+    # paras.pred = True
+    # paras.mode = 'dev'
+    # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # # paras.upstream_data = read_json_rows(config.RESULT_PATH / "test_ss_full/eval_data_ss_test_0.5_top5.jsonl")[0:50]
+    # #paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    # #paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_pred_ss_2019_07_31_05:56:24/eval_data_ss_dev_0.5_top5.jsonl")
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
+    # paras.output_folder = 'nli_dev_pred_full'
+    # eval_nli_and_save(paras)
+
     paras = bert_para.PipelineParas()
     paras.pred = True
     paras.mode = 'dev'
     paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "test_ss_full/eval_data_ss_test_0.5_top5.jsonl")[0:50]
-    #paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
-    #paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_test_refactor"
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_pred_ss_2019_07_31_05:56:24/eval_data_ss_dev_0.5_top5.jsonl")
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "bert_gat_merged_ss_dev_5/eval_data_bert_gat_ss_5_dev_0.1_top[5].jsonl")
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
-    paras.output_folder = 'nli_dev_pred_full'
+    paras.output_folder = 'nli_dev_bert_gat'
     eval_nli_and_save(paras)
 
 

@@ -75,23 +75,27 @@ def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_
     else:
         paras.mode = 'test'
 
-    print(f"max evidence number:", top_n)
     if paras.mode == 'dev':
         eval_mode = {'check_sent_id_correct': True, 'standard': False}
-        strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(upstream_with_ss_evidence,
-                                                                    paras.original_data,
-                                                                    max_evidence=top_n,
-                                                                    mode=eval_mode,
-                                                                    error_analysis_file=paras.get_f1_log_file(
-                                                                        f'{paras.prob_thresholds}_{top_n}_ss'),
-                                                                    verbose=False)
-        tracking_score = strict_score
-        print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
-        print("Strict score:", strict_score)
-        print(f"Eval Tracking score:", f"{tracking_score}")
-    if save:
-        save_intermidiate_results(upstream_with_ss_evidence, paras.get_eval_data_file(f'bert_gat_ss_{top_n}'))
-        print(f"results saved at: {paras.output_folder}")
+        if not isinstance(top_n, list):
+            top_n = [top_n]
+
+        for n in top_n:
+            print(f"max evidence number:", n)
+            strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(upstream_with_ss_evidence,
+                                                                        paras.original_data,
+                                                                        max_evidence=n,
+                                                                        mode=eval_mode,
+                                                                        error_analysis_file=paras.get_f1_log_file(
+                                                                            f'{paras.prob_thresholds}_{n}_ss'),
+                                                                        verbose=False)
+            tracking_score = strict_score
+            print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
+            print("Strict score:", strict_score)
+            print(f"Eval Tracking score:", f"{tracking_score}")
+        if save:
+            save_intermidiate_results(upstream_with_ss_evidence, paras.get_eval_data_file(f'bert_gat_ss_{n}'))
+            print(f"results saved at: {paras.output_folder}")
 
 
 
@@ -103,11 +107,11 @@ if __name__ == '__main__':
 
     print('-------------------------------\n')
     print("eval bert dev result")
-    score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', top_n=10)
+    score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', top_n=[10, 5])
 
     print('-------------------------------\n')
     print("eval gat dev result")
-    score_for_ss_evidence_list(gat_data, gat_data, 'gat_ss_dev_10', top_n=10)
+    score_for_ss_evidence_list(gat_data, gat_data, 'gat_ss_dev_10', top_n=[10, 5])
 
     print('-------------------------------\n')
     bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_test_10/eval_data_ss_10_test_0.1_top[10].jsonl")

@@ -102,7 +102,7 @@ def get_sample_data(upstream_data, tokenized=False, pred=False):
 
     sampled_data_list = []
 
-    for item in tqdm(d_list):
+    for item in tqdm(d_list, desc="Sampling"):
         # e_list = check_sentences.check_and_clean_evidence(item)
         sampled_e_list, flags = sample_data_for_item(item, pred)
         # print(flags)

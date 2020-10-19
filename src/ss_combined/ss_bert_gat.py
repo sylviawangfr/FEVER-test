@@ -116,8 +116,9 @@ if __name__ == '__main__':
     print('-------------------------------\n')
     bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_test_10/eval_data_ss_10_test_0.1_top[10].jsonl")
     gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_test_10/eval_data_ss_10_test_0.1_top[10].jsonl")
-    print("eval bert + gat test result")
+    print("eval bert + gat test result, calculating")
     eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_test_5', eval=False, save=True)
+    print("done")
 
 
 

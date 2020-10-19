@@ -112,13 +112,16 @@ def eval_three_classes(nli_result):
 
 if __name__ == "__main__":
     # nli_data = read_json_rows(config.RESULT_PATH / "nli_doc_hardset.jsonl/eval_data_nli_dev_0.5_top5.jsonl")
-    nli_data = read_json_rows(config.RESULT_PATH / "nli_dev_pred_full/eval_data_nli_dev_0.5_top5.jsonl")
-    eval_three_classes(nli_data)
+    # nli_data = read_json_rows(config.RESULT_PATH / "nli_dev_pred_full/eval_data_nli_dev_0.5_top5.jsonl")
+    # eval_three_classes(nli_data)
     # input_file = config.RESULT_PATH / "doc_hardset.jsonl"
     # ss_file = config.RESULT_PATH / f"pred_ss_{input_file.name}/eval_data_ss_dev_0.5_top5.jsonl"
     # nli_file = config.RESULT_PATH / f"nli_{input_file.name}"
     # # pred_ss(input_file, input_file, ss_file)
     # nli(ss_file, input_file, nli_file)
+
+    nli_data = read_json_rows(config.RESULT_PATH / "nli_dev_bert_gat/eval_data_nli_dev_0.5_top[5].jsonl")
+    eval_three_classes(nli_data)
 
 
 

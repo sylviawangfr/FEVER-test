@@ -57,5 +57,6 @@ def test_eval():
     input_data = read_json_rows(config.RESULT_PATH / 'nli_test_bert_gat/eval_data_nli_test_0.5_top[5].jsonl')
     create_submmission(input_data)
 
-def test():
-    print("test fun")
+
+if __name__ == '__main__':
+    dev_gat_eval()

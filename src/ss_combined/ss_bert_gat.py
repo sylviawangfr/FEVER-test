@@ -61,8 +61,8 @@ def eval_and_save(bert_data, gat_data, output_folder, top_n=5, eval=True, save=T
                         "predicted_sentids": predicted_sentids,
                         "predicted_evidence": predicted_evidence}
         merged.append(new_item)
-
-    score_for_ss_evidence_list(merged, merged, output_folder, eval=eval, thresholds=0.1, top_n=top_n, save=save)
+    dev_original = read_json_rows(config.FEVER_DEV_JSONL)
+    score_for_ss_evidence_list(merged, dev_original, output_folder, eval=eval, thresholds=0.1, top_n=top_n, save=save)
 
 
 def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_dir, eval=True, thresholds=0.1, top_n=5, save=False):

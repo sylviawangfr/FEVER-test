@@ -11,33 +11,33 @@ from evals.submmit import create_submmission
 from evals.pipeline_hardset import eval_three_classes
 
 def dev_gat_eval():
-    threshold = 0.4
+    threshold = 0.1
     bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     print("eval bert + gat dev result")
     eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_dev_5', thresholds=threshold, save=True)
 
-    print('-------------------------------\n')
-    print("eval bert dev result")
-    score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', thresholds=threshold, top_n=[10, 5])
-
-    print('-------------------------------\n')
-    print("eval gat dev result")
-    score_for_ss_evidence_list(gat_data, gat_data, 'gat_ss_dev_10', thresholds=threshold, top_n=[10, 5])
-
-    print('-------------------------------\n')
-    paras = bert_para.PipelineParas()
-    paras.pred = True
-    paras.mode = 'dev'
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "bert_gat_merged_ss_dev_5/eval_data_bert_gat_ss_5_dev_0.1_top[5].jsonl")
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
-    paras.output_folder = 'nli_dev_bert_gat'
-    eval_nli_and_save(paras)
-    print('-------------------------------\n')
-    nli_data = read_json_rows(config.RESULT_PATH / "nli_dev_bert_gat/eval_data_nli_dev_0.5_top[5].jsonl")
-    eval_three_classes(nli_data)
+    # print('-------------------------------\n')
+    # print("eval bert dev result")
+    # score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', thresholds=threshold, top_n=[10, 5])
+    #
+    # print('-------------------------------\n')
+    # print("eval gat dev result")
+    # score_for_ss_evidence_list(gat_data, gat_data, 'gat_ss_dev_10', thresholds=threshold, top_n=[10, 5])
+    #
+    # print('-------------------------------\n')
+    # paras = bert_para.PipelineParas()
+    # paras.pred = True
+    # paras.mode = 'dev'
+    # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "bert_gat_merged_ss_dev_5/eval_data_bert_gat_ss_5_dev_0.1_top[5].jsonl")
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
+    # paras.output_folder = 'nli_dev_bert_gat'
+    # eval_nli_and_save(paras)
+    # print('-------------------------------\n')
+    # nli_data = read_json_rows(config.RESULT_PATH / "nli_dev_bert_gat/eval_data_nli_dev_0.5_top[5].jsonl")
+    # eval_three_classes(nli_data)
 
 
 def test_eval():

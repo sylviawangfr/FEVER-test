@@ -119,7 +119,7 @@ if __name__ == '__main__':
     #                             config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl", top_k=10)
     #
     # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
-    get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.RESULT_PATH / f"doc_test_{get_current_time_str()}.jsonl", eval=False)
+    get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"doc_dev_{get_current_time_str()}.jsonl")
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
     # print(retrieve_docs("Brian Wilson was part of the Beach Boys."))
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST / get_current_time_str())

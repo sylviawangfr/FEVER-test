@@ -331,3 +331,13 @@ if __name__ == "__main__":
     paras.prob_thresholds = 0.1
     pred_ss_and_save(paras)
 
+    # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / 'doc_dev.jsonl')
+    # paras.mode = 'dev'
+    # paras.pred = True
+    # paras.top_n = [10]
+    # paras.mode = 'dev'
+    # paras.sample_n = 10
+    # paras.prob_thresholds = 0.1
+    # pred_ss_and_save(paras)
+

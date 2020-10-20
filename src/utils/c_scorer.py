@@ -300,20 +300,24 @@ def check_sent_correct(instance, actual, number_of_preds):
 
     return False
 
-def get_ss_recall_precision(result_list):
+def get_ss_recall_precision(result_list, top_n=5):
     all_truth_s = 0
     all_true_preds = 0
     all_preds = 0
+    hits = 0
+    total_items = 0
     for item in result_list:
         if item["label"].upper() != "NOT ENOUGH INFO":
-            pred_ids = item["predicted_sentids"]
+            total_items += 1
+            pred_ids = item["predicted_sentids"][:top_n]
             all_preds += len(pred_ids)
             evi_ids = []
             for evience_group in item["evidence"]:
                 # Filter out the annotation ids. We just want the evidence page and line number
                 evi_ids += [e[2] + SENT_LINE + str(e[3]) for e in evience_group]
             all_truth_s += len(set(evi_ids))
-
+            if all([evi_id in pred_ids for evi_id in evi_ids]):
+                hits += 1
             for pred_s in pred_ids:
                 if pred_s in set(evi_ids):
                     all_true_preds += 1
@@ -322,6 +326,7 @@ def get_ss_recall_precision(result_list):
     precision = all_true_preds / all_preds
     print(f"total truth/total true preds/total preds: {all_truth_s}/{all_true_preds}/{all_preds}")
     print(f"recall/precision:{recall}/{precision}")
+    print(f"hits: {hits/total_items}")
 
 
 def get_macro_ss_recall_precision(result_list):
@@ -447,6 +452,13 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
                         error_items.append(get_pred_instantce_details(instance))
                     else:
                         error_items.append(instance)
+                macro_prec = evidence_macro_precision(instance, max_evidence)
+                macro_precision += macro_prec[0]
+                macro_precision_hits += macro_prec[1]
+
+                macro_rec = evidence_macro_recall(instance, max_evidence)
+                macro_recall += macro_rec[0]
+                macro_recall_hits += macro_rec[1]
 
     log_print("Error count:", error_count)
     total = len(predictions)

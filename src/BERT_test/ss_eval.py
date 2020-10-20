@@ -208,7 +208,7 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
         eval_list[i]['prob'] = probs[i]
 
     # results_list = ss_score_converter(paras.original_data, eval_list, paras.prob_thresholds, paras.top_n)
-    ss_f1_score_and_save(paras, eval_list)
+    return ss_f1_score_and_save(paras, eval_list)
 
 
 def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5):
@@ -288,7 +288,7 @@ def ss_f1_score_and_save(paras: bert_para.PipelineParas, upstream_eval_list, sav
                 save_intermidiate_results(results_list, paras.get_eval_data_file(f'ss_{n}'))
                 save_intermidiate_results(upstream_eval_list, paras.get_eval_item_file(f'ss_{n}'))
                 print(f"results saved at: {paras.output_folder}")
-
+    return results_list
 
 def softmax_test(z):
     """Compute softmax values for each sets of scores in x."""

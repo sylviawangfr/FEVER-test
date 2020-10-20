@@ -199,7 +199,7 @@ def convert_to_graph_sampler(upstream_data, output_file, pred=False):
             pbar.update(1)
             batch += 1
     paras.bert_client.close()
-    return
+
 
 
 if __name__ == '__main__':

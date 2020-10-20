@@ -3,7 +3,12 @@ from sample_for_nli_esim.tf_idf_sample_v1_0 import convert_evidence2scoring_form
 import utils.common_types as model_para
 from BERT_test.ss_eval import ss_f1_score_and_save
 import config
+import tqdm
 from utils import c_scorer
+from doc_retriv.doc_retrieve import retri_doc_and_update_item
+from BERT_test.bert_data_processor import *
+from BERT_test.ss_eval import pred_ss_and_save
+
 
 def read_upstream_files(bert_ss_data, gat_ss_data):
     pass
@@ -66,6 +71,20 @@ def eval_and_save(bert_data, gat_data, output_folder, top_n=5, thresholds=0.1, e
     score_for_ss_evidence_list(merged, dev_original, output_folder, eval=eval, thresholds=thresholds, top_n=[top_n], save=save)
 
 
+def redo_empty_items(empty_pred_items, mode='dev'):
+    pass
+
+
+def get_empty_items(upstream_l):
+    empty_items = []
+    for i in tqdm(upstream_l):
+        if len(i['predicted_sentids']) < 1:
+            empty_items.append(i)
+    for j in empty_items:
+        retri_doc_and_update_item(j)
+    save_intermidiate_results(empty_items, config.RESULT_PATH / 'empty_items.jsonl')
+
+
 def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_dir, eval=True, thresholds=0.5, top_n=[5], save=False):
     paras = model_para.PipelineParas()
     paras.output_folder = output_dir
@@ -83,7 +102,7 @@ def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_
 
         for n in top_n:
             print(f"max evidence number:", n)
-            c_scorer.get_ss_recall_precision(upstream_with_ss_evidence, top_n=n)
+            c_scorer.get_ss_recall_precision(upstream_with_ss_evidence, top_n=n, threshold=thresholds)
             # strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(upstream_with_ss_evidence,
             #                                                             paras.original_data,
             #                                                             max_evidence=n,
@@ -102,18 +121,20 @@ def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_
 
 
 if __name__ == '__main__':
+
     bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
-    gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
-    print("eval bert + gat dev result")
-    eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_dev_5', thresholds=0.1, top_n=5, save=False)
-
-    print('-------------------------------\n')
-    print("eval bert dev result")
-    score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', thresholds=0.4, top_n=[5, 10])
-
-    print('-------------------------------\n')
-    print("eval gat dev result")
-    score_for_ss_evidence_list(gat_data, gat_data, 'gat_ss_dev_10', thresholds=0.1, top_n=[10])
+    get_empty_items(bert_data)
+    # gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
+    # print("eval bert + gat dev result")
+    # eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_dev_5', thresholds=0, top_n=5, save=False)
+    #
+    # print('-------------------------------\n')
+    # print("eval bert dev result")
+    # score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', thresholds=0, top_n=[5, 10])
+    #
+    # print('-------------------------------\n')
+    # print("eval gat dev result")
+    # score_for_ss_evidence_list(gat_data, gat_data, 'gat_ss_dev_10', thresholds=0.1, top_n=[10])
 
     # print('-------------------------------\n')
     # bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_test_10/eval_data_ss_10_test_0.1_top[10].jsonl")

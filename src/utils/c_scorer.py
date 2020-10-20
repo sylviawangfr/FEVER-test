@@ -300,17 +300,26 @@ def check_sent_correct(instance, actual, number_of_preds):
 
     return False
 
-def get_ss_recall_precision(result_list, top_n=5):
+def get_ss_recall_precision(result_list, top_n=5, threshold=0.4):
     all_truth_s = 0
     all_true_preds = 0
     all_preds = 0
     hits = 0
     total_items = 0
+    empty_pred = 0
     for item in result_list:
         if item["label"].upper() != "NOT ENOUGH INFO":
             total_items += 1
-            pred_ids = item["predicted_sentids"][:top_n]
+            scored_sentids = item["scored_sentids"]
+            pred_ids = []
+            for i in scored_sentids:
+                if i[-1] > threshold:
+                    pred_ids.append(i[0])
+                if len(pred_ids) == top_n:
+                    break
             all_preds += len(pred_ids)
+            if len(pred_ids) < 1:
+                empty_pred += 1
             evi_ids = []
             for evience_group in item["evidence"]:
                 # Filter out the annotation ids. We just want the evidence page and line number
@@ -326,7 +335,8 @@ def get_ss_recall_precision(result_list, top_n=5):
     precision = all_true_preds / all_preds
     print(f"total truth/total true preds/total preds: {all_truth_s}/{all_true_preds}/{all_preds}")
     print(f"recall/precision:{recall}/{precision}")
-    print(f"hits: {hits/total_items}")
+    print(f"hits/total/percentage: {hits}/{total_items}/{hits/total_items}")
+    print(f"empty items: {empty_pred}")
 
 
 def get_macro_ss_recall_precision(result_list):

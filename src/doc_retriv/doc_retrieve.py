@@ -2,7 +2,7 @@ from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, sea
 from utils.c_scorer import *
 from utils.common import thread_exe
 from utils.fever_db import *
-from utils.file_loader import read_json_rows, get_current_time_str
+from utils.file_loader import read_json_rows, get_current_time_str, read_all_files
 from dbpedia_sampler.dbpedia_triple_linker import link_sent_to_resources_multi
 from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
 from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns

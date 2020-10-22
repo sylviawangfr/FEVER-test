@@ -234,7 +234,6 @@ def read_all_files_gen(path):
             yield i
 
 
-
 def read_all_files(path):
     all_rows = []
     for entry in os.listdir(path):

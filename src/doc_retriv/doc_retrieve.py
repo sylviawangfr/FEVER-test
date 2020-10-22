@@ -126,12 +126,12 @@ def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file
         d_list = read_json_rows(in_file)
 
     print("total items: ", len(d_list))
-    # for i in tqdm(d_list):
-    #     retri_doc_and_update_item(i)
-    def retri_doc_and_update_item_with_context(data_l):
-        retri_doc_and_update_item(data_l, context_dict)
-    thread_number = 2
-    thread_exe(retri_doc_and_update_item_with_context, iter(d_list), thread_number, "query wiki pages")
+    for i in tqdm(d_list):
+        retri_doc_and_update_item(d_list, context_dict)
+    # def retri_doc_and_update_item_with_context(data_l):
+    #     retri_doc_and_update_item(data_l, context_dict)
+    # thread_number = 2
+    # thread_exe(retri_doc_and_update_item_with_context, iter(d_list), thread_number, "query wiki pages")
     save_intermidiate_results(d_list, out_file)
     if eval:
         eval_doc_preds(d_list, top_k, log_file)

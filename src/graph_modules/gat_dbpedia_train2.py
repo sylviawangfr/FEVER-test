@@ -231,6 +231,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_dir, gpu=0, thr
     else:
         paras.mode = 'test'
     ss_f1_score_and_save(paras, dict_to_list)
+    return dict_to_list
 
 
 def test_load_model():

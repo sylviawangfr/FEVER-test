@@ -8,6 +8,8 @@ from utils import c_scorer
 from doc_retriv.doc_retrieve import retri_doc_and_update_item
 from BERT_test.bert_data_processor import *
 from BERT_test.ss_eval import pred_ss_and_save
+from dbpedia_sampler.dbpedia_ss_sampler import convert_to_graph_sampler
+from graph_modules.gat_dbpedia_train2 import pred_prob
 
 
 def read_upstream_files(bert_ss_data, gat_ss_data):
@@ -69,10 +71,38 @@ def eval_and_save(bert_data, gat_data, output_folder, top_n=5, thresholds=0.1, e
         merged.append(new_item)
     dev_original = read_json_rows(config.FEVER_DEV_JSONL)
     score_for_ss_evidence_list(merged, dev_original, output_folder, eval=eval, thresholds=thresholds, top_n=[top_n], save=save)
+    return
 
+def redo_error_items(error_items, mode='dev'):
+    output_dir = config.RESULT_PATH / "error_rerun"
+    # doc retrive
+    for j in error_items:
+        retri_doc_and_update_item(j)
 
-def redo_empty_items(empty_pred_items, mode='dev'):
-    pass
+    # bert_ss
+    paras = bert_para.PipelineParas()
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    paras.output_folder = "error_rerun/ss_bert"
+    paras.mode = mode
+    paras.pred = True
+    paras.top_n = [10]
+    paras.sample_n = 10
+    paras.prob_thresholds = 0.01
+    ss_bert = pred_ss_and_save(paras)
+
+    # gat_ss
+    dbpedia_output = output_dir / "ss_gat" / f"dbpedia_sample.jsonl"
+    convert_to_graph_sampler(ss_bert,
+                             dbpedia_output,
+                             pred=True)
+    print("done with dbpedia sampler")
+    model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
+    gat_output = config.RESULT_PATH / "error_rerun/ss_gat"
+    ss_gat = pred_prob(model_path, error_items, ss_bert, gat_output, thredhold=0.1, pred=True, gpu=2, eval=True)
+
+    # merge
+    merged = eval_and_save(ss_bert, ss_gat, output_dir, top_n=5, thresholds=0.1, eval=True, save=True)
 
 
 def get_empty_items(upstream_l):
@@ -83,6 +113,14 @@ def get_empty_items(upstream_l):
     for j in empty_items:
         retri_doc_and_update_item(j)
     save_intermidiate_results(empty_items, config.RESULT_PATH / 'empty_items.jsonl')
+
+
+def get_error_items(upstream_l, output_dir, top_n=5):
+    error_l = []
+    for i in upstream_l:
+        if not c_scorer.is_evidence_correct(i, top_n):
+            error_l.append(i)
+    save_intermidiate_results(error_l, output_dir / "error_ss.jsonl")
 
 
 def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_dir, eval=True, thresholds=0.5, top_n=[5], save=False):
@@ -103,34 +141,35 @@ def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_
         for n in top_n:
             print(f"max evidence number:", n)
             c_scorer.get_ss_recall_precision(upstream_with_ss_evidence, top_n=n, threshold=thresholds)
-            # strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(upstream_with_ss_evidence,
-            #                                                             paras.original_data,
-            #                                                             max_evidence=n,
-            #                                                             mode=eval_mode,
-            #                                                             error_analysis_file=paras.get_f1_log_file(
-            #                                                                 f'{paras.prob_thresholds}_{n}_ss'),
-            #                                                             verbose=False)
+            strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(upstream_with_ss_evidence,
+                                                                        paras.original_data,
+                                                                        max_evidence=n,
+                                                                        mode=eval_mode,
+                                                                        error_analysis_file=paras.get_f1_log_file(
+                                                                            f'{paras.prob_thresholds}_{n}_ss'),
+                                                                        verbose=False)
             # tracking_score = strict_score
-            # print(f"Dev(strict/raw_acc/pr/rec/f1):{strict_score}/{acc_score}/{pr}/{rec}/{f1}/")
+            print(f"Dev(strict/raw_acc/pr/rec/f1):{strict_score}/{acc_score}/{pr}/{rec}/{f1}/")
             # print("Strict score:", strict_score)
             # print(f"Eval Tracking score:", f"{tracking_score}")
         if save:
             save_intermidiate_results(upstream_with_ss_evidence, paras.get_eval_data_file(f'bert_gat_ss_{n}'))
             print(f"results saved at: {paras.output_folder}")
+        return upstream_with_ss_evidence
 
 
 
 if __name__ == '__main__':
 
     bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
-    get_empty_items(bert_data)
+    # get_error_items(bert_data, config.RESULT_PATH, top_n=5)
     # gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     # print("eval bert + gat dev result")
     # eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_dev_5', thresholds=0, top_n=5, save=False)
     #
-    # print('-------------------------------\n')
-    # print("eval bert dev result")
-    # score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', thresholds=0, top_n=[5, 10])
+    print('-------------------------------\n')
+    print("eval bert dev result")
+    score_for_ss_evidence_list(bert_data, bert_data, 'bert_ss_dev_10', thresholds=0.4, top_n=[5, 10])
     #
     # print('-------------------------------\n')
     # print("eval gat dev result")

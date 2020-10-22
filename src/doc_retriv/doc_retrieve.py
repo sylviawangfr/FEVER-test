@@ -78,7 +78,10 @@ def retri_doc_and_update_item(item):
 
 
 def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file=None):
-    d_list = read_json_rows(in_file)
+    if isinstance(in_file, list):
+        d_list = in_file
+    else:
+        d_list = read_json_rows(in_file)
 
     print("total items: ", len(d_list))
     # for i in tqdm(d_list):
@@ -110,7 +113,12 @@ def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
 
 
 if __name__ == '__main__':
-    pass
+    docs = read_json_rows(config.RESULT_PATH / 'doc_retri_no_hits.jsonl')
+    for i in docs:
+        if 'predicted_docids' in i:
+            i.pop('predicted_docids')
+    get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo.jsonl')
+    # pass
     # i = retrieve_docs("L.A. Reid has served as the president of a record label.")
     # print(i)
     # j = retrieve_docs("Trouble with the Curve")
@@ -127,3 +135,4 @@ if __name__ == '__main__':
     # a_list = read_json_rows(config.DOC_RETRV_DEV)
     # fever_doc_only(a_list, a_list, analysis_log=config.LOG_PATH / f"{get_current_time_str()}_doc_retri_no_hits_.jsonl")
     # rerun_failed_items(config.DOC_RETRV_TEST, [49649, 24225, 149500,202840,64863], config.RESULT_PATH / 'test_update.jsonl')
+    # eval_doc_preds(docs, 10, None)

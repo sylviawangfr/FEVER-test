@@ -47,6 +47,42 @@ def search_doc(phrases):
     except:
         return []
 
+# entity, keywords
+def search_doc_dbpedia_context(context_dict):
+    try:
+        search = Search(using=client, index=config.WIKIPAGE_INDEX)
+        must = []
+        should = []
+
+        # must.append({'match_phrase': {'lines': ph}})
+        for i in context_dict['keywords']:
+            should.append({'multi_match': {'query': i, "type": "most_fields", 'fields': ['id^2', 'lines']}})
+        must.append({'multi_match': {'query': context_dict['entity'], "type": "phrase", 'fields': ['id^2', 'lines'], 'slop': 3}})
+
+        search = search.query(Q('bool', must=must, should=should)). \
+                 highlight('lines', number_of_fragments=0). \
+                 sort({'_score': {"order": "desc"}}). \
+                 source(include=['id'])[0:5]
+
+        response = search.execute()
+        r_list = []
+
+        for hit in response['hits']['hits']:
+            score = hit['_score']
+            id = hit['_source']['id']
+            if 'highlight' in hit:
+                lines = hit['highlight']['lines'][0]
+                lines = lines.replace("</em> <em>", " ")
+            else:
+                lines = ""
+            phrases = context_dict['keywords'].append(context_dict['entity'])
+            doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
+            r_list.append(doc_dic)
+
+        return r_list
+    except:
+        return []
+
 
 def search_doc_id(possible_id):
     try:
@@ -140,6 +176,15 @@ def search_and_merge2(entities_and_nouns):
     # print("done with r6")
     return merge_result(result0 + result7)
 
+
+# entity, keywords
+def search_and_merge3(entity_context_l):
+    context_r = []
+    for c in entity_context_l:
+        re_tmp = search_doc_dbpedia_context(c)
+        context_r.append(re_tmp)
+    # print("done with r6")
+    return context_r
 
 
 def merge_result(result):

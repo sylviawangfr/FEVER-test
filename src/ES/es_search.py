@@ -183,8 +183,7 @@ def search_and_merge3(entity_context_l):
     for c in entity_context_l:
         re_tmp = search_doc_dbpedia_context(c)
         context_r.append(re_tmp)
-    # print("done with r6")
-    return context_r
+    return merge_result(context_r)
 
 
 def merge_result(result):

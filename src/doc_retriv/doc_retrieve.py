@@ -105,8 +105,8 @@ def search_object_URIs(sub_obj_l):
 
 def read_claim_context_graphs(dir):
     # config.RESULT_PATH / "sample_ss_graph_dev_test"
-    # data_dev = read_all_files(dir)
-    data_dev = read_json_rows(dir)
+    data_dev = read_all_files(dir)
+    # data_dev = read_json_rows(dir)
     cached_graph_d = dict()
     for i in data_dev:
         if 'claim_links' in i and len(i['claim_links']) > 0:

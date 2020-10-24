@@ -163,9 +163,9 @@ if __name__ == '__main__':
 
     bert_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     # get_error_items(bert_data, config.RESULT_PATH, top_n=5)
-    # gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
+    gat_data = read_json_rows(config.RESULT_PATH / "gat_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     # print("eval bert + gat dev result")
-    # eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_dev_5', thresholds=0, top_n=5, save=False)
+    eval_and_save(bert_data, gat_data, 'bert_gat_merged_ss_dev_5', thresholds=0, top_n=5, save=False)
     #
     print('-------------------------------\n')
     print("eval bert dev result")

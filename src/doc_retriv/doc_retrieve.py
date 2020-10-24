@@ -188,11 +188,12 @@ if __name__ == '__main__':
     context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph_dev_pred")
     # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph.jsonl")
     # r = search_entity_dbpedia("Giada at Home was only available on DVD.")
-    docs = read_json_rows(config.RESULT_PATH / 'doc_retri_no_hits.jsonl')
-    for i in docs:
-        if 'predicted_docids' in i:
-            i.pop('predicted_docids')
-    get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo.jsonl', context_dict=context_graph_dict)
+    # docs = read_json_rows(config.RESULT_PATH / 'doc_retri_no_hits.jsonl')
+    docs = read_json_rows(config.FEVER_DEV_JSONL)
+    # for i in docs:
+    #     if 'predicted_docids' in i:
+    #         i.pop('predicted_docids')
+    get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo_dev.jsonl', context_dict=context_graph_dict)
     # pass
     # i = retrieve_docs("L.A. Reid has served as the president of a record label.")
     # print(i)

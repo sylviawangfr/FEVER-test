@@ -1,4 +1,4 @@
-from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, search_and_merge3
+from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, search_and_merge3, merge_result
 from utils.c_scorer import *
 from utils.common import thread_exe
 from utils.fever_db import *
@@ -9,19 +9,23 @@ from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns
 import difflib
 from utils.text_clean import convert_brc
 from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim
+from dbpedia_sampler.uri_util import isURI
 
 
 def retrieve_docs(example, context_dict=None):
     claim = example['claim']
     id = example['id']
     result_context = []
+    result_uris = []
     if context_dict is not None and len(context_dict) > 0:
-        context = get_context_dbpedia(context_dict, id)
+        context, object_urls = get_context_dbpedia(context_dict, id)
         result_context = search_and_merge3(context)
+        result_uris = search_object_URIs(object_urls)
     nouns = get_phrases_and_nouns(claim)
     result_es = search_and_merge2(nouns)
     result_dbpedia = search_entity_dbpedia(claim)
-
+    result_dbpedia.extend(result_uris)
+    result_dbpedia = merge_result(result_dbpedia)
     result = merge_es_and_dbpedia(result_es, result_dbpedia, result_context)
     if len(result) > 10:
         result = result[:10]
@@ -56,7 +60,7 @@ def merge_es_and_dbpedia(r_es, r_db, r_context=[]):
     for idx_j, j in enumerate(r_context_ids):
         for idx_i, i in enumerate(merged_ids):
             if i == j:
-                merged_ids[idx_i]['score'] += r_context[idx_j]['score']
+                merged[idx_i]['score'] += r_context[idx_j]['score']
 
     for idx_j, j in enumerate(r_context_ids):
         if j not in merged_ids:
@@ -83,9 +87,26 @@ def search_entity_dbpedia(claim):
     return docs
 
 
+def search_object_URIs(sub_obj_l):
+    docs = []
+    for sub_obj in sub_obj_l:
+        obj = sub_obj[1]
+        wiki_links_obj = get_resource_wiki_page(obj)
+        if wiki_links_obj is None or len(wiki_links_obj) < 1:
+            continue
+        for item in wiki_links_obj:
+            possible_doc_id = item.split('/')[-1]
+            verified_id_es = search_doc_id(possible_doc_id)
+            for r_es in verified_id_es:
+                if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
+                    docs.append({'id': r_es['id'], 'score': r_es['score'], 'phrases': [possible_doc_id.replace('_', ' ')]})
+    return docs
+
+
 def read_claim_context_graphs(dir):
     # config.RESULT_PATH / "sample_ss_graph_dev_test"
-    data_dev = read_all_files(dir)
+    # data_dev = read_all_files(dir)
+    data_dev = read_json_rows(dir)
     cached_graph_d = dict()
     for i in data_dev:
         if 'claim_links' in i and len(i['claim_links']) > 0:
@@ -99,14 +120,21 @@ def read_claim_context_graphs(dir):
 
 def get_context_dbpedia(cached_graphs, id):
     context = []
+    object_urls = []
     if id in cached_graphs:
-        tris = cached_graphs['id']
+        tris = cached_graphs[id]
         for t in tris:
             if 'keywords' in t and 'subject' in t:
                 entity = t['subject'].split('/')[-1]
                 keywords = t['keywords']
-                context.append({'entity': entity, 'keywords': keywords})
-    return context
+                if isinstance(keywords, list) \
+                        and len(list(filter(lambda x: (x['entity'] == entity
+                                                       and sorted(x['keywords']) == sorted(keywords)), context))) < 1:
+                    context.append({'entity': entity, 'keywords': keywords})
+            if 'object' in t and "http://dbpedia.org/resource/" in t['object'] \
+                    and len(list(filter(lambda x: (x[0] == t['subject'] and x[1] == t['object']), object_urls))) < 1:
+                object_urls.append([t['subject'], t['object']])
+    return context, object_urls
 
 
 def retri_doc_and_update_item(item, context_dict=None):
@@ -158,12 +186,13 @@ def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
 
 if __name__ == '__main__':
     context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph_dev_pred")
+    # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph.jsonl")
     # r = search_entity_dbpedia("Giada at Home was only available on DVD.")
     docs = read_json_rows(config.RESULT_PATH / 'doc_retri_no_hits.jsonl')
     for i in docs:
         if 'predicted_docids' in i:
             i.pop('predicted_docids')
-    get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo.jsonl', context_graph_dict)
+    get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo.jsonl', context_dict=context_graph_dict)
     # pass
     # i = retrieve_docs("L.A. Reid has served as the president of a record label.")
     # print(i)

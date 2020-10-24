@@ -56,7 +56,7 @@ def search_doc_dbpedia_context(context_dict):
 
         # must.append({'match_phrase': {'lines': ph}})
         for i in context_dict['keywords']:
-            should.append({'multi_match': {'query': i, "type": "most_fields", 'fields': ['id^2', 'lines']}})
+            should.append({'multi_match': {'query': i, "type": "phrase", 'fields': ['id^2', 'lines'], 'slop': 3}})
         must.append({'multi_match': {'query': context_dict['entity'], "type": "phrase", 'fields': ['id^2', 'lines'], 'slop': 3}})
 
         search = search.query(Q('bool', must=must, should=should)). \
@@ -66,7 +66,8 @@ def search_doc_dbpedia_context(context_dict):
 
         response = search.execute()
         r_list = []
-
+        phrases = context_dict['keywords']
+        phrases.append(context_dict['entity'])
         for hit in response['hits']['hits']:
             score = hit['_score']
             id = hit['_source']['id']
@@ -75,7 +76,6 @@ def search_doc_dbpedia_context(context_dict):
                 lines = lines.replace("</em> <em>", " ")
             else:
                 lines = ""
-            phrases = context_dict['keywords'].append(context_dict['entity'])
             doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
             r_list.append(doc_dic)
 
@@ -182,14 +182,15 @@ def search_and_merge3(entity_context_l):
     context_r = []
     for c in entity_context_l:
         re_tmp = search_doc_dbpedia_context(c)
-        context_r.append(re_tmp)
+        context_r.extend(re_tmp)
     return merge_result(context_r)
 
 
 def merge_result(result):
     merged = []
     for i in result:
-        score, ph, id, lines = i.values()
+        score = i['score']
+        id = i['id']
         if not has_doc_id(id, merged):
             merged.append(i)
         else:

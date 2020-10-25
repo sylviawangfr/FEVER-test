@@ -173,7 +173,7 @@ def eval_doc_preds(doc_list, top_k, log_file):
     eval_mode = {'check_doc_id_correct': True, 'standard': False}
     if log_file is None:
         log_file = config.LOG_PATH / f"{dt}_analyze_doc_retri.log"
-    print(fever_score(doc_list, doc_list, mode=eval_mode, error_analysis_file=log_file))
+    print(fever_score(doc_list, doc_list, mode=eval_mode, max_evidence=10, error_analysis_file=log_file))
 
 
 def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
@@ -185,15 +185,15 @@ def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
 
 
 if __name__ == '__main__':
-    context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph_test_pred")
+    # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph_test_pred")
     # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph.jsonl")
     # r = search_entity_dbpedia("Giada at Home was only available on DVD.")
     # docs = read_json_rows(config.RESULT_PATH / 'doc_retri_no_hits.jsonl')
-    docs = read_json_rows(config.FEVER_TEST_JSONL)
+    # docs = read_json_rows(config.FEVER_TEST_JSONL)
     # for i in docs:
     #     if 'predicted_docids' in i:
     #         i.pop('predicted_docids')
-    get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo_test.jsonl', context_dict=context_graph_dict)
+    # get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo_test.jsonl', context_dict=context_graph_dict)
     # pass
     # i = retrieve_docs("L.A. Reid has served as the president of a record label.")
     # print(i)
@@ -211,4 +211,5 @@ if __name__ == '__main__':
     # a_list = read_json_rows(config.DOC_RETRV_DEV)
     # fever_doc_only(a_list, a_list, analysis_log=config.LOG_PATH / f"{get_current_time_str()}_doc_retri_no_hits_.jsonl")
     # rerun_failed_items(config.DOC_RETRV_TEST, [49649, 24225, 149500,202840,64863], config.RESULT_PATH / 'test_update.jsonl')
-    # eval_doc_preds(docs, 10, None)
+    docs = read_json_rows(config.RESULT_PATH / "doc_dev.jsonl")
+    eval_doc_preds(docs, 10, None)

@@ -447,7 +447,7 @@ def fever_score(predictions, actual=None, max_evidence=5, mode=None,
 
         if mode is not None:
             if 'check_doc_id_correct' in mode and mode['check_doc_id_correct']:
-                if check_doc_id_correct(instance, actual[idx], max_length=10):
+                if check_doc_id_correct(instance, actual[idx], max_length=max_evidence):
                     mode['check_doc_id_correct_hits'] += 1
                 else:
                     error_count += 1

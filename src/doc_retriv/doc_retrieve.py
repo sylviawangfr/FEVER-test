@@ -173,7 +173,7 @@ def eval_doc_preds(doc_list, top_k, log_file):
     eval_mode = {'check_doc_id_correct': True, 'standard': False}
     if log_file is None:
         log_file = config.LOG_PATH / f"{dt}_analyze_doc_retri.log"
-    print(fever_score(doc_list, doc_list, mode=eval_mode, max_evidence=10, error_analysis_file=log_file))
+    print(fever_score(doc_list, doc_list, mode=eval_mode, max_evidence=top_k, error_analysis_file=log_file))
 
 
 def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):

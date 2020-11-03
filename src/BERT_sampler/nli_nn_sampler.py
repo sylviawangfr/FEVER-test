@@ -243,7 +243,7 @@ def get_sample_data(upstream_data, tokenized=False, pred=False):
                 extended_data_list.append(extend_item)
             sampled_data_list.extend(extended_data_list)
     cursor.close()
-
+    print(f"Sampled evidences: {len(sampled_data_list)}")
     return sampled_data_list
 
 

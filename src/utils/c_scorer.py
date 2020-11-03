@@ -339,17 +339,17 @@ def get_ss_recall_precision(result_list, top_n=5, threshold=0.4):
     print(f"empty items: {empty_pred}")
 
 
-def get_macro_ss_recall_precision(result_list):
+def get_macro_ss_recall_precision(result_list, max_evidence =5):
     macro_precision = 0
     macro_precision_hits = 0
     macro_recall = 0
     macro_recall_hits = 0
     for instance in result_list:
-        macro_prec = evidence_macro_precision(instance)
+        macro_prec = evidence_macro_precision(instance, max_evidence=max_evidence)
         macro_precision += macro_prec[0]
         macro_precision_hits += macro_prec[1]
 
-        macro_rec = evidence_macro_recall(instance)
+        macro_rec = evidence_macro_recall(instance, max_evidence=max_evidence)
         macro_recall += macro_rec[0]
         macro_recall_hits += macro_rec[1]
     pr = (macro_precision / macro_precision_hits) if macro_precision_hits > 0 else 1.0

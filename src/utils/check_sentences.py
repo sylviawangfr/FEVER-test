@@ -22,6 +22,16 @@ class Evidences(object):
         o_set = sorted(o_set, key=lambda x: (x[0], x[1]))
         self.evidences_list = list(o_set)
 
+    def pop_sent(self, index):
+        del_item = self.evidences_list.pop(index)
+        return del_item
+
+    def contains(self, doc_id, ln):
+        for d, l in self.evidences_list:
+            if doc_id == d and l == ln:
+                return True
+        return False
+
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Evidences):
             return False

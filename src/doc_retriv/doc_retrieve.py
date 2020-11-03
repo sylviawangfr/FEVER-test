@@ -20,7 +20,7 @@ def retrieve_docs(example, context_dict=None):
     if context_dict is not None and len(context_dict) > 0:
         context, object_urls = get_context_dbpedia(context_dict, id)
         result_context = search_and_merge3(context)
-        result_uris = search_object_URIs(object_urls)
+        result_uris = search_extended_URIs(object_urls)
     nouns = get_phrases_and_nouns(claim)
     result_es = search_and_merge2(nouns)
     result_dbpedia = search_entity_dbpedia(claim)
@@ -87,7 +87,16 @@ def search_entity_dbpedia(claim):
     return docs
 
 
-def search_object_URIs(sub_obj_l):
+def distill_docs(es_docs):
+    # validate wiki page title and dbpedia entities
+    pass
+
+
+def search_medias(phrase):
+    # filter duplicated entity linking, TV, book, film, series, band, song, album
+    pass
+
+def search_extended_URIs(sub_obj_l):
     docs = []
     for sub_obj in sub_obj_l:
         obj = sub_obj[1]
@@ -187,7 +196,7 @@ def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
 if __name__ == '__main__':
     # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph_test_pred")
     # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph.jsonl")
-    # r = search_entity_dbpedia("Giada at Home was only available on DVD.")
+    r = search_entity_dbpedia("Giada at Home was only available on DVD.")
     # docs = read_json_rows(config.RESULT_PATH / 'doc_retri_no_hits.jsonl')
     # docs = read_json_rows(config.FEVER_TEST_JSONL)
     # for i in docs:
@@ -195,7 +204,7 @@ if __name__ == '__main__':
     #         i.pop('predicted_docids')
     # get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo_test.jsonl', context_dict=context_graph_dict)
     # pass
-    # i = retrieve_docs("L.A. Reid has served as the president of a record label.")
+    i = retrieve_docs("L.A. Reid has served as the president of a record label.")
     # print(i)
     # j = retrieve_docs("Trouble with the Curve")
     # print(j)

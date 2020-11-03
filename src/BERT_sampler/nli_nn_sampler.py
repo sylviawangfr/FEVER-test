@@ -241,7 +241,7 @@ def get_sample_data(upstream_data, tokenized=False, pred=False):
                 extend_item['evid'] = evidence_text
                 extend_item['label'] = 'NOT ENOUGH INFO'
                 extended_data_list.append(extend_item)
-            sampled_data_list.extend(extended_data_list)
+    sampled_data_list.extend(extended_data_list)
     cursor.close()
     print(f"Sampled evidences: {len(sampled_data_list)}")
     return sampled_data_list
@@ -292,24 +292,23 @@ def format_printing(item):
 
 if __name__ == '__main__':
     additional_file = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
-    # t, ext = get_sample_data(additional_file, tokenized=True)
-    # print(len(ext))
-    # print(t)
+    t = get_sample_data(additional_file, tokenized=True)
+    print(len(t))
 
-    complete_upstream_dev_data = additional_file
-    count = Counter()
-    length_list = []
-
-    for item in complete_upstream_dev_data:
-        # length_list.extend([len(item['evid'].split(' '))])
-        length_list.extend([len(e) for e in item['evidence'] if item['verifiable'] == 'VERIFIABLE'])
-
-    count.update(length_list)
-    print(count.most_common())
-    print(sorted(list(count.most_common()), key=lambda x: -x[0]))
-    print(np.max(length_list))
-    print(np.mean(length_list))
-    print(np.std(length_list))
+    # complete_upstream_dev_data = additional_file
+    # count = Counter()
+    # length_list = []
+    #
+    # for item in complete_upstream_dev_data:
+    #     # length_list.extend([len(item['evid'].split(' '))])
+    #     length_list.extend([len(e) for e in item['evidence'] if item['verifiable'] == 'VERIFIABLE'])
+    #
+    # count.update(length_list)
+    # print(count.most_common())
+    # print(sorted(list(count.most_common()), key=lambda x: -x[0]))
+    # print(np.max(length_list))
+    # print(np.mean(length_list))
+    # print(np.std(length_list))
     #
     # for item in complete_upstream_dev_data[:5]:
     #     format_printing(item)

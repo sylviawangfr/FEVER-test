@@ -38,6 +38,7 @@ from BERT_test.nli_eval import eval_nli_and_save
 from data_util.toChart import *
 from utils.file_loader import get_current_time_str
 from utils.file_loader import read_json_rows
+import numpy as np
 
 logger = logging.getLogger(__name__)
 

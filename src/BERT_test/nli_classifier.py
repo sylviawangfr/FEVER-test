@@ -221,7 +221,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
         train_sampler = RandomSampler(train_data)
     else:
         train_sampler = DistributedSampler(train_data)
-    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
+    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size, shuffle=True)
 
     loss_for_chart = []
     model.train()
@@ -312,7 +312,8 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
 
 if __name__ == "__main__":
     # train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")
-    # nli_finetuning(train_data, output_folder="nli_train" + get_current_time_str(), sampler='nli_tfidf')
+    # train_data = read_json_rows(config.RESULT_PATH / 'train_s_tfidf_retrieve.jsonl')
+    # nli_finetuning(train_data, output_folder="nli_train_extended" + get_current_time_str(), sampler='nli_nn')
     train_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     nli_finetuning(train_data, output_folder="nli_train_extended" + get_current_time_str(), sampler='nli_nn')
 

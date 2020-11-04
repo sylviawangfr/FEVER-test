@@ -221,7 +221,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
         train_sampler = RandomSampler(train_data)
     else:
         train_sampler = DistributedSampler(train_data)
-    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size, shuffle=True)
+    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=train_batch_size)
 
     loss_for_chart = []
     model.train()

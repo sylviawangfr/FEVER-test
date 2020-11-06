@@ -146,6 +146,32 @@ def link_sent_to_resources_multi(sentence):
     return not_linked_phrases_l, linked_phrases_l
 
 
+def link_sent_to_resources_one_to_muilti(sentence):
+    sentence = text_clean.convert_brc(sentence)
+    entities, chunks = get_phrases(sentence)
+    not_linked_phrases_l = []
+    linked_phrases_l = []
+    # if len(entities) < 2:
+    #     phrases = list(set(entities) | set(chunks))
+    # else:
+    #     phrases = entities
+    phrases = merge_chunks_with_entities(chunks, entities)
+    log.debug(f"all phrases to be linked: {phrases}")
+
+    for p in phrases:
+        if is_date_or_number(p):
+            not_linked_phrases_l.append(p)
+            continue
+
+        linked_phrases = lookup_phrase_multiple_result(p)
+
+        if len(linked_phrases) == 0:
+            not_linked_phrases_l.append(p)
+        else:
+            linked_phrases_l.extend(linked_phrases)
+    return not_linked_phrases_l, linked_phrases_l
+
+
 def add_categories(linked_ps):
     for i in linked_ps:
         if 'outbounds' not in i:

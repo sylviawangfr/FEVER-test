@@ -76,7 +76,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
     do_lower_case = True
     train_batch_size = 32
     learning_rate = 5e-6
-    num_train_epochs = 4.0
+    num_train_epochs = 8.0
     # Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10%% of training.
     warmup_proportion = 0.1
     # local_rank for distributed training on gpus

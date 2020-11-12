@@ -186,7 +186,6 @@ def lookup_resource_app(text_phrase, url):
                         text_phrase_lower = text_phrase.lower()
                         if tmp_label == text_phrase_lower:
                             close_matches.append(i)
-                            break
                 if len(close_matches) < 1:
                     close_matches = re
     else:
@@ -233,7 +232,6 @@ def lookup_resource_ref_count(text_phrase):
                     text_phrase_lower = text_phrase.lower()
                     if tmp_label == text_phrase_lower:
                         close_matches.append(i)
-                        break
                 if len(close_matches) < 1:
                     close_matches = re
     response.close()
@@ -268,13 +266,13 @@ def test():
 
 
 if __name__ == "__main__":
-    for i in range(1):
-        test()
-        gc.collect()
+    # for i in range(1):
+    #     test()
+    #     gc.collect()
 
 
 
-    # lookup_resource('Howard Eugene Johnson')
+    lookup_resource_no_filter('Tool')
     # lookup_resource('cultists')
     # lookup_resource('Italian')
     # lookup_resource('Even')

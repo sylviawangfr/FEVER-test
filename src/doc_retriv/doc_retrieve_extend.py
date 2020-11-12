@@ -10,6 +10,7 @@ import difflib
 from utils.text_clean import convert_brc
 from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim
 from dbpedia_sampler.uri_util import isURI
+from dbpedia_sampler.dbpedia_virtuoso import get_categories2
 
 
 def retrieve_docs(example, context_dict=None):
@@ -35,6 +36,18 @@ def retrieve_docs(example, context_dict=None):
 def search_entities_and_nouns(claim):
     ents, phrases = get_phrases(claim)
     result_es = search_and_merge2(list(set(ents) | set(phrases)))
+
+
+def search_entities_extended(ents):
+    # 1. link entities to dbpedia
+    # 2. find connections between entities
+    # 3. search entity and extended phrases
+
+    pass
+
+
+def filter_entities_in_media_subset(resources):
+    pass
 
 
 def merge_es_and_dbpedia(r_es, r_db, r_context=[]):
@@ -91,6 +104,43 @@ def search_entity_dbpedia(claim):
                 if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
                     docs.append({'id': r_es['id'], 'score': r_es['score'], 'phrases': [resource['text']]})
     return docs
+
+
+def link_entities(claim):
+    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources_multi(claim)
+    triples = []
+    phrase_links = dict()
+    threshold = 0.5
+    for resource in linked_phrases_l:
+        resource_uri = resource['URI']
+
+        phrase = resource['text']
+        if phrase in phrase_links:
+            phrase_links[phrase].append(resource_uri)
+        else:
+            phrase_links[phrase] = [resource_uri]
+    for k,v in dict.iteritems():
+        if len(v) > 1:
+
+            # sorted_matching_index = sorted(range(len(keyword_matching_score)), key=lambda k: keyword_matching_score[k],
+            #                                reverse=True)
+            # top_score = keyword_matching_score[sorted_matching_index[0]]
+            media_subset = []
+            for i in v:
+                media_subset.append(is_media_subset(i))
+
+
+
+def is_media_subset(resource):
+    media_subset = ['work', 'person', 'art', 'creative work', 'television show', 'MusicGroup', 'band', 'film', 'book']
+    categories = get_categories2(resource)
+    categories = [i['keywords'] for i in categories]
+    for c in categories:
+        if c in media_subset:
+            return 1
+    return 0
+
+
 
 
 def distill_docs(es_docs):

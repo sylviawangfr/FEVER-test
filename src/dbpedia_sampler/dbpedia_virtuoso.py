@@ -14,6 +14,7 @@ PREFIX_SCHEMA = "http://www.w3.org/2001/XMLSchema"
 PREFIX_SUBCLASSOF = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
 PREFIX_DBR = "http://dbpedia.org/resource/"
 PREFIX_TYPE_OF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+PREFIX_TYPE = 'http://purl.org/dc/terms/subject'
 RECORD_LIMIT = 200
 
 log = log_util.get_logger('dbpedia_virtuoso')
@@ -63,6 +64,20 @@ def get_categories(resource):
         "FROM <http://dbpedia.org> WHERE {" \
         f"<{resource}> <{PREFIX_TYPE_OF}> ?object ." \
         "filter contains(str(?object), 'http://dbpedia.org/ontology/') " \
+        "filter (!contains(str(?object), \'wiki\'))} LIMIT 500"
+    tris = get_triples(query_str_inbound)
+    for tri in tris:
+        obj_split = uri_short_extract(tri['object'])
+        tri['keywords'] = [obj_split]
+    return tris
+
+
+def get_categories2(resource):
+    query_str_inbound = f"SELECT distinct (<{resource}> AS ?subject) ?relation ?object " \
+        "FROM <http://dbpedia.org> WHERE {" \
+        f"<{resource}> ?relation ?object ." \
+        "filter (?relation in (" \
+        f"{PREFIX_TYPE_OF, PREFIX_TYPE}) " \
         "filter (!contains(str(?object), \'wiki\'))} LIMIT 500"
     tris = get_triples(query_str_inbound)
     for tri in tris:
@@ -307,7 +322,8 @@ def does_reach_max_length(text):
 if __name__ == "__main__":
     # res = "http://dbpedia.org/resource/Magic_Johnson"
     res = "http://dbpedia.org/resource/Tap_dancer"
-    print(get_disambiguates_outbounds(res))
+    get_categories2(res)
+    # print(get_disambiguates_outbounds(res))
     # print(get_properties(res))
     # on = "http://dbpedia.org/ontology/City"
     # o1 = get_categories_one_hop_child(on)

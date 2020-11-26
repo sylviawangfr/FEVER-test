@@ -188,12 +188,13 @@ def get_ontology_linked_values_inbound(resource_uri):
 # @profile
 def get_outbounds(resource_uri):
     query_str_outbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
+        f"PREFIX dbp: <http://dbpedia.org/property/> " \
         f"SELECT distinct (<{resource_uri}> AS ?subject) ?relation ?object " \
         "FROM <http://dbpedia.org> WHERE { " \
         f"<{resource_uri}> ?relation ?object . " \
         "filter (!contains(str(?relation), 'wiki')) " \
         "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
-        "filter (contains(str(?relation), 'ontology') " \
+        "filter (?relation not in (dbp:width, dbp:icon, dbp:image, dbp:align, dbp:float, dbp:direction, dbp:imagewidth, dbp:iconWidth)) " \
         "|| contains(str(?object), 'http://dbpedia.org/resource/') " \
         "|| contains(str(?relation), 'http://dbpedia.org/property/'))} LIMIT 500"
     tris = get_triples(query_str_outbound)
@@ -228,6 +229,7 @@ def get_disambiguates_outbounds(resource_uri):
         "filter (?x in (disambiguates:, redirects:)) " \
         "filter (!contains(str(?relation), 'wiki')) " \
         "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
+        "filter (?relation not in (dbp:thumbnail, dbo:abstract)) " \
         "filter (contains(str(?relation), 'ontology') " \
         "|| contains(str(?object), 'http://dbpedia.org/resource/') " \
         "|| contains(str(?relation), 'http://dbpedia.org/property/'))} " \

@@ -243,7 +243,7 @@ if __name__ == '__main__':
     # s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
     # ss1 = "Giada at Home was only available on DVD ."
     # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
-
+    ss1 = "Cheese in the Trap (TV series) only stars animals."
     claim_dict = construct_subgraph_for_claim(ss1)
     construct_subgraph_for_candidate(claim_dict, ss2, doc_title='')
     # test_claim()

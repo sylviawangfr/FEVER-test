@@ -197,7 +197,7 @@ def get_exact_match(text_phrase, lookup_records):
 
 def get_media_subset_match(text_phrase, lookup_records):
     media_match = []
-    media = ['tv', 'film', 'book', 'novel', 'band', 'album', 'series', 'poem', 'song', 'advertisement', 'company',
+    media = ['tv', 'film', 'book', 'novel', 'band', 'album', 'music', 'series', 'poem', 'song', 'advertisement', 'company',
              'episode', 'season', 'animator', 'actor', 'singer', 'writer', 'drama', 'character']
     for i in lookup_records:
         label = i['Label']

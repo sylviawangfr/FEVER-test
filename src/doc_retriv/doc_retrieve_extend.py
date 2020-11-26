@@ -257,7 +257,7 @@ def run_claim_context_graph(data):
         claim_gragh_dict = construct_subgraph_for_claim(claim, bert_client)
         claim_g = claim_gragh_dict['graph']
         print(claim)
-        json.dumps(claim_g, indent=2)
+        print(json.dumps(claim_g, indent=2))
         print("----------------------------")
 
 

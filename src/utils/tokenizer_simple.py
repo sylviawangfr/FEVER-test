@@ -30,7 +30,7 @@ def split_claim_regex(text):
     # REGEX = r'(?<![.])([A-Z]+[\w]*\s)*([A-Z][\w]+)'
     REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\s)*(\'s)?' \
             r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(and\s)*(with\s)*(the\s)*' \
-            r'(-?)(\d*\s)*)*(?<!-\s)([A-Z]+[\w]*(\s\d+)*)'
+            r'(-?)(\d*\s)*)*(?<!-\s)([A-Z]+[\w]*(\s\d+)*)(\s\(.*\))*'
     regexp = regex.compile(REGEX)
     matches = [m for m in regexp.finditer(text)]
     tokens = [matches[i].group() for i in range(len(matches))]

@@ -245,5 +245,5 @@ if __name__ == '__main__':
     ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
     # ss1 = "Cheese in the Trap (TV series) only stars animals."
     claim_dict = construct_subgraph_for_claim(ss1)
-    construct_subgraph_for_candidate(claim_dict, ss2, doc_title='')
+    print(construct_subgraph_for_candidate(claim_dict, ss2, doc_title=''))
     # test_claim()

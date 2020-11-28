@@ -230,8 +230,8 @@ def test_claim():
 
 
 if __name__ == '__main__':
-    ss1 = "Michelin Guides are published by George Lucas."
-    ss2 = "The term normally refers to the annually published Michelin Red Guide , the oldest European hotel and restaurant reference guide , which awards Michelin stars for excellence to a select few establishments ."
+    # ss1 = "Michelin Guides are published by George Lucas."
+    # ss2 = "The term normally refers to the annually published Michelin Red Guide , the oldest European hotel and restaurant reference guide , which awards Michelin stars for excellence to a select few establishments ."
     # s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
     # s7 = "Howard Eugene Johnson -LRB- 30 January 1915 -- 28 May 2000 -RRB- , better known as `` Stretch \'\' Johnson , was a tap dancer and social activist ."
     # s8 = "Magic Johnson was a tap dancer"
@@ -241,9 +241,9 @@ if __name__ == '__main__':
     # s9 = 'Tap Tap was a series of rhythm games by Tapulous available for the iOS of which several versions , both purchasable and free , have been produced .'
     # s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
     # s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
-    # ss1 = "Giada at Home was only available on DVD ."
-    # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
-    ss1 = "Cheese in the Trap (TV series) only stars animals."
+    ss1 = "Giada at Home was only available on DVD ."
+    ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
+    # ss1 = "Cheese in the Trap (TV series) only stars animals."
     claim_dict = construct_subgraph_for_claim(ss1)
     construct_subgraph_for_candidate(claim_dict, ss2, doc_title='')
     # test_claim()

@@ -447,13 +447,13 @@ def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, fuzzy_match=
                         item1['relatives'] = [resource1['text'], resource2['text']]
                         item1['text'] = resource1['text']
                         item1['URI'] = item1['subject']
-                        item['exact_match'] = item1['exact_match']
+                        item['exact_match'] = i['exact_match']
                         result.append(item1)
                     if not does_tri_exit_in_list(item2, result):
                         item2['relatives'] = [resource2['text'], resource1['text']]
                         item2['text'] = resource2['text']
                         item2['URI'] = item2['subject']
-                        item['exact_match'] = item2['exact_match']
+                        item['exact_match'] = j['exact_match']
                         result.append(item2)
         if fuzzy_match and not exact_match:
             for re1 in resource1_l:

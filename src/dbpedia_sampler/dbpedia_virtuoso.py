@@ -194,7 +194,7 @@ def get_outbounds(resource_uri):
         f"<{resource_uri}> ?relation ?object . " \
         "filter (!contains(str(?relation), 'wiki')) " \
         "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
-        "filter (?relation not in (dbp:width, dbp:icon, dbp:image, dbp:align, dbp:float, dbp:direction, dbp:imagewidth, dbp:iconWidth)) " \
+        "filter (?relation not in (dbp:width, dbp:icon, dbp:image, dbp:align, dbp:float, dbp:direction, dbp:imagewidth, dbp:iconWidth) " \
         "|| contains(str(?object), 'http://dbpedia.org/resource/') " \
         "|| contains(str(?relation), 'http://dbpedia.org/property/'))} LIMIT 500"
     tris = get_triples(query_str_outbound)

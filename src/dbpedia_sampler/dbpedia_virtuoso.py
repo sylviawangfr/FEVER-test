@@ -193,6 +193,7 @@ def get_outbounds(resource_uri):
         "FROM <http://dbpedia.org> WHERE { " \
         f"<{resource_uri}> ?relation ?object . " \
         "filter (!contains(str(?relation), 'wiki')) " \
+        "filter (!contains(str(?object), 'http://www.w3.org/2002/07/owl')) " \
         "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
         "filter (?relation not in (dbp:width, dbp:icon, dbp:image, dbp:align, dbp:float, dbp:direction, dbp:imagewidth, dbp:iconWidth) " \
         "|| contains(str(?object), 'http://dbpedia.org/resource/') " \
@@ -229,7 +230,6 @@ def get_disambiguates_outbounds(resource_uri):
         "filter (?x in (disambiguates:, redirects:)) " \
         "filter (!contains(str(?relation), 'wiki')) " \
         "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
-        "filter (?relation not in (dbp:thumbnail, dbo:abstract)) " \
         "filter (contains(str(?relation), 'ontology') " \
         "|| contains(str(?object), 'http://dbpedia.org/resource/') " \
         "|| contains(str(?relation), 'http://dbpedia.org/property/'))} " \

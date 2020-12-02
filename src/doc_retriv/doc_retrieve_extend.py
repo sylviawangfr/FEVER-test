@@ -8,7 +8,7 @@ from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
 from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns_merged
 import difflib
 from utils.text_clean import convert_brc
-from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim
+from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim, get_isolated_nodes
 from dbpedia_sampler.uri_util import isURI
 from dbpedia_sampler.dbpedia_virtuoso import get_categories2
 from bert_serving.client import BertClient
@@ -32,6 +32,46 @@ def retrieve_docs(example, context_dict=None):
     if len(result) > 10:
         result = result[:10]
     return result
+
+
+def strategy_over_all(claim):
+    doc_result = []
+    claim_dict = construct_subgraph_for_claim(claim)
+    claim_graph = claim_dict['graph']
+    if len(claim_graph) > 0:
+        isolated_nodes = get_isolated_nodes(claim_dict)
+        # 1. ES search linked entity page
+        # 2. BERT filter: linked triples VS entity pages -> candidate sentences
+        # 3. BERT filter: claim VS entity page sentences
+        if len(isolated_nodes) > 0:
+            # 1. candidate sentence to sent_context_graph
+            # 2. ES search sent_context_graph new entity pages
+            # 3. BERT filter:  extended context triples VS new entity page sentences  -> aggregated envidence set
+            pass
+        else:
+            # search triple doc
+            pass
+    else:
+        # cannot extract context graph
+        nouns = get_phrases_and_nouns_merged(claim)
+        doc_result = search_and_merge2(nouns)
+    pass
+
+
+def strategy_search_phrases(claim):
+    nouns = get_phrases_and_nouns_merged(claim)
+    result_es = search_and_merge2(nouns)
+    return result_es
+
+
+def strategy_search_claim_context(claim_graph):
+    if len(claim_graph) > 0:
+        isolated_nodes = get_isolated_nodes()
+    pass
+
+
+def strategy_search_candidate_extended_context(sents, claim_graph, claim_isolated_nodes):
+    pass
 
 
 def search_entities_and_nouns(claim):

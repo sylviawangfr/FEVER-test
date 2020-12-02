@@ -67,6 +67,7 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
     for i in relative_hash:
         if len(relative_hash[i]) == 0:
             no_relatives_found.append(lookup_hash[i])
+
     for i in no_relatives_found:
     #     if len(t['categories']) < 1 or len(t['categories']) > 20:
         possible_links = i['links']
@@ -164,6 +165,22 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title='', b
             sent_graph.append(i)
 
     return sent_graph
+
+
+def get_isolated_nodes(claim_dict):
+    claim_graph = claim_dict['graph']
+    claim_linked_phrases_l = claim_dict['linked_phrases_l']
+    claim_all_uris = dict()
+    for i in claim_linked_phrases_l:
+        claim_uris = i['links']
+        for u in claim_uris:
+            if u['URI'] not in claim_all_uris:
+                claim_all_uris.update({u['URI']: u})
+    claim_isolated_nodes = []
+    for tri in claim_graph:
+        if tri['relation'] == "" and tri['object'] == "":
+            claim_isolated_nodes.append(claim_all_uris[tri['subject']])
+    return claim_isolated_nodes
 
 
 def does_node_exist_in_graph(node_uri, graph):

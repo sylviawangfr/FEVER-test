@@ -341,7 +341,7 @@ if __name__ == "__main__":
     #     gc.collect()
     # test()
 
-
+    lookup_resource("Winter's Tale")
 
     # lookup_resource_no_filter('Tool')
     lookup_resource('Western Conference Southwest Division')

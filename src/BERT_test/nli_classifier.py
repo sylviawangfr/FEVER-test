@@ -74,7 +74,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
     output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"nli_{output_folder}"
     max_seq_length = 300
     do_lower_case = True
-    train_batch_size = 32
+    train_batch_size = 8
     learning_rate = 5e-6
     num_train_epochs = 3.0
     # Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10%% of training.

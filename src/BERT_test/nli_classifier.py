@@ -163,6 +163,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
     # get train data
     train_examples = processor.get_train_examples(upstream_train_data, sampler)
     print(f"length of train examples: {len(train_examples)}")
+    logger.info("  Batch size = %d", train_batch_size)
     num_train_optimization_steps = int(
         len(train_examples) / train_batch_size / gradient_accumulation_steps) * num_train_epochs
     if local_rank != -1:

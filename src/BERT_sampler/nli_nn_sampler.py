@@ -282,7 +282,7 @@ def eval_samples(sampled_data):
     refused = list(filter(lambda x: (x['label'] == 'REFUTES'), sampled_data))
     nei = list(filter(lambda x: (x['label'] == 'NOT ENOUGH INFO'), sampled_data))
     support = list(filter(lambda x: (x['label'] == 'SUPPORTS'), sampled_data))
-    print(f"refused:{len(refused)}, nei:{len(nei)}, support:{len(support)}")
+    print(f"REFUTES:{len(refused)}, nei:{len(nei)}, SUPPORTS:{len(support)}")
 
 
 if __name__ == '__main__':

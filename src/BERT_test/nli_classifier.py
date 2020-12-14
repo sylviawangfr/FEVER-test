@@ -80,7 +80,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
     # Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10%% of training.
     warmup_proportion = 0.1
     # local_rank for distributed training on gpus
-    local_rank = [0, 1, 2]
+    local_rank = 2
     seed = 42
     gradient_accumulation_steps = 8
 

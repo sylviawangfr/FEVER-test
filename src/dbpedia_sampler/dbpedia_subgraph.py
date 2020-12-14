@@ -30,7 +30,7 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
     not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text, '')
     linked_phrases = [i['text'] for i in linked_phrases_l]
     all_phrases = not_linked_phrases_l + linked_phrases
-    relative_hash = {key: set() for key in linked_phrases}
+    relative_hash = {key: set() for key in all_phrases}
     all_uris = dict()
     for i in linked_phrases_l:
         uris = i['links']
@@ -66,21 +66,23 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
     no_relatives_found = []
     for i in relative_hash:
         if len(relative_hash[i]) == 0:
-            no_relatives_found.append(lookup_hash[i])
+            no_relatives_found.append(i)
 
     for i in no_relatives_found:
     #     if len(t['categories']) < 1 or len(t['categories']) > 20:
-        possible_links = i['links']
-        for t in possible_links:
-            if not dbpedia_triple_linker.does_node_exit_in_list(t['URI'], merged_result):
-                single_node = dict()
-                single_node['subject'] = t['URI']
-                single_node['object'] = ''
-                single_node['relation'] = ''
-                single_node['keywords'] = t['text']
-                single_node['relatives'] = []
-                single_node['text'] = t['text']
-                merged_result.append(single_node)
+        if i in lookup_hash:
+            possible_links = i['links']
+            for t in possible_links:
+                if not dbpedia_triple_linker.does_node_exit_in_list(t['URI'], merged_result):
+                    single_node = dict()
+                    single_node['subject'] = t['URI']
+                    single_node['object'] = ''
+                    single_node['relation'] = ''
+                    single_node['keywords'] = t['text']
+                    single_node['relatives'] = []
+                    single_node['text'] = t['text']
+                    single_node['exact_match'] = t['exact_match']
+                    merged_result.append(single_node)
             # continue
 
         # for i in t['categories']:
@@ -94,6 +96,7 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
     claim_d['graph'] = merged_result
     claim_d['embedding'] = embeddings_hash
     claim_d['lookup_hash'] = lookup_hash
+    claim_d['no_relatives'] = no_relatives_found
     return claim_d
 
 
@@ -258,9 +261,10 @@ if __name__ == '__main__':
     # s9 = 'Tap Tap was a series of rhythm games by Tapulous available for the iOS of which several versions , both purchasable and free , have been produced .'
     # s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
     # s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
-    ss1 = "Giada at Home was only available on DVD ."
-    ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
+    # ss1 = "Giada at Home was only available on DVD ."
+    # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
     # ss1 = "Cheese in the Trap (TV series) only stars animals."
+    ss1 = "Michelle Obama's husband was born in Kenya"
     claim_dict = construct_subgraph_for_claim(ss1)
-    print(construct_subgraph_for_candidate(claim_dict, ss2, doc_title=''))
+    # print(construct_subgraph_for_candidate(claim_dict, ss2, doc_title=''))
     # test_claim()

@@ -1,0 +1,102 @@
+{
+  "wikipages_tmp" : {
+    "aliases" : { },
+    "mappings" : {
+      "properties" : {
+        "id" : {
+          "type" : "text",
+          "term_vector" : "with_positions_offsets",
+          "analyzer" : "underscore_analyzer",
+          "fielddata" : true
+        },
+        "lines" : {
+          "type" : "text",
+          "term_vector" : "with_positions_offsets",
+          "analyzer" : "wikipage_analyzer",
+          "fielddata" : true
+        },
+        "text" : {
+          "type" : "text",
+          "term_vector" : "with_positions_offsets",
+          "analyzer" : "wikipage_analyzer",
+          "fielddata" : true
+        }
+      }
+    },
+    "settings" : {
+      "index" : {
+        "number_of_shards" : "1",
+        "provided_name" : "wikipages_tmp",
+        "creation_date" : "1560947751901",
+        "analysis" : {
+          "filter" : {
+            "stemmer_filter" : {
+              "name" : "possessive_english",
+              "type" : "stemmer"
+            },
+            "light_english_stemmer" : {
+              "type" : "stemmer",
+              "language" : "light_english"
+            }
+          },
+          "analyzer" : {
+            "wikipage_analyzer" : {
+              "filter" : [
+                "lowercase",
+                "light_english_stemmer",
+                "stemmer_filter"
+              ],
+              "char_filter" : [
+                "nfkc_normalizer",
+                "stopwords_filter"
+              ],
+              "tokenizer" : "standard"
+            },
+            "underscore_analyzer" : {
+              "filter" : [
+                "lowercase",
+                "light_english_stemmer",
+                "stemmer_filter"
+              ],
+              "char_filter" : [
+                "nfkc_normalizer",
+                "underscore_filter",
+                "stopwords_filter"
+              ],
+              "tokenizer" : "standard"
+            }
+          },
+          "char_filter" : {
+            "nfkc_normalizer" : {
+              "name" : "nfkc",
+              "type" : "icu_normalizer"
+            },
+            "stopwords_filter" : {
+              "type" : "mapping",
+              "mappings" : [
+                "-LRB- => (",
+                "-RRB- => )",
+                "-LSB- => [",
+                "-RSB- => ]",
+                "-LCB- => {",
+                "-RCB- => }",
+                "-COLON- => :"
+              ]
+            },
+            "underscore_filter" : {
+              "type" : "mapping",
+              "mappings" : [
+                "_=>\\u0020"
+              ]
+            }
+          }
+        },
+        "number_of_replicas" : "1",
+        "uuid" : "J9OcZfUXRrOVb7M4RlSd6g",
+        "version" : {
+          "created" : "7000099"
+        }
+      }
+    }
+  }
+}

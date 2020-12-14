@@ -1,6 +1,6 @@
 import regex
 import spacy
-from spacy.symbols import nsubj, dobj, pobj, VERB
+from spacy.symbols import nsubj, dobj, pobj, VERB, nsubjpass
 from memory_profiler import profile
 
 # nlp_eng = spacy.load("en_core_web_md")
@@ -67,7 +67,7 @@ def get_dependent_verb(sent, phrase_l):
         for possible_phrase in doc_merged:
             if possible_phrase.text == ph:
                 one_p = {'dep': '', 'verb': ''}
-                if possible_phrase.dep == nsubj:
+                if possible_phrase.dep in [nsubj, nsubjpass] :
                     one_p['dep'] = 'subj'
                 if possible_phrase.dep == dobj or possible_phrase.dep == pobj:
                     one_p['dep'] = 'obj'
@@ -84,6 +84,7 @@ def get_dependent_verb(sent, phrase_l):
                         except StopIteration:
                             pass
                 phs[ph] = one_p
+                break
     return phs
 
 
@@ -110,6 +111,8 @@ def get_phrase_token_indice(sent_token_l, phrase_token_l):
 
 
 if __name__ == '__main__':
+    ss1 = "Michelle Obama's husband was born in Kenya"
+    verbs = get_dependent_verb(ss1, ['Michelle Obama', 'husband', 'Kenya'])
 
     # d_l = ['two', 'three', 'four', 'six', 'one', 'two', 'thirty', 'one', 'two']
     # p_l = ['one', 'two']

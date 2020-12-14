@@ -1,7 +1,7 @@
 {
   "mappings": {
       "properties": {
-        "id" : {
+        "sid" : {
           "type": "keyword"
         },
         "text": {
@@ -17,7 +17,10 @@
           "fielddata": true
         },
         "doc_id": {
-          "type": "keyword"
+          "type": "text",
+          "term_vector": "with_positions_offsets",
+          "analyzer": "underscore_analyzer",
+          "fielddata": true
         }
       }
   },

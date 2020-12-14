@@ -14,6 +14,7 @@ import copy
 import random
 import numpy as np
 from collections import Counter
+import math
 
 from tqdm import tqdm
 
@@ -95,102 +96,84 @@ def sample_data_for_item(item, pred=False):
     return res_sentids_list, flags
 
 
-def sample_data_for_item_extend(item, pred=False):
+# mode in ['train', 'pred', 'eval']
+def sample_data_for_item_extend(item, mode='train'):
     res_sentids_list = []
-    flags = []
-    extended_e_list = []
-    if pred:
+    extended_RS_list = []
+    extended_NEI_list = []
+    if mode == 'pred':
         e_set = check_sentences.get_predicted_evidence(item)
         # return functools.reduce(operator.concat, e_list)
-        return list(e_set), None
+        return list(e_set), None, None
 
+    def sample_not_in_evidence_set(sampled_e, e_set):
+        doc_id = sampled_e.split(c_scorer.SENT_LINE)[0]
+        ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
+        pick_flag = True
+        for one_evidence in e_set:
+            if one_evidence.contains(doc_id, ln):
+                pick_flag = False
+        return pick_flag
     if item['verifiable'] == "VERIFIABLE":
         assert item['label'] == 'SUPPORTS' or item['label'] == 'REFUTES'
         e_set = check_sentences.check_and_clean_evidence(item)
-        additional_data = item['predicted_sentids']
-        # print(len(additional_data))
+        for evidence in e_set:
+            # exact evidence
+            res_sentids_list.append(evidence)
+            # extend evidence + 2
+            if mode == 'train':
+                additional_data = item['predicted_sentids']
+                n_e = len(evidence)
+                # extend_number >= 2
+                extend_number = 2  # >= 2
+                # extend S and R
+                for i in range(extend_number):
+                    extended_SR_evidences = copy.deepcopy(evidence)
+                    if n_e < 5:
+                        additional_sample_num = random.randint(1, 5 - n_e)
+                        random.shuffle(additional_data)
+                        for sampled_e in additional_data:
+                            if additional_sample_num <= 0:
+                                extended_RS_list.append(extended_SR_evidences)
+                                break
+                            if sample_not_in_evidence_set(sampled_e, e_set):
+                                doc_ids = sampled_e.split(c_scorer.SENT_LINE)[0]
+                                ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
+                                extended_SR_evidences.add_sent(doc_ids, ln)
+                                additional_sample_num -= 1
 
-        for evidences in e_set:
-            # print(evidences)
-            new_evidences = copy.deepcopy(evidences)
-            extended_evidences = copy.deepcopy(evidences)
-            n_e = len(evidences)
-            if n_e < 5:
-                additional_sample_num = random.randint(0, 5 - n_e)
-                random.shuffle(additional_data)
-                for sampled_e in additional_data[:additional_sample_num]:
-                    doc_ids = sampled_e.split(c_scorer.SENT_LINE)[0]
-                    ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
-                    new_evidences.add_sent(doc_ids, ln)
-
-            if new_evidences != evidences:
-                flag = f"verifiable.non_eq.{len(new_evidences) - len(evidences)}"
-                flags.append(flag)
-                pass
-            else:
-                flag = "verifiable.eq.0"
-                flags.append(flag)
-                pass
-            res_sentids_list.append(new_evidences)
-
-            # 1. reduce and random pick support and Refuse evids to expand NEI labels
-            # 2. store expanded sets and try to balance sample sets after normal sampling
-            if not pred and 1 < n_e <= 5:
-                try:
-                    additional_sample_num = random.randint(0, 5 - n_e)
-                    pop_sample_idx = random.randint(0, n_e - 1)
-                except:
-                    print("error")
-                extended_evidences.pop_sent(pop_sample_idx)
-                for sampled_e in additional_data:
-                    if additional_sample_num <= 0:
-                        break
-                    doc_id = sampled_e.split(c_scorer.SENT_LINE)[0]
-                    ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
-                    pick_flag = True
-                    for one_evidence in e_set:
-                        if one_evidence.contains(doc_id, ln):
-                            pick_flag = False
-                    if pick_flag:
-                        extended_evidences.add_sent(doc_id, ln)
-                        additional_sample_num -= 1
-                extended_e_list.append(extended_evidences)
-
+                # extend NEI
+                for i in range(n_e):
+                    extended_NEI_evidence = copy.deepcopy(evidence)
+                    extended_NEI_evidence.pop_sent(i)
+                    additional_sample_num = random.randint(2-n_e, 5 - n_e)
+                    for sampled_e in additional_data:
+                        if additional_sample_num <= 0 and extended_NEI_evidence not in extended_NEI_list:
+                            extended_NEI_list.append(extended_NEI_evidence)
+                            break
+                        if sample_not_in_evidence_set(sampled_e, e_set):
+                            doc_id = sampled_e.split(c_scorer.SENT_LINE)[0]
+                            ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
+                            extended_NEI_evidence.add_sent(doc_id, ln)
+                            additional_sample_num -= 1
         assert len(res_sentids_list) == len(e_set)
 
     elif item['verifiable'] == "NOT VERIFIABLE":
         assert item['label'] == 'NOT ENOUGH INFO'
-
-        e_set = check_sentences.check_and_clean_evidence(item)
         additional_data = item['predicted_sentids']
-        # print(len(additional_data))
         random.shuffle(additional_data)
-        additional_sample_num = random.randint(2, 5)
+        additional_sample_num = random.randint(1, 5)
         raw_evidences_list = []
         for sampled_e in additional_data[:additional_sample_num]:
             doc_ids = sampled_e.split(c_scorer.SENT_LINE)[0]
             ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
             raw_evidences_list.append((doc_ids, ln))
         new_evidences = check_sentences.Evidences(raw_evidences_list)
-
-        if len(new_evidences) == 0:
-            flag = f"verifiable.eq.0"
-            flags.append(flag)
-            pass
-        else:
-            flag = f"not_verifiable.non_eq.{len(new_evidences)}"
-            flags.append(flag)
-
-        assert all(len(e) == 0 for e in e_set)
         res_sentids_list.append(new_evidences)
-        assert len(res_sentids_list) == 1
+    return res_sentids_list, extended_RS_list, extended_NEI_list
 
-    assert len(res_sentids_list) == len(flags)
-
-    return res_sentids_list, flags, extended_e_list
-
-
-def get_sample_data(upstream_data, tokenized=False, pred=False):
+# mode in ['train', 'pred', 'eval']
+def get_sample_data(upstream_data, tokenized=False, mode='train'):
     cursor, conn = fever_db.get_cursor()
     if isinstance(upstream_data, list):
         d_list = upstream_data
@@ -198,11 +181,10 @@ def get_sample_data(upstream_data, tokenized=False, pred=False):
         d_list = read_json_rows(upstream_data)
 
     sampled_data_list = []
-    extended_data_list = []
 
     for item in tqdm(d_list, desc="Sampling"):
         # e_list = check_sentences.check_and_clean_evidence(item)
-        sampled_e_list, flags, extended_e_list = sample_data_for_item_extend(item, pred)
+        sampled_e_list, extended_RS_list, extended_NEI_list = sample_data_for_item_extend(item, mode)
         # print(flags)
         for i, sampled_evidence in enumerate(sampled_e_list):
             new_item = dict()
@@ -214,34 +196,40 @@ def get_sample_data(upstream_data, tokenized=False, pred=False):
                 new_item['claim'] = item['claim']
             else:
                 new_item['claim'] = ' '.join(easy_tokenize(item['claim']))
-
             new_item['evid'] = evidence_text
-            new_item['predicted_sentids'] = item['predicted_sentids']
-            if not pred:
-                new_item['predicted_evidence'] = convert_evidence2scoring_format(item['predicted_sentids'])
-                new_item['verifiable'] = item['verifiable']
-                new_item['label'] = item['label']
-            else:
+
+            if mode == 'pred':
                 new_item['predicted_evidence'] = item['predicted_evidence']
+                new_item['predicted_sentids'] = item['predicted_sentids']
                 # not used, but to avoid example error
                 new_item['label'] = 'NOT ENOUGH INFO'
+            else:
+                new_item['label'] = item['label']
             sampled_data_list.append(new_item)
-        if not pred:
-            for idx, extended_evidence in enumerate(extended_e_list):
+        if mode == 'train':
+            def init_extended_evidence(tmp_extended_evidence):
                 extend_item = dict()
-                evidence_text = evidence_list_to_text(cursor, extended_evidence,
+                evidence_text = evidence_list_to_text(cursor, tmp_extended_evidence,
                                                       contain_head=True, id_tokenized=tokenized)
-                extend_item['id'] = str(item['id']) + '#' + str(i)
-
+                extend_item['id'] = str(item['id']) + '_' + str(i)
                 if tokenized:
                     extend_item['claim'] = item['claim']
                 else:
                     extend_item['claim'] = ' '.join(easy_tokenize(item['claim']))
-
                 extend_item['evid'] = evidence_text
+                return extend_item
+
+            for idx, extended_evidence in enumerate(extended_RS_list):
+                extend_item = init_extended_evidence(extended_evidence)
+                extend_item['id'] = extend_item['id'] + '_rs'
+                extend_item['label'] = item['label']
+                sampled_data_list.append(extend_item)
+            for idx, extended_evidence in enumerate(extended_NEI_list):
+                extend_item = init_extended_evidence(extended_evidence)
+                extend_item['id'] = extend_item['id'] + '_nei'
                 extend_item['label'] = 'NOT ENOUGH INFO'
-                extended_data_list.append(extend_item)
-    sampled_data_list.extend(extended_data_list)
+                sampled_data_list.append(extend_item)
+
     cursor.close()
     print(f"Sampled evidences: {len(sampled_data_list)}")
     return sampled_data_list
@@ -290,10 +278,20 @@ def format_printing(item):
     return
 
 
+def eval_samples(sampled_data):
+    refused = list(filter(lambda x: (x['label'] == 'REFUTES'), sampled_data))
+    nei = list(filter(lambda x: (x['label'] == 'NOT ENOUGH INFO'), sampled_data))
+    support = list(filter(lambda x: (x['label'] == 'SUPPORTS'), sampled_data))
+    print(f"refused:{len(refused)}, nei:{len(nei)}, support:{len(support)}")
+
+
 if __name__ == '__main__':
     additional_file = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
-    t = get_sample_data(additional_file, tokenized=True)
-    print(len(t))
+    t = get_sample_data(additional_file, tokenized=True, mode='train')
+    eval_samples(t)
+
+    t = get_sample_data(additional_file, tokenized=True, mode='eval')
+    eval_samples(t)
 
     # complete_upstream_dev_data = additional_file
     # count = Counter()

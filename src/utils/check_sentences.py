@@ -86,6 +86,7 @@ def check_and_clean_evidence(item):
             cleaned_one_annotator_evidences_list.append((docid, sent_num))
 
         one_annotator_evidences = Evidences(cleaned_one_annotator_evidences_list)
+        # if not evidence_list_exist_in_set(one_annotator_evidences, evidences_list_set):
         evidences_list_set.add(one_annotator_evidences)
 
     return evidences_list_set

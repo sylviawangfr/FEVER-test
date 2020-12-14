@@ -13,6 +13,7 @@ import numpy as np
 import log_util
 import utils.check_sentences
 import utils.common_types as bert_para
+from utils.resource_manager import FeverDBResource
 from data_util.data_preperation.tokenize_fever import easy_tokenize
 from utils import common, c_scorer
 from utils.file_loader import *
@@ -107,6 +108,39 @@ def get_full_list_sample(paras: bert_para.PipelineParas):
         return post_filter(full_data_list, keep_prob=paras.post_filter_prob, seed=12)
     else:
         return full_data_list
+
+
+def get_claim_sample_list(claim, doc_ids):
+    feverDB = FeverDBResource()
+    r_list = []
+    id_list = []
+    full_data_list = []
+    for doc_id in doc_ids:
+        cur_r_list, cur_id_list = fever_db.get_all_sent_by_doc_id(feverDB.get_cursor(), doc_id, with_h_links=False)
+        # Merging to data list and removing duplicate
+        for i in range(len(cur_r_list)):
+            if cur_id_list[i] in id_list:
+                continue
+            else:
+                r_list.append(cur_r_list[i])
+                id_list.append(cur_id_list[i])
+    if not (len(id_list) == len(set(id_list)) or len(r_list) == len(id_list)):
+        print("error sampling docs: ")
+        print(doc_ids)
+    zipped_s_id_list = list(zip(r_list, id_list))
+    # Sort using id
+    zipped_s_id_list = sorted(zipped_s_id_list, key=lambda x: (x[1][0], x[1][1]))
+    all_sent_list = convert_to_formatted_sent(zipped_s_id_list, None, contain_head=True,
+                                              id_tokenized=True)
+    cur_id = claim['id']
+    for i, sent_item in enumerate(all_sent_list):
+        sent_item['selection_id'] = str(cur_id) + "<##>" + str(sent_item['sid'])
+        sent_item['query'] = claim['claim']
+        full_data_list.append(sent_item)
+    # cursor.close()
+    # conn.close()
+    return full_data_list
+
 
 
 def trucate_item(d_list, top_k=None):

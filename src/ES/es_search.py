@@ -84,6 +84,56 @@ def search_doc_dbpedia_context(context_dict):
         return []
 
 
+def search_doc_id_and_keywords(possible_id, keywords):
+    search = Search(using=client, index=config.WIKIPAGE_INDEX)
+    must = []
+    should = []
+    must.append(
+        {'match_phrase': {'id': {'query': possible_id, 'analyzer' : 'underscore_analyzer', 'boost': 2}}})
+    # should.append({'match_phrase': {'lines': {'query': possible_id.replace("_", " "), 'analyzer': 'underscore_analyzer'}}})
+    if len(keywords) == 2:
+        relation = keywords[0]
+        should.append({'match': {'lines': {'query': relation, 'analyzer': 'underscore_analyzer'}}})
+    if len(keywords) > 0:
+        obj = keywords[-1]
+        should.append({'match_phrase': {'lines': {'query': obj, 'analyzer': 'underscore_analyzer'}}})
+    search = search.query(Q('bool', must=must, should=should)). \
+                 highlight('lines', number_of_fragments=0, fragment_size=150). \
+                 sort({'_score': {"order": "desc"}}). \
+                 source(include=['id'])[0:5]
+
+    response = search.execute()
+    r_list = []
+    sentences_list = []
+    phrases = [possible_id]
+    phrases.extend(keywords)
+    for hit in response['hits']['hits']:
+        score = hit['_score']
+        id = hit['_source']['id']
+        if 'highlight' in hit:
+            lines = hit['highlight']['lines'][0]
+            lines = lines.replace("</em> <em>", " ")
+            lines_json_l = json.loads(lines)
+            match_count = [i['sentences'].count("<em>") for i in lines_json_l]
+            sorted_matching_index = sorted(range(len(match_count)), key=lambda k: match_count[k],
+                                           reverse=True)
+            highest_match_count = -1
+            for idx in sorted_matching_index:
+                if match_count[idx] > 0 and match_count[idx] >= highest_match_count:
+                    line_num = lines_json_l[idx]['line_num']
+                    sentence = lines_json_l[idx]['sentences']
+                    sentence = sentence.replace("</em>", "").replace("<em>", "")
+                    sentences_list.append({'sid': f'{possible_id}<SENT_LINE>{line_num}', 'sentence': sentence})
+                    highest_match_count = match_count[idx]
+                else:
+                    break
+        doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': sentences_list}
+        r_list.append(doc_dic)
+    return r_list
+
+
+
+
 def search_doc_id(possible_id):
     try:
         search = Search(using=client, index=config.WIKIPAGE_INDEX)
@@ -290,8 +340,9 @@ def test_search_id(text):
         return []
 
 if __name__ == '__main__':
-    t = read_json(config.PRO_ROOT / "src/ES/wikipage_mapping.json")
-    print(test_search_id("Trouble with the Curve"))
+    search_doc_id_and_keywords("Cordillera Domeyko", ["parent Mountain Peak", "Andes"])
+    # t = read_json(config.PRO_ROOT / "src/ES/wikipage_mapping.json")
+    # print(test_search_id("Trouble with the Curve"))
     # print(has_phrase_covered(['a c', 'b', 'c'], ['a b c', 'c d']))
     # print(search_doc(['Fox 2000 Pictures', 'Soul Food']))
     # test_search_claim("Lisa Kudrow was in Romy and Michele's High School Reunion (1997), The Opposite of Sex (1998), Analyze This (1999) and its sequel Analyze That (2002), Dr. Dolittle 2 (2001), Wonderland (2003), Happy Endings (2005), P.S. I Love You (2007), Bandslam (2008), Hotel for Dogs (2009), Easy A (2010), Neighbors (2014), its sequel Neighbors 2: Sorority Rising (2016) and The Girl on the Train (2016).")

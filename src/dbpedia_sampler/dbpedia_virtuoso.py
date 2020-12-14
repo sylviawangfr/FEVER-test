@@ -127,6 +127,7 @@ def get_properties(resource_uri):
         tris.remove(i)
     return tris
 
+
 def get_resource_wiki_page(resource_uri):
     query_str = f"PREFIX dbr: <{PREFIX_DBR}> " \
         f"SELECT distinct (<{resource_uri}> AS ?subject) " \

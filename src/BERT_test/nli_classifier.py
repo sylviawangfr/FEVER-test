@@ -302,7 +302,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
         paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
         paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
         paras.pred = False
-        paras.mode = 'dev'
+        paras.mode = 'eval'
         paras.BERT_model = output_dir
         paras.BERT_tokenizer = output_dir
         paras.output_folder = output_folder

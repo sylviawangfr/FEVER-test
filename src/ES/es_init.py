@@ -37,46 +37,52 @@ def init_fever_sentence_index():
         print("ES index for fever sentences has been created successfully")
 
 
-def build_sentences_records():
-    count = 0
-    search = Search(using=client, index=config.WIKIPAGE_INDEX)
-    must = []
-    must.append({'regexp': {'text': '.+'}})
-    must.append({'regexp': {'lines': '.+'}})
-
-    search = search.query(Q('bool', must=must))
-    try:
-        search.execute()
-        print("got all wiki doc records.")
-        thread_exe(bulk_save_sentence_hit, search.scan(), 1000, "building sentence index")
-    except Exception as e:
-        print(e)
-    print("done with building sentence index")
-
-
-def bulk_save_sentence_hit(hit):
-    doc_id = hit.id
-    lines = hit.lines
-    lines_items = json.loads(lines)
-    sen_json_l = []
-    for line in lines_items:
-        if line['sentences']:
-            sent_pid = doc_id + '(-.-)' + str(line['line_num'])
-            sent = line['sentences']
-            h_links = json.dumps(line['h_links'])
-            # to json
-            s_dict = {'id': sent_pid, 'text': sent, 'h_links': h_links, 'doc_id': doc_id}
-            sen_json_l.append(json.dumps(s_dict))
-
-    # bunk insert es
-    ESH.bulk(client, sen_json_l, index=config.FEVER_SEN_INDEX)
+# def build_sentences_records():
+    # count = 0
+    # search = Search(using=client, index=config.WIKIPAGE_INDEX)
+    # must = []
+    # must.append({'regexp': {'text': '.+'}})
+    # must.append({'regexp': {'lines': '.+'}})
+    #
+    # search = search.query(Q('bool', must=must))
+    # try:
+    #     search.execute()
+    #     print("got all wiki doc records.")
+    #     thread_exe(bulk_save_sentence_hit, search.scan(), 8, "building sentence index")
+    # except Exception as e:
+    #     print(e)
+    # print("done with building sentence index")
 
 
-def init_wikipages():
+
+# def bulk_save_sentence_hit(hit):
+#     doc_id = hit.id
+#     lines = hit.lines
+#     lines_items = json.loads(lines)
+#     sen_json_l = []
+#     for line in lines_items:
+#         if line['sentences']:
+#             sent_pid = doc_id + '(-.-)' + str(line['line_num'])
+#             sent = line['sentences']
+#             h_links = json.dumps(line['h_links'])
+#             # to json
+#             s_dict = {'sid': sent_pid, 'text': sent, 'h_links': h_links, 'doc_id': doc_id}
+#             sen_json_l.append(json.dumps(s_dict))
+#
+#     # bunk insert es
+#     ESH.bulk(client, sen_json_l, index=config.FEVER_SEN_INDEX)
+
+
+def index_wikipages():
     # process wikipedia dump file to ES
     thread_number = 5
     thread_exe(add_wiki_bunch, config.WIKI_PAGE_PATH.iterdir(), thread_number, "indexing wiki pages")
     print("indexed all wiki docs in ES")
+
+
+def index_sentences():
+    thread_number = 5
+    thread_exe(add_sentence_bunch, config.WIKI_PAGE_PATH.iterdir(), thread_number, "indexing sentence pages")
 
 
 def add_wiki_bunch(file):
@@ -88,15 +94,34 @@ def add_wiki_bunch(file):
         ESH.bulk(client, piece, index=config.WIKIPAGE_INDEX)
 
 
+def add_sentence_bunch(file):
+    json_rows = read_json_rows(file)
+    clean_rows = [parse_pages_checks(row) for row in json_rows]
+    sen_json_l = []
+    for r in clean_rows:
+        doc_id = r['id']
+        lines = json.loads(r['lines'])
+        for line in lines:
+            if line['sentences']:
+                sid = doc_id + '(-.-)' + str(line['line_num'])
+                sent = line['sentences']
+                h_links = json.dumps(line['h_links'])
+                # to json
+                s_dict = {'sid': sid, 'text': sent, 'h_links': h_links, 'doc_id': doc_id}
+                sen_json_l.append(json.dumps(s_dict))
+    ESH.bulk(client, sen_json_l, index=config.FEVER_SEN_INDEX)
+
+
 def test_indexing():
     f = config.WIKI_PAGE_PATH / "wiki-001.jsonl"
-    add_wiki_bunch(f)
+    add_sentence_bunch(f)
 
 
 if __name__ == '__main__':
-    init_index()
+    # test_indexing()
+    # init_index()
     # init_wikipages()
 
-    # init_fever_sentence_index()
-    # build_sentences_records()
+    init_fever_sentence_index()
+    index_sentences()
     #  pass

@@ -461,8 +461,6 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings,  fuzzy_matc
             filtered_triples = get_topk_similar_triples(resource1['text'], resource2, keyword_embeddings, top_k=3)
             for item in filtered_triples:
                 if not does_tri_exit_in_list(item, result):
-                    item['relatives'] = [resource1['text'], resource2['text']]
-                    item['exact_match'] = resource1['exact_match'] | resource2['exact_match']
                     result.append(item)
     return result
 

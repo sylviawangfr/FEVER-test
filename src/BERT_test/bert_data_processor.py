@@ -100,19 +100,19 @@ class FeverNliProcessor(DataProcessor):
 
     def get_train_examples(self,upstream_data, sampler='nli_nn'):
         sampler_fun = get_sampler(sampler)
-        train_list = sampler_fun(upstream_data, tokenized=True)
+        train_list = sampler_fun(upstream_data, tokenized=True, mode='train')
         return self._create_examples(train_list)
 
     def get_dev_examples(self, upstream_data, sampler='nli_nn'):
         """See base class."""
         sampler_fun = get_sampler(sampler)
-        dev_list = sampler_fun(upstream_data, tokenized=True)
+        dev_list = sampler_fun(upstream_data, tokenized=True, mode='eval')
         return self._create_examples(dev_list), dev_list
 
     def get_test_examples(self, upstream_data, sampler='nli_nn'):
         """See base class."""
         sampler_fun = get_sampler(sampler)
-        dev_list = sampler_fun(upstream_data, tokenized=True, pred=True)
+        dev_list = sampler_fun(upstream_data, tokenized=True, mode='pred')
         return self._create_examples(dev_list), dev_list
 
     def get_labels(self):

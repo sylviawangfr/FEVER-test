@@ -80,8 +80,8 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
     # Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10%% of training.
     warmup_proportion = 0.1
     # local_rank for distributed training on gpus
-    # local_rank = -1
-    local_rank = torch.distributed.get_rank()
+    local_rank = 1
+
     seed = 42
     gradient_accumulation_steps = 8
 
@@ -104,11 +104,12 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         n_gpu = torch.cuda.device_count()
     else:
-        torch.cuda.set_device(local_rank)
-        device = torch.device("cuda", local_rank)
-        n_gpu = 1
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         torch.distributed.init_process_group(backend='nccl')
+        local_rank = torch.distributed.get_rank()
+        torch.cuda.set_device(local_rank)
+        device = torch.device("cuda", local_rank)
+        n_gpu = torch.cuda.device_count()
 
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',

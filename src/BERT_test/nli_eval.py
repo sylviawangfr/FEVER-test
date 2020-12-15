@@ -75,15 +75,15 @@ def eval_nli_and_save(paras : bert_para.PipelineParas):
     sequence_length = 300
     processor = FeverNliProcessor()
 
-    if paras.pred:
-        sampler = 'nli_nn'
-    else:
-        sampler = 'nli_tfidf'
+    # if paras.pred:
+    #     sampler = 'nli_nn'
+    # else:
+    #     sampler = 'nli_tfidf'
 
     if paras.mode == 'eval':
-        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, sampler)
+        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, 'nli_nn')
     else:
-        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, sampler)
+        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, 'nli_nn')
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), sequence_length, tokenizer)

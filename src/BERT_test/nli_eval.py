@@ -226,8 +226,7 @@ if __name__ == "__main__":
     # paras.pred = True
     paras.mode = 'eval'
     paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "bert_gat_merged_ss_dev_5/eval_data_bert_gat_ss_5_dev_0.1_top[5].jsonl")
-    paras.upstream_data = paras.original_data
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "bert_gat_merged_ss_dev_5/eval_data_bert_gat_ss_5_dev_0.1_top[5].jsonl")
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.output_folder = 'dev_before_refactor'

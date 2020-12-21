@@ -132,6 +132,51 @@ def search_doc_id_and_keywords(possible_id, keywords):
     return r_list
 
 
+def search_doc_id_and_keywords_in_sentences(possible_id, keywords):
+    search = Search(using=client, index=config.FEVER_SEN_INDEX)
+    must = []
+    should = []
+    must.append(
+        {'match_phrase': {'doc_id': {'query': possible_id, 'analyzer': 'underscore_analyzer', 'boost': 2}}})
+    if len(keywords) == 2:
+        relation = keywords[0]
+        should.append({'match': {'text': {'query': relation, 'analyzer': 'wikipage_analyzer'}}})
+    if len(keywords) > 0:
+        obj = keywords[-1]
+        should.append({'match_phrase': {'text': {'query': obj, 'analyzer': 'wikipage_analyzer'}}})
+    search = search.query(Q('bool', must=must, should=should)). \
+                 highlight('lines', number_of_fragments=0, fragment_size=150). \
+                 sort({'_score': {"order": "desc"}}). \
+                 source(include=['sid', 'text', 'h_links'])[0:5]
+
+    response = search.execute()
+    r_list = []
+    sentences_list = []
+    phrases = [possible_id]
+    phrases.extend(keywords)
+    for hit in response['hits']['hits']:
+        score = hit['_score']
+        id = hit['_source']['id']
+        if 'highlight' in hit:
+            lines = hit['highlight']['lines'][0]
+            lines = lines.replace("</em> <em>", " ")
+            lines_json_l = json.loads(lines)
+            match_count = [i['sentences'].count("<em>") for i in lines_json_l]
+            sorted_matching_index = sorted(range(len(match_count)), key=lambda k: match_count[k],
+                                           reverse=True)
+            highest_match_count = -1
+            for idx in sorted_matching_index:
+                if match_count[idx] > 0 and match_count[idx] >= highest_match_count:
+                    line_num = lines_json_l[idx]['line_num']
+                    sentence = lines_json_l[idx]['sentences']
+                    sentence = sentence.replace("</em>", "").replace("<em>", "")
+                    sentences_list.append({'sid': f'{possible_id}<SENT_LINE>{line_num}', 'sentence': sentence})
+                    highest_match_count = match_count[idx]
+                else:
+                    break
+        doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': sentences_list}
+        r_list.append(doc_dic)
+    return r_list
 
 
 def search_doc_id(possible_id):

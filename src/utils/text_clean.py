@@ -158,6 +158,7 @@ def reverse_convert_brc(string):
 
 
 if __name__ == '__main__':
+    t = normalize("""["French", "Franco-Seychellois", "E\u0301tienne de Silhouette", "E\u0301tienne de Silhouette", "Louis XV", "Louis XV"]""")
     # is_date('October 18 , 2008')
     is_date('1980-83')
     is_number('1980-83')

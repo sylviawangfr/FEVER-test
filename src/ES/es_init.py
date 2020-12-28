@@ -119,9 +119,8 @@ def test_indexing():
 
 if __name__ == '__main__':
     # test_indexing()
-    # init_index()
-    # index_wikipages()
+    init_index()
+    index_wikipages()
 
-    # init_fever_sentence_index()
-    # index_sentences()
-     pass
+    init_fever_sentence_index()
+    index_sentences()

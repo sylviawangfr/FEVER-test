@@ -11,6 +11,7 @@ from utils import fever_db
 from utils.file_loader import save_intermidiate_results, read_json_rows
 
 SENT_LINE = '<SENT_LINE>'
+SENT_LINE2 = '(-.-)'
 SENT_DOC_TITLE = ' - '
 
 """

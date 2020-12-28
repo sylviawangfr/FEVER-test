@@ -2,11 +2,14 @@ import json
 import sqlite3
 
 from tqdm import tqdm
+from typing import Iterable, Tuple
+
+SENT_LINE2 = '(-.-)'
 
 
 class Evidences(object):
     # Evidences is a list of docid and sentences line number
-    def __init__(self, evidences):
+    def __init__(self, evidences: Iterable[Tuple]):
         evidences_set = set()
         for doc_id, line_num in evidences:
             if doc_id is not None and line_num is not None:
@@ -16,11 +19,31 @@ class Evidences(object):
         # print(evidences_list)
         self.evidences_list = evidences_list
 
+    def __init__(self, sid: str):
+        evidences_l = []
+        doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
+        if doc_id is not None and ln is not None:
+            evidences_l.append((doc_id, ln))
+        self.evidences_list = evidences_l
+
+    def __init__(self, sids: Iterable[str]):
+        evidences_set = set()
+        evidence_t = [(sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])) for sid in sids]
+        for doc_id, ln in evidence_t:
+            if doc_id is not None and ln is not None:
+                evidences_set.add((doc_id, ln))
+        evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
+        self.evidences_list = evidences_list
+
     def add_sent(self, sent, ln):
         o_set = set(self.evidences_list)
         o_set.add((sent, ln))
         o_set = sorted(o_set, key=lambda x: (x[0], x[1]))
         self.evidences_list = list(o_set)
+
+    def add_sent(self, sid):
+        doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
+        self.add_sent(doc_id, ln)
 
     def pop_sent(self, index):
         del_item = self.evidences_list.pop(index)
@@ -31,6 +54,10 @@ class Evidences(object):
             if doc_id == d and l == ln:
                 return True
         return False
+
+    def contains(self, sid):
+        doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
+        return self.contains(doc_id, ln)
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Evidences):

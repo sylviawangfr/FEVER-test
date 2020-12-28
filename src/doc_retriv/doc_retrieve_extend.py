@@ -1,4 +1,4 @@
-from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, search_and_merge3, merge_result, search_doc_id_and_keywords
+from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, search_and_merge3, merge_result, search_doc_id_and_keywords, search_doc_id_and_keywords_in_sentences
 from utils.c_scorer import *
 from utils.common import thread_exe
 from utils.fever_db import *
@@ -12,6 +12,11 @@ from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim, const
 from dbpedia_sampler.uri_util import isURI
 from dbpedia_sampler.dbpedia_virtuoso import get_categories2
 from bert_serving.client import BertClient
+from doc_retriv.SentenceEvidence import *
+from utils.check_sentences import Evidences
+import copy
+from typing import List
+import itertools
 
 
 def retrieve_docs(example, context_dict=None):
@@ -45,16 +50,16 @@ def strategy_over_all(claim):
     claim_graph = claim_dict['graph']
     if len(claim_graph) > 0:
         # 1. ES search all linked entity page -> candidate docs 2
-        candidate_docs_2 = search_claim_context_entity_docs(claim_graph)
+        candidate_docs_2 = search_entity_docs_for_triples(claim_graph)
         candidate_docs = candidate_docs_1 + candidate_docs_2
         # 2. BERT filter: claim VS candidate docs 2 sents -> candidate sentences 2
         candidate_sents_2 = filter_bert_claim_vs_sents(claim, candidate_docs)
         linked_triples = get_linked_triples(claim_graph)
         candidate_sentences_3 = []
         if len(linked_triples) > 0:
-            # 3. BERT filter: linked triples VS candidate docs 2 -> candidate sentences 3
+            # 3. ES filter: linked triples VS candidate docs 2 -> candidate sentences 3
             candidate_sentences_3 = search_triples_in_docs(linked_triples, candidate_docs_2)
-            # 4. sort candidate sentences 2 + 3 -> candidate sentence 4
+        # 4. sort candidate sentences 2 + 3 -> candidate sentence 4
         candidate_sentences_4 = candidate_sents_2 + candidate_sentences_3
         isolated_phrases = claim_dict['no_relatives']
         if len(isolated_phrases) > 0:
@@ -62,7 +67,7 @@ def strategy_over_all(claim):
             # 6. ES search sent_context_graph new entity pages -> candidate docs 3
             # 7. BERT filter:  extended context triples VS candidate docs 3 sentences  -> candidate sentence 3
             # 8. aggregate envidence set -> candidate sentences 4
-            candidate_sentence_set = strategy_one_hop(claim_dict, candidate_docs, candidate_sentences_4)
+            candidate_sentence_set = strategy_one_hop(claim_dict, linked_triples, candidate_sentences_4)
 
     else:
         # *. BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
@@ -73,25 +78,136 @@ def strategy_over_all(claim):
     pass
 
 
+def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences, candidate_sentences):
+    evidence_set_from_triple = generate_triple_sentence_combination(linked_triples_with_sentences, [])
+    evidence_set_from_sentences = generate_sentence_combination(candidate_sentences)
+    new_evidence_set = copy.deepcopy(evidence_set_from_triple)
+    for evid_s in evidence_set_from_sentences:
+        for evid_t in evidence_set_from_triple:
+            new_evidence = copy.deepcopy(evid_t)
+            new_evidence.add_sent(evid_s)
+            new_evidence_set.append(new_evidence)
+    new_evidence_set.extend(evid_s)
+    new_evidence_set = list(set(new_evidence_set))
+    for e_s in new_evidence_set:
+        for s in e_s.evidences_list:
+            extend_sentences = candidate_sentences[s].extend_sentences
+            for extend_s in extend_sentences:
+                new_evidence = copy.deepcopy(e_s)
+                new_evidence.add_sent(extend_s)
+                new_evidence_set.append(new_evidence)
+    new_evidence_set = list(set(new_evidence_set))
+    return new_evidence_set
+
+
+def generate_sentence_combination(list_of_sentences):
+    new_evidence_set = set()
+    for i in len(list_of_sentences):
+        combination_set = itertools.combinations(list_of_sentences, i)
+        evid_l = [Evidences(s.sid) for s in combination_set]
+        new_evidence_set.update(set(evid_l))
+    return list(new_evidence_set)
+
+
+def generate_triple_sentence_combination(list_of_triples, list_of_evidence: List[Evidences]):
+    if len(list_of_triples) == 0:
+        return list_of_evidence
+    else:
+        triple = list_of_triples.pop()
+        if len(triple.sentences) == 0:
+            new_evidence_l = list_of_evidence
+        else:
+            new_evidence_l = []
+            for tri_sid in triple.sentences:
+                if len(list_of_evidence) == 0:
+                    new_evidence_l = [Evidences(tri_s) for tri_s in triple.sentences]
+                    break
+                else:
+                    tmp_evidence_l = copy.deepcopy(list_of_evidence)
+                    for e in tmp_evidence_l:
+                        e.add_sent(tri_sid)
+                    new_evidence_l.extend(tmp_evidence_l)
+        return generate_triple_sentence_combination(list_of_triples, new_evidence_l)
+
+
 def get_linked_triples(context_graph):
     tris = []
     for t in context_graph:
         if t['relation'] != '' and t['object'] != '':
-            tris.append(t)
+            tris.append(Triple(t))
     return tris
 
 
-def strategy_one_hop(claim_dict, isolated_nodes, candidate_docs, candidate_sentences):
+def update_relative_hash(relative_hash:dict, connected_phrases):
+    for i in connected_phrases:
+        if i in relative_hash:
+            relative_hash[i].extend(connected_phrases)
+            relative_hash[i].remove(i)
+            relative_hash[i] = list(set(relative_hash[i]))
+
+
+def strategy_one_hop(claim_dict, linked_triples, candidate_sentences: List[SentenceEvidence]):
     # 5. isolated_nodes candidate docs 2 sentences to sent_context_graph -> new entities
     # 6. ES search sent_context_graph new entity pages -> candidate docs 3
     # 7. BERT filter:  extended context triples VS candidate docs 3 sentences  -> candidate sentence 3
     # 8. aggregate envidence set -> candidate sentences 4
-    for isolated_text in isolated_nodes:
-        for sentence in candidate_sentences:
-            if not isolated_text in sentence['phrases']:
-                c_sentence1 = sentence['sentence']
-                doc_id =
-                sent_context_graph = construct_subgraph_for_candidate(claim_dict, )
+    # extend_evidence_l = []
+    # isolated_nodes_copy = copy.deepcopy(isolated_nodes)
+    relative_hash = claim_dict['relative_hash']
+    for c_s in candidate_sentences:
+        sent_context_graph, extend_triples = construct_subgraph_for_candidate(claim_dict, c_s['lines'], c_s['doc_id'])
+        if len(extend_triples) < 1:
+            continue
+        extended_docs = search_entity_docs_for_triples(extend_triples)
+        extended_sentences = search_triples_in_docs(extend_triples, extended_docs)
+        for e_s in extended_sentences:
+            extend_phrases = e_s['phrases']
+            ts_phrases = c_s['phrases']
+            bridged_phrases = list(set(extend_phrases + ts_phrases))
+            update_relative_hash(relative_hash, bridged_phrases)
+            c_s.extend_sentences.append(e_s.sid)
+
+    # sort out minimal evidence set, then BERT filter h_links
+    possible_evidence_set = merge_sentences_and_generate_evidence_set(linked_triples, candidate_sentences)
+    # BERT filter: (minimal set + h_link_sentence) VS claim
+    no_relatives_found = []
+    for i in relative_hash:
+        if len(relative_hash[i]) == 0:
+            no_relatives_found.append(i)
+    if len(no_relatives_found) > 0:
+        #
+        pass
+
+def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
+    pass
+    # h_links = sentence['h_links']
+    # h_links_docs = search_entity_docs(h_links)
+    # for doc_id in h_links_docs:
+    #     cur_r_list, cur_id_list = fever_db.get_all_sent_by_doc_id(cursor, doc_id, with_h_links=False)
+    #     # Merging to data list and removing duplicate
+    #     for i in range(len(cur_r_list)):
+    #         if cur_id_list[i] in id_list:
+    #             continue
+    #         else:
+    #             r_list.append(cur_r_list[i])
+    #             id_list.append(cur_id_list[i])
+    #
+    # # assert len(id_list) == len(set(id_list))  # check duplicate
+    # # assert len(r_list) == len(id_list)
+    # if not (len(id_list) == len(set(id_list)) or len(r_list) == len(id_list)):
+    #     utils.get_adv_print_func(err_log_f)
+    #
+    # zipped_s_id_list = list(zip(r_list, id_list))
+    # # Sort using id
+    # # sorted(evidences_set, key=lambda x: (x[0], x[1]))
+    # zipped_s_id_list = sorted(zipped_s_id_list, key=lambda x: (x[1][0], x[1][1]))
+    #
+    # all_sent_list = convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
+    #                                           id_tokenized=True)
+
+
+
+def get_all_sentences_from_doc(doc_id):
     pass
 
 
@@ -101,32 +217,49 @@ def strategy_search_phrases(claim):
     return result_es
 
 
-def search_triples_in_docs(triples, docs):
+def filter_bert_claim_vs_sents(claim, docs):
+    pass
+
+
+def search_triples_in_docs(triples, docs:dict): #  list[Triple]
     # phrase match via ES
     possible_sentences = []
     for tri in triples:
         sentences = []
-        subject_text = tri['text']
+        subject_text = tri.text
         if len(docs) > 0 and subject_text in docs:
             resource_docs = docs[subject_text]
             for doc in resource_docs:
                 doc_id = doc['id']
-                tmp_sentences = search_doc_id_and_keywords(doc_id, tri['keywords'])
+                tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, tri['keywords'])
                 if len(tmp_sentences) > 0:
-                    sentences.extend(tmp_sentences)
-        tri['sentences'] = sentences
+                    for i in tmp_sentences:
+                        i['tri_id'] = tri.tri_id
+                        tri.sentences.add(i['sid'])
+                    sentences.extend([SentenceEvidence(ts) for ts in tmp_sentences])
         if len(sentences) > 0:
             possible_sentences.extend(sentences)
     return possible_sentences
 
 
-def filter_bert_claim_vs_sents(claim, doc_ids):
-    return []
+def search_triple_in_sentence(tri, doc_id):
+    # phrase match via ES
+    possible_sentences = []
+    sentences = []
+    tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, tri['keywords'])
+    if len(tmp_sentences) > 0:
+        for i in tmp_sentences:
+            i['tri_id'] = tri.tri_id
+            tri.sentences.add(i['sid'])
+        sentences.extend([SentenceEvidence(ts) for ts in tmp_sentences])
+    if len(sentences) > 0:
+        possible_sentences.extend(sentences)
+    return possible_sentences
 
 
-def search_claim_context_entity_docs(claim_graph):
+def search_entity_docs_for_triples(triples):
     docs = dict()
-    for tri in claim_graph:
+    for tri in triples:
         entity_pages = []
         resource_uri = tri['subject']
         wiki_links = get_resource_wiki_page(resource_uri)
@@ -145,15 +278,19 @@ def search_claim_context_entity_docs(claim_graph):
     return docs
 
 
-def strategy_bert_filter_claim_candidate_docs(claim, doc_l):
-    for i in doc_l:
-        doc_id = i['id']
-
-
-
-
-def strategy_search_candidate_extended_context(sents, claim_graph, claim_isolated_nodes):
-    pass
+def search_entity_docs(entities):
+    docs = dict()
+    for entity in entities:
+        entity_pages = []
+        verified_id_es = search_doc_id(entity)
+        for r_es in verified_id_es:
+            if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
+                entity_pages.append({'id': r_es['id'],
+                             'score': r_es['score'],
+                             'phrases': [entity]})
+        if len(entity_pages) > 0:
+            docs.update({entity: entity_pages})
+    return docs
 
 
 def search_entities_and_nouns(claim):
@@ -161,12 +298,6 @@ def search_entities_and_nouns(claim):
     result_es = search_and_merge2(list(set(ents) | set(phrases)))
 
 
-def search_entities_extended(ents):
-    # 1. link entities to dbpedia
-    # 2. find connections between entities
-    # 3. search entity and extended phrases
-
-    pass
 
 
 def filter_entities_in_media_subset(resources):
@@ -384,31 +515,4 @@ def run_claim_context_graph(data):
 
 
 if __name__ == '__main__':
-    # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph_test_pred")
-    # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph.jsonl")
-    # r = search_entity_dbpedia("Giada at Home was only available on DVD.")
-    # docs = read_json_rows(config.RESULT_PATH / 'doc_retri_no_hits.jsonl')
-    # docs = read_json_rows(config.FEVER_TEST_JSONL)
-    # for i in docs:
-    #     if 'predicted_docids' in i:
-    #         i.pop('predicted_docids')
-    # get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo_test.jsonl', context_dict=context_graph_dict)
-    # pass
-    # i = retrieve_docs("L.A. Reid has served as the president of a record label.")
-    # print(i)
-    # j = retrieve_docs("Trouble with the Curve")
-    # print(j)
-    # get_doc_ids_and_fever_score(config.LOG_PATH / "test.jsonl", config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl")
-    # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL,
-    #                             config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl", top_k=10)
-    #
-    # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
-    # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"doc_dev_{get_current_time_str()}.jsonl")
-    # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
-    # print(retrieve_docs("Brian Wilson was part of the Beach Boys."))
-    # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST / get_current_time_str())
-    # a_list = read_json_rows(config.DOC_RETRV_DEV)
-    # fever_doc_only(a_list, a_list, analysis_log=config.LOG_PATH / f"{get_current_time_str()}_doc_retri_no_hits_.jsonl")
-    # rerun_failed_items(config.DOC_RETRV_TEST, [49649, 24225, 149500,202840,64863], config.RESULT_PATH / 'test_update.jsonl')
-    data = read_json_rows(config.RESULT_PATH / 'doc_retri_no_hits.jsonl')
-    run_claim_context_graph(data)
+    print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))

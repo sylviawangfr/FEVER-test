@@ -3,7 +3,7 @@ from utils.c_scorer import *
 from utils.common import thread_exe
 from utils.fever_db import *
 from utils.file_loader import read_json_rows, get_current_time_str, read_all_files
-from dbpedia_sampler.dbpedia_triple_linker import link_sent_to_resources_multi
+from dbpedia_sampler.dbpedia_triple_linker import link_sentence
 from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
 from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns_merged
 import difflib
@@ -71,7 +71,7 @@ def merge_es_and_dbpedia(r_es, r_db, r_context=[]):
 
 
 def search_entity_dbpedia(claim):
-    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources_multi(claim)
+    not_linked_phrases_l, linked_phrases_l = link_sentence(claim)
     docs = []
     for resource in linked_phrases_l:
         resource_uri = resource['URI']
@@ -196,7 +196,7 @@ def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
 if __name__ == '__main__':
     # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph_test_pred")
     # context_graph_dict = read_claim_context_graphs(config.RESULT_PATH / "sample_ss_graph.jsonl")
-    r = search_entity_dbpedia("Giada at Home was only available on DVD.")
+    # r = search_entity_dbpedia("Giada at Home was only available on DVD.")
     # docs = read_json_rows(config.RESULT_PATH / 'doc_retri_no_hits.jsonl')
     # docs = read_json_rows(config.FEVER_TEST_JSONL)
     # for i in docs:
@@ -204,7 +204,7 @@ if __name__ == '__main__':
     #         i.pop('predicted_docids')
     # get_doc_ids_and_fever_score(docs, config.RESULT_PATH / 'doc_redo_test.jsonl', context_dict=context_graph_dict)
     # pass
-    i = retrieve_docs("L.A. Reid has served as the president of a record label.")
+    # i = retrieve_docs("L.A. Reid has served as the president of a record label.")
     # print(i)
     # j = retrieve_docs("Trouble with the Curve")
     # print(j)
@@ -213,19 +213,19 @@ if __name__ == '__main__':
     #                             config.RESULT_PATH / f"{get_current_time_str()}_train_doc_retrive.jsonl", top_k=10)
     #
     # get_doc_ids_and_fever_score(config.FEVER_TRAIN_JSONL, config.DOC_RETRV_TRAIN)
-    # get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"doc_dev_{get_current_time_str()}.jsonl")
+    get_doc_ids_and_fever_score(config.FEVER_DEV_JSONL, config.RESULT_PATH / f"doc_dev_{get_current_time_str()}.jsonl")
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST, eval=False)
     # print(retrieve_docs("Brian Wilson was part of the Beach Boys."))
     # get_doc_ids_and_fever_score(config.FEVER_TEST_JSONL, config.DOC_RETRV_TEST / get_current_time_str())
     # a_list = read_json_rows(config.DOC_RETRV_DEV)
     # fever_doc_only(a_list, a_list, analysis_log=config.LOG_PATH / f"{get_current_time_str()}_doc_retri_no_hits_.jsonl")
     # rerun_failed_items(config.DOC_RETRV_TEST, [49649, 24225, 149500,202840,64863], config.RESULT_PATH / 'test_update.jsonl')
-    docs1 = read_json_rows(config.RESULT_PATH / "doc_redo_dev.jsonl")
-    docs2 = read_json_rows(config.RESULT_PATH / "doc_dev.jsonl")
-    eval_doc_preds(docs1, 5, None)
-    print("-------------------")
-    eval_doc_preds(docs2, 5, None)
-    print("####################")
-    eval_doc_preds(docs1, 10, None)
-    print("-------------------")
-    eval_doc_preds(docs2, 10, None)
+    # docs1 = read_json_rows(config.RESULT_PATH / "doc_redo_dev.jsonl")
+    # docs2 = read_json_rows(config.RESULT_PATH / "doc_dev.jsonl")
+    # eval_doc_preds(docs1, 5, None)
+    # print("-------------------")
+    # eval_doc_preds(docs2, 5, None)
+    # print("####################")
+    # eval_doc_preds(docs1, 10, None)
+    # print("-------------------")
+    # eval_doc_preds(docs2, 10, None)

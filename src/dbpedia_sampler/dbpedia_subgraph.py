@@ -97,6 +97,7 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
     claim_d['embedding'] = embeddings_hash
     claim_d['lookup_hash'] = lookup_hash
     claim_d['no_relatives'] = no_relatives_found
+    claim_d['relative_hash'] =  relative_hash
     return claim_d
 
 
@@ -163,11 +164,13 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title='', b
         if tri['relation'] == "" and tri['object'] == "":
             claim_isolated_nodes.append(claim_all_uris[tri['subject']])
     sent_extended_one_hop = extend_connection_between_claim_and_sent(claim_isolated_nodes, sent_graph, linked_phrases_l, embeddings_hash, bc=bc)
+    extend_triples = []
     for i in sent_extended_one_hop:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
             sent_graph.append(i)
+            extend_triples.append(i)
 
-    return sent_graph
+    return sent_graph, extend_triples
 
 
 def get_isolated_nodes(claim_dict):

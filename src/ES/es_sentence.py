@@ -41,7 +41,7 @@ es = Elasticsearch([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT}])
 def add_wiki_bunch(file):
     bunch_size = 2000
     json_rows = read_json_rows(file)
-    clean_rows = [json.dumps(parse_pages_checks(row)) for row in json_rows]
+    clean_rows = [json.dumps(parse_pages_checks(row), ensure_ascii=False) for row in json_rows]
     iters = iter_baskets_contiguous(clean_rows, bunch_size)
     for piece in iters:
         ESH.bulk(es, piece, index=config.WIKIPAGE_INDEX)

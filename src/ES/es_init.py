@@ -88,7 +88,7 @@ def index_sentences():
 def add_wiki_bunch(file):
     bunch_size = 2000
     json_rows = read_json_rows(file)
-    clean_rows = [json.dumps(parse_pages_checks(row)) for row in json_rows]
+    clean_rows = [json.dumps(parse_pages_checks(row), ensure_ascii=False) for row in json_rows]
     iters = iter_baskets_contiguous(clean_rows, bunch_size)
     for piece in iters:
         ESH.bulk(client, piece, index=config.WIKIPAGE_INDEX)
@@ -105,10 +105,10 @@ def add_sentence_bunch(file):
             if line['sentences']:
                 sid = doc_id + '(-.-)' + str(line['line_num'])
                 sent = line['sentences']
-                h_links = json.dumps(line['h_links'])
+                h_links = json.dumps(line['h_links'], ensure_ascii=False)
                 # to json
                 s_dict = {'sid': sid, 'text': sent, 'h_links': h_links, 'doc_id': doc_id}
-                sen_json_l.append(json.dumps(s_dict))
+                sen_json_l.append(json.dumps(s_dict, ensure_ascii=False))
     ESH.bulk(client, sen_json_l, index=config.FEVER_SEN_INDEX)
 
 
@@ -120,8 +120,8 @@ def test_indexing():
 if __name__ == '__main__':
     # test_indexing()
     # init_index()
-    # init_wikipages()
+    # index_wikipages()
 
-    init_fever_sentence_index()
-    index_sentences()
-    #  pass
+    # init_fever_sentence_index()
+    # index_sentences()
+     pass

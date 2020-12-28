@@ -140,7 +140,7 @@ def lines_to_items(page_id, lines):
 
     # print(len(lines_list), lines_list[-1]['line_num'] + 1)
     assert len(lines_list) == int(lines_list[-1]['line_num'] + 1)
-    string_line_item = json.dumps(lines_list)
+    string_line_item = json.dumps(lines_list, ensure_ascii=False)
     return string_line_item
 
 
@@ -156,7 +156,7 @@ def parse_pages_checks(item):
     this_item['id'] = page_id
     this_item['text'] = text
 
-    lines = [line.strip().replace('\n', '') for line in lines]
+    lines = [normalize(line.strip().replace('\n', '')) for line in lines]
 
     if len(lines) == 1 and lines[0] == '':
         lines = ['0']

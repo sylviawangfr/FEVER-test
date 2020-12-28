@@ -93,10 +93,10 @@ def search_doc_id_and_keywords(possible_id, keywords):
     # should.append({'match_phrase': {'lines': {'query': possible_id.replace("_", " "), 'analyzer': 'underscore_analyzer'}}})
     if len(keywords) == 2:
         relation = keywords[0]
-        should.append({'match': {'lines': {'query': relation, 'analyzer': 'underscore_analyzer'}}})
+        should.append({'match': {'lines': {'query': relation, 'analyzer': 'wikipage_analyzer'}}})
     if len(keywords) > 0:
         obj = keywords[-1]
-        should.append({'match_phrase': {'lines': {'query': obj, 'analyzer': 'underscore_analyzer'}}})
+        should.append({'match_phrase': {'lines': {'query': obj, 'analyzer': 'wikipage_analyzer'}}})
     search = search.query(Q('bool', must=must, should=should)). \
                  highlight('lines', number_of_fragments=0, fragment_size=150). \
                  sort({'_score': {"order": "desc"}}). \
@@ -113,22 +113,29 @@ def search_doc_id_and_keywords(possible_id, keywords):
         if 'highlight' in hit:
             lines = hit['highlight']['lines'][0]
             lines = lines.replace("</em> <em>", " ")
-            lines_json_l = json.loads(lines)
+            lines_json_l = json.loads(normalize(lines))
             match_count = [i['sentences'].count("<em>") for i in lines_json_l]
             sorted_matching_index = sorted(range(len(match_count)), key=lambda k: match_count[k],
                                            reverse=True)
             highest_match_count = -1
             for idx in sorted_matching_index:
                 if match_count[idx] > 0 and match_count[idx] >= highest_match_count:
+                    h_links_s = set()
                     line_num = lines_json_l[idx]['line_num']
                     sentence = lines_json_l[idx]['sentences']
+                    h_links = lines_json_l[idx]['h_links']
                     sentence = sentence.replace("</em>", "").replace("<em>", "")
-                    sentences_list.append({'sid': f'{possible_id}<SENT_LINE>{line_num}', 'sentence': sentence})
                     highest_match_count = match_count[idx]
+                    for h in h_links:
+                        h = h.replace("<em>", "").replace("</em>", "")
+                        h_links_s.add(h)
+                    sentences_list.append(
+                            {'sid': f'{possible_id}<SENT_LINE>{line_num}', 'text': sentence, 'h_links': list(h_links_s)})
                 else:
                     break
-        doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': sentences_list}
-        r_list.append(doc_dic)
+        for s in sentences_list:
+            doc_dic = {'score': score, 'phrases': phrases, 'doc_id': id, 'sid': s['sid'], 'text': s['text'], 'h_links': s['h_links']}
+            r_list.append(doc_dic)
     return r_list
 
 
@@ -145,37 +152,26 @@ def search_doc_id_and_keywords_in_sentences(possible_id, keywords):
         obj = keywords[-1]
         should.append({'match_phrase': {'text': {'query': obj, 'analyzer': 'wikipage_analyzer'}}})
     search = search.query(Q('bool', must=must, should=should)). \
-                 highlight('lines', number_of_fragments=0, fragment_size=150). \
+                 highlight('text', number_of_fragments=0, fragment_size=150). \
                  sort({'_score': {"order": "desc"}}). \
-                 source(include=['sid', 'text', 'h_links'])[0:5]
+                 source(include=['doc_id', 'sid', 'text', 'h_links'])[0:5]
 
     response = search.execute()
     r_list = []
-    sentences_list = []
     phrases = [possible_id]
     phrases.extend(keywords)
+    top_n = 1
     for hit in response['hits']['hits']:
+        if top_n < 1:
+            break
         score = hit['_score']
-        id = hit['_source']['id']
-        if 'highlight' in hit:
-            lines = hit['highlight']['lines'][0]
-            lines = lines.replace("</em> <em>", " ")
-            lines_json_l = json.loads(lines)
-            match_count = [i['sentences'].count("<em>") for i in lines_json_l]
-            sorted_matching_index = sorted(range(len(match_count)), key=lambda k: match_count[k],
-                                           reverse=True)
-            highest_match_count = -1
-            for idx in sorted_matching_index:
-                if match_count[idx] > 0 and match_count[idx] >= highest_match_count:
-                    line_num = lines_json_l[idx]['line_num']
-                    sentence = lines_json_l[idx]['sentences']
-                    sentence = sentence.replace("</em>", "").replace("<em>", "")
-                    sentences_list.append({'sid': f'{possible_id}<SENT_LINE>{line_num}', 'sentence': sentence})
-                    highest_match_count = match_count[idx]
-                else:
-                    break
-        doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': sentences_list}
+        doc_id = hit['_source']['doc_id']
+        sid = hit['_source']['sid']
+        text = hit['_source']['text']
+        h_links = list(set(json.loads(normalize(hit['_source']['h_links']))))
+        doc_dic = {'doc_id': doc_id, 'score': score, 'phrases': phrases, 'sid': sid, 'text': text, 'h_links': h_links}
         r_list.append(doc_dic)
+        top_n -= 1
     return r_list
 
 
@@ -184,7 +180,7 @@ def search_doc_id(possible_id):
         search = Search(using=client, index=config.WIKIPAGE_INDEX)
         search = search.query('match_phrase', id=possible_id). \
                  sort({'_score': {"order": "desc"}}). \
-                 source(include=['id'])[0:10]
+                 source(include=['id'])[0:5]
         response = search.execute()
         r_list = []
         for hit in response['hits']['hits']:
@@ -385,7 +381,10 @@ def test_search_id(text):
         return []
 
 if __name__ == '__main__':
-    search_doc_id_and_keywords("Cordillera Domeyko", ["parent Mountain Peak", "Andes"])
+    # t = normalize("""["Mariano Gonza\u0301lez", "Mariano Gonza\u0301lez"]""")
+
+    # search_doc_id_and_keywords("Cordillera Domeyko", ["parent Mountain Peak", "Andes"])
+    search_doc_id_and_keywords("Pablo_Andrés_González", ["brother", "Mariano González"])
     # t = read_json(config.PRO_ROOT / "src/ES/wikipage_mapping.json")
     # print(test_search_id("Trouble with the Curve"))
     # print(has_phrase_covered(['a c', 'b', 'c'], ['a b c', 'c d']))

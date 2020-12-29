@@ -40,7 +40,7 @@ def retrieve_docs(example, context_dict=None):
 
 
 def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
-    for example in data_l:
+    for example in tqdm(data_l):
         claim = example['claim']
         nouns = get_phrases_and_nouns_merged(claim)
         # 2. get ES page candidates -> candidate docs 1

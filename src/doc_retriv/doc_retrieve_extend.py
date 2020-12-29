@@ -39,6 +39,27 @@ def retrieve_docs(example, context_dict=None):
     return result
 
 
+def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
+    for example in data_l:
+        claim = example['claim']
+        nouns = get_phrases_and_nouns_merged(claim)
+        # 2. get ES page candidates -> candidate docs 1
+        #  . BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
+        candidate_docs_1 = search_and_merge2(nouns)
+        example['predicted_docids'] = candidate_docs_1[:10]
+    save_intermidiate_results(data_l, out_filename)
+    if eval:
+        eval_doc_preds(data_l, 10, log_filename)
+
+
+def prepare_candidate_evidence_set(data_l, out_filename: Path, log_filename: Path):
+    for example in data_l:
+        claim = example['claim']
+        claim_dict = construct_subgraph_for_claim(claim)
+
+
+
+
 def strategy_over_all(claim):
     # 1. ES search phrases
     nouns = get_phrases_and_nouns_merged(claim)
@@ -74,7 +95,6 @@ def strategy_over_all(claim):
         # cannot extract context graph, return candidate sentences 1
         candidate_docs = candidate_docs_1
         candidate_sentences_1 = filter_bert_claim_vs_sents(claim, candidate_docs_1)
-
     pass
 
 
@@ -107,6 +127,10 @@ def generate_sentence_combination(list_of_sentences):
         evid_l = [Evidences(s.sid) for s in combination_set]
         new_evidence_set.update(set(evid_l))
     return list(new_evidence_set)
+
+
+def generate_expand_evidence_from_hlinks(possible_evidence, hlink_docs):
+    return []
 
 
 def generate_triple_sentence_combination(list_of_triples, list_of_evidence: List[Evidences]):
@@ -175,8 +199,17 @@ def strategy_one_hop(claim_dict, linked_triples, candidate_sentences: List[Sente
         if len(relative_hash[i]) == 0:
             no_relatives_found.append(i)
     if len(no_relatives_found) > 0:
-        #
-        pass
+        for e_s in possible_evidence_set:
+            h_link_docs = get_hlink_docs(e_s)
+            extend_hlink_e = generate_expand_evidence_from_hlinks(e_s, h_link_docs)
+            possible_evidence_set.extend(extend_hlink_e)
+    possible_evidence_set = list(set(possible_evidence_set))
+    # bert NLI model
+    pass
+
+
+def get_hlink_docs(evidence):
+    return []
 
 def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
     pass
@@ -515,4 +548,7 @@ def run_claim_context_graph(data):
 
 
 if __name__ == '__main__':
-    print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
+    # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
+    folder = config.RESULT_PATH / 'extend_1229'
+    data = read_json_rows(config.FEVER_DEV_JSONL)[0:10]
+    prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")

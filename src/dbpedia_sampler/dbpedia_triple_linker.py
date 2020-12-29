@@ -465,14 +465,13 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings,  fuzzy_matc
     return result
 
 
-def filter_keyword_vs_keyword(linked_phrases_l, keyword_embeddings, fuzzy_match=False, bc:BertClient=None):
+def filter_keyword_vs_keyword(isolated_nodes, linked_phrases_l, keyword_embeddings, fuzzy_match=False, bc:BertClient=None):
     result = []
-    for i in itertools.combinations(linked_phrases_l, 2):
+    for i in itertools.product(isolated_nodes, linked_phrases_l):
         resource1 = i[0]
         resource2 = i[1]
 
-        if resource1['text'] in resource2['text'] \
-                or resource2['text'] in resource1['text']:
+        if resource1['text'] in resource2['text'] or resource2['text'] in resource1['text']:
             continue
 
         resource1_l = resource1['links']

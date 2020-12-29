@@ -51,13 +51,13 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
     for i in r1 + r2:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
             merged_result.append(i)
-    no_relatives_found = []
     # only keyword-match on those no exact match triples
     fill_relative_hash(relative_hash, merged_result)
+    isolated_node = []
     for i in relative_hash:
-        if len(relative_hash[i]) == 0:
-            no_relatives_found.append(lookup_hash[i])
-    r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_relatives_found, embeddings_hash, fuzzy_match=False, bc=bc)
+        if len(relative_hash[i]) == 0 and i in lookup_hash:
+            isolated_node.append(lookup_hash[i])
+    r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(isolated_node, linked_phrases_l, embeddings_hash, fuzzy_match=False, bc=bc)
     for i in r3:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
             merged_result.append(i)
@@ -70,7 +70,7 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
 
     for i in no_relatives_found:
     #     if len(t['categories']) < 1 or len(t['categories']) > 20:
-        if i in lookup_hash:
+        if i in lookup_hash.values():
             possible_links = i['links']
             for t in possible_links:
                 if not dbpedia_triple_linker.does_node_exit_in_list(t['URI'], merged_result):
@@ -97,7 +97,7 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
     claim_d['embedding'] = embeddings_hash
     claim_d['lookup_hash'] = lookup_hash
     claim_d['no_relatives'] = no_relatives_found
-    claim_d['relative_hash'] =  relative_hash
+    claim_d['relative_hash'] = relative_hash
     return claim_d
 
 
@@ -152,8 +152,9 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title='', b
     fill_relative_hash(relative_hash, sent_graph)
     no_relatives_found = []
     for i in relative_hash:
-        if len(relative_hash[i]) == 0:
+        if len(relative_hash[i]) == 0 and i in claim_dict['lookup_hash']:
             no_relatives_found.append(claim_dict['lookup_hash'][i])
+
     r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_relatives_found, embeddings_hash, fuzzy_match=False, bc=bc)
     for i in r3:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):

@@ -41,7 +41,7 @@ def retrieve_docs(example, context_dict=None):
 
 def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
     for example in tqdm(data_l):
-        claim = example['claim']
+        claim = convert_brc(normalize(example['claim']))
         nouns = get_phrases_and_nouns_merged(claim)
         # 2. get ES page candidates -> candidate docs 1
         #  . BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
@@ -58,10 +58,49 @@ def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
         eval_doc_preds(data_l, 10, log_filename)
 
 
-def prepare_candidate_evidence_set(data_l, out_filename: Path, log_filename: Path):
-    for example in data_l:
-        claim = example['claim']
-        claim_dict = construct_subgraph_for_claim(claim)
+def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path):
+    bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+    flush_save = []
+    batch = 10
+    flush_num = batch
+    with tqdm(total=len(data_l), desc=f"constructing claim graph") as pbar:
+        for idx, example in enumerate(data_l):
+            claim = convert_brc(normalize(example['claim']))
+            claim_dict = construct_subgraph_for_claim(claim, bc)
+            claim_dict.pop('embedding')
+            example['claim_dict'] = claim_dict
+            flush_save.append(example)
+            flush_num -= 1
+            pbar.update(1)
+            if flush_num == 0:
+                save_and_append_results(flush_save, idx + 1, out_filename, log_filename)
+                flush_num = batch
+                flush_save = []
+    bc.close()
+
+
+def prepare_candidate_doc2(data_with_claim_dict_l, out_filename: Path, log_filename: Path):
+    for example in tqdm(data_with_claim_dict_l):
+        # claim = convert_brc(normalize(example['claim']))
+        claim_dict = example['claim_dict']
+        claim_graph = claim_dict['graph']
+        candidate_docs_2 = search_entity_docs_for_triples(claim_graph)
+        if len(candidate_docs_2) < 1:
+            print("failed claim:", example.get('id'))
+            example['predicted_docids'] = []
+            example['doc_and_line'] = []
+        else:
+            example['predicted_docids'] = [j.get('id') for j in candidate_docs_2][:10]
+            example['doc_and_line'] = candidate_docs_2
+        data_with_claim_dict_l.pop('claim_dict')
+    save_intermidiate_results(data_with_claim_dict_l, out_filename)
+    if eval:
+        eval_doc_preds(data_with_claim_dict_l, 10, log_filename)
+
+
+
+def prepare_triple_sentences(data_l, out_filename: Path, log_filename: Path):
+    pass
 
 
 
@@ -85,7 +124,7 @@ def strategy_over_all(claim):
         candidate_sentences_3 = []
         if len(linked_triples) > 0:
             # 3. ES filter: linked triples VS candidate docs 2 -> candidate sentences 3
-            candidate_sentences_3 = search_triples_in_docs(linked_triples, candidate_docs_2)
+            candidate_sentences_3 = search_triples_in_docs(linked_triples, candidate_docs)
         # 4. sort candidate sentences 2 + 3 -> candidate sentence 4
         candidate_sentences_4 = candidate_sents_2 + candidate_sentences_3
         isolated_phrases = claim_dict['no_relatives']
@@ -559,3 +598,4 @@ if __name__ == '__main__':
     folder = config.RESULT_PATH / "extend_20201229"
     data = read_json_rows(config.FEVER_DEV_JSONL)
     prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    # prepare_claim_graph(data, folder / "claim_graph.jsonl", folder / "claim_graph.log")

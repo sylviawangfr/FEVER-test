@@ -308,7 +308,7 @@ def similarity_between_nonlinked_and_linked(not_linked_phrases_l, phrase_list_em
             tri2['text'] = linked_resource['text']
             tri2['URI'] = linked_resource['URI']
             tri2['score'] = score
-            tri2['exact_match'] = link_sentence['exact_match']
+            tri2['exact_match'] = linked_resource['exact_match']
             tmp_result.append(tri2)
     return tmp_result
 

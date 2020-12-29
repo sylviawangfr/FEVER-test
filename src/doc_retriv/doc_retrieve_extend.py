@@ -2,7 +2,7 @@ from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, sea
 from utils.c_scorer import *
 from utils.common import thread_exe
 from utils.fever_db import *
-from utils.file_loader import read_json_rows, get_current_time_str, read_all_files
+from utils.file_loader import read_json_rows, get_current_time_str, read_all_files, save_and_append_results
 from dbpedia_sampler.dbpedia_triple_linker import link_sentence
 from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
 from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns_merged
@@ -54,14 +54,13 @@ def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
             example['predicted_docids'] = [j.get('id') for j in candidate_docs_1][:10]
             example['doc_and_line'] = candidate_docs_1
     save_intermidiate_results(data_l, out_filename)
-    if eval:
-        eval_doc_preds(data_l, 10, log_filename)
+    eval_doc_preds(data_l, 10, log_filename)
 
 
 def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     flush_save = []
-    batch = 10
+    batch = 2
     flush_num = batch
     with tqdm(total=len(data_l), desc=f"constructing claim graph") as pbar:
         for idx, example in enumerate(data_l):
@@ -597,5 +596,5 @@ if __name__ == '__main__':
     # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
     folder = config.RESULT_PATH / "extend_20201229"
     data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
-    # prepare_claim_graph(data, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    # prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    prepare_claim_graph(data, folder / "claim_graph.jsonl", folder / "claim_graph.log")

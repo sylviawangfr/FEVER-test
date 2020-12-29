@@ -20,9 +20,11 @@ def fill_relative_hash(relative_hash, graph):
         if 'relatives' in i and len(i['relatives']) > 1:
             relatives = i['relatives']
             if relatives[0] in relative_hash:
-                relative_hash[relatives[0]].add(relatives[1])
+                relative_hash[relatives[0]].append(relatives[1])
+                relative_hash[relatives[0]] = list(set(relative_hash[relatives[0]]))
             if relatives[1] in relative_hash:
-                relative_hash[relatives[1]].add(relatives[0])
+                relative_hash[relatives[1]].append(relatives[0])
+                relative_hash[relatives[1]] = list(set(relative_hash[relatives[1]]))
 
 
 # @profile
@@ -30,7 +32,7 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
     not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text, '')
     linked_phrases = [i['text'] for i in linked_phrases_l]
     all_phrases = not_linked_phrases_l + linked_phrases
-    relative_hash = {key: set() for key in all_phrases}
+    relative_hash = {key: [] for key in all_phrases}
     all_uris = dict()
     for i in linked_phrases_l:
         uris = i['links']

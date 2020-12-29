@@ -556,6 +556,6 @@ def run_claim_context_graph(data):
 
 if __name__ == '__main__':
     # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
-    folder = config.RESULT_PATH / 'extend_1229'
+    folder = config.RESULT_PATH / "extend_20201229"
     data = read_json_rows(config.FEVER_DEV_JSONL)
     prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")

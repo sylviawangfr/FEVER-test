@@ -409,8 +409,8 @@ def lookup_or_update_onehop_embedding_hash(linked_resource, embedding_hash, bc:B
     keyword_vec = []
     if linked_resource['URI'] in embedding_hash:
         keyword_vec = embedding_hash[linked_resource['URI']]['one_hop']
-    if len(keyword_vec) == 0:
-        candidates = get_one_hop(linked_resource)
+    candidates = get_one_hop(linked_resource)
+    if len(keyword_vec) == 0 or len(keyword_vec) != len(candidates):
         tri_keywords_l2 = [' '.join(tri['keywords']) for tri in candidates]
         keyword_vec = bert_similarity.get_phrase_embedding(tri_keywords_l2, bc)
         embedding_hash[linked_resource['URI']]['one_hop'] = keyword_vec

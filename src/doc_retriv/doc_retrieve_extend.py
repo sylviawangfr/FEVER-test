@@ -46,7 +46,13 @@ def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
         # 2. get ES page candidates -> candidate docs 1
         #  . BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
         candidate_docs_1 = search_and_merge2(nouns)
-        example['predicted_docids'] = candidate_docs_1[:10]
+        if len(candidate_docs_1) < 1:
+            print("failed claim:", example.get('id'))
+            example['predicted_docids'] = []
+            example['doc_and_line'] = []
+        else:
+            example['predicted_docids'] = [j.get('id') for j in candidate_docs_1][:10]
+            example['doc_and_line'] = candidate_docs_1
     save_intermidiate_results(data_l, out_filename)
     if eval:
         eval_doc_preds(data_l, 10, log_filename)
@@ -496,6 +502,7 @@ def retri_doc_and_update_item(item, context_dict=None):
         item['predicted_docids'] = []
     else:
         item['predicted_docids'] = [j.get('id') for j in docs][:10]
+        item['doc_and_line'] = docs
     return item
 
 
@@ -550,5 +557,5 @@ def run_claim_context_graph(data):
 if __name__ == '__main__':
     # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
     folder = config.RESULT_PATH / 'extend_1229'
-    data = read_json_rows(config.FEVER_DEV_JSONL)[0:10]
+    data = read_json_rows(config.FEVER_DEV_JSONL)
     prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")

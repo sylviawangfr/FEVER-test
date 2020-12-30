@@ -26,7 +26,7 @@ class Triple:
         self.keywords = tri_dict['keywords'] if 'keywords' in tri_dict else ''
         self.relatives = tri_dict['relatives'] if 'relatives' in tri_dict else ''
         self.text = tri_dict['text']
-        self.exact_match = tri_dict['exact_match']
+        self.exact_match = tri_dict['exact_match'] if 'exact_match' in tri_dict else False
         # self.score = tri_dict['score']
         self.URI = tri_dict['URI']
 

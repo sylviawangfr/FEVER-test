@@ -189,7 +189,7 @@ def merge_entity_and_triple_docs(entity_docs, triple_docs):
 
     for i in triple_docs:
         if i not in entity_docs:
-            merged_dict.update(i)
+            merged_dict.update({i: triple_docs[i]})
     return merged_dict
 
 

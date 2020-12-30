@@ -19,24 +19,24 @@ from typing import List
 import itertools
 
 
-def retrieve_docs(example, context_dict=None):
-    claim = example['claim']
-    id = example['id']
-    result_context = []
-    result_uris = []
-    if context_dict is not None and len(context_dict) > 0:
-        context, object_urls = get_context_dbpedia(context_dict, id)
-        result_context = search_and_merge3(context)
-        result_uris = search_extended_URIs(object_urls)
-    nouns = get_phrases_and_nouns_merged(claim)
-    result_es = search_and_merge2(nouns)
-    result_dbpedia = search_entity_dbpedia(claim)
-    result_dbpedia.extend(result_uris)
-    result_dbpedia = merge_result(result_dbpedia)
-    result = merge_es_and_dbpedia(result_es, result_dbpedia, result_context)
-    if len(result) > 10:
-        result = result[:10]
-    return result
+# def retrieve_docs(example, context_dict=None):
+#     claim = example['claim']
+#     id = example['id']
+#     result_context = []
+#     result_uris = []
+#     if context_dict is not None and len(context_dict) > 0:
+#         context, object_urls = get_context_dbpedia(context_dict, id)
+#         result_context = search_and_merge3(context)
+#         result_uris = search_extended_URIs(object_urls)
+#     nouns = get_phrases_and_nouns_merged(claim)
+#     result_es = search_and_merge2(nouns)
+#     result_dbpedia = search_entity_dbpedia(claim)
+#     result_dbpedia.extend(result_uris)
+#     result_dbpedia = merge_result(result_dbpedia)
+#     result = merge_es_and_dbpedia(result_es, result_dbpedia, result_context)
+#     if len(result) > 10:
+#         result = result[:10]
+#     return result
 
 
 def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
@@ -71,31 +71,126 @@ def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path):
             flush_save.append(example)
             flush_num -= 1
             pbar.update(1)
-            if flush_num == 0:
+            if flush_num == 0 or idx == (len(data_l) - 1):
                 save_and_append_results(flush_save, idx + 1, out_filename, log_filename)
                 flush_num = batch
                 flush_save = []
     bc.close()
 
 
-def prepare_candidate_doc2(data_with_claim_dict_l, out_filename: Path, log_filename: Path):
-    for example in tqdm(data_with_claim_dict_l):
-        # claim = convert_brc(normalize(example['claim']))
-        claim_dict = example['claim_dict']
-        claim_graph = claim_dict['graph']
-        candidate_docs_2 = search_entity_docs_for_triples(claim_graph)
-        if len(candidate_docs_2) < 1:
-            print("failed claim:", example.get('id'))
-            example['predicted_docids'] = []
-            example['doc_and_line'] = []
-        else:
-            example['predicted_docids'] = [j.get('id') for j in candidate_docs_2][:10]
-            example['doc_and_line'] = candidate_docs_2
-        data_with_claim_dict_l.pop('claim_dict')
-    save_intermidiate_results(data_with_claim_dict_l, out_filename)
-    if eval:
-        eval_doc_preds(data_with_claim_dict_l, 10, log_filename)
+def prepare_candidate_doc2(data_original, data_with_claim_dict_l, out_filename: Path, log_filename: Path):
+    flush_save = []
+    batch = 10
+    flush_num = batch
+    with tqdm(total=len(data_with_claim_dict_l), desc=f"searching entity docs") as pbar:
+        for idx, example in enumerate(data_with_claim_dict_l):
+            # claim = convert_brc(normalize(example['claim']))
+            claim_dict = example['claim_dict']
+            claim_graph = claim_dict['graph']
+            claim_triples = []
+            for idx_t, t in enumerate(claim_graph):
+                t['tri_id'] = idx_t
+                claim_triples.append(Triple(t))
+            linked_l = claim_dict['linked_phrases_l']
+            all_resources = []
+            for p in linked_l:
+                for link in p['links']:
+                    if len(list(filter(lambda x: link['URI'] == x, all_resources))) < 1:
+                        all_resources.append(link)
+            entity_candidate_docs = search_entity_docs(all_resources)
+            triple_candidate_docs = search_entity_docs_for_triples(claim_triples)
+            candidate_docs_2 = merge_entity_and_triple_docs(entity_candidate_docs, triple_candidate_docs)
+            if len(candidate_docs_2) < 1:
+                print("failed claim:", example.get('id'))
+                data_original[idx]['resource_docs'] = {}
+            else:
+                data_original[idx]['resource_docs'] = candidate_docs_2
+            flush_save.append(data_original[idx])
+            flush_num -= 1
+            pbar.update(1)
+            if flush_num == 0 or idx == (len(data_with_claim_dict_l) - 1):
+                save_and_append_results(flush_save, idx + 1, out_filename, log_filename)
+                flush_num = batch
+                flush_save = []
 
+
+def search_entity_docs(resources):
+    docs_all = dict()
+    for resource in resources:
+        docs = []
+        resource_uri = resource['URI']
+        wiki_links = get_resource_wiki_page(resource_uri)
+        if wiki_links is None or len(wiki_links) < 1:
+            continue
+        for item in wiki_links:
+            possible_doc_id = item.split('/')[-1]
+            verified_id_es = search_doc_id(possible_doc_id)
+            for r_es in verified_id_es:
+                if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
+                    docs.append({'id': r_es['id'], 'score': r_es['score'], 'phrases': [resource['text']]})
+        if len(docs) > 0:
+            docs_all.update({resource_uri: docs})
+    return docs_all
+
+
+def merge_es_and_dbpedia(r_ents, r_tris, r_context):
+    # all_ents_docs = [d for docs in r_ents.values for d in docs]
+    # all_tri_docs = [d for docs in r_tris.values for d in docs]
+    # all_context_docs = [d for docs in r_context.values for d in docs]
+    # r_ents_ids = [i['id'] for i in r_ents]
+    # r_tri_ids = [i['id'] for i in r_tris]
+    # r_context_ids = [i['id'] for i in r_context]
+    # for idx_i, i in enumerate(r_ents_ids):
+    #     for idx_j, j in enumerate(r_tri_ids):
+    #         if i == j:
+    #             if len(r_ents[idx_i]['phrases']) > 1:
+    #                 r_ents[idx_i]['score'] += r_tris[idx_j]['score']
+    #             else:
+    #                 p = r_tris[idx_j]['phrases'][0].lower()
+    #                 doc_id = convert_brc(r_tris[idx_j]['id']).replace('_', ' ').lower()
+    #                 ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
+    #                 if ratio > 0.8:
+    #                     r_ents[idx_i]['score'] += r_tris[idx_j]['score'] * 0.5
+    merged = r_ents
+    # for idx, i in enumerate(r_db_ids):
+    #     if i not in r_es_ids:
+    #         p = r_tris[idx]['phrases'][0].lower()
+    #         doc_id = convert_brc(r_tris[idx]['id']).replace('_', ' ').lower()
+    #         ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
+    #         if ratio > 0.8:
+    #             r_tris[idx]['score'] *= 2
+    #         merged.append(r_tris[idx])
+    #
+    # merged_ids = [i['id'] for i in merged]
+    # for idx_j, j in enumerate(r_context_ids):
+    #     for idx_i, i in enumerate(merged_ids):
+    #         if i == j:
+    #             merged[idx_i]['score'] += r_context[idx_j]['score']
+    #
+    # for idx_j, j in enumerate(r_context_ids):
+    #     if j not in merged_ids:
+    #         merged.append(r_context[idx_j])
+    #
+    # merged.sort(key=lambda x: x.get('score'), reverse=True)
+    return merged
+
+
+def merge_entity_and_triple_docs(entity_docs, triple_docs):
+    merged_dict = entity_docs
+    all_tri_docs = [d for docs in triple_docs.values() for d in docs]
+    all_tri_doc_ids = dict()
+    for d in all_tri_docs:
+        if d['id'] not in all_tri_doc_ids:
+            all_tri_doc_ids.update({d['id']: d['score']})
+    for docs in entity_docs.values():
+        for d in docs:
+            if d['id'] in all_tri_doc_ids:
+                d['score'] += 0.5 * all_tri_doc_ids[d['id']]
+
+    for i in triple_docs:
+        if i not in entity_docs:
+            merged_dict.update(i)
+    return merged_dict
 
 
 def prepare_triple_sentences(data_l, out_filename: Path, log_filename: Path):
@@ -283,17 +378,6 @@ def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
     #                                           id_tokenized=True)
 
 
-
-def get_all_sentences_from_doc(doc_id):
-    pass
-
-
-def strategy_search_phrases(claim):
-    nouns = get_phrases_and_nouns_merged(claim)
-    result_es = search_and_merge2(nouns)
-    return result_es
-
-
 def filter_bert_claim_vs_sents(claim, docs):
     pass
 
@@ -334,11 +418,16 @@ def search_triple_in_sentence(tri, doc_id):
     return possible_sentences
 
 
-def search_entity_docs_for_triples(triples):
+def search_entity_docs_for_triples(triples: List[Triple]):
     docs = dict()
+    all_resources = []
     for tri in triples:
+        if len(list(filter(lambda  x: x == tri.subject, all_resources))) < 1:
+            all_resources.append(tri.subject)
+        if "http://dbpedia.org/resource/" in tri.object and len(list(filter(lambda  x: x == tri.object, all_resources))) < 1:
+            all_resources.append(tri.object)
+    for idx, resource_uri in enumerate(all_resources):
         entity_pages = []
-        resource_uri = tri['subject']
         wiki_links = get_resource_wiki_page(resource_uri)
         if wiki_links is None or len(wiki_links) < 1:
             continue
@@ -346,94 +435,12 @@ def search_entity_docs_for_triples(triples):
             possible_doc_id = item.split('/')[-1]
             verified_id_es = search_doc_id(possible_doc_id)
             for r_es in verified_id_es:
-                if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
+                if len(list(filter(lambda x: (x['id'] == r_es['id']), entity_pages))) < 1:
                     entity_pages.append({'id': r_es['id'],
                                  'score': r_es['score'],
-                                 'phrases': [tri['text']] if len(tri['relatives']) < 1 else tri['relatives']})
+                                 'phrases': [tri.text] if len(tri.relatives) < 1 else tri.relatives})
         if len(entity_pages) > 0:
-            docs.update({tri['text']: entity_pages})
-    return docs
-
-
-def search_entity_docs(entities):
-    docs = dict()
-    for entity in entities:
-        entity_pages = []
-        verified_id_es = search_doc_id(entity)
-        for r_es in verified_id_es:
-            if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
-                entity_pages.append({'id': r_es['id'],
-                             'score': r_es['score'],
-                             'phrases': [entity]})
-        if len(entity_pages) > 0:
-            docs.update({entity: entity_pages})
-    return docs
-
-
-def search_entities_and_nouns(claim):
-    ents, phrases = get_phrases(claim)
-    result_es = search_and_merge2(list(set(ents) | set(phrases)))
-
-
-
-
-def filter_entities_in_media_subset(resources):
-    pass
-
-
-def merge_es_and_dbpedia(r_es, r_db, r_context=[]):
-    r_es_ids = [i['id'] for i in r_es]
-    r_db_ids = [i['id'] for i in r_db]
-    r_context_ids = [i['id'] for i in r_context]
-    for idx_i, i in enumerate(r_es_ids):
-        for idx_j, j in enumerate(r_db_ids):
-            if i == j:
-                if len(r_es[idx_i]['phrases']) > 1:
-                    r_es[idx_i]['score'] += r_db[idx_j]['score']
-                else:
-                    p = r_db[idx_j]['phrases'][0].lower()
-                    doc_id = convert_brc(r_db[idx_j]['id']).replace('_', ' ').lower()
-                    ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
-                    if ratio > 0.8:
-                        r_es[idx_i]['score'] += r_db[idx_j]['score'] * 0.5
-    merged = r_es
-    for idx, i in enumerate(r_db_ids):
-        if i not in r_es_ids:
-            p = r_db[idx]['phrases'][0].lower()
-            doc_id = convert_brc(r_db[idx]['id']).replace('_', ' ').lower()
-            ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
-            if ratio > 0.8:
-                r_db[idx]['score'] *= 2
-            merged.append(r_db[idx])
-
-    merged_ids = [i['id'] for i in merged]
-    for idx_j, j in enumerate(r_context_ids):
-        for idx_i, i in enumerate(merged_ids):
-            if i == j:
-                merged[idx_i]['score'] += r_context[idx_j]['score']
-
-    for idx_j, j in enumerate(r_context_ids):
-        if j not in merged_ids:
-            merged.append(r_context[idx_j])
-
-    merged.sort(key=lambda x: x.get('score'), reverse=True)
-    return merged
-
-
-def search_entity_dbpedia(claim):
-    not_linked_phrases_l, linked_phrases_l = link_sentence(claim)
-    docs = []
-    for resource in linked_phrases_l:
-        resource_uri = resource['URI']
-        wiki_links = get_resource_wiki_page(resource_uri)
-        if wiki_links is None or len(wiki_links) < 1:
-            continue
-        for item in wiki_links:
-            possible_doc_id = item.split('/')[-1]
-            verified_id_es = search_doc_id(possible_doc_id)
-            for r_es in verified_id_es:
-                if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
-                    docs.append({'id': r_es['id'], 'score': r_es['score'], 'phrases': [resource['text']]})
+            docs.update({resource_uri: entity_pages})
     return docs
 
 
@@ -514,25 +521,6 @@ def read_claim_context_graphs(dir):
     return cached_graph_d
 
 
-def get_context_dbpedia(cached_graphs, id):
-    context = []
-    object_urls = []
-    if id in cached_graphs:
-        tris = cached_graphs[id]
-        for t in tris:
-            if 'keywords' in t and 'subject' in t:
-                entity = t['subject'].split('/')[-1]
-                keywords = t['keywords']
-                if isinstance(keywords, list) \
-                        and len(list(filter(lambda x: (x['entity'] == entity
-                                                       and sorted(x['keywords']) == sorted(keywords)), context))) < 1:
-                    context.append({'entity': entity, 'keywords': keywords})
-            if 'object' in t and "http://dbpedia.org/resource/" in t['object'] \
-                    and len(list(filter(lambda x: (x[0] == t['subject'] and x[1] == t['object']), object_urls))) < 1:
-                object_urls.append([t['subject'], t['object']])
-    return context, object_urls
-
-
 def retri_doc_and_update_item(item, context_dict=None):
     docs = retrieve_docs(item, context_dict)
     if len(docs) < 1:
@@ -597,7 +585,12 @@ if __name__ == '__main__':
     folder = config.RESULT_PATH / "extend_20201229"
 
     # prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
-    data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
-    prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
+    # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
+
+    data_original = read_json_rows(config.FEVER_DEV_JSONL)[0:100]
+    data_context = read_json_rows(folder / "claim_graph_10000.jsonl")[0:100]
+    prepare_candidate_doc2(data_original, data_context, folder / "entity_doc_100.jsonl", folder / "entity_doc_100.log")

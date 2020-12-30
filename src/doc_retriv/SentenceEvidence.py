@@ -18,14 +18,17 @@ class SentenceEvidence:
 class Triple:
     def __init__(self, tri_dict):
         self.tri_id = tri_dict['tri_id']
-        self.sentences = tri_dict['sentences'] if 'sentences' in tri_dict else set()  # list of sid
+        self.sentences = tri_dict['sentences'] if 'sentences' in tri_dict else []  # list of sid
         self.subject = tri_dict['subject']
         self.relation = tri_dict['relation']
+        self.datatype = tri_dict['datatype']
         self.object = tri_dict['object']
         self.keywords = tri_dict['keywords']
         self.relatives = tri_dict['relatives']
         self.text = tri_dict['text']
         self.exact_match = tri_dict['exact_match']
+        # self.score = tri_dict['score']
+        self.URI = tri_dict['URI']
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Triple):

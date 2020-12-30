@@ -21,10 +21,10 @@ class Triple:
         self.sentences = tri_dict['sentences'] if 'sentences' in tri_dict else []  # list of sid
         self.subject = tri_dict['subject']
         self.relation = tri_dict['relation']
-        self.datatype = tri_dict['datatype']
+        self.datatype = tri_dict['datatype'] if 'datatype' in tri_dict else ''
         self.object = tri_dict['object']
-        self.keywords = tri_dict['keywords']
-        self.relatives = tri_dict['relatives']
+        self.keywords = tri_dict['keywords'] if 'keywords' in tri_dict else ''
+        self.relatives = tri_dict['relatives'] if 'relatives' in tri_dict else ''
         self.text = tri_dict['text']
         self.exact_match = tri_dict['exact_match']
         # self.score = tri_dict['score']

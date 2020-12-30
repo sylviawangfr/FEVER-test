@@ -90,7 +90,11 @@ def prepare_candidate_doc2(data_original, data_with_claim_dict_l, out_filename: 
             claim_triples = []
             for idx_t, t in enumerate(claim_graph):
                 t['tri_id'] = idx_t
-                claim_triples.append(Triple(t))
+                try:
+                    claim_triples.append(Triple(t))
+                except Exception as e:
+                    print(t)
+                    raise e
             linked_l = claim_dict['linked_phrases_l']
             all_resources = []
             for p in linked_l:

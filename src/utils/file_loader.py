@@ -9,7 +9,7 @@ import os
 def read_json_rows(file):
     d_list = []
     with open(file, encoding='utf-8', mode='r') as in_f:
-        for line in tqdm(in_f):
+        for line in in_f:
             item = json.loads(normalize(line.strip()))
             d_list.append(item)
     return d_list

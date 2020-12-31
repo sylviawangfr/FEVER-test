@@ -240,6 +240,7 @@ def filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d):
                     if score >= 0.5:
                         tmp_tri = all_date_properties[j]
                         tmp_tri['relatives'] = [tmp_tri['text'], i]
+                        tmp_tri['URI'] = tmp_tri['subject']
                         similarity_match.append(tmp_tri)
                     else:
                         break

@@ -123,64 +123,63 @@ def prepare_candidate2_example(example):
     return candidate_docs_2
 
 
-def search_entity_docs(resources):
-    docs_all = dict()
-    for resource in resources:
-        docs = []
-        resource_uri = resource['URI']
-        wiki_links = get_resource_wiki_page(resource_uri)
-        if wiki_links is None or len(wiki_links) < 1:
-            continue
-        for item in wiki_links:
-            possible_doc_id = item.split('/')[-1]
-            verified_id_es = search_doc_id(possible_doc_id)
-            for r_es in verified_id_es:
-                if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
-                    docs.append({'id': r_es['id'], 'score': r_es['score'], 'phrases': [resource['text']]})
-        if len(docs) > 0:
-            docs_all.update({resource_uri: docs})
-    return docs_all
+def prepare_candidate_docs(original_data, es_data, entity_data, out_filename: Path, log_filename: Path):
+    error_items = []
+    with tqdm(total=len(original_data), desc=f"preparing candidate docs") as pbar:
+        for idx, example in enumerate(original_data):
+            es_r = es_data[idx]['doc_and_line']
+            ent_r = entity_data[idx]['resource_docs']
+            merged = merge_es_and_entity_docs(es_r, ent_r)
+            if len(merged) == 0:
+                error_items.append(example)
+            example['candidate_docs'] = merged
+            example['predicted_docids'] = [j.get('id') for j in merged][:10]
+        save_intermidiate_results(original_data, out_filename)
+        save_intermidiate_results(error_items, log_filename)
+        eval_doc_preds(original_data, 10, log_filename)
 
 
-def merge_es_and_dbpedia(r_ents, r_tris, r_context):
-    # all_ents_docs = [d for docs in r_ents.values for d in docs]
-    # all_tri_docs = [d for docs in r_tris.values for d in docs]
-    # all_context_docs = [d for docs in r_context.values for d in docs]
-    # r_ents_ids = [i['id'] for i in r_ents]
-    # r_tri_ids = [i['id'] for i in r_tris]
-    # r_context_ids = [i['id'] for i in r_context]
-    # for idx_i, i in enumerate(r_ents_ids):
-    #     for idx_j, j in enumerate(r_tri_ids):
-    #         if i == j:
-    #             if len(r_ents[idx_i]['phrases']) > 1:
-    #                 r_ents[idx_i]['score'] += r_tris[idx_j]['score']
-    #             else:
-    #                 p = r_tris[idx_j]['phrases'][0].lower()
-    #                 doc_id = convert_brc(r_tris[idx_j]['id']).replace('_', ' ').lower()
-    #                 ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
-    #                 if ratio > 0.8:
-    #                     r_ents[idx_i]['score'] += r_tris[idx_j]['score'] * 0.5
-    merged = r_ents
-    # for idx, i in enumerate(r_db_ids):
-    #     if i not in r_es_ids:
-    #         p = r_tris[idx]['phrases'][0].lower()
-    #         doc_id = convert_brc(r_tris[idx]['id']).replace('_', ' ').lower()
-    #         ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
-    #         if ratio > 0.8:
-    #             r_tris[idx]['score'] *= 2
-    #         merged.append(r_tris[idx])
-    #
-    # merged_ids = [i['id'] for i in merged]
-    # for idx_j, j in enumerate(r_context_ids):
-    #     for idx_i, i in enumerate(merged_ids):
-    #         if i == j:
-    #             merged[idx_i]['score'] += r_context[idx_j]['score']
-    #
-    # for idx_j, j in enumerate(r_context_ids):
-    #     if j not in merged_ids:
-    #         merged.append(r_context[idx_j])
-    #
-    # merged.sort(key=lambda x: x.get('score'), reverse=True)
+
+MEDIA = ['tv', 'film', 'book', 'novel', 'band', 'album', 'music', 'series', 'poem', 'song', 'advertisement',
+             'company',
+             'episode', 'season', 'animator', 'actor', 'singer', 'writer', 'drama', 'character']
+def is_media(resource_record):
+    if resource_record is not None and any([j in resource_record.lower() for j in MEDIA]):
+        return True
+    else:
+        return False
+
+
+def merge_es_and_entity_docs(r_es, r_ents):
+    all_ents_docs = [d for docs in r_ents.values() for d in docs]
+    all_es_docs = r_es
+    r_ents_ids = [i['id'] for i in all_ents_docs]
+    r_es_ids = [i['id'] for i in all_es_docs]
+    for idx_i, i in enumerate(r_es_ids):
+        for idx_j, j in enumerate(r_ents_ids):
+            if i == j:
+                if len(r_es[idx_i]['phrases']) > 1:
+                    all_es_docs[idx_i]['score'] += all_ents_docs[idx_j]['score']
+                else:
+                    p = all_ents_docs[idx_j]['phrases'][0].lower()
+                    doc_id = convert_brc(all_ents_docs[idx_j]['id']).replace('_', ' ').lower()
+                    ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
+                    if ratio > 0.8:
+                        r_es[idx_i]['score'] += all_ents_docs[idx_j]['score'] * 0.5
+    merged = all_es_docs
+    for idx, i in enumerate(r_ents_ids):
+        if i not in r_es_ids:
+            phrases = all_ents_docs[idx]['phrases']
+            if len(phrases) == 1:
+                p = all_ents_docs[idx]['phrases'][0].lower()
+                doc_id = convert_brc(i).replace('_', ' ').lower()
+                ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
+                if ratio >= 0.8 or is_media(doc_id):
+                    all_ents_docs[idx]['score'] *= 2
+            else:  # from triple
+                all_ents_docs[idx]['score'] *= 2
+            merged.append(all_ents_docs[idx])
+    merged.sort(key=lambda x: x.get('score'), reverse=True)
     return merged
 
 
@@ -202,12 +201,6 @@ def merge_entity_and_triple_docs(entity_docs, triple_docs):
     return merged_dict
 
 
-def prepare_triple_sentences(data_l, out_filename: Path, log_filename: Path):
-    pass
-
-
-
-
 def strategy_over_all(claim):
     # 1. ES search phrases
     nouns = get_phrases_and_nouns_merged(claim)
@@ -227,7 +220,7 @@ def strategy_over_all(claim):
         candidate_sentences_3 = []
         if len(linked_triples) > 0:
             # 3. ES filter: linked triples VS candidate docs 2 -> candidate sentences 3
-            candidate_sentences_3 = search_triples_in_docs(linked_triples, candidate_docs)
+            candidate_sentences_3 = search_triples_in_docs(linked_triples, candidate_docs_2)
         # 4. sort candidate sentences 2 + 3 -> candidate sentence 4
         candidate_sentences_4 = candidate_sents_2 + candidate_sentences_3
         isolated_phrases = claim_dict['no_relatives']
@@ -427,15 +420,34 @@ def search_triple_in_sentence(tri, doc_id):
     return possible_sentences
 
 
+def search_entity_docs(resources):
+    docs_all = dict()
+    for resource in resources:
+        docs = []
+        resource_uri = resource['URI']
+        wiki_links = get_resource_wiki_page(resource_uri)
+        if wiki_links is None or len(wiki_links) < 1:
+            continue
+        for item in wiki_links:
+            possible_doc_id = item.split('/')[-1]
+            verified_id_es = search_doc_id(possible_doc_id)
+            for r_es in verified_id_es:
+                if len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
+                    docs.append({'id': r_es['id'], 'score': r_es['score'], 'phrases': [resource['text']]})
+        if len(docs) > 0:
+            docs_all.update({resource_uri: docs})
+    return docs_all
+
+
 def search_entity_docs_for_triples(triples: List[Triple]):
     docs = dict()
-    all_resources = []
+    all_resources = dict()
     for tri in triples:
         if len(list(filter(lambda  x: x == tri.subject, all_resources))) < 1:
-            all_resources.append(tri.subject)
+            all_resources.update({tri.subject: [tri.text] if len(tri.relatives) < 1 else tri.relatives})
         if "http://dbpedia.org/resource/" in tri.object and len(list(filter(lambda  x: x == tri.object, all_resources))) < 1:
-            all_resources.append(tri.object)
-    for idx, resource_uri in enumerate(all_resources):
+            all_resources.update({tri.object: [tri.text] if len(tri.relatives) < 1 else tri.relatives})
+    for resource_uri in all_resources.keys():
         entity_pages = []
         wiki_links = get_resource_wiki_page(resource_uri)
         if wiki_links is None or len(wiki_links) < 1:
@@ -447,7 +459,7 @@ def search_entity_docs_for_triples(triples: List[Triple]):
                 if len(list(filter(lambda x: (x['id'] == r_es['id']), entity_pages))) < 1:
                     entity_pages.append({'id': r_es['id'],
                                  'score': r_es['score'],
-                                 'phrases': [tri.text] if len(tri.relatives) < 1 else tri.relatives})
+                                 'phrases': all_resources[resource_uri]})
         if len(entity_pages) > 0:
             docs.update({resource_uri: entity_pages})
     return docs
@@ -530,34 +542,34 @@ def read_claim_context_graphs(dir):
     return cached_graph_d
 
 
-def retri_doc_and_update_item(item, context_dict=None):
-    docs = retrieve_docs(item, context_dict)
-    if len(docs) < 1:
-        print("failed claim:", item.get('id'))
-        item['predicted_docids'] = []
-    else:
-        item['predicted_docids'] = [j.get('id') for j in docs][:10]
-        item['doc_and_line'] = docs
-    return item
+# def retri_doc_and_update_item(item, context_dict=None):
+#     docs = retrieve_docs(item, context_dict)
+#     if len(docs) < 1:
+#         print("failed claim:", item.get('id'))
+#         item['predicted_docids'] = []
+#     else:
+#         item['predicted_docids'] = [j.get('id') for j in docs][:10]
+#         item['doc_and_line'] = docs
+#     return item
 
-
-def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file=None, context_dict=None):
-    if isinstance(in_file, list):
-        d_list = in_file
-    else:
-        d_list = read_json_rows(in_file)
-
-    print("total items: ", len(d_list))
-    for i in tqdm(d_list):
-        retri_doc_and_update_item(i, context_dict)
-    # def retri_doc_and_update_item_with_context(data_l):
-    #     retri_doc_and_update_item(data_l, context_dict)
-    # thread_number = 2
-    # thread_exe(retri_doc_and_update_item_with_context, iter(d_list), thread_number, "query wiki pages")
-    save_intermidiate_results(d_list, out_file)
-    if eval:
-        eval_doc_preds(d_list, top_k, log_file)
-    return d_list
+#
+# def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file=None, context_dict=None):
+#     if isinstance(in_file, list):
+#         d_list = in_file
+#     else:
+#         d_list = read_json_rows(in_file)
+#
+#     print("total items: ", len(d_list))
+#     for i in tqdm(d_list):
+#         retri_doc_and_update_item(i, context_dict)
+#     # def retri_doc_and_update_item_with_context(data_l):
+#     #     retri_doc_and_update_item(data_l, context_dict)
+#     # thread_number = 2
+#     # thread_exe(retri_doc_and_update_item_with_context, iter(d_list), thread_number, "query wiki pages")
+#     save_intermidiate_results(d_list, out_file)
+#     if eval:
+#         eval_doc_preds(d_list, top_k, log_file)
+#     return d_list
 
 
 def eval_doc_preds(doc_list, top_k, log_file):
@@ -570,12 +582,12 @@ def eval_doc_preds(doc_list, top_k, log_file):
     print(fever_score(doc_list, doc_list, mode=eval_mode, max_evidence=top_k, error_analysis_file=log_file))
 
 
-def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
-    r_list = read_json_rows(full_retri_doc)
-    for i in r_list:
-        if i['id'] in failed_list:
-            retri_doc_and_update_item(i)
-    save_intermidiate_results(r_list, updated_file_name)
+# def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
+#     r_list = read_json_rows(full_retri_doc)
+#     for i in r_list:
+#         if i['id'] in failed_list:
+#             retri_doc_and_update_item(i)
+#     save_intermidiate_results(r_list, updated_file_name)
 
 
 def run_claim_context_graph(data):
@@ -625,12 +637,12 @@ def rerun_failed_graph(folder):
 
 if __name__ == '__main__':
     # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
-    folder = config.RESULT_PATH / "extend_20201231"
+    folder = config.RESULT_PATH / "extend_20201229"
     # rerun_failed_graph(folder)
     # prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
-    data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
-    prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
+    # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 
@@ -638,3 +650,11 @@ if __name__ == '__main__':
     # data_context = read_json_rows(folder / "claim_graph_19998.jsonl")
     # assert(len(data_original) == len(data_context))
     # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc_19998.jsonl", folder / "entity_doc_19998.log")
+
+    # folder = config.RESULT_PATH / "extend_20201229"
+    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    ent_data = read_json_rows(folder / "rerun_entity_doc_10000.jsonl")
+    ent_data.extend(read_json_rows(folder / "rerun_entity_doc_19998.jsonl"))
+    assert(len(es_data) == len(ent_data) and len(original_data) == len(ent_data))
+    prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")

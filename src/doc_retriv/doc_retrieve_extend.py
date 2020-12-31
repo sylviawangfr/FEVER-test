@@ -94,6 +94,7 @@ def prepare_candidate_doc2(data_original, data_with_claim_dict_l, out_filename: 
                     claim_triples.append(Triple(t))
                 except Exception as e:
                     print(t)
+                    print(f"idx:{idx}")
                     raise e
             linked_l = claim_dict['linked_phrases_l']
             all_resources = []

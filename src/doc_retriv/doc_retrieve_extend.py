@@ -586,7 +586,8 @@ def run_claim_context_graph(data):
 
 
 def rerun_failed_graph(folder):
-    failed_items = [20986, 217205, 149990, 84858, 217195, 25545, 4704, 217187]
+    failed_items = [20986, 217205, 149990, 84858, 217195, 25545, 4704, 217187, 182050,88781, 10688, 206031, 182033,
+                    96740,182032, 134670,88589,182051, 23588, 10324, 206024, 156889]
     data_original = read_json_rows(config.FEVER_DEV_JSONL)
     data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
     # data_context2 = read_json_rows(folder / "claim_graph_19998.jsonl")

@@ -591,8 +591,8 @@ def run_claim_context_graph(data):
 
 def rerun_failed_graph(folder):
     failed_items = [20986, 149990, 84858, 25545,
-                    4704, 217187, 182050,88781, 10688, 206031, 182033,
-                    96740,182032, 134670,88589,182051, 23588, 10324, 206024, 156889]
+                    182050,88781, 10688, 206031, 182033,
+                    96740,182032, 134670, 88589,182051, 23588, 10324, 206024, 156889]
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     data_context = read_json_rows(folder / "claim_graph_19998.jsonl")
     # data_context = read_json_rows(folder / "claim_graph_19998.jsonl")
@@ -600,6 +600,7 @@ def rerun_failed_graph(folder):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     for idx, i in enumerate(data_context):
         if i['id'] in failed_items:
+            print(json.dumps(i, indent=2))
             claim = convert_brc(normalize(i['claim']))
             claim_dict = construct_subgraph_for_claim(claim, bc)
             claim_dict.pop('embedding')
@@ -610,8 +611,8 @@ def rerun_failed_graph(folder):
                 data_entity[idx]['resource_docs'] = {}
             else:
                 data_entity[idx]['resource_docs'] = candidate_docs_2
-    save_intermidiate_results(data_context, folder / "rerun_claim_graph_19998.jsonl")
-    save_intermidiate_results(data_entity, folder / "rerun_entity_doc_19998.jsonl")
+    # save_intermidiate_results(data_context, folder / "rerun_claim_graph_19998.jsonl")
+    # save_intermidiate_results(data_entity, folder / "rerun_entity_doc_19998.jsonl")
 
 
 

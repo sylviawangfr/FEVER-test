@@ -591,8 +591,8 @@ if __name__ == '__main__':
 
     # prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
-    data = read_json_rows(config.FEVER_DEV_JSONL)[38:39]
-    prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)[38:39]
+    # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 

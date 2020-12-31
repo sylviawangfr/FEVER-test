@@ -596,7 +596,7 @@ if __name__ == '__main__':
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
-    data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
+    data_original = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
+    data_context = read_json_rows(folder / "claim_graph_19998.jsonl")
     assert(len(data_original) == len(data_context))
-    prepare_candidate_doc2(data_original, data_context, folder / "entity_doc_10000.jsonl", folder / "entity_doc_10000.log")
+    prepare_candidate_doc2(data_original, data_context, folder / "entity_doc_19998.jsonl", folder / "entity_doc_19998.log")

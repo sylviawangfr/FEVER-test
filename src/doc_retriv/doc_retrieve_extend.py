@@ -625,12 +625,12 @@ def rerun_failed_graph(folder):
 
 if __name__ == '__main__':
     # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
-    folder = config.RESULT_PATH / "extend_20201229"
-    rerun_failed_graph(folder)
+    folder = config.RESULT_PATH / "extend_20201231"
+    # rerun_failed_graph(folder)
     # prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
-    # data = read_json_rows(config.FEVER_DEV_JSONL)[38:39]
-    # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
+    data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
+    prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 

@@ -60,7 +60,7 @@ def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
 def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     flush_save = []
-    batch = 2
+    batch = 20
     flush_num = batch
     with tqdm(total=len(data_l), desc=f"constructing claim graph") as pbar:
         for idx, example in enumerate(data_l):
@@ -629,10 +629,10 @@ if __name__ == '__main__':
     # rerun_failed_graph(folder)
     # prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
-    data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
-    prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
-    # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
-    # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
+    # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
+    data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
+    prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # data_context = read_json_rows(folder / "claim_graph_19998.jsonl")

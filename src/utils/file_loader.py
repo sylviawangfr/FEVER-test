@@ -1,15 +1,15 @@
 from pathlib import Path
-
+import glob
 from utils.common import *
 from utils.text_clean import *
-import glob
+import tqdm
 import os
 
 
 def read_json_rows(file):
     d_list = []
     with open(file, encoding='utf-8', mode='r') as in_f:
-        for line in in_f:
+        for line in tqdm(in_f):
             item = json.loads(normalize(line.strip()))
             d_list.append(item)
     return d_list

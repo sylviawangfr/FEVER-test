@@ -600,7 +600,6 @@ def rerun_failed_graph(folder):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     for idx, i in enumerate(data_context):
         if i['id'] in failed_items:
-            print(json.dumps(i, indent=2))
             claim = convert_brc(normalize(i['claim']))
             claim_dict = construct_subgraph_for_claim(claim, bc)
             claim_dict.pop('embedding')
@@ -608,6 +607,7 @@ def rerun_failed_graph(folder):
             candidate_docs_2 = prepare_candidate2_example(i)
             if len(candidate_docs_2) < 1:
                 print("failed claim:", i.get('id'))
+                print(json.dumps(i.get('linked_phrases_l'), indent=2))
                 data_entity[idx]['resource_docs'] = {}
             else:
                 data_entity[idx]['resource_docs'] = candidate_docs_2

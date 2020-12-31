@@ -134,6 +134,7 @@ def prepare_candidate_docs(original_data, es_data, entity_data, out_filename: Pa
                 error_items.append(example)
             example['candidate_docs'] = merged
             example['predicted_docids'] = [j.get('id') for j in merged][:10]
+            pbar.update(1)
         save_intermidiate_results(original_data, out_filename)
         save_intermidiate_results(error_items, log_filename)
         eval_doc_preds(original_data, 10, log_filename)

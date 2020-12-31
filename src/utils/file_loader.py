@@ -188,7 +188,7 @@ def save_intermidiate_results(d_list, out_filename: Path, last_loaded_path=None)
 
     with open(out_filename, encoding='utf-8', mode='w') as out_f:
         for item in d_list:
-            out_f.write(json.dumps(item) + '\n')
+            out_f.write(json.dumps(item, ensure_ascii=False) + '\n')
     out_f.close()
 
     if last_loaded_path is not None:
@@ -203,7 +203,7 @@ def save_and_append_results(d_list, total, out_filename: Path, log_filename):
 
     with open(out_filename, encoding='utf-8', mode='a') as out_f:
         for item in d_list:
-            out_f.write(json.dumps(item) + '\n')
+            out_f.write(json.dumps(item, ensure_ascii=False) + '\n')
         out_f.close()
 
     with open(log_filename, encoding='utf-8', mode='a') as log_f:
@@ -218,7 +218,7 @@ def append_results(d_list, out_filename: Path):
 
     with open(out_filename, encoding='utf-8', mode='a') as out_f:
         for item in d_list:
-            out_f.write(json.dumps(item) + '\n')
+            out_f.write(json.dumps(item, ensure_ascii=False) + '\n')
     out_f.close()
 
 

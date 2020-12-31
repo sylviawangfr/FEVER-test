@@ -585,10 +585,20 @@ def run_claim_context_graph(data):
         print("----------------------------")
 
 
+def rerun_failed_graph(folder):
+    failed_items = [20986, 217205, 149990, 84858, 217195, 25545, 4704, 217187]
+    data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
+    # data_context2 = read_json_rows(folder / "claim_graph_19998.jsonl")
+    for i in data_context:
+        if i['id'] in failed_items:
+            print(json.dumps(i, indent=4))
+
+
 if __name__ == '__main__':
     # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
     folder = config.RESULT_PATH / "extend_20201229"
-
+    rerun_failed_graph(folder)
     # prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[38:39]
@@ -596,7 +606,7 @@ if __name__ == '__main__':
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
-    data_context = read_json_rows(folder / "claim_graph_19998.jsonl")
-    assert(len(data_original) == len(data_context))
-    prepare_candidate_doc2(data_original, data_context, folder / "entity_doc_19998.jsonl", folder / "entity_doc_19998.log")
+    # data_original = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
+    # data_context = read_json_rows(folder / "claim_graph_19998.jsonl")
+    # assert(len(data_original) == len(data_context))
+    # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc_19998.jsonl", folder / "entity_doc_19998.log")

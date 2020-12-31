@@ -84,27 +84,7 @@ def prepare_candidate_doc2(data_original, data_with_claim_dict_l, out_filename: 
     flush_num = batch
     with tqdm(total=len(data_with_claim_dict_l), desc=f"searching entity docs") as pbar:
         for idx, example in enumerate(data_with_claim_dict_l):
-            # claim = convert_brc(normalize(example['claim']))
-            claim_dict = example['claim_dict']
-            claim_graph = claim_dict['graph']
-            claim_triples = []
-            for idx_t, t in enumerate(claim_graph):
-                t['tri_id'] = idx_t
-                try:
-                    claim_triples.append(Triple(t))
-                except Exception as e:
-                    print(t)
-                    print(f"idx:{idx}")
-                    raise e
-            linked_l = claim_dict['linked_phrases_l']
-            all_resources = []
-            for p in linked_l:
-                for link in p['links']:
-                    if len(list(filter(lambda x: link['URI'] == x, all_resources))) < 1:
-                        all_resources.append(link)
-            entity_candidate_docs = search_entity_docs(all_resources)
-            triple_candidate_docs = search_entity_docs_for_triples(claim_triples)
-            candidate_docs_2 = merge_entity_and_triple_docs(entity_candidate_docs, triple_candidate_docs)
+            candidate_docs_2 = prepare_candidate2_example(example)
             if len(candidate_docs_2) < 1:
                 print("failed claim:", example.get('id'))
                 data_original[idx]['resource_docs'] = {}
@@ -117,6 +97,30 @@ def prepare_candidate_doc2(data_original, data_with_claim_dict_l, out_filename: 
                 save_and_append_results(flush_save, idx + 1, out_filename, log_filename)
                 flush_num = batch
                 flush_save = []
+
+
+def prepare_candidate2_example(example):
+    claim_dict = example['claim_dict']
+    claim_graph = claim_dict['graph']
+    claim_triples = []
+    for idx_t, t in enumerate(claim_graph):
+        t['tri_id'] = idx_t
+        try:
+            claim_triples.append(Triple(t))
+        except Exception as e:
+            print(t)
+            print(f"id:{example['id']}")
+            raise e
+    linked_l = claim_dict['linked_phrases_l']
+    all_resources = []
+    for p in linked_l:
+        for link in p['links']:
+            if len(list(filter(lambda x: link['URI'] == x, all_resources))) < 1:
+                all_resources.append(link)
+    entity_candidate_docs = search_entity_docs(all_resources)
+    triple_candidate_docs = search_entity_docs_for_triples(claim_triples)
+    candidate_docs_2 = merge_entity_and_triple_docs(entity_candidate_docs, triple_candidate_docs)
+    return candidate_docs_2
 
 
 def search_entity_docs(resources):
@@ -588,12 +592,29 @@ def run_claim_context_graph(data):
 def rerun_failed_graph(folder):
     failed_items = [20986, 217205, 149990, 84858, 217195, 25545, 4704, 217187, 182050,88781, 10688, 206031, 182033,
                     96740,182032, 134670,88589,182051, 23588, 10324, 206024, 156889]
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    data_original = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
-    # data_context2 = read_json_rows(folder / "claim_graph_19998.jsonl")
-    for i in data_context:
+    # data_context = read_json_rows(folder / "claim_graph_19998.jsonl")
+    data_entity = read_json_rows(folder / "entity_doc_10000.jsonl")
+    bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+    for idx, i in enumerate(data_context):
         if i['id'] in failed_items:
-            print(json.dumps(i, indent=4))
+            claim = convert_brc(normalize(i['claim']))
+            claim_dict = construct_subgraph_for_claim(claim, bc)
+            claim_dict.pop('embedding')
+            i['claim_dict'] = claim_dict
+
+            candidate_docs_2 = prepare_candidate2_example(i)
+            if len(candidate_docs_2) < 1:
+                print("failed claim:", i.get('id'))
+                data_entity[idx]['resource_docs'] = {}
+            else:
+                data_entity[idx]['resource_docs'] = candidate_docs_2
+    save_intermidiate_results(data_context, folder / "rerun_claim_graph_10000.jsonl")
+    save_intermidiate_results(data_entity, folder / "rerun_entity_doc_10000.jsonl")
+
+
+
 
 
 if __name__ == '__main__':

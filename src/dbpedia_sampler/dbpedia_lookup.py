@@ -77,8 +77,8 @@ def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
     result = []
     keyword_matching_score = []
     try:
-        keyword_matching_score = [difflib.SequenceMatcher(None, text_phrase,
-                                                          i['Label'] if i['Label'] is not None else '').ratio()
+        keyword_matching_score = [difflib.SequenceMatcher(None, text_phrase.lower(),
+                                                          i['Label'].lower() if i['Label'] is not None else '').ratio()
                                   for i in lookup_records]
     except Exception as err:
         log.error(err)
@@ -340,7 +340,7 @@ if __name__ == "__main__":
     #     test()
     #     gc.collect()
     # test()
-
+    lookup_resource("A monk")
     lookup_resource("Winter's Tale")
 
     # lookup_resource_no_filter('Tool')

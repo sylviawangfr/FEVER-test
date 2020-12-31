@@ -21,8 +21,10 @@ def search_doc(phrases):
             if ph.lower().startswith('the ') or ph.lower().startswith("a ") or ph.lower().startswith("an "):
                 ph = ph.split(' ', 1)[1]
         # must.append({'match_phrase': {'lines': ph}})
-            should.append({'multi_match': {'query': ph, "type": "most_fields", 'fields': ['id^2', 'lines']}})
-            must.append({'multi_match': {'query': ph, "type": "phrase", 'fields': ['id^2', 'lines'], 'slop': 3}})
+            should.append({'multi_match': {'query': ph, "type": "most_fields",
+                                           'fields': ['id^2', 'lines'], 'analyzer': 'underscore_analyzer'}})
+            must.append({'multi_match': {'query': ph, "type": "phrase",
+                                         'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
 
         search = search.query(Q('bool', must=must, should=should)). \
                  highlight('lines', number_of_fragments=0). \
@@ -56,8 +58,10 @@ def search_doc_dbpedia_context(context_dict):
 
         # must.append({'match_phrase': {'lines': ph}})
         for i in context_dict['keywords']:
-            should.append({'multi_match': {'query': i, "type": "phrase", 'fields': ['id^2', 'lines'], 'slop': 3}})
-        must.append({'multi_match': {'query': context_dict['entity'], "type": "phrase", 'fields': ['id^2', 'lines'], 'slop': 3}})
+            should.append({'multi_match': {'query': i, "type": "phrase", 'fields': ['id^2', 'lines'],
+                                           'slop': 3, 'analyzer': 'underscore_analyzer'}})
+        must.append({'multi_match': {'query': context_dict['entity'], "type": "phrase",
+                                     'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
 
         search = search.query(Q('bool', must=must, should=should)). \
                  highlight('lines', number_of_fragments=0). \
@@ -89,7 +93,7 @@ def search_doc_id_and_keywords(possible_id, keywords):
     must = []
     should = []
     must.append(
-        {'match_phrase': {'id': {'query': possible_id, 'analyzer' : 'underscore_analyzer', 'boost': 2}}})
+        {'match_phrase': {'id': {'query': possible_id, 'analyzer': 'underscore_analyzer', 'boost': 2}}})
     # should.append({'match_phrase': {'lines': {'query': possible_id.replace("_", " "), 'analyzer': 'underscore_analyzer'}}})
     if len(keywords) == 2:
         relation = keywords[0]
@@ -177,11 +181,19 @@ def search_doc_id_and_keywords_in_sentences(possible_id, keywords):
 
 def search_doc_id(possible_id):
     try:
-        search = Search(using=client, index=config.WIKIPAGE_INDEX)
-        search = search.query('match_phrase', id=possible_id). \
-                 sort({'_score': {"order": "desc"}}). \
-                 source(include=['id'])[0:5]
-        response = search.execute()
+        body = {
+            "query": {
+                "match_phrase": {
+                    "id": {
+                        "query": possible_id,
+                        "analyzer": "underscore_analyzer"
+                    }
+                }},
+            "sort": {"_score": {"order": "desc"}},
+            "_source": ["id"],
+            "size": 5
+        }
+        response = client.search(index=config.WIKIPAGE_INDEX, body=body)
         r_list = []
         for hit in response['hits']['hits']:
             score = hit['_score']
@@ -189,8 +201,10 @@ def search_doc_id(possible_id):
             doc_dic = {'score': score, 'phrases': [possible_id], 'id': id, 'lines': ""}
             r_list.append(doc_dic)
         return r_list
-    except:
+    except Exception as e:
+        print(e)
         return []
+
 
 
 # in case there is no co-existing all phrases in one doc:
@@ -381,10 +395,11 @@ def test_search_id(text):
         return []
 
 if __name__ == '__main__':
+    search_doc_id("Pablo_Andrés_González")
     # t = normalize("""["Mariano Gonza\u0301lez", "Mariano Gonza\u0301lez"]""")
 
     # search_doc_id_and_keywords("Cordillera Domeyko", ["parent Mountain Peak", "Andes"])
-    search_doc_id_and_keywords("Pablo_Andrés_González", ["brother", "Mariano González"])
+    # search_doc_id_and_keywords("Pablo_Andrés_González", ["brother", "Mariano González"])
     # t = read_json(config.PRO_ROOT / "src/ES/wikipage_mapping.json")
     # print(test_search_id("Trouble with the Curve"))
     # print(has_phrase_covered(['a c', 'b', 'c'], ['a b c', 'c d']))

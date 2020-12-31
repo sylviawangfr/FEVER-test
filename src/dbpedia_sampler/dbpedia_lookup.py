@@ -106,32 +106,29 @@ def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
 # @profile
 def combine_lookup(text_phrase):
     lookup_matches_ref = lookup_resource_ref_count(text_phrase)
-    # if exact_match is not None:
-    #     log.debug(f"DBpedia lookup phrase: {text_phrase}, matching: {exact_match['URI']}")
-    #     return exact_match, media_match
-    # else:
     lookup_app_matches_label = lookup_resource_app_label(text_phrase)
     lookup_app_matches_query = lookup_resource_app_query(text_phrase)
     lookup_app_matches = []
     for i in lookup_matches_ref:
-        if len(list(filter(lambda x: (x['Label'] == i['Label']), lookup_app_matches))) < 1:
+        if len(list(filter(lambda x: (x['Label'] == i['Label'] and x['URI'] == i['URI']), lookup_app_matches))) < 1:
             lookup_app_matches.append(i)
     for i in lookup_app_matches_query:
-        if len(list(filter(lambda x: (x['Label'] == i['Label']), lookup_app_matches))) < 1:
+        if len(list(filter(lambda x: (x['Label'] == i['Label'] and x['URI'] == i['URI']), lookup_app_matches))) < 1:
             lookup_app_matches.append(i)
     for i in lookup_app_matches_label:
-        if len(list(filter(lambda x: (x['Label'] == i['Label']), lookup_app_matches))) < 1:
+        if len(list(filter(lambda x: (x['Label'] == i['Label'] and x['URI'] == i['URI']), lookup_app_matches))) < 1:
             lookup_app_matches.append(i)
 
     lookup_app_matches.sort(key=lambda k: int(k['Refcount']), reverse=True)
     exact_match = get_exact_match(text_phrase, lookup_app_matches)
     media_match = get_media_subset_match(text_phrase, lookup_app_matches)
-    if exact_match is not None:
-        log.debug(f"DBpedia lookup-app phrase: {text_phrase}, matching: {exact_match['URI']}")
-        exact_match['exact_match'] = True
-        result = [exact_match]
+    if len(exact_match) > 0:
+        log.debug(f"DBpedia lookup-app phrase: {text_phrase}, matching: {[i['URI'] for i in exact_match]}")
+        for i in exact_match:
+            i['exact_match'] = True
+        result = exact_match
         for i in media_match:
-            if i['URI'] != exact_match['URI']:
+            if len(list(filter(lambda x: (i['URI'] == x), exact_match))) < 1:
                 i['exact_match'] = False
                 result.append(i)
         top_ref = lookup_app_matches[0]
@@ -189,10 +186,11 @@ def combine_lookup(text_phrase):
 
 
 def get_exact_match(text_phrase, lookup_records):
+    result = []
     for i in lookup_records:
         if i['Label'] is not None and text_phrase.lower() == i['Label'].lower():
-            return i
-    return None
+            result.append(i)
+    return result
 
 
 def get_media_subset_match(text_phrase, lookup_records):
@@ -340,8 +338,8 @@ if __name__ == "__main__":
     #     test()
     #     gc.collect()
     # test()
-    lookup_resource("A monk")
-    lookup_resource("Winter's Tale")
+    lookup_resource("The Fly")
+    # lookup_resource("Winter's Tale")
 
     # lookup_resource_no_filter('Tool')
     lookup_resource('Western Conference Southwest Division')

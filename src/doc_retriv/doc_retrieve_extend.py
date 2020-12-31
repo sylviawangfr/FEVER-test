@@ -604,7 +604,7 @@ def rerun_failed_graph(folder):
             claim_dict = construct_subgraph_for_claim(claim, bc)
             claim_dict.pop('embedding')
             i['claim_dict'] = claim_dict
-            print(json.dumps(i['claim_dict'].get('linked_phrases_l'), indent=2))
+            # print(json.dumps(i['claim_dict'].get('linked_phrases_l'), indent=2))
             candidate_docs_2 = prepare_candidate2_example(i)
             if len(candidate_docs_2) < 1:
                 print("failed claim:", i.get('id'))

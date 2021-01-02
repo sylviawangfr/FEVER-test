@@ -19,26 +19,6 @@ from typing import List
 import itertools
 
 
-# def retrieve_docs(example, context_dict=None):
-#     claim = example['claim']
-#     id = example['id']
-#     result_context = []
-#     result_uris = []
-#     if context_dict is not None and len(context_dict) > 0:
-#         context, object_urls = get_context_dbpedia(context_dict, id)
-#         result_context = search_and_merge3(context)
-#         result_uris = search_extended_URIs(object_urls)
-#     nouns = get_phrases_and_nouns_merged(claim)
-#     result_es = search_and_merge2(nouns)
-#     result_dbpedia = search_entity_dbpedia(claim)
-#     result_dbpedia.extend(result_uris)
-#     result_dbpedia = merge_result(result_dbpedia)
-#     result = merge_es_and_dbpedia(result_es, result_dbpedia, result_context)
-#     if len(result) > 10:
-#         result = result[:10]
-#     return result
-
-
 def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
     for example in tqdm(data_l):
         candidate_docs_1 = prepare_candidate_es_for_example2(example)
@@ -395,8 +375,6 @@ def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
     #                                           id_tokenized=True)
 
 
-def filter_bert_claim_vs_sents(claim, docs):
-    pass
 
 
 def search_triples_in_docs(triples, docs:dict): #  list[Triple]
@@ -480,31 +458,6 @@ def search_entity_docs_for_triples(triples: List[Triple]):
     return docs
 
 
-def link_entities(claim):
-    not_linked_phrases_l, linked_phrases_l = link_sentence(claim)
-    triples = []
-    phrase_links = dict()
-    threshold = 0.5
-    for resource in linked_phrases_l:
-        resource_uri = resource['URI']
-
-        phrase = resource['text']
-        if phrase in phrase_links:
-            phrase_links[phrase].append(resource_uri)
-        else:
-            phrase_links[phrase] = [resource_uri]
-    for k,v in dict.iteritems():
-        if len(v) > 1:
-
-            # sorted_matching_index = sorted(range(len(keyword_matching_score)), key=lambda k: keyword_matching_score[k],
-            #                                reverse=True)
-            # top_score = keyword_matching_score[sorted_matching_index[0]]
-            media_subset = []
-            for i in v:
-                media_subset.append(is_media_subset(i))
-
-
-
 def is_media_subset(resource):
     media_subset = ['work', 'person', 'art', 'creative work', 'television show', 'MusicGroup', 'band', 'film', 'book']
     categories = get_categories2(resource)
@@ -546,37 +499,10 @@ def read_claim_context_graphs(dir):
     return cached_graph_d
 
 
-# def retri_doc_and_update_item(item, context_dict=None):
-#     docs = retrieve_docs(item, context_dict)
-#     if len(docs) < 1:
-#         print("failed claim:", item.get('id'))
-#         item['predicted_docids'] = []
-#     else:
-#         item['predicted_docids'] = [j.get('id') for j in docs][:10]
-#         item['doc_and_line'] = docs
-#     return item
-
-#
-# def get_doc_ids_and_fever_score(in_file, out_file, top_k=10, eval=True, log_file=None, context_dict=None):
-#     if isinstance(in_file, list):
-#         d_list = in_file
-#     else:
-#         d_list = read_json_rows(in_file)
-#
-#     print("total items: ", len(d_list))
-#     for i in tqdm(d_list):
-#         retri_doc_and_update_item(i, context_dict)
-#     # def retri_doc_and_update_item_with_context(data_l):
-#     #     retri_doc_and_update_item(data_l, context_dict)
-#     # thread_number = 2
-#     # thread_exe(retri_doc_and_update_item_with_context, iter(d_list), thread_number, "query wiki pages")
-#     save_intermidiate_results(d_list, out_file)
-#     if eval:
-#         eval_doc_preds(d_list, top_k, log_file)
-#     return d_list
-
-
 def eval_doc_preds(doc_list, top_k, log_file):
+    if 'evidence' not in doc_list[0]:
+        return
+
     dt = get_current_time_str()
     print(fever_doc_only(doc_list, doc_list, max_evidence=top_k,
                          analysis_log=config.LOG_PATH / f"{dt}_doc_retri_no_hits.jsonl"))
@@ -584,14 +510,6 @@ def eval_doc_preds(doc_list, top_k, log_file):
     if log_file is None:
         log_file = config.LOG_PATH / f"{dt}_analyze_doc_retri.log"
     print(fever_score(doc_list, doc_list, mode=eval_mode, max_evidence=top_k, error_analysis_file=log_file))
-
-
-# def rerun_failed_items(full_retri_doc, failed_list, updated_file_name):
-#     r_list = read_json_rows(full_retri_doc)
-#     for i in r_list:
-#         if i['id'] in failed_list:
-#             retri_doc_and_update_item(i)
-#     save_intermidiate_results(r_list, updated_file_name)
 
 
 def run_claim_context_graph(data):
@@ -639,7 +557,7 @@ def rerun_failed_graph(folder):
     save_intermidiate_results(data_entity, folder / "rerun_entity_doc.jsonl")
 
 
-def redo_example(error_data, log_filename):
+def redo_example_docs(error_data, log_filename):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     for example in tqdm(error_data):
         es_doc_and_lines = prepare_candidate_es_for_example2(example)

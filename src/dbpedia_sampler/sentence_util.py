@@ -52,7 +52,7 @@ def get_ents_and_phrases(sentence):
 
     nouns = list(set(nouns_chunks))
     for i in nouns_chunks:
-        if len(list(filter(lambda x: (i in x), capitalized_phrased))) > 0:
+        if len(list(filter(lambda x: (i in x), capitalized_phrased))) > 0 and i in nouns:
             nouns.remove(i)
     for i in noun_tokens:
         if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in nouns:

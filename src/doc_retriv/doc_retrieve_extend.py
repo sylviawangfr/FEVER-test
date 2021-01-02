@@ -678,5 +678,5 @@ if __name__ == '__main__':
     # assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
     # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
 
-    error_data =read_json_rows(config.RESULT_PATH / "errors/candidate_docs.log")
+    error_data =read_json_rows(config.RESULT_PATH / "errors/candidate_docs.log")[37:38]
     redo_example(error_data, config.RESULT_PATH / "errors/redo.log")

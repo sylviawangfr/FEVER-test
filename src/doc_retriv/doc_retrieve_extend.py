@@ -650,7 +650,7 @@ if __name__ == '__main__':
 
     data_original = read_json_rows(config.FEVER_DEV_JSONL)
     data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
-    data_context = data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
+    data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
     assert(len(data_original) == len(data_context))
     prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
 

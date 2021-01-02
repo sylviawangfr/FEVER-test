@@ -176,7 +176,7 @@ def merge_es_and_entity_docs(r_es, r_ents):
                 doc_id = convert_brc(i).replace('_', ' ').lower()
                 ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
                 if ratio >= 0.8 or is_media(doc_id):
-                    all_ents_docs[idx]['score'] *= 2
+                    all_ents_docs[idx]['score'] *= 1.5
             else:  # from triple
                 all_ents_docs[idx]['score'] *= 2
             merged.append(all_ents_docs[idx])

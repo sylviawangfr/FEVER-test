@@ -656,8 +656,8 @@ if __name__ == '__main__':
     # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
     folder = config.RESULT_PATH / "extend_20201231"
     # rerun_failed_graph(folder)
-    # data = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    data = read_json_rows(config.FEVER_DEV_JSONL)
+    prepare_candidate_doc1(data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
@@ -678,5 +678,5 @@ if __name__ == '__main__':
     # assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
     # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
 
-    error_data =read_json_rows(config.RESULT_PATH / "errors/candidate_docs.log")
-    redo_example(error_data, config.RESULT_PATH / "errors/redo.log")
+    # error_data =read_json_rows(config.RESULT_PATH / "errors/candidate_docs.log")
+    # redo_example(error_data, config.RESULT_PATH / "errors/redo.log")

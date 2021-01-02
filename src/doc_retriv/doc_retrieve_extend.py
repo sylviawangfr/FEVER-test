@@ -651,13 +651,27 @@ def redo_example(error_data, log_filename):
     eval_doc_preds(error_data, 10, log_filename)
 
 
+def do_testset_es(folder):
+    data = read_json_rows(config.FEVER_TEST_JSONL)
+    prepare_candidate_doc1(data, folder / "test_es_doc_10.jsonl", folder / "test_es_doc_10.log")
 
-if __name__ == '__main__':
-    # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
+
+def do_testset_graph1(folder):
+    data = read_json_rows(config.FEVER_TEST_JSONL)[0:10000]
+    prepare_claim_graph(data, folder / "test_claim_graph_10000.jsonl", folder / "test_claim_graph_10000.log")
+    # data = read_json_rows(config.FEVER_TEST_JSONL)[10000:19998]
+    # prepare_claim_graph(data, folder / "test_claim_graph_19998.jsonl", folder / "test_claim_graph_19998.log")
+
+
+def do_testset_graph2(folder):
+    data = read_json_rows(config.FEVER_TEST_JSONL)[10000:19998]
+    prepare_claim_graph(data, folder / "test_claim_graph_19998.jsonl", folder / "test_claim_graph_19998.log")
+
+
+def do_dev_set():
     folder = config.RESULT_PATH / "extend_20201231"
-
-    es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
+    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
 
     # rerun_failed_graph(folder)
     # data = read_json_rows(config.FEVER_DEV_JSONL)
@@ -684,3 +698,8 @@ if __name__ == '__main__':
 
     # error_data =read_json_rows(config.RESULT_PATH / "errors/candidate_docs.log")
     # redo_example(error_data, config.RESULT_PATH / "errors/redo.log")
+
+
+if __name__ == '__main__':
+    folder = config.RESULT_PATH / "extend_test_20210102"
+    do_testset_es(folder)

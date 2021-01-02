@@ -444,13 +444,13 @@ def search_entity_docs_for_triples(triples: List[Triple]):
     docs = dict()
     all_resources = dict()
     for tri in triples:
-        if len(list(filter(lambda  x: x == tri.subject, all_resources))) < 1:
+        if len(list(filter(lambda x: x == tri.subject, all_resources))) < 1:
             all_resources.update({tri.subject: [tri.text] if len(tri.relatives) < 1 else tri.relatives})
         if "http://dbpedia.org/resource/" in tri.object and len(list(filter(lambda  x: x == tri.object, all_resources))) < 1:
             all_resources.update({tri.object: [tri.text] if len(tri.relatives) < 1 else tri.relatives})
     for resource_uri in all_resources.keys():
         entity_pages = []
-        wiki_links = get_resource_wiki_page(resource_uri)
+        wiki_links = get_resource_wiki_page(normalize(resource_uri))
         if wiki_links is None or len(wiki_links) < 1:
             continue
         for item in wiki_links:
@@ -640,23 +640,23 @@ if __name__ == '__main__':
     # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
     folder = config.RESULT_PATH / "extend_20201231"
     # rerun_failed_graph(folder)
-    data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)
+    # prepare_candidate_doc1(data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 
-    # data_original = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
-    # data_context = read_json_rows(folder / "claim_graph_19998.jsonl")
-    # assert(len(data_original) == len(data_context))
-    # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc_19998.jsonl", folder / "entity_doc_19998.log")
+    data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
+    data_context = data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
+    assert(len(data_original) == len(data_context))
+    prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
 
-    # folder = config.RESULT_PATH / "extend_20201229"
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
     # es_data = read_json_rows(folder / "es_doc_10.jsonl")
     # ent_data = read_json_rows(folder / "rerun_entity_doc_10000.jsonl")
     # ent_data.extend(read_json_rows(folder / "rerun_entity_doc_19998.jsonl"))
-    # assert(len(es_data) == len(ent_data) and len(original_data) == len(ent_data))
-    # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
+    # assert(len(es_data) == len(data_original))
+    # prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")

@@ -41,7 +41,7 @@ import itertools
 
 def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
     for example in tqdm(data_l):
-        candidate_docs_1 = prepare_candidate_es_for_example(example)
+        candidate_docs_1 = prepare_candidate_es_for_example2(example)
         if len(candidate_docs_1) < 1:
             print("failed claim:", example.get('id'))
             example['predicted_docids'] = []

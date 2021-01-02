@@ -25,17 +25,22 @@ def count_words(sent):
     return l
 
 
+REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\s)*(\'s)?' \
+            r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(and\s)*(with\s)*(the\s)*' \
+            r'(-?)(&?)(\d*\s)*)*(?<!-\s)([A-Z]+[\w]*(\s\d+)*)(\s\(.*\))*'
+
+
 def split_claim_regex(text):
     # get capital phrases
     # REGEX = r'(?<![.])([A-Z]+[\w]*\s)*([A-Z][\w]+)'
-    REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\s)*(\'s)?' \
-            r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(and\s)*(with\s)*(the\s)*' \
-            r'(-?)(&?)(\d*\s)*)*(?<!-\s)([A-Z]+[\w]*(\s\d+)*)(\s\(.*\))*'
     regexp = regex.compile(REGEX)
     matches = [m for m in regexp.finditer(text)]
     tokens = [matches[i].group() for i in range(len(matches))]
     return tokens
 
+
+def is_capitalized(text):
+    return regex.match(REGEX, text) is not None
 
 def merge_phrases_as_span(sent, phrase_l):
     doc_to_merge = nlp_eng_spacy(sent)

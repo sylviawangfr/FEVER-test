@@ -18,7 +18,10 @@ def search_doc(phrases):
         must = []
         should = []
         for ph in phrases:
-            if ph.lower().startswith('the ') or ph.lower().startswith("a ") or ph.lower().startswith("an "):
+            if (not is_capitalized(ph)) and \
+                    (ph.lower().startswith('the ')
+                     or ph.lower().startswith("a ")
+                     or ph.lower().startswith("an ")):
                 ph = ph.split(' ', 1)[1]
         # must.append({'match_phrase': {'lines': ph}})
             should.append({'multi_match': {'query': ph, "type": "most_fields",
@@ -301,7 +304,7 @@ def search_and_merge4(entities, nouns):
     entity_subsets = get_subsets(entities)
     nouns_subsets = get_subsets(nouns)
     covered_set = set()
-    result = []
+    result = search_and_merge2(entities)
     if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
         product = itertools.product(entity_subsets, nouns_subsets)
         for i in product:

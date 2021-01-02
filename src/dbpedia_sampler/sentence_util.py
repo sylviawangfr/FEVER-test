@@ -42,40 +42,22 @@ def get_ents_and_phrases(sentence):
     for token in doc_noun:
         if token.pos_.lower() in ['propn', 'noun']:
             noun_tokens.append(token.text)
-        # if (token.dep_ not in ["aux", 'auxpass']) \
-        #         and (token.pos_ in ["VERB", "AUX"]) \
-        #         and not (token.pos_ == "AUX" and token.dep_ == "ROOT"):
-        #     verbs.append(token.text)
     nouns_chunks = [chunk.text for chunk in doc_noun.noun_chunks]
     ents = [ent.text for ent in doc_noun.ents]
-    capitalized_phrased = split_claim_regex(sentence)
-    merged = [i for i in capitalized_phrased]
-    for i in nouns_chunks:
-        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in merged:
-            merged.append(i)
-    for i in noun_tokens:
-        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in merged:
-            merged.append(i)
+    capitalized_phrased = list(set(split_claim_regex(sentence)))
+
     for i in ents:
-        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in merged:
-            merged.append(i)
-    # merged = capitalized_phrased
-    # for i in nouns_chunks:
-    #     if i not in capitalized_phrased:
-    #         merged.append(i)
-    # for i in noun_tokens:
-    #     if i not in capitalized_phrased:
-    #         merged.append(i)
-    # for i in ents:
-    #     if i not in capitalized_phrased:
-    #         merged.append(i)
-    # to_delete = []
-    # for i in merged:
-    #     if 'the ' + i in merged or 'a ' + i in merged:
-    #         to_delete.append(i)
-    # for i in to_delete:
-    #     merged.remove(i)
-    return merged
+        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in capitalized_phrased:
+            nouns_chunks.append(i)
+
+    nouns = list(set(nouns_chunks))
+    for i in nouns_chunks:
+        if len(list(filter(lambda x: (i in x), capitalized_phrased))) > 0:
+            nouns.remove(i)
+    for i in noun_tokens:
+        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in nouns:
+            nouns.append(i)
+    return capitalized_phrased, nouns
 
 
 def get_phrases_and_nouns_merged(sentence):
@@ -91,7 +73,7 @@ def get_phrases_and_nouns_merged(sentence):
     nouns_chunks = [chunk.text for chunk in doc_noun.noun_chunks]
     ents = [ent.text for ent in doc_noun.ents]
     capitalized_phrased = split_claim_regex(sentence)
-    merged = [i for i in capitalized_phrased]
+    merged = list(set(capitalized_phrased))
     for i in nouns_chunks:
         if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in merged:
             merged.append(i)

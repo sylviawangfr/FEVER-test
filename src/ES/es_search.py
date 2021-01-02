@@ -22,14 +22,14 @@ def search_doc(phrases):
                 ph = ph.split(' ', 1)[1]
         # must.append({'match_phrase': {'lines': ph}})
             should.append({'multi_match': {'query': ph, "type": "most_fields",
-                                           'fields': ['id^2', 'lines'], 'analyzer': 'underscore_analyzer'}})
+                                           'fields': ['id^3', 'lines'], 'analyzer': 'underscore_analyzer'}})
             must.append({'multi_match': {'query': ph, "type": "phrase",
-                                         'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
+                                         'fields': ['id^3', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
 
         search = search.query(Q('bool', must=must, should=should)). \
                  highlight('lines', number_of_fragments=0). \
                  sort({'_score': {"order": "desc"}}). \
-                 source(include=['id'])[0:5]
+                 source(include=['id'])[0:10]
 
         response = search.execute()
         r_list = []
@@ -216,12 +216,11 @@ def has_overlap(str_l):
     return False
 
 def search_subsets(phrases):
-    l = len(phrases)
     result = []
     phrase_set = set(phrases)
     covered_set = set([])
     searched_subsets = []
-
+    l = len(phrases)
     if l > 1:
         l = 5 if l > 4 else l + 1
         for i in reversed(range(2, l)):
@@ -280,6 +279,44 @@ def search_and_merge2(entities_and_nouns):
     result7 = search_single_entity(not_covered0)
     # print("done with r6")
     return merge_result(result0 + result7)
+
+
+def search_and_merge4(entities, nouns):
+    if len(entities) == 0:
+        return search_and_merge2(nouns)
+    if len(nouns) == 0:
+        return search_and_merge2(entities)
+
+    def get_subsets(phrase_l):
+        all_subsets = []
+        l = len(phrase_l)
+        if l == 0:
+            return all_subsets
+        l = 4 if l > 3 else l
+        for i in reversed(range(1, l + 1)):
+            sub_sets = [list(c) for c in itertools.combinations(phrase_l, i)]
+            all_subsets.extend(sub_sets)
+        return all_subsets
+
+    entity_subsets = get_subsets(entities)
+    nouns_subsets = get_subsets(nouns)
+    covered_set = set()
+    result = []
+    if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
+        product = itertools.product(entity_subsets, nouns_subsets)
+        for i in product:
+            new_subset = []
+            new_subset.extend(i[0])
+            new_subset.extend(i[1])
+            if has_overlap(new_subset):
+                continue
+            r = search_doc(new_subset)
+            if len(r) > 0:
+                covered_set = covered_set | set(new_subset)
+                result.extend(r)
+        not_covered = set(nouns + entities) - covered_set
+        result7 = search_single_entity(not_covered)
+        return merge_result(result + result7)
 
 
 # entity, keywords

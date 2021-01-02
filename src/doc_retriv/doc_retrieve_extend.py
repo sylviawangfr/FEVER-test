@@ -1,11 +1,11 @@
-from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, search_and_merge3, merge_result, search_doc_id_and_keywords, search_doc_id_and_keywords_in_sentences
+from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, search_and_merge4, merge_result, search_doc_id_and_keywords, search_doc_id_and_keywords_in_sentences
 from utils.c_scorer import *
 from utils.common import thread_exe
 from utils.fever_db import *
 from utils.file_loader import read_json_rows, get_current_time_str, read_all_files, save_and_append_results
 from dbpedia_sampler.dbpedia_triple_linker import link_sentence
 from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
-from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns_merged
+from dbpedia_sampler.sentence_util import get_ents_and_phrases, get_phrases_and_nouns_merged
 import difflib
 from utils.text_clean import convert_brc
 from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim, construct_subgraph_for_candidate
@@ -41,11 +41,7 @@ import itertools
 
 def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
     for example in tqdm(data_l):
-        claim = convert_brc(normalize(example['claim']))
-        nouns = get_phrases_and_nouns_merged(claim)
-        # 2. get ES page candidates -> candidate docs 1
-        #  . BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
-        candidate_docs_1 = search_and_merge2(nouns)
+        candidate_docs_1 = prepare_candidate_es_for_example(example)
         if len(candidate_docs_1) < 1:
             print("failed claim:", example.get('id'))
             example['predicted_docids'] = []
@@ -57,6 +53,20 @@ def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
     eval_doc_preds(data_l, 10, log_filename)
 
 
+def prepare_candidate_es_for_example(example):
+    claim = convert_brc(normalize(example['claim']))
+    nouns = get_phrases_and_nouns_merged(claim)
+    candidate_docs_1 = search_and_merge2(nouns)
+    return candidate_docs_1
+
+
+def prepare_candidate_es_for_example2(example):
+    claim = convert_brc(normalize(example['claim']))
+    entities, nouns = get_ents_and_phrases(claim)
+    candidate_docs_1 = search_and_merge4(entities, nouns)
+    return candidate_docs_1
+
+
 def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     flush_save = []
@@ -64,10 +74,7 @@ def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path):
     flush_num = batch
     with tqdm(total=len(data_l), desc=f"constructing claim graph") as pbar:
         for idx, example in enumerate(data_l):
-            claim = convert_brc(normalize(example['claim']))
-            claim_dict = construct_subgraph_for_claim(claim, bc)
-            claim_dict.pop('embedding')
-            example['claim_dict'] = claim_dict
+            example = prepare_claim_graph_for_example(example, bc)
             flush_save.append(example)
             flush_num -= 1
             pbar.update(1)
@@ -76,6 +83,14 @@ def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path):
                 flush_num = batch
                 flush_save = []
     bc.close()
+
+
+def prepare_claim_graph_for_example(example, bc: BertClient):
+     claim = convert_brc(normalize(example['claim']))
+     claim_dict = construct_subgraph_for_claim(claim, bc)
+     claim_dict.pop('embedding')
+     example['claim_dict'] = claim_dict
+     return example
 
 
 def prepare_candidate_doc2(data_original, data_with_claim_dict_l, out_filename: Path, log_filename: Path):
@@ -140,7 +155,6 @@ def prepare_candidate_docs(original_data, es_data, entity_data, out_filename: Pa
         eval_doc_preds(original_data, 10, log_filename)
 
 
-
 MEDIA = ['tv', 'film', 'book', 'novel', 'band', 'album', 'music', 'series', 'poem', 'song', 'advertisement',
              'company',
              'episode', 'season', 'animator', 'actor', 'singer', 'writer', 'drama', 'character']
@@ -176,7 +190,7 @@ def merge_es_and_entity_docs(r_es, r_ents):
                 doc_id = convert_brc(i).replace('_', ' ').lower()
                 ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
                 if ratio >= 0.8 or is_media(doc_id):
-                    all_ents_docs[idx]['score'] *= 1.5
+                    all_ents_docs[idx]['score'] *= 2
             else:  # from triple
                 all_ents_docs[idx]['score'] *= 2
             merged.append(all_ents_docs[idx])
@@ -625,6 +639,16 @@ def rerun_failed_graph(folder):
     save_intermidiate_results(data_entity, folder / "rerun_entity_doc.jsonl")
 
 
+def redo_example(error_data, log_filename):
+    bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+    for example in tqdm(error_data):
+        es_doc_and_lines = prepare_candidate_es_for_example2(example)
+        graph_data_example = prepare_claim_graph_for_example(example, bc)
+        ent_resource_docs = prepare_candidate2_example(graph_data_example)
+        merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
+        example['candidate_docs'] = merged
+        example['predicted_docids'] = [j.get('id') for j in merged][:10]
+    eval_doc_preds(error_data, 10, log_filename)
 
 
 
@@ -648,8 +672,11 @@ if __name__ == '__main__':
 
     # rerun_failed_graph(folder)
 
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "rerun_entity_doc.jsonl")
-    assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
-    prepare_candidate_docs(original_data, es_data, ent_data, folder / "rerun_candidate_docs.jsonl", folder / "rerun_candidate_docs.log")
+    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # ent_data = read_json_rows(folder / "rerun_entity_doc.jsonl")
+    # assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
+    # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
+
+    error_data =read_json_rows(config.RESULT_PATH / "errors/candidate_docs.log")
+    redo_example(error_data, config.RESULT_PATH / "errors/redo.log")

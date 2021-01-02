@@ -652,4 +652,4 @@ if __name__ == '__main__':
     es_data = read_json_rows(folder / "es_doc_10.jsonl")
     ent_data = read_json_rows(folder / "rerun_entity_doc.jsonl")
     assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
-    prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
+    prepare_candidate_docs(original_data, es_data, ent_data, folder / "rerun_candidate_docs.jsonl", folder / "rerun_candidate_docs.log")

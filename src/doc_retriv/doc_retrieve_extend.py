@@ -655,9 +655,13 @@ def redo_example(error_data, log_filename):
 if __name__ == '__main__':
     # print(generate_triple_sentence_combination([[1,2], [3,4], [5,6]], []))
     folder = config.RESULT_PATH / "extend_20201231"
+
+    es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
+
     # rerun_failed_graph(folder)
-    data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_candidate_doc1(data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)
+    # prepare_candidate_doc1(data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")

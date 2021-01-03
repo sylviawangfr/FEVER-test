@@ -209,6 +209,61 @@ def search_doc_id(possible_id):
         return []
 
 
+def remove_the_a(ph):
+    if (not is_capitalized(ph)) and \
+            (ph.lower().startswith('the ')
+             or ph.lower().startswith("a ")
+             or ph.lower().startswith("an ")):
+        ph = ph.split(' ', 1)[1]
+    return ph
+
+
+def search_entity_combinations(entities):
+    def construct_must_and_should(must_l, should_l):
+        must = []
+        should = []
+        for m in must_l:
+            m = remove_the_a(m)
+            must.append({'multi_match': {'query': m, "type": "phrase",
+                                         'fields': ['id^3', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
+        for s in should_l:
+            s = remove_the_a(s)
+            should.append({'multi_match': {'query': s, "type": "most_fields",
+                                           'fields': ['id^3', 'lines'], 'analyzer': 'underscore_analyzer'}})
+        return must, should
+
+    try:
+        r_list = []
+        for ph in entities:
+            tmp_r = []
+            must_entity = [ph]
+            should_entities = [i for i in entities if i != ph]
+            must, should = construct_must_and_should(must_entity, should_entities)
+            search = Search(using=client, index=config.WIKIPAGE_INDEX)
+            search = search.query(Q('bool', must=must, should=should)). \
+                         highlight('lines', number_of_fragments=0). \
+                         sort({'_score': {"order": "desc"}}). \
+                         source(include=['id'])[0:10]
+
+            response = search.execute()
+            for hit in response['hits']['hits']:
+                score = hit['_score']
+                id = hit['_source']['id']
+                if 'highlight' in hit:
+                    lines = hit['highlight']['lines'][0]
+                    lines = lines.replace("</em> <em>", " ")
+                else:
+                    lines = ""
+                doc_dic = {'score': score, 'phrases': entities, 'id': id, 'lines': lines}
+                tmp_r.append(doc_dic)
+            r_list.extend(tmp_r)
+
+        r_list.sort(key=lambda x: x.get('score'), reverse=True)
+        return r_list
+    except:
+        return []
+
+
 
 # in case there is no co-existing all phrases in one doc:
 # search in pairs and merge
@@ -288,7 +343,7 @@ def search_and_merge4(entities, nouns):
     if len(entities) == 0:
         return search_and_merge2(nouns)
     if len(nouns) == 0:
-        return search_and_merge2(entities)
+        return search_entity_combinations(entities)
 
     def get_subsets(phrase_l):
         all_subsets = []
@@ -430,11 +485,13 @@ def test_search_id(text):
             doc_dic = {'score': score, 'phrases': text, 'id': id, 'lines': lines}
             r_list.append(doc_dic)
 
+        r_list.sort(key=lambda x: x.get('score'), reverse=True)
         return r_list
     except:
         return []
 
 if __name__ == '__main__':
+    search_entity_combinations(['Ireland', 'Saxony'])
     search_doc_id("Pablo_Andrés_González")
     # t = normalize("""["Mariano Gonza\u0301lez", "Mariano Gonza\u0301lez"]""")
 

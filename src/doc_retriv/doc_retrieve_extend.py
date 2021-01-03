@@ -370,7 +370,7 @@ def do_testset_graph2(folder):
 
 
 def do_dev_set():
-    # folder = config.RESULT_PATH / "extend_20201231"
+    folder = config.RESULT_PATH / "extend_20201231"
     # es_data = read_json_rows(folder / "es_doc_10.jsonl")
     # eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
 
@@ -397,8 +397,8 @@ def do_dev_set():
     # assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
     # prepare_candidate_docs(original_data, es_data, ent_data, folder / "redo_candidate_docs.jsonl", folder / "redo_candidate_docs.log")
     #
-    error_data =read_json_rows(config.LOG_PATH / "2021_01_03_11:32:43_doc_retri_no_hits.jsonl")
-    redo_example_docs(error_data, config.RESULT_PATH / "errors/redo_91.8.log")
+    error_data = read_json_rows(folder / "redo_candidate_docs.log")
+    redo_example_docs(error_data, config.RESULT_PATH / "errors/redo03.log")
 
 
 if __name__ == '__main__':

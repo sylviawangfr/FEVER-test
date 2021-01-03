@@ -17,7 +17,6 @@ from utils.check_sentences import Evidences
 import copy
 from typing import List
 import itertools
-from __future__ import absolute_import, division, print_function
 from BERT_test.ss_eval import *
 
 
@@ -41,17 +40,22 @@ def prepare_candidate_sents2_bert_dev(original_data, data_with_candidate_docs, o
     pred_ss_and_save(paras)
 
 
-def prepare_candidate_sents3_from_triples(original_data, data_with_graph, data_with_res_doc, output_file, log_file):
+def prepare_candidate_sents3_from_triples(data_original, data_with_graph, data_with_res_doc, output_file, log_file):
     for idx, example in enumerate(data_with_graph):
         claim_dict = example['claim_dict']
         triple_l = claim_dict['graph']
         resouce_doc_dict = data_with_res_doc[idx]['resource_docs']
-        triples = [Triple(t) for t in triple_l]
+        triples = []
+        for idx_tri, tri in enumerate(triple_l):
+            tri['tri_id'] = idx_tri
+            triples.append(Triple(tri))
         candidate_sentences = search_triples_in_docs(triples, resouce_doc_dict)
+        to_dict = [c_s.__dict__ for c_s in candidate_sentences]
+        data_original[idx]['sentences_from_triple'] = to_dict
+    save_intermidiate_results(data_original, output_file, log_file)
 
 
-
-def search_triples_in_docs(triples: List[Triple], docs:dict): #  list[Triple]
+def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]
     # phrase match via ES
     possible_sentences = []
     for tri in triples:
@@ -72,19 +76,19 @@ def search_triples_in_docs(triples: List[Triple], docs:dict): #  list[Triple]
     return possible_sentences
 
 
-def search_triple_in_sentence(tri, doc_id):
-    # phrase match via ES
-    possible_sentences = []
-    sentences = []
-    tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, tri['keywords'])
-    if len(tmp_sentences) > 0:
-        for i in tmp_sentences:
-            i['tri_id'] = tri.tri_id
-            tri.sentences.add(i['sid'])
-        sentences.extend([SentenceEvidence(ts) for ts in tmp_sentences])
-    if len(sentences) > 0:
-        possible_sentences.extend(sentences)
-    return possible_sentences
+# def search_triple_in_sentence(tri, doc_id):
+#     # phrase match via ES
+#     possible_sentences = []
+#     sentences = []
+#     tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, tri['keywords'])
+#     if len(tmp_sentences) > 0:
+#         for i in tmp_sentences:
+#             i['tri_id'] = tri.tri_id
+#             tri.sentences.add(i['sid'])
+#         sentences.extend([SentenceEvidence(ts) for ts in tmp_sentences])
+#     if len(sentences) > 0:
+#         possible_sentences.extend(sentences)
+#     return possible_sentences
 
 
 def strategy_over_all(claim):
@@ -274,8 +278,11 @@ def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
 
 
 if __name__ == '__main__':
-    folder = config.RESULT_PATH / "extend_20201231"
-    org_data = read_json_rows(config.FEVER_DEV_JSONL)
-    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    prepare_candidate_sents_bert_dev(original_data, candidate_docs, folder)
+    folder = config.RESULT_PATH / "extend_20201229"
+    org_data = read_json_rows(config.FEVER_DEV_JSONL)[0:5]
+    graph_data = read_json_rows(folder / "claim_graph.jsonl")[0:5]
+    entity_data = read_json_rows(folder / "entity_doc.jsonl")[0:5]
+    # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
+    # prepare_candidate_sents_bert_dev(original_data, candidate_docs, folder)
+    prepare_candidate_sents3_from_triples(org_data, graph_data, entity_data, folder / "tri_s.jsonl", folder / "tri_s.log")
 

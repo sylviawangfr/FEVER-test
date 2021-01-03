@@ -375,8 +375,8 @@ def do_dev_set():
     # eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
 
     # rerun_failed_graph(folder)
-    # data = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_candidate_doc1(data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
+    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    prepare_candidate_doc1(original_data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
@@ -391,7 +391,7 @@ def do_dev_set():
 
     # rerun_failed_graph(folder)
 
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
     es_data = read_json_rows(folder / "redo_es_doc_10.jsonl")
     ent_data = read_json_rows(folder / "rerun_entity_doc.jsonl")
     assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))

@@ -27,7 +27,7 @@ def count_words(sent):
 
 REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\s)*(\'s)?' \
             r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(and\s)*(with\s)*(the\s)*' \
-            r'(-?)(&?)(\d*\s)*)*(?<!-\s)([A-Z]+[\w]*(\s\d+)*)(\s\(.*\))*'
+            r'(-?)(&?)(\.?)(\d*\s)*)*(?<!-\s)([A-Z]+[\w]*(\s\d+)*)(\s\(.*\))*'
 
 
 def split_claim_regex(text):
@@ -116,22 +116,22 @@ def get_phrase_token_indice(sent_token_l, phrase_token_l):
 
 
 if __name__ == '__main__':
-    ss1 = "Michelle Obama's husband was born in Kenya"
-    verbs = get_dependent_verb(ss1, ['Michelle Obama', 'husband', 'Kenya'])
+    # ss1 = "Michelle Obama's husband was born in Kenya"
+    # verbs = get_dependent_verb(ss1, ['Michelle Obama', 'husband', 'Kenya'])
 
     # d_l = ['two', 'three', 'four', 'six', 'one', 'two', 'thirty', 'one', 'two']
     # p_l = ['one', 'two']
     # get_phrase_token_indice(d_l, p_l)
 
-    text = "Bessie Smith's Tale was married on April 15, 1894."
-    text1 = "L.A. Reid has served as the president of a record label."
-    ph = ['Bessie Smith', 'April 15, 1894']
+    # text = "Bessie Smith's Tale was married on April 15, 1894."
+    text = "L.A. Reid has served as the president of a record label."
+    # ph = ['Bessie Smith', 'April 15, 1894']
 
     print(split_claim_regex(text))
     split_claim_spacy(text)
     # split_claim_nltk(text)
     # print(n)
     # print(e)
-    doc = nlp_eng_spacy(text)
-    for tok in doc:
-        print(tok, tok.dep_)
+    # doc = nlp_eng_spacy(text)
+    # for tok in doc:
+    #     print(tok, tok.dep_)

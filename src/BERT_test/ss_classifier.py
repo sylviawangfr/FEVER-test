@@ -37,6 +37,7 @@ from BERT_test.bert_data_processor import *
 from BERT_test.ss_eval import eval_ss_and_save
 from data_util.toChart import *
 from utils.file_loader import read_json_rows
+import numpy as np
 
 logger = logging.getLogger(__name__)
 

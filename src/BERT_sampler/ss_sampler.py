@@ -19,6 +19,7 @@ from utils import common, c_scorer
 from utils.file_loader import *
 from utils.text_clean import convert_brc
 from memory_profiler import profile
+from tqdm import tqdm
 
 
 logger = log_util.get_logger('ss_sampler')
@@ -315,7 +316,7 @@ def eval_sample_length(samples):
 if __name__ == '__main__':
     logger.info("test")
     paras = bert_para.PipelineParas()
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[5:10]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:50]
     paras.sample_n = 3
     paras.pred = False
     sample_tfidf = get_tfidf_sample(paras)
@@ -323,7 +324,7 @@ if __name__ == '__main__':
     count_truth_examples(sample_tfidf)
 
     paras2 = bert_para.PipelineParas()
-    dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[5:10]
+    dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:50]
     paras2.upstream_data = dev_upstream_data
     paras2.pred = False
     paras2.post_filter_prob = 0.5

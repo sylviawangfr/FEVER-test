@@ -2,22 +2,22 @@ import json
 import sqlite3
 
 from tqdm import tqdm
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, List
 
 SENT_LINE2 = '(-.-)'
 
 
 class Evidences(object):
     # Evidences is a list of docid and sentences line number
-    def __init__(self, evidences: Iterable[Tuple]):
-        evidences_set = set()
-        for doc_id, line_num in evidences:
-            if doc_id is not None and line_num is not None:
-                evidences_set.add((doc_id, line_num))
-
-        evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
-        # print(evidences_list)
-        self.evidences_list = evidences_list
+    # def __init__(self, evidences: Iterable[Tuple]):
+    #     evidences_set = set()
+    #     for doc_id, line_num in evidences:
+    #         if doc_id is not None and line_num is not None:
+    #             evidences_set.add((doc_id, line_num))
+    #
+    #     evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
+    #     # print(evidences_list)
+    #     self.evidences_list = evidences_list
 
     def __init__(self, sid: str):
         evidences_l = []
@@ -28,10 +28,11 @@ class Evidences(object):
 
     def __init__(self, sids: Iterable[str]):
         evidences_set = set()
-        evidence_t = [(sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])) for sid in sids]
-        for doc_id, ln in evidence_t:
-            if doc_id is not None and ln is not None:
-                evidences_set.add((doc_id, ln))
+        for sid in sids:
+            doc_id = sid.split(SENT_LINE2)[0]
+            ln = sid.split(SENT_LINE2)[1]
+            if doc_id != 'None' and ln != 'None':
+                evidences_set.add((doc_id, int(ln)))
         evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
         self.evidences_list = evidences_list
 
@@ -110,7 +111,7 @@ def check_and_clean_evidence(item):
         for evidence in one_annotator_evidences_list:
             docid, sent_num = evidence[-2], evidence[-1]
             # print(docid, sent_num)
-            cleaned_one_annotator_evidences_list.append((docid, sent_num))
+            cleaned_one_annotator_evidences_list.append(f"{docid}{SENT_LINE2}{sent_num}")
 
         one_annotator_evidences = Evidences(cleaned_one_annotator_evidences_list)
         # if not evidence_list_exist_in_set(one_annotator_evidences, evidences_list_set):
@@ -126,7 +127,7 @@ def get_predicted_evidence(item):
     cleaned_one_annotator_evidences_list = []
     for one_annotator_evidences_list in whole_annotators_evidences:
         docid, sent_num = one_annotator_evidences_list[0], one_annotator_evidences_list[1]
-        cleaned_one_annotator_evidences_list.append((docid, sent_num))
+        cleaned_one_annotator_evidences_list.append(f"{docid}{SENT_LINE2}{sent_num}")
 
     one_annotator_evidences = Evidences(cleaned_one_annotator_evidences_list)
     evidences_list_set.add(one_annotator_evidences)

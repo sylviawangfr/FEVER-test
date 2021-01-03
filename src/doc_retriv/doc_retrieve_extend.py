@@ -370,13 +370,13 @@ def do_testset_graph2(folder):
 
 
 def do_dev_set():
-    folder = config.RESULT_PATH / "extend_20201231"
+    # folder = config.RESULT_PATH / "extend_20201231"
     # es_data = read_json_rows(folder / "es_doc_10.jsonl")
     # eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
 
     # rerun_failed_graph(folder)
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_candidate_doc1(original_data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
+    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # prepare_candidate_doc1(original_data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
@@ -392,13 +392,13 @@ def do_dev_set():
     # rerun_failed_graph(folder)
 
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    es_data = read_json_rows(folder / "redo_es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "rerun_entity_doc.jsonl")
-    assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
-    prepare_candidate_docs(original_data, es_data, ent_data, folder / "redo_candidate_docs.jsonl", folder / "redo_candidate_docs.log")
-
-    # error_data =read_json_rows(config.RESULT_PATH / "errors/redo_es_doc_10.log")
-    # redo_example_docs(error_data, config.RESULT_PATH / "errors/redo.log")
+    # es_data = read_json_rows(folder / "redo_es_doc_10.jsonl")
+    # ent_data = read_json_rows(folder / "rerun_entity_doc.jsonl")
+    # assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
+    # prepare_candidate_docs(original_data, es_data, ent_data, folder / "redo_candidate_docs.jsonl", folder / "redo_candidate_docs.log")
+    #
+    error_data =read_json_rows(config.LOG_PATH / "2021_01_03_11:32:43_doc_retri_no_hits.jsonl")
+    redo_example_docs(error_data, config.RESULT_PATH / "errors/redo_91.8.log")
 
 
 if __name__ == '__main__':

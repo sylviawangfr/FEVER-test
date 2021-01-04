@@ -4,6 +4,9 @@
         "sid" : {
           "type": "keyword"
         },
+        "doc_id_keyword" : {
+          "type": "keyword"
+        },
         "text": {
           "type": "text",
           "term_vector": "with_positions_offsets",

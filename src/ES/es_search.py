@@ -98,7 +98,7 @@ def search_doc_id_and_keywords(possible_id, keywords):
         should.append({'match': {'lines': {'query': relation, 'analyzer': 'wikipage_analyzer'}}})
     if len(keywords) > 0:
         obj = keywords[-1]
-        should.append({'match_phrase': {'lines': {'query': obj, 'analyzer': 'wikipage_analyzer'}}})
+        should.append({'match_phrase': {'lines': {'query': obj, 'slop': 3, 'analyzer': 'wikipage_analyzer'}}})
     search = search.query(Q('bool', must=must, should=should)). \
                  highlight('lines', number_of_fragments=0, fragment_size=150). \
                  sort({'_score': {"order": "desc"}}). \
@@ -141,18 +141,20 @@ def search_doc_id_and_keywords(possible_id, keywords):
     return r_list
 
 
-def search_doc_id_and_keywords_in_sentences(possible_id, keywords):
+def search_doc_id_and_keywords_in_sentences(possible_id, subject, keywords):
     search = Search(using=client, index=config.FEVER_SEN_INDEX)
     must = []
     should = []
     must.append(
-        {'match_phrase': {'doc_id': {'query': possible_id, 'analyzer': 'underscore_analyzer', 'boost': 2}}})
+        {'term': {'doc_id_keyword': possible_id}})
+    must.append({'multi_match': {'query': subject, "type": "phrase",
+                                 'fields': ['doc_id', 'text'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
     if len(keywords) == 2:
         relation = keywords[0]
         should.append({'match': {'text': {'query': relation, 'analyzer': 'wikipage_analyzer'}}})
     if len(keywords) > 0:
         obj = keywords[-1]
-        should.append({'match_phrase': {'text': {'query': obj, 'analyzer': 'wikipage_analyzer'}}})
+        must.append({'match': {'text': {'query': obj, 'analyzer': 'wikipage_analyzer'}}})
     search = search.query(Q('bool', must=must, should=should)). \
                  highlight('text', number_of_fragments=0, fragment_size=150). \
                  sort({'_score': {"order": "desc"}}). \

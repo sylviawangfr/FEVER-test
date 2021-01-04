@@ -60,16 +60,20 @@ def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]
     possible_sentences = []
     for tri in triples:
         sentences = []
-        subject_text = tri.text
-        if len(docs) > 0 and subject_text in docs:
-            resource_docs = docs[subject_text]
+        resource_docs = []
+        if len(docs) > 0:
+            if tri.subject in docs:
+                resource_docs.extend(docs[tri.subject])
+            if tri.object in docs:
+                resource_docs.extend(docs[tri.object])
+        if len(resource_docs) > 0:
             for doc in resource_docs:
                 doc_id = doc['id']
-                tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, tri['keywords'])
+                tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, tri.text, tri.keywords)
                 if len(tmp_sentences) > 0:
                     for i in tmp_sentences:
                         i['tri_id'] = tri.tri_id
-                        tri.sentences.add(i['sid'])
+                        tri.sentences.append(i['sid'])
                     sentences.extend([SentenceEvidence(ts) for ts in tmp_sentences])
         if len(sentences) > 0:
             possible_sentences.extend(sentences)
@@ -278,7 +282,7 @@ def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
 
 
 if __name__ == '__main__':
-    folder = config.RESULT_PATH / "extend_20201229"
+    folder = config.RESULT_PATH / "extend_20201231"
     org_data = read_json_rows(config.FEVER_DEV_JSONL)[0:5]
     graph_data = read_json_rows(folder / "claim_graph.jsonl")[0:5]
     entity_data = read_json_rows(folder / "entity_doc.jsonl")[0:5]

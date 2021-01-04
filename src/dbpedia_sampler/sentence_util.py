@@ -1,6 +1,7 @@
 import log_util
-from utils import c_scorer, text_clean
+from utils import c_scorer, text_clean, file_loader
 from utils.tokenizer_simple import *
+import config
 from memory_profiler import profile
 
 STOP_WORDS = ['the', 'they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
@@ -22,15 +23,23 @@ def get_phrases(sentence, doc_title=''):
         sent = sentence
 
     doc_noun = nlp_eng_spacy(sent)
-    nouns_chunks = [chunk.text for chunk in doc_noun.noun_chunks]
-    ents = [ent.text for ent in doc_noun.ents]
+    nouns_chunks = [remove_the_a(chunk.text) for chunk in doc_noun.noun_chunks]
+    ents = [remove_the_a(ent.text) for ent in doc_noun.ents]
     capitalized_phrased = list(set(split_claim_regex(sentence)))
+    noun_tokens = []
+    for token in doc_noun:
+        if token.pos_.lower() in ['propn', 'noun']:
+            noun_tokens.append(token.text)
     if not doc_title == '':
         capitalized_phrased = list(set(capitalized_phrased) | {doc_title})
 
     for i in ents:
         if len(list(filter(lambda x: (i in x or x in i), capitalized_phrased))) < 1 \
                 and i not in capitalized_phrased \
+                and i not in nouns_chunks:
+            nouns_chunks.append(i)
+    for i in noun_tokens:
+        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 \
                 and i not in nouns_chunks:
             nouns_chunks.append(i)
 
@@ -43,14 +52,23 @@ def get_phrases(sentence, doc_title=''):
     return capitalized_phrased, nouns
 
 
+def remove_the_a(ph):
+    if (not is_capitalized(ph)) and \
+            (ph.lower().startswith('the ')
+             or ph.lower().startswith("a ")
+             or ph.lower().startswith("an ")):
+        ph = ph.split(' ', 1)[1]
+    return ph
+
+
 def get_ents_and_phrases(sentence):
     doc_noun = nlp_eng_spacy(sentence)
     noun_tokens = []
     for token in doc_noun:
         if token.pos_.lower() in ['propn', 'noun']:
             noun_tokens.append(token.text)
-    nouns_chunks = [chunk.text for chunk in doc_noun.noun_chunks]
-    ents = [ent.text for ent in doc_noun.ents]
+    nouns_chunks = [remove_the_a(chunk.text) for chunk in doc_noun.noun_chunks]
+    ents = [remove_the_a(ent.text) for ent in doc_noun.ents]
     capitalized_phrased = list(set(split_claim_regex(sentence)))
 
     for i in ents:
@@ -154,4 +172,14 @@ def merge_chunks_with_entities(chunks, ents):
             merged.append(c)
     return merged
 
+
+if __name__ == '__main__':
+    data = file_loader.read_json_rows(config.FEVER_DEV_JSONL)[10:20]
+    for i in data:
+        claim = i['claim']
+        a, b = get_ents_and_phrases(claim)
+        print(claim)
+        print(a)
+        print(b)
+        print('*'*10)
 

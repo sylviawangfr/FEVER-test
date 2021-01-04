@@ -370,7 +370,7 @@ def do_testset_graph2(folder):
 
 
 def do_dev_set():
-    folder = config.RESULT_PATH / "extend_20200104"
+    folder = config.RESULT_PATH / "extend_20210104"
     # es_data = read_json_rows(folder / "es_doc_10.jsonl")
     # eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
 

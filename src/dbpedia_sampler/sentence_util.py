@@ -174,7 +174,9 @@ def merge_chunks_with_entities(chunks, ents):
 
 
 if __name__ == '__main__':
-    data = file_loader.read_json_rows(config.FEVER_DEV_JSONL)[10:20]
+    get_ents_and_phrases("Anne Sullivan was born in April of 1866.")
+
+    data = file_loader.read_json_rows(config.FEVER_DEV_JSONL)[100:200]
     for i in data:
         claim = i['claim']
         a, b = get_ents_and_phrases(claim)

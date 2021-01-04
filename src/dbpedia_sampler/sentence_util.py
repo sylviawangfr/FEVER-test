@@ -11,6 +11,7 @@ STOP_WORDS = ['the', 'they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 
 
 log = log_util.get_logger('dbpedia_triple_linker')
 
+
 # @profile
 def get_phrases(sentence, doc_title=''):
     log.debug(sentence)
@@ -20,20 +21,26 @@ def get_phrases(sentence, doc_title=''):
     else:
         sent = sentence
 
-    chunks, ents = split_claim_spacy(sent)
-    entities = [en[0] for en in ents]
-    capitalized_phrased = split_claim_regex(sent)
-    log.debug(f"chunks: {chunks}")
-    log.debug(f"entities: {entities}")
-    log.debug(f"capitalized phrases: {capitalized_phrased}")
-    merged_entities = merge_phrases_l1_to_l2(capitalized_phrased, entities)
+    doc_noun = nlp_eng_spacy(sent)
+    nouns_chunks = [chunk.text for chunk in doc_noun.noun_chunks]
+    ents = [ent.text for ent in doc_noun.ents]
+    capitalized_phrased = list(set(split_claim_regex(sentence)))
     if not doc_title == '':
-        merged_entities = list(set(merged_entities) | set([doc_title]))
-    merged_entities = [i for i in merged_entities if i.lower() not in STOP_WORDS]
-    other_chunks = delete_ents_from_chunks(merged_entities, chunks)
-    log.debug(f"merged entities: {merged_entities}")
-    log.debug(f"other phrases: {other_chunks}")
-    return merged_entities, other_chunks
+        capitalized_phrased = list(set(capitalized_phrased) | {doc_title})
+
+    for i in ents:
+        if len(list(filter(lambda x: (i in x or x in i), capitalized_phrased))) < 1 \
+                and i not in capitalized_phrased \
+                and i not in nouns_chunks:
+            nouns_chunks.append(i)
+
+    nouns = list(set(nouns_chunks))
+    for i in nouns_chunks:
+        if len(list(filter(lambda x: (i in x or x in i), capitalized_phrased))) > 0 and i in nouns:
+            nouns.remove(i)
+    capitalized_phrased = [i for i in capitalized_phrased if i.lower() not in STOP_WORDS]
+    nouns = [i for i in nouns if i.lower() not in STOP_WORDS]
+    return capitalized_phrased, nouns
 
 
 def get_ents_and_phrases(sentence):
@@ -47,12 +54,14 @@ def get_ents_and_phrases(sentence):
     capitalized_phrased = list(set(split_claim_regex(sentence)))
 
     for i in ents:
-        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in capitalized_phrased:
+        if len(list(filter(lambda x: (i in x or x in i), capitalized_phrased))) < 1 \
+                and i not in capitalized_phrased \
+                and i not in nouns_chunks:
             nouns_chunks.append(i)
 
     nouns = list(set(nouns_chunks))
     for i in nouns_chunks:
-        if len(list(filter(lambda x: (i in x), capitalized_phrased))) > 0 and i in nouns:
+        if len(list(filter(lambda x: (i in x or x in i), capitalized_phrased))) > 0 and i in nouns:
             nouns.remove(i)
     for i in noun_tokens:
         if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in nouns:

@@ -18,21 +18,16 @@ def search_doc(phrases):
         must = []
         should = []
         for ph in phrases:
-            if (not is_capitalized(ph)) and \
-                    (ph.lower().startswith('the ')
-                     or ph.lower().startswith("a ")
-                     or ph.lower().startswith("an ")):
-                ph = ph.split(' ', 1)[1]
-        # must.append({'match_phrase': {'lines': ph}})
+            ph = remove_the_a(ph)
             should.append({'multi_match': {'query': ph, "type": "most_fields",
-                                           'fields': ['id^3', 'lines'], 'analyzer': 'underscore_analyzer'}})
+                                           'fields': ['id^2', 'lines'], 'analyzer': 'underscore_analyzer'}})
             must.append({'multi_match': {'query': ph, "type": "phrase",
-                                         'fields': ['id^3', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
+                                         'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
 
         search = search.query(Q('bool', must=must, should=should)). \
                  highlight('lines', number_of_fragments=0). \
                  sort({'_score': {"order": "desc"}}). \
-                 source(include=['id'])[0:10]
+                 source(include=['id'])[0:15]
 
         response = search.execute()
         r_list = []
@@ -194,7 +189,7 @@ def search_doc_id(possible_id):
                 }},
             "sort": {"_score": {"order": "desc"}},
             "_source": ["id"],
-            "size": 5
+            "size": 10
         }
         response = client.search(index=config.WIKIPAGE_INDEX, body=body)
         r_list = []
@@ -229,7 +224,7 @@ def search_entity_combinations(entities):
         for s in should_l:
             s = remove_the_a(s)
             should.append({'multi_match': {'query': s, "type": "most_fields",
-                                           'fields': ['id^3', 'lines'], 'analyzer': 'underscore_analyzer'}})
+                                           'fields': ['id', 'lines'], 'analyzer': 'underscore_analyzer'}})
         return must, should
 
     try:
@@ -331,11 +326,8 @@ def search_and_merge(entities, nouns):
 
 
 def search_and_merge2(entities_and_nouns):
-    # print("entities:", entities)
-    # print("nouns:", nouns)
     result0, not_covered0 = search_subsets(entities_and_nouns)
     result7 = search_single_entity(not_covered0)
-    # print("done with r6")
     return merge_result(result0 + result7)
 
 
@@ -359,7 +351,7 @@ def search_and_merge4(entities, nouns):
     entity_subsets = get_subsets(entities)
     nouns_subsets = get_subsets(nouns)
     covered_set = set()
-    result = search_and_merge2(entities)
+    result = search_entity_combinations(entities)
     if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
         product = itertools.product(entity_subsets, nouns_subsets)
         for i in product:

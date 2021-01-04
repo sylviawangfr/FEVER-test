@@ -3,8 +3,8 @@ from utils import c_scorer, text_clean
 from utils.tokenizer_simple import *
 from memory_profiler import profile
 
-STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
-               'we', 'who', 'where', 'what', 'days', 'him', 'her','here', 'there', 'a', 'for',
+STOP_WORDS = ['the', 'they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
+               'we', 'who', 'where', 'what', 'days', 'him', 'her', 'here', 'there', 'a', 'for',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
               'third']
 
@@ -57,6 +57,8 @@ def get_ents_and_phrases(sentence):
     for i in noun_tokens:
         if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in nouns:
             nouns.append(i)
+    capitalized_phrased = [i for i in capitalized_phrased if i.lower() not in STOP_WORDS]
+    nouns = [i for i in nouns if i.lower() not in STOP_WORDS]
     return capitalized_phrased, nouns
 
 
@@ -99,6 +101,7 @@ def get_phrases_and_nouns_merged(sentence):
     #         to_delete.append(i)
     # for i in to_delete:
     #     merged.remove(i)
+    merged = [i for i in merged if i.lower() not in STOP_WORDS]
     return merged
 
 

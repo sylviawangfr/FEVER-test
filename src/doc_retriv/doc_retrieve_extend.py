@@ -398,7 +398,7 @@ def do_dev_set():
     # prepare_candidate_docs(original_data, es_data, ent_data, folder / "redo_candidate_docs.jsonl", folder / "redo_candidate_docs.log")
     #
     error_data = read_json_rows(folder / "redo_candidate_docs.log")
-    redo_example_docs(error_data, config.RESULT_PATH / "errors/redo03.log")
+    redo_example_docs(error_data, config.RESULT_PATH / "errors/redo04.log")
 
 
 if __name__ == '__main__':

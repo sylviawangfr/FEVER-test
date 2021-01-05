@@ -41,17 +41,19 @@ def prepare_candidate_sents2_bert_dev(original_data, data_with_candidate_docs, o
 
 
 def prepare_candidate_sents3_from_triples(data_original, data_with_graph, data_with_res_doc, output_file, log_file):
-    for idx, example in enumerate(data_with_graph):
-        claim_dict = example['claim_dict']
-        triple_l = claim_dict['graph']
-        resouce_doc_dict = data_with_res_doc[idx]['resource_docs']
-        triples = []
-        for idx_tri, tri in enumerate(triple_l):
-            tri['tri_id'] = idx_tri
-            triples.append(Triple(tri))
-        candidate_sentences = search_triples_in_docs(triples, resouce_doc_dict)
-        to_dict = [c_s.__dict__ for c_s in candidate_sentences]
-        data_original[idx]['sentences_from_triple'] = to_dict
+    with tqdm(total=len(data_original), desc=f"searching triple sentences") as pbar:
+        for idx, example in enumerate(data_with_graph):
+            claim_dict = example['claim_dict']
+            triple_l = claim_dict['graph']
+            resouce_doc_dict = data_with_res_doc[idx]['resource_docs']
+            triples = []
+            for idx_tri, tri in enumerate(triple_l):
+                tri['tri_id'] = idx_tri
+                triples.append(Triple(tri))
+            candidate_sentences = search_triples_in_docs(triples, resouce_doc_dict)
+            to_dict = [c_s.__dict__ for c_s in candidate_sentences]
+            data_original[idx]['sentences_from_triple'] = to_dict
+            pbar.update(1)
     save_intermidiate_results(data_original, output_file)
 
 

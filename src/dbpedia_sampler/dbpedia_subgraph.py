@@ -47,10 +47,11 @@ def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
         lookup_hash[i['text']] = i
 
     verb_d = get_dependent_verb(claim_text, all_phrases)
-    merged_result = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d, bc=bc)
+    r0 = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d, bc=bc)
     r1 = dbpedia_triple_linker.filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d)
     r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, fuzzy_match=True, bc=bc)
-    for i in r1 + r2:
+    merged_result = []
+    for i in r0 + r1 + r2:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
             merged_result.append(i)
     # only keyword-match on those no exact match triples

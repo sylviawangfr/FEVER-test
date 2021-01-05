@@ -146,8 +146,22 @@ def is_media(resource_record):
 
 
 def merge_es_and_entity_docs(r_es, r_ents):
-    all_ents_docs = [d for docs in r_ents.values() for d in docs]
-    all_es_docs = r_es
+    def merge_doc_l(doc_l):
+        merge_docs = []
+        for d in doc_l:
+            if len(list(filter(lambda x: x['id'] == d['id'], merge_docs))) == 0:
+                merge_docs.append(d)
+            else:
+                for m in merge_docs:
+                    if m['id'] == d['id'] and m['score'] < d['score']:
+                        merge_docs.remove(m)
+                        merge_docs.append(d)
+                        break
+        return merge_docs
+
+    all_doc_items_with_dup = [d for docs in r_ents.values() for d in docs]
+    all_ents_docs = merge_doc_l(all_doc_items_with_dup)
+    all_es_docs = merge_doc_l(r_es)
     r_ents_ids = [i['id'] for i in all_ents_docs]
     r_es_ids = [i['id'] for i in all_es_docs]
     for idx_i, i in enumerate(r_es_ids):
@@ -170,7 +184,7 @@ def merge_es_and_entity_docs(r_es, r_ents):
                 doc_id = convert_brc(i).replace('_', ' ').lower()
                 ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
                 if ratio >= 0.8 or is_media(doc_id):
-                    all_ents_docs[idx]['score'] *= 2
+                    all_ents_docs[idx]['score'] *= 1.5
             else:  # from triple
                 all_ents_docs[idx]['score'] *= 2
             merged.append(all_ents_docs[idx])
@@ -397,8 +411,8 @@ def do_dev_set():
     # assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
     # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
     # rerun_failed_graph(folder)
-    error_data = read_json_rows(folder / "candidate_docs.log")
-    redo_example_docs(error_data, folder / "redo06.log")
+    error_data = read_json_rows(folder / 'candidate_docs.log')
+    redo_example_docs(error_data, folder / "redo09.log")
 
 
 

@@ -371,7 +371,8 @@ def search_and_merge4(entities, nouns):
         # not_covered = set(entities) - covered_set
         # result7 = search_single_entity(not_covered)
         # return merge_result(result + result7)
-    return result
+    return merge_result(result)
+
 
 
 # entity, keywords

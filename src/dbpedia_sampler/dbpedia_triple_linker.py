@@ -322,7 +322,7 @@ def similarity_between_nonlinked_and_linked(not_linked_phrases_l, phrase_list_em
         return []
 
     out = pw.cosine_similarity(phrase_list_embedding, embedding2).flatten()
-    topk_idx = np.argsort(out)[::-1][:3]
+    topk_idx = np.argsort(out)[::-1][:2]
     len2 = len(tri_keywords_l2)
 
     tmp_result = []
@@ -474,6 +474,7 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings,  fuzzy_matc
                             item['relatives'] = [re2['text'], re1['text']]
                             item['text'] = re2['text']
                             item['URI'] = re2['URI']
+                            item['score'] = float(1)
                             item['exact_match'] = re1['exact_match'] | re2['exact_match']
                             result.append(item)
 
@@ -522,6 +523,7 @@ def filter_keyword_vs_keyword(isolated_nodes, linked_phrases_l, keyword_embeddin
                         item1['relatives'] = [resource1['text'], resource2['text']]
                         item1['text'] = resource1['text']
                         item1['URI'] = item1['subject']
+                        item1['score'] = float(1)
                         item1['exact_match'] = i['exact_match']
                         result.append(item1)
                     if not does_tri_exit_in_list(item2, result):
@@ -529,6 +531,7 @@ def filter_keyword_vs_keyword(isolated_nodes, linked_phrases_l, keyword_embeddin
                         item2['text'] = resource2['text']
                         item2['URI'] = item2['subject']
                         item2['exact_match'] = j['exact_match']
+                        item1['score'] = float(1)
                         result.append(item2)
         if fuzzy_match and not exact_match:
             for re1 in resource1_l:
@@ -616,7 +619,7 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings, t
             else:
                 record = candidates[idx]
                 record['score'] = idx_score
-                record['relatives'] = [res['text'], single_phrase]
+                record['relatives'] = [single_phrase, res['text']]
                 record['text'] = res['text']
                 record['URI'] = res['URI']
                 record['exact_match'] = res['exact_match']

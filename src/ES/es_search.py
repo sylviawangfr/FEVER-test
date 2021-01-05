@@ -19,8 +19,8 @@ def search_doc(phrases):
         should = []
         for ph in phrases:
             ph = remove_the_a(ph)
-            should.append({'multi_match': {'query': ph, "type": "most_fields",
-                                           'fields': ['id^2', 'lines'], 'analyzer': 'underscore_analyzer'}})
+            # should.append({'multi_match': {'query': ph, "type": "most_fields",
+            #                                'fields': ['id^2', 'lines'], 'analyzer': 'underscore_analyzer'}})
             must.append({'multi_match': {'query': ph, "type": "phrase",
                                          'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
 

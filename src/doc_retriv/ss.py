@@ -57,6 +57,10 @@ def prepare_candidate_sents3_from_triples(data_original, data_with_graph, data_w
     save_intermidiate_results(data_original, output_file)
 
 
+def prepare_evidence_set_for_bert_nli(data_origin, data_with_ss, data_with_entity, data_with_graph, output_file):
+
+
+
 def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]
     # phrase match via ES
     possible_sentences = []
@@ -79,7 +83,7 @@ def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]
                     sentences.extend([SentenceEvidence(ts) for ts in tmp_sentences])
         if len(sentences) > 0:
             possible_sentences.extend(sentences)
-    return possible_sentences
+    return possible_sentences, triples
 
 
 # def search_triple_in_sentence(tri, doc_id):
@@ -285,10 +289,10 @@ def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
 
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "extend_20210104"
-    org_data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
-    graph_data = read_json_rows(folder / "claim_graph_10000.jsonl")
-    entity_data = read_json_rows(folder / "entity_doc.jsonl")[0:10000]
+    org_data = read_json_rows(config.FEVER_DEV_JSONL)[2:4]
+    graph_data = read_json_rows(folder / "claim_graph_10000.jsonl")[2:4]
+    entity_data = read_json_rows(folder / "entity_doc.jsonl")[2:4]
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
     # prepare_candidate_sents_bert_dev(original_data, candidate_docs, folder)
-    prepare_candidate_sents3_from_triples(org_data, graph_data, entity_data, folder / "tri_10000.jsonl", folder / "tri_10000.log")
+    prepare_candidate_sents3_from_triples(org_data, graph_data, entity_data, folder / "tri_2-4.jsonl", folder / "tri_2-4.log")
 

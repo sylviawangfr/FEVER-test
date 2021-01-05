@@ -305,7 +305,26 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
         tmp_result = similarity_between_nonlinked_and_linked(not_linked_phrases_l, embedding1, m, keyword_embeddings, bc)
         if len(tmp_result) > 0:
             result.extend(tmp_result)
+    # only top 2 triples
+    result = filter_triples(result)
     return result
+
+
+def filter_triples(triples):
+    relatives_l = []
+    all_triples = []
+    for tri in triples:
+        rel = tri['relatives']
+        if len(list(filter(lambda x: x == rel, relatives_l))) == 0:
+            relatives_l.append(rel)
+    for r in relatives_l:
+        tri_r = []
+        for t in triples:
+            if t['relatives'] == r:
+                tri_r.append(t)
+        tri_r.sort(key=lambda k: k['score'], reverse=True)
+        all_triples.extend(tri_r[:2])
+    return all_triples
 
 
 def similarity_between_nonlinked_and_linked(not_linked_phrases_l, phrase_list_embedding, linked_resource, keyword_embeddings, bc:BertClient=None):
@@ -492,6 +511,7 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings,  fuzzy_matc
             for item in filtered_triples:
                 if not does_tri_exit_in_list(item, result):
                     result.append(item)
+    result = filter_triples(result)
     return result
 
 
@@ -542,6 +562,7 @@ def filter_keyword_vs_keyword(isolated_nodes, linked_phrases_l, keyword_embeddin
                     for item in top_k_pairs:
                         if not does_tri_exit_in_list(item, result):
                             result.append(item)
+    result = filter_triples(result)
     return result
 
 

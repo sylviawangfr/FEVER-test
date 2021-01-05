@@ -394,11 +394,11 @@ def do_dev_set():
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
-    data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
-    prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
+    # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 
-    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    # data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
+    data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
     # data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
     # assert(len(data_original) == len(data_context))
     # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
@@ -414,6 +414,8 @@ def do_dev_set():
     # error_data = read_json_rows(folder / 'candidate_docs.log')
     # redo_example_docs(error_data, folder / "redo09.log")
 
+    # data = read_json_rows(config.FEVER_DEV_JSONL)[2:3]
+    # prepare_claim_graph(data, folder / "claim_graph_2.jsonl", folder / "claim_graph_2.log")
 
 
 if __name__ == '__main__':

@@ -57,7 +57,7 @@ def query_resource(uri):
 # @profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):
     # not_linked_phrases_l, linked_phrases_l = link_sent_to_resources(sentence, doc_title=doc_title, lookup_hash=lookup_hash)
-    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources(sentence, doc_title=doc_title, lookup_hash=lookup_hash)
+    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources2(sentence, doc_title=doc_title, lookup_hash=lookup_hash)
     add_categories(linked_phrases_l)
     return not_linked_phrases_l, linked_phrases_l
 

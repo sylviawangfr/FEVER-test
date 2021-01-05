@@ -398,7 +398,7 @@ def do_dev_set():
     # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
     # rerun_failed_graph(folder)
     error_data = read_json_rows(folder / "candidate_docs.log")
-    redo_example_docs(error_data, folder / "redo05.log")
+    redo_example_docs(error_data, folder / "redo06.log")
 
 
 

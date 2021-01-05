@@ -368,9 +368,10 @@ def search_and_merge4(entities, nouns):
             if len(r) > 0:
                 covered_set = covered_set | set(new_subset)
                 result.extend(r)
-        not_covered = set(nouns + entities) - covered_set
-        result7 = search_single_entity(not_covered)
-        return merge_result(result + result7)
+        # not_covered = set(entities) - covered_set
+        # result7 = search_single_entity(not_covered)
+        # return merge_result(result + result7)
+    return result
 
 
 # entity, keywords

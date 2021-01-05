@@ -551,7 +551,7 @@ def filter_keyword_vs_keyword(isolated_nodes, linked_phrases_l, keyword_embeddin
                         item2['text'] = resource2['text']
                         item2['URI'] = item2['subject']
                         item2['exact_match'] = j['exact_match']
-                        item1['score'] = float(1)
+                        item2['score'] = float(1)
                         result.append(item2)
         if fuzzy_match and not exact_match:
             for re1 in resource1_l:

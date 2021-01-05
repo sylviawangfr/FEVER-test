@@ -147,14 +147,16 @@ def search_doc_id_and_keywords_in_sentences(possible_id, subject, keywords):
     should = []
     must.append(
         {'term': {'doc_id_keyword': possible_id}})
-    must.append({'multi_match': {'query': subject, "type": "phrase",
-                                 'fields': ['doc_id', 'text'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
+    must.append({'multi_match': {'query': subject,
+                                 'fields': ['doc_id', 'text'], 'analyzer': 'underscore_analyzer'}})
     if len(keywords) == 2:
         relation = keywords[0]
         should.append({'match': {'text': {'query': relation, 'analyzer': 'wikipage_analyzer'}}})
     if len(keywords) > 0:
         obj = keywords[-1]
-        must.append({'match': {'text': {'query': obj, 'analyzer': 'wikipage_analyzer'}}})
+        must.append({'multi_match': {'query': obj,
+                                     'fields': ['doc_id', 'text'], 'analyzer': 'underscore_analyzer'}})
+
     search = search.query(Q('bool', must=must, should=should)). \
                  highlight('text', number_of_fragments=0, fragment_size=150). \
                  sort({'_score': {"order": "desc"}}). \

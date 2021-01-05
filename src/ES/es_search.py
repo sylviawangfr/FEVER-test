@@ -224,7 +224,7 @@ def search_entity_combinations(entities):
         for m in must_l:
             m = remove_the_a(m)
             must.append({'multi_match': {'query': m, "type": "phrase",
-                                         'fields': ['id^3', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
+                                         'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
         for s in should_l:
             s = remove_the_a(s)
             should.append({'multi_match': {'query': s, "type": "most_fields",

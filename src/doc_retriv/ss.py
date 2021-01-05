@@ -52,7 +52,7 @@ def prepare_candidate_sents3_from_triples(data_original, data_with_graph, data_w
         candidate_sentences = search_triples_in_docs(triples, resouce_doc_dict)
         to_dict = [c_s.__dict__ for c_s in candidate_sentences]
         data_original[idx]['sentences_from_triple'] = to_dict
-    save_intermidiate_results(data_original, output_file, log_file)
+    save_intermidiate_results(data_original, output_file)
 
 
 def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]

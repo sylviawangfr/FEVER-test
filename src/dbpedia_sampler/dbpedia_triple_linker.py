@@ -56,7 +56,8 @@ def query_resource(uri):
 
 # @profile
 def link_sentence(sentence, doc_title='', lookup_hash=None):
-    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources(sentence, doc_title=doc_title, lookup_hash=lookup_hash)
+    # not_linked_phrases_l, linked_phrases_l = link_sent_to_resources(sentence, doc_title=doc_title, lookup_hash=lookup_hash)
+    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources2(sentence, doc_title=doc_title, lookup_hash=lookup_hash)
     add_categories(linked_phrases_l)
     return not_linked_phrases_l, linked_phrases_l
 
@@ -105,6 +106,33 @@ def link_sent_to_resources(sentence, doc_title='', lookup_hash=None):
     #     linked_phrases_l = merge_linked_l1_to_l2(merged_links_step1, [])
     # else:
     #     linked_phrases_l = merge_linked_l1_to_l2(linked_phrases_l, [])
+    return not_linked_phrases_l, linked_phrases_l
+
+
+def link_sent_to_resources2(sentence, doc_title='', lookup_hash=None):
+    sentence = text_clean.convert_brc(sentence)
+    entities, chunks = get_phrases(sentence, doc_title)
+    linked_phrases_l = []
+    if len(entities) < 1:
+        phrases = chunks
+        not_linked_phrases_l = []
+    else:
+        phrases = entities
+        not_linked_phrases_l = chunks
+
+    for p in phrases:
+        if is_date_or_number(p):
+            not_linked_phrases_l.append(p)
+            continue
+        if lookup_hash is not None and p in lookup_hash:
+            linked_phrase = lookup_hash[p]
+        else:
+            linked_phrase = lookup_phrase(p)
+
+        if len(linked_phrase) == 0:
+            not_linked_phrases_l.append(p)
+        else:
+            linked_phrases_l.append(linked_phrase)
     return not_linked_phrases_l, linked_phrases_l
 
 

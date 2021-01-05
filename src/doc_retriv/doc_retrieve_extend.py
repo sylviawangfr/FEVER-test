@@ -310,8 +310,8 @@ def rerun_failed_graph(folder):
     # failed_items = [20986, 217205, 149990, 84858, 25545, 4705, 217187,
     #                 182050,88781, 10688, 206031, 182033,
     #                 96740,182032, 134670, 88589,182051, 23588, 10324, 206024, 156889]
-    failed_items = [149990, 84858, 25545, 4705, 88781, 10688, 206031, 96740,
-                    134670, 88589, 23588, 69354, 10324, 206024, 156889, 144242]
+    failed_items = [84858, 25545, 10688, 206031, 96740,
+                    10324, 156889]
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # data_context = read_json_rows(folder / "claim_graph_19998.jsonl")
     # data_entity = read_json_rows(folder / "entity_doc_19998.jsonl")
@@ -383,19 +383,19 @@ def do_dev_set():
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
-    data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
-    assert(len(data_original) == len(data_context))
-    prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    # data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
+    # data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
+    # assert(len(data_original) == len(data_context))
+    # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
 
-    # rerun_failed_graph(folder)
+    rerun_failed_graph(folder)
 
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    # es_data = read_json_rows(folder / "redo_es_doc_10.jsonl")
-    # ent_data = read_json_rows(folder / "rerun_entity_doc.jsonl")
+    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # ent_data = read_json_rows(folder / "entity_doc.jsonl")
     # assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
-    # prepare_candidate_docs(original_data, es_data, ent_data, folder / "redo_candidate_docs.jsonl", folder / "redo_candidate_docs.log")
+    # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
     # rerun_failed_graph(folder)
     # error_data = read_json_rows(folder / "redo_candidate_docs.log")
     # redo_example_docs(error_data, config.RESULT_PATH / "errors/redo05.log")

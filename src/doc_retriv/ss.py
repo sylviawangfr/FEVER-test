@@ -285,10 +285,10 @@ def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
 
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "extend_20210104"
-    org_data = read_json_rows(config.FEVER_DEV_JSONL)[0:50]
-    graph_data = read_json_rows(folder / "claim_graph_10000.jsonl")[0:50]
-    entity_data = read_json_rows(folder / "entity_doc.jsonl")[0:50]
+    org_data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
+    graph_data = read_json_rows(folder / "claim_graph_10000.jsonl")
+    entity_data = read_json_rows(folder / "entity_doc.jsonl")[0:10000]
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
     # prepare_candidate_sents_bert_dev(original_data, candidate_docs, folder)
-    prepare_candidate_sents3_from_triples(org_data, graph_data, entity_data, folder / "tri_50.jsonl", folder / "tri_50.log")
+    prepare_candidate_sents3_from_triples(org_data, graph_data, entity_data, folder / "tri_10000.jsonl", folder / "tri_10000.log")
 

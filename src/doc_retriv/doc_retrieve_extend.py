@@ -391,14 +391,14 @@ def do_dev_set():
 
     # rerun_failed_graph(folder)
 
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "entity_doc.jsonl")
-    assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
-    prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
+    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    # assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
+    # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
     # rerun_failed_graph(folder)
-    # error_data = read_json_rows(folder / "redo_candidate_docs.log")
-    # redo_example_docs(error_data, config.RESULT_PATH / "errors/redo05.log")
+    error_data = read_json_rows(folder / "candidate_docs.log")
+    redo_example_docs(error_data, folder / "redo05.log")
 
 
 

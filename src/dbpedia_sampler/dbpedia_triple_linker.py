@@ -135,6 +135,11 @@ def link_sent_to_resources(sentence, doc_title='', lookup_hash=None):
 
 def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', lookup_hash=None):
     def merge_links(linked_p, es_linked_p):
+        if len(es_linked_p) == 0:
+            return linked_p
+        if len(linked_p) == 0:
+            return es_linked_p
+
         links1 = linked_p['links']
         links2 = es_linked_p['links']
         for i in links2:
@@ -164,7 +169,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
                 es_doc_links = lookup_doc_id(p, extend_entity_docs[p])
                 if len(es_doc_links) > 0:
                     linked_phrase = merge_links(linked_phrase, es_doc_links)
-            if lookup_hash is not None:
+            if lookup_hash is not None and len(linked_phrase) > 0:
                 lookup_hash.update({p: linked_phrase})
 
         if len(linked_phrase) == 0:

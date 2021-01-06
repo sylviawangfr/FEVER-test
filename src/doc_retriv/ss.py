@@ -50,15 +50,20 @@ def prepare_candidate_sents3_from_triples(data_original, data_with_graph, data_w
             for idx_tri, tri in enumerate(triple_l):
                 tri['tri_id'] = idx_tri
                 triples.append(Triple(tri))
-            candidate_sentences = search_triples_in_docs(triples, resouce_doc_dict)
-            to_dict = [c_s.__dict__ for c_s in candidate_sentences]
-            data_original[idx]['sentences_from_triple'] = to_dict
+            tri_sentence_dict = search_triples_in_docs(triples, resouce_doc_dict)
+            # to_dict = [c_s.__dict__ for c_s in candidate_sentences]
+            data_original[idx]['triple_sentences'] = tri_sentence_dict
             pbar.update(1)
     save_intermidiate_results(data_original, output_file)
 
 
 def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s, data_with_tri_s, output_file):
+    def get_bert_sids(scored_sentids, threshold=0.5):
+        return []
     for idx, example in enumerate(data_origin):
+        # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
+        bert_s = get_bert_sids(data_with_bert_s['scored_sentids'])
+        triple_s = data_with_tri_s['triple_sentences']
 
 
 
@@ -66,7 +71,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s, data_with_t
 
 def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]
     # phrase match via ES
-    possible_sentences = []
+    # possible_sentences = []
     for tri in triples:
         sentences = []
         resource_docs = []
@@ -81,12 +86,13 @@ def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]
                 tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, tri.text, tri.keywords)
                 if len(tmp_sentences) > 0:
                     for i in tmp_sentences:
-                        i['tri_id'] = tri.tri_id
+                        # i['tri_id'] = tri.tri_id
                         tri.sentences.append(i['sid'])
-                    sentences.extend([SentenceEvidence(ts) for ts in tmp_sentences])
-        if len(sentences) > 0:
-            possible_sentences.extend(sentences)
-    return possible_sentences, triples
+                    # sentences.extend([SentenceEvidence(ts) for ts in tmp_sentences])
+        # if len(sentences) > 0:
+        #     possible_sentences.extend(sentences)
+    tri_sentence_dict = {tri.tri_id: list(set(tri.sentences)) for tri in triples}
+    return tri_sentence_dict
 
 
 # def search_triple_in_sentence(tri, doc_id):

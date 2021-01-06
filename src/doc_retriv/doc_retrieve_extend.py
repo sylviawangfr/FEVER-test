@@ -406,11 +406,9 @@ def do_testset_graph2(folder):
 
 def do_dev_set():
     folder = config.RESULT_PATH / "extend_20210106"
-    es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
 
-    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_candidate_doc1(original_data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
+    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
@@ -436,7 +434,8 @@ def do_dev_set():
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[2:3]
     # prepare_claim_graph(data, folder / "claim_graph_2.jsonl", folder / "claim_graph_2.log")
-
+    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
 
 if __name__ == '__main__':
     # folder = config.RESULT_PATH / "extend_test_20210102"

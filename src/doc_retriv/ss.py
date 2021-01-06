@@ -57,7 +57,10 @@ def prepare_candidate_sents3_from_triples(data_original, data_with_graph, data_w
     save_intermidiate_results(data_original, output_file)
 
 
-def prepare_evidence_set_for_bert_nli(data_origin, data_with_ss, data_with_entity, data_with_graph, output_file):
+def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s, data_with_tri_s, output_file):
+    for idx, example in enumerate(data_origin):
+
+
 
 
 

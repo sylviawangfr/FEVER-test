@@ -162,7 +162,8 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
             linked_phrase = lookup_phrase(p)
             if extend_entity_docs is not None and p in extend_entity_docs:
                 es_doc_links = lookup_doc_id(p, extend_entity_docs[p])
-                linked_phrase = merge_links(linked_phrase, es_doc_links)
+                if len(es_doc_links) > 0:
+                    linked_phrase = merge_links(linked_phrase, es_doc_links)
             if lookup_hash is not None:
                 lookup_hash.update({p: linked_phrase})
 

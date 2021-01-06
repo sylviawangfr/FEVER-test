@@ -217,7 +217,7 @@ def remove_the_a(ph):
     return ph
 
 
-def search_entity_combinations(entities):
+def search_entity_combinations(entitie_subsets):
     def construct_must_and_should(must_l, should_l):
         must = []
         should = []
@@ -233,31 +233,32 @@ def search_entity_combinations(entities):
 
     try:
         r_list = []
-        for ph in entities:
-            tmp_r = []
-            must_entity = [ph]
-            should_entities = [i for i in entities if i != ph]
-            must, should = construct_must_and_should(must_entity, should_entities)
-            search = Search(using=client, index=config.WIKIPAGE_INDEX)
-            search = search.query(Q('bool', must=must, should=should)). \
-                         highlight('lines', number_of_fragments=0). \
-                         sort({'_score': {"order": "desc"}}). \
-                         source(include=['id'])[0:10]
+        for entities in entitie_subsets:
+            for ph in entities:
+                tmp_r = []
+                must_entity = [ph]
+                should_entities = [i for i in entities if i != ph]
+                must, should = construct_must_and_should(must_entity, should_entities)
+                search = Search(using=client, index=config.WIKIPAGE_INDEX)
+                search = search.query(Q('bool', must=must, should=should)). \
+                             highlight('lines', number_of_fragments=0). \
+                             sort({'_score': {"order": "desc"}}). \
+                             source(include=['id'])[0:10]
 
-            response = search.execute()
-            for hit in response['hits']['hits']:
-                score = hit['_score']
-                id = hit['_source']['id']
-                if 'highlight' in hit:
-                    lines = hit['highlight']['lines'][0]
-                    lines = lines.replace("</em> <em>", " ")
-                else:
-                    lines = ""
-                doc_dic = {'score': score, 'phrases': entities, 'id': id, 'lines': lines}
-                tmp_r.append(doc_dic)
-            r_list.extend(tmp_r)
+                response = search.execute()
+                for hit in response['hits']['hits']:
+                    score = hit['_score']
+                    id = hit['_source']['id']
+                    if 'highlight' in hit:
+                        lines = hit['highlight']['lines'][0]
+                        lines = lines.replace("</em> <em>", " ")
+                    else:
+                        lines = ""
+                    doc_dic = {'score': score, 'phrases': entities, 'id': id, 'lines': lines}
+                    tmp_r.append(doc_dic)
+                r_list.extend(tmp_r)
 
-        r_list.sort(key=lambda x: x.get('score'), reverse=True)
+            r_list.sort(key=lambda x: x.get('score'), reverse=True)
         return r_list
     except:
         return []
@@ -336,11 +337,6 @@ def search_and_merge2(entities_and_nouns):
 
 
 def search_and_merge4(entities, nouns):
-    if len(entities) == 0:
-        return search_and_merge2(nouns)
-    if len(nouns) == 0:
-        return search_entity_combinations(entities)
-
     def get_subsets(phrase_l):
         all_subsets = []
         l = len(phrase_l)
@@ -352,10 +348,16 @@ def search_and_merge4(entities, nouns):
             all_subsets.extend(sub_sets)
         return all_subsets
 
+    if len(entities) == 0:
+        return search_and_merge2(nouns)
+    if len(nouns) == 0:
+        entity_subsets = get_subsets(entities)
+        return search_entity_combinations(entity_subsets)
+
     entity_subsets = get_subsets(entities)
     nouns_subsets = get_subsets(nouns)
     covered_set = set()
-    result = search_entity_combinations(entities)
+    result = search_entity_combinations(entity_subsets)
     if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
         product = itertools.product(entity_subsets, nouns_subsets)
         for i in product:

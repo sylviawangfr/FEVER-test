@@ -40,8 +40,9 @@ def prepare_candidate_sents2_bert_dev(original_data, data_with_candidate_docs, o
     pred_ss_and_save(paras)
 
 
-def prepare_candidate_sents3_from_triples(data_original, data_with_graph, data_with_res_doc, output_file, log_file):
-    with tqdm(total=len(data_original), desc=f"searching triple sentences") as pbar:
+def prepare_candidate_sents3_from_triples(data_with_graph, data_with_res_doc, output_file, log_file):
+    result = []
+    with tqdm(total=len(data_with_graph), desc=f"searching triple sentences") as pbar:
         for idx, example in enumerate(data_with_graph):
             claim_dict = example['claim_dict']
             triple_l = claim_dict['graph']
@@ -51,10 +52,8 @@ def prepare_candidate_sents3_from_triples(data_original, data_with_graph, data_w
                 tri['tri_id'] = idx_tri
                 triples.append(Triple(tri))
             tri_sentence_dict = search_triples_in_docs(triples, resouce_doc_dict)
-            # to_dict = [c_s.__dict__ for c_s in candidate_sentences]
-            data_original[idx]['triple_sentences'] = tri_sentence_dict
-            pbar.update(1)
-    save_intermidiate_results(data_original, output_file)
+            result.append({'id': example['id'], 'triple_sentences': tri_sentence_dict, "triples": triples.__dict__})
+    save_intermidiate_results(result, output_file)
 
 
 def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s, data_with_tri_s, output_file):
@@ -64,9 +63,6 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s, data_with_t
         # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
         bert_s = get_bert_sids(data_with_bert_s['scored_sentids'])
         triple_s = data_with_tri_s['triple_sentences']
-
-
-
 
 
 def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]
@@ -155,15 +151,19 @@ def search_entity_docs_for_triples():
     pass
 
 def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences, candidate_sentences):
-    evidence_set_from_triple = generate_triple_sentence_combination(linked_triples_with_sentences, [])
+    subgraphs = generate_triple_subsets(linked_triples_with_sentences)
+    evidence_set_from_triple = []
+    for sub_g in subgraphs:
+        tmp_evi_from_tri_subgraph = generate_triple_sentence_combination(sub_g, [])
+        evidence_set_from_triple.extend(tmp_evi_from_tri_subgraph)
     evidence_set_from_sentences = generate_sentence_combination(candidate_sentences)
     new_evidence_set = copy.deepcopy(evidence_set_from_triple)
     for evid_s in evidence_set_from_sentences:
         for evid_t in evidence_set_from_triple:
             new_evidence = copy.deepcopy(evid_t)
-            new_evidence.add_sent(evid_s)
+            new_evidence.add_sents(evid_s)
             new_evidence_set.append(new_evidence)
-    new_evidence_set.extend(evid_s)
+        new_evidence_set.extend(evid_s)
     new_evidence_set = list(set(new_evidence_set))
     for e_s in new_evidence_set:
         for s in e_s.evidences_list:
@@ -187,6 +187,76 @@ def generate_sentence_combination(list_of_sentences):
 
 def generate_expand_evidence_from_hlinks(possible_evidence, hlink_docs):
     return []
+
+
+def generate_triple_subsets(list_of_triples, linked_entity_dict):
+    def has_overlap_resource(tri_l1, tri_l2, tri_dict):
+        for tri1_id in tri_l1:
+            tri1_res = {tri_dict[tri1_id].object, tri_dict[tri1_id].subject}
+            for tri2_id in tri_l2:
+                tri2_res = {tri_dict[tri2_id].object, tri_dict[tri2_id].subject}
+                if len(tri1_res & tri2_res) > 0:
+                    return True
+        return False
+
+    tri_id_to_tri_dict = {t.tri_id: t for t in list_of_triples}
+    resource_to_phrase_dict = dict()
+    for phrase in linked_entity_dict:
+        links = linked_entity_dict[phrase]
+        for l in links:
+            uri = l['URI']
+            if uri not in resource_to_phrase_dict:
+                resource_to_phrase_dict.update({uri: phrase})
+
+    resource_to_tri_dict = dict()
+    for tri in list_of_triples:
+        subj = tri.subject
+        obj = tri.object
+        if subj in resource_to_phrase_dict:
+            if subj in resource_to_tri_dict:
+                resource_to_tri_dict[subj].append(tri.tri_id)
+            else:
+                resource_to_tri_dict.update({subj: [tri.tri_id]})
+        if obj in resource_to_phrase_dict:
+            if obj in resource_to_tri_dict:
+                resource_to_tri_dict[obj].append(tri.tri_id)
+            else:
+                resource_to_tri_dict.update({obj: [tri.tri_id]})
+
+    ent_to_resouce_tri_dict = dict()
+    for res_tris in resource_to_tri_dict:
+        res_ph = resource_to_phrase_dict[res_tris]
+        if res_ph in ent_to_resouce_tri_dict:
+            ent_to_resouce_tri_dict[res_ph].append(res_tris)
+        else:
+            ent_to_resouce_tri_dict.update({res_ph: [res_tris]})
+
+    tri_sets = []
+    for ent in ent_to_resouce_tri_dict:
+        resouces = ent_to_resouce_tri_dict[ent]
+        if len(tri_sets) == 0:
+            tri_sets = resouces.values()
+        else:
+            for res_tris in resouces:
+                need_expand = True
+                for single_tri_set in tri_sets:
+                    if has_overlap_resource(single_tri_set, res_tris, tri_id_to_tri_dict):
+                        single_tri_set.extend(res_tris)
+                        need_expand = False
+                        break
+                if need_expand:
+                    new_tri_sets = copy.deepcopy(tri_sets)
+                    for new_tri_s in new_tri_sets:
+                        new_tri_s.extend(res_tris)
+                        tri_sets.append(new_tri_s)
+
+    tri_sets = [list(set(s)) for s in tri_sets]
+    tri_sets = list(set(tri_sets))
+    tri_sets_with_triples = []
+    for s in tri_sets:
+        tmp_set = [tri_id_to_tri_dict[id] for id in s]
+        tri_sets_with_triples.append(tmp_set)
+    return tri_sets_with_triples
 
 
 def generate_triple_sentence_combination(list_of_triples, list_of_evidence: List[Evidences]):
@@ -303,5 +373,5 @@ if __name__ == '__main__':
     entity_data = read_json_rows(folder / "entity_doc.jsonl")[2:4]
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
     # prepare_candidate_sents_bert_dev(original_data, candidate_docs, folder)
-    prepare_candidate_sents3_from_triples(org_data, graph_data, entity_data, folder / "tri_2-4.jsonl", folder / "tri_2-4.log")
+    prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_2-4.jsonl", folder / "tri_2-4.log")
 

@@ -42,6 +42,10 @@ class Evidences(object):
         o_set = sorted(o_set, key=lambda x: (x[0], x[1]))
         self.evidences_list = list(o_set)
 
+    def add_sents(self, sids: Iterable[str]):
+        for s in sids:
+            self.add_sent(s)
+
     def add_sent(self, sid):
         doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
         self.add_sent(doc_id, ln)

@@ -147,7 +147,7 @@ def search_doc_id_and_keywords_in_sentences(possible_id, subject, keywords):
     should = []
     must.append(
         {'term': {'doc_id_keyword': possible_id}})
-    must.append({'multi_match': {'query': subject,
+    must.append({'multi_match': {'query': subject, 'type': 'phrase', 'slop': 3,
                                  'fields': ['doc_id', 'text'], 'analyzer': 'underscore_analyzer'}})
     if len(keywords) == 2:
         relation = keywords[0]

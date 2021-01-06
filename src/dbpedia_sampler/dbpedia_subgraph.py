@@ -28,8 +28,8 @@ def fill_relative_hash(relative_hash, graph):
 
 
 # @profile
-def construct_subgraph_for_claim(claim_text, bc:BertClient=None):
-    not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text, '')
+def construct_subgraph_for_claim(claim_text, extend_entity_docs=None, bc:BertClient=None):
+    not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text, extend_entity_docs=extend_entity_docs, doc_title='')
     linked_phrases = [i['text'] for i in linked_phrases_l]
     all_phrases = not_linked_phrases_l + linked_phrases
     relative_hash = {key: [] for key in all_phrases}

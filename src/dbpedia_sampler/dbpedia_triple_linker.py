@@ -1,6 +1,6 @@
 import difflib
 import itertools
-
+from utils.text_clean import convert_brc
 import dateutil.parser as dateutil
 import numpy as np
 import sklearn.metrics.pairwise as pw
@@ -44,6 +44,27 @@ def lookup_phrase(phrase):
     return linked_phrase
 
 
+def lookup_doc_id(phrase, doc_ids):
+    linked_phrase = dict()
+    links = []
+    for d in doc_ids:
+        tmp_d = convert_brc(d).replace('_', ' ').lower()
+        resource_dict = dbpedia_lookup.lookup_label_exact_match(tmp_d)
+        for i in resource_dict:
+            r_dict = dict()
+            if isinstance(i, dict):
+                r_dict['categories'] = dbpedia_lookup.to_triples(i)
+                r_dict['URI'] = i['URI']
+                r_dict['text'] = phrase
+                r_dict['exact_match'] = (phrase.lower() == tmp_d)
+                links.append(r_dict)
+    if len(links) > 0:
+        linked_phrase['text'] = phrase
+        linked_phrase['links'] = links
+        linked_phrase['text'] = phrase
+    return linked_phrase
+
+
 # @profile
 def query_resource(uri):
     context = dict()
@@ -55,9 +76,12 @@ def query_resource(uri):
 
 
 # @profile
-def link_sentence(sentence, doc_title='', lookup_hash=None):
+def link_sentence(sentence, extend_entity_docs=None, doc_title='', lookup_hash=None):
     # not_linked_phrases_l, linked_phrases_l = link_sent_to_resources(sentence, doc_title=doc_title, lookup_hash=lookup_hash)
-    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources2(sentence, doc_title=doc_title, lookup_hash=lookup_hash)
+    not_linked_phrases_l, linked_phrases_l = link_sent_to_resources2(sentence,
+                                                                     extend_entity_docs=extend_entity_docs,
+                                                                     doc_title=doc_title,
+                                                                     lookup_hash=lookup_hash)
     add_categories(linked_phrases_l)
     return not_linked_phrases_l, linked_phrases_l
 
@@ -109,7 +133,15 @@ def link_sent_to_resources(sentence, doc_title='', lookup_hash=None):
     return not_linked_phrases_l, linked_phrases_l
 
 
-def link_sent_to_resources2(sentence, doc_title='', lookup_hash=None):
+def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', lookup_hash=None):
+    def merge_links(linked_p, es_linked_p):
+        links1 = linked_p['links']
+        links2 = es_linked_p['links']
+        for i in links2:
+            if i['URI'] not in links1:
+                links1.append(i)
+        return linked_p
+
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)
     linked_phrases_l = []
@@ -128,6 +160,11 @@ def link_sent_to_resources2(sentence, doc_title='', lookup_hash=None):
             linked_phrase = lookup_hash[p]
         else:
             linked_phrase = lookup_phrase(p)
+            if extend_entity_docs is not None and p in extend_entity_docs:
+                es_doc_links = lookup_doc_id(p, extend_entity_docs[p])
+                linked_phrase = merge_links(linked_phrase, es_doc_links)
+            if lookup_hash is not None:
+                lookup_hash.update({p: linked_phrase})
 
         if len(linked_phrase) == 0:
             not_linked_phrases_l.append(p)
@@ -306,8 +343,8 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
         if len(tmp_result) > 0:
             result.extend(tmp_result)
     # only top 2 triples
-    result = filter_triples(result)
-    return result
+    filted_result = filter_triples(result)
+    return filted_result
 
 
 def filter_triples(triples):
@@ -323,7 +360,10 @@ def filter_triples(triples):
             if t['relatives'] == r:
                 tri_r.append(t)
         tri_r.sort(key=lambda k: k['score'], reverse=True)
-        all_triples.extend(tri_r[:2])
+        top_k =2
+        for idx, i in enumerate(tri_r):
+            if i['score'] > 0.9 or idx < top_k:
+                all_triples.append(i)
     return all_triples
 
 

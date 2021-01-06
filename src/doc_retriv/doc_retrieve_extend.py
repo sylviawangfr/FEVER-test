@@ -16,6 +16,7 @@ from doc_retriv.SentenceEvidence import *
 from utils.check_sentences import Evidences
 import copy
 from typing import List
+from utils.tokenizer_simple import is_capitalized
 import itertools
 
 
@@ -47,14 +48,33 @@ def prepare_candidate_es_for_example2(example):
     return candidate_docs_1
 
 
-def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path):
+def get_entity_docs(doc_and_line):
+    doc_and_line.sort(key=lambda x: x.get('score'), reverse=True)
+    doc_and_line = doc_and_line[:15]
+    all_phrases = list(set([p for d in doc_and_line for p in d['phrases']]))
+    all_docids = list(set([d['id'] for d in doc_and_line]))
+    all_doc_dict = dict()
+    for doc in all_docids:
+        for p in all_phrases:
+            doc_id = convert_brc(doc).replace("_", " ")
+            if is_capitalized(p) and p.lower() in doc_id.lower():
+                if p in all_doc_dict:
+                    all_doc_dict[p].append(doc)
+                else:
+                    all_doc_dict.update({p: [doc]})
+    return all_doc_dict
+
+
+def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: Path):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     flush_save = []
     batch = 20
     flush_num = batch
     with tqdm(total=len(data_l), desc=f"constructing claim graph") as pbar:
         for idx, example in enumerate(data_l):
-            example = prepare_claim_graph_for_example(example, bc)
+            example_with_es = data_with_es[idx]
+            extend_entity_docs = get_entity_docs(example_with_es['doc_and_line'])
+            example = prepare_claim_graph_for_example(example, extend_entity_docs=extend_entity_docs, bc=bc)
             flush_save.append(example)
             flush_num -= 1
             pbar.update(1)
@@ -65,9 +85,9 @@ def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path):
     bc.close()
 
 
-def prepare_claim_graph_for_example(example, bc: BertClient):
+def prepare_claim_graph_for_example(example, extend_entity_docs=None, bc: BertClient=None):
      claim = convert_brc(normalize(example['claim']))
-     claim_dict = construct_subgraph_for_claim(claim, bc)
+     claim_dict = construct_subgraph_for_claim(claim, extend_entity_docs=extend_entity_docs, bc=bc)
      claim_dict.pop('embedding')
      example['claim_dict'] = claim_dict
      return example
@@ -358,7 +378,8 @@ def redo_example_docs(error_data, log_filename):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     for example in tqdm(error_data):
         es_doc_and_lines = prepare_candidate_es_for_example2(example)
-        graph_data_example = prepare_claim_graph_for_example(example, bc)
+        entity_docs = get_entity_docs(es_doc_and_lines)
+        graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs, bc=bc)
         ent_resource_docs = prepare_candidate2_example(graph_data_example)
         merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
         example['candidate_docs'] = merged
@@ -389,8 +410,8 @@ def do_dev_set():
     # eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
 
 
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_candidate_doc1(original_data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
+    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # prepare_candidate_doc1(original_data, folder / "redo_es_doc_10.jsonl", folder / "redo_es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
@@ -411,8 +432,8 @@ def do_dev_set():
     # assert(len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
     # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
     # rerun_failed_graph(folder)
-    # error_data = read_json_rows(folder / 'es_doc_10.log')
-    # redo_example_docs(error_data, folder / "redo09.log")
+    error_data = read_json_rows(folder / 'candidate_docs.log')
+    redo_example_docs(error_data, folder / "redo09.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[2:3]
     # prepare_claim_graph(data, folder / "claim_graph_2.jsonl", folder / "claim_graph_2.log")

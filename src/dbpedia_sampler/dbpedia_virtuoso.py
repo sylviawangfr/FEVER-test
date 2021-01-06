@@ -197,8 +197,7 @@ def get_outbounds(resource_uri):
         "filter (!contains(str(?object), 'http://www.w3.org/2002/07/owl')) " \
         "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
         "filter (?relation not in (dbp:width, dbp:icon, dbp:image, dbp:align, dbp:float, dbp:direction, dbp:imagewidth, dbp:iconWidth) " \
-        "|| contains(str(?object), 'http://dbpedia.org/resource/') " \
-        "|| contains(str(?relation), 'http://dbpedia.org/property/'))} LIMIT 500"
+        "|| contains(str(?object), 'http://dbpedia.org/resource/'))} LIMIT 500"
     tris = get_triples(query_str_outbound)
     to_delete = []
     for tri in tris:
@@ -324,8 +323,9 @@ def does_reach_max_length(text):
 
 if __name__ == "__main__":
     # res = "http://dbpedia.org/resource/Magic_Johnson"
-    res = "http://dbpedia.org/resource/Tap_dancer"
-    get_categories2(res)
+    # res = "http://dbpedia.org/resource/Tap_dancer"
+    res = get_outbounds('http://dbpedia.org/resource/Germany')
+    # get_categories2(res)
     # print(get_disambiguates_outbounds(res))
     # print(get_properties(res))
     # on = "http://dbpedia.org/ontology/City"

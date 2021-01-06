@@ -26,6 +26,7 @@ def lookup_resource(text_phrase):
         unwrapped_rec = [unwrap_record(i) for i in lookup_rec]
         return unwrapped_rec
 
+
 def unwrap_record(lookup_rec):
     record = dict()
     record['Label'] = lookup_rec['Label']
@@ -46,21 +47,21 @@ def unwrap_record(lookup_rec):
     return record
 
 
-def lookup_resource_no_filter(text_phrase):
-    lookup_matches_ref = lookup_resource_ref_count(text_phrase)
-    lookup_app_matches_label = lookup_resource_app_label(text_phrase)
-    lookup_app_matches_query = lookup_resource_app_query(text_phrase)
-    merged = []
-    merge_resources(merged, lookup_matches_ref)
-    merge_resources(merged, lookup_app_matches_label)
-    merge_resources(merged, lookup_app_matches_query)
-    keyword_matching_score = [difflib.SequenceMatcher(None, text_phrase,
-                                                      i['Label'] if i['Label'] is not None else '').ratio()
-                              for i in merged]
-    sorted_matching_index = sorted(range(len(keyword_matching_score)), key=lambda k: keyword_matching_score[k],
-                                   reverse=True)
-    result = [merged[i] for i in sorted_matching_index]
-    return result[:20]
+# def lookup_resource_no_filter(text_phrase):
+#     lookup_matches_ref = lookup_resource_ref_count(text_phrase)
+#     lookup_app_matches_label = lookup_resource_app_label(text_phrase)
+#     lookup_app_matches_query = lookup_resource_app_query(text_phrase)
+#     merged = []
+#     merge_resources(merged, lookup_matches_ref)
+#     merge_resources(merged, lookup_app_matches_label)
+#     merge_resources(merged, lookup_app_matches_query)
+#     keyword_matching_score = [difflib.SequenceMatcher(None, text_phrase,
+#                                                       i['Label'] if i['Label'] is not None else '').ratio()
+#                               for i in merged]
+#     sorted_matching_index = sorted(range(len(keyword_matching_score)), key=lambda k: keyword_matching_score[k],
+#                                    reverse=True)
+#     result = [merged[i] for i in sorted_matching_index]
+#     return result[:20]
 
 
 def merge_resources(merged_l, to_merge):
@@ -102,6 +103,19 @@ def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
     #     result.append(lookup_records[sorted_matching_index[0]])
     return result
 
+
+def lookup_label_exact_match(text_phrase):
+    lookup_app_matches_label = lookup_resource_app_label(text_phrase)
+    lookup_app_matches_query = lookup_resource_app_query(text_phrase)
+    lookup_app_matches = []
+    merge_resources(lookup_app_matches, lookup_app_matches_label)
+    merge_resources(lookup_app_matches, lookup_app_matches_query)
+    lookup_rec = get_exact_match(text_phrase, lookup_app_matches)
+    if len(lookup_rec) < 1:
+        return []
+    else:
+        unwrapped_rec = [unwrap_record(i) for i in lookup_rec]
+        return unwrapped_rec
 
 # @profile
 def combine_lookup(text_phrase):
@@ -189,6 +203,7 @@ def get_exact_match(text_phrase, lookup_records):
     result = []
     for i in lookup_records:
         if i['Label'] is not None and text_phrase.lower() == i['Label'].lower():
+            i['exact_match'] = True
             result.append(i)
     return result
 
@@ -338,7 +353,8 @@ if __name__ == "__main__":
     #     test()
     #     gc.collect()
     # test()
-    lookup_resource("Hourglass album")
+    lookup_resource("'Savages")
+    lookup_resource("'Savages_(2012_film)")
     # lookup_resource("Winter's Tale")
 
     # lookup_resource_no_filter('Tool')

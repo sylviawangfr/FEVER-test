@@ -353,7 +353,7 @@ if __name__ == "__main__":
     #     test()
     #     gc.collect()
     # test()
-    lookup_resource("'Savages")
+    lookup_resource("colin kaepernick")
     lookup_resource("'Savages_(2012_film)")
     # lookup_resource("Winter's Tale")
 

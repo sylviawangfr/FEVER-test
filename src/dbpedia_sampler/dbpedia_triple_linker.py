@@ -166,7 +166,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
         else:
             linked_phrase = lookup_phrase(p)
             if extend_entity_docs is not None and p in extend_entity_docs:
-                es_doc_links = lookup_doc_id(p, extend_entity_docs[p])
+                es_doc_links = extend_entity_docs[p]
                 if len(es_doc_links) > 0:
                     linked_phrase = merge_links(linked_phrase, es_doc_links)
             if lookup_hash is not None and len(linked_phrase) > 0:
@@ -553,7 +553,8 @@ def filter_resource_vs_keyword(linked_phrases_l, keyword_embeddings,  fuzzy_matc
                 for idx, i in enumerate(linked_phrases_l):
                     keyword_embeddings[i['text']] = linked_text_embedding[idx]
 
-            filtered_triples = get_topk_similar_triples(resource1['text'], resource2, keyword_embeddings, top_k=3)
+            filtered_triples = get_topk_similar_triples(resource1['text'], resource2, keyword_embeddings,
+                                                        top_k=3, threshold=SCORE_CONFIDENCE_3, bc=bc)
             for item in filtered_triples:
                 if not does_tri_exit_in_list(item, result):
                     result.append(item)
@@ -722,15 +723,22 @@ def test():
         gc.collect()
         time.sleep(5)
 
+def test_similarity(ph1, ph2):
+    bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+    phe = bert_similarity.get_phrase_embedding([ph1, ph2], bc)
+    out = pw.cosine_similarity([phe[0]], [phe[1]]).flatten()
+    return out
 
 
 if __name__ == '__main__':
+    si = test_similarity('United States', 'Germany')
+
     # test()
     # test()
     # embedding1 = bert_similarity.get_phrase_embedding(['Advertising'])
     # embedding2 = bert_similarity.get_phrase_embedding(['Pranksters'])
     # out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
-    # text = "Autonomous cars shift insurance liability toward manufacturers"
+    text = "Autonomous cars shift insurance liability toward manufacturers"
     # claim = "Roman Atwood is a content creator."
     # sentence1 = "Brett Atwood is a website editor , content strategist and former print and online journalist whose " \
     #            "writings have appeared in Billboard , Rolling Stone , Vibe , " \
@@ -755,8 +763,8 @@ if __name__ == '__main__':
     #      "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
     # s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
     # s7 = "Firefox is a computer game."
-    s8 = "Where the Heart Is ( 2000 film ) - The filmstars Natalie Portman , Stockard Channing , Ashley Judd , and Joan Cusack with supporting roles done by James Frain , Dylan Bruno , Keith David , and Sally Field ."
-    no_l, l = link_sentence(s8, doc_title='')
+    # s8 = "Where the Heart Is ( 2000 film ) - The filmstars Natalie Portman , Stockard Channing , Ashley Judd , and Joan Cusack with supporting roles done by James Frain , Dylan Bruno , Keith David , and Sally Field ."
+    # no_l, l = link_sentence(s8, doc_title='')
 
     # all_phrases = no_l + [i['text'] for i in l]
     # verb_d = get_dependent_verb(s6, all_phrases)

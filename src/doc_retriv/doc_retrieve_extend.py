@@ -1,15 +1,14 @@
-from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, search_and_merge4, merge_result, search_doc_id_and_keywords, search_doc_id_and_keywords_in_sentences
+from ES.es_search import search_doc_id, search_and_merge2, search_and_merge4, merge_result, search_doc_id_and_keywords, search_doc_id_and_keywords_in_sentences
 from utils.c_scorer import *
 from utils.common import thread_exe
 from utils.fever_db import *
 from utils.file_loader import read_json_rows, get_current_time_str, read_all_files, save_and_append_results
-from dbpedia_sampler.dbpedia_triple_linker import link_sentence
+from dbpedia_sampler.dbpedia_triple_linker import lookup_doc_id
 from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
 from dbpedia_sampler.sentence_util import get_ents_and_phrases, get_phrases_and_nouns_merged
 import difflib
 from utils.text_clean import convert_brc
-from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim, construct_subgraph_for_candidate
-from dbpedia_sampler.uri_util import isURI
+from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim
 from dbpedia_sampler.dbpedia_virtuoso import get_categories2
 from bert_serving.client import BertClient
 from doc_retriv.SentenceEvidence import *
@@ -54,15 +53,27 @@ def get_entity_docs_from_es(doc_and_line):
     all_phrases = list(set([p for d in doc_and_line for p in d['phrases']]))
     all_docids = list(set([d['id'] for d in doc_and_line]))
     all_doc_dict = dict()
+    docid_to_phrases = {d['id']: d['phrases'] for d in doc_and_line}
     for doc in all_docids:
         for p in all_phrases:
-            doc_id = convert_brc(doc).replace("_", " ")
-            if is_capitalized(p) and p.lower() in doc_id.lower():
+            doc_id_clean = convert_brc(doc).replace("_", " ")
+            if is_capitalized(p) and p.lower() in doc_id_clean.lower():
                 if p in all_doc_dict:
                     all_doc_dict[p].append(doc)
                 else:
                     all_doc_dict.update({p: [doc]})
-    return all_doc_dict
+    phrase_to_doc_links = dict()
+    for p in all_doc_dict:
+        doc_ids = all_doc_dict[p]
+        filtered_doc_ids = []
+        for doc in doc_ids:
+            doc_id_clean = convert_brc(doc).replace("_", " ")
+            if doc_id_clean.lower() == p.lower() or is_media(doc_id_clean) or len(docid_to_phrases[doc]) > 1:
+                filtered_doc_ids.append(doc)
+        linked_phrase = lookup_doc_id(p, filtered_doc_ids)
+        if len(linked_phrase) > 0:
+            phrase_to_doc_links.update({p: linked_phrase})
+    return phrase_to_doc_links
 
 
 def prepare_es_entity_docs(es_data_l, output_file):
@@ -71,7 +82,7 @@ def prepare_es_entity_docs(es_data_l, output_file):
         for idx, example in enumerate(es_data_l):
             doc_and_line = example['doc_and_line']
             doc_dict = get_entity_docs_from_es(doc_and_line)
-            es_enttiy_docs.update({'id': example['id'], 'es_entity_docs': doc_dict})
+            es_enttiy_docs.append({'id': example['id'], 'es_entity_docs': doc_dict})
     save_intermidiate_results(es_enttiy_docs, output_file)
 
 
@@ -421,13 +432,13 @@ def do_dev_set():
     # prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
 
-    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
-
-
     # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
-    # prepare_claim_graph(data, data_with_es[0:10000], folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
+    # prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
+
+
+    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
+    data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
+    prepare_claim_graph(data, data_with_es[0:10000], folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, data_with_es[10000:19998], folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 

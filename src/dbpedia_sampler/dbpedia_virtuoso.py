@@ -195,6 +195,7 @@ def get_outbounds(resource_uri):
         f"<{resource_uri}> ?relation ?object . " \
         "filter (!contains(str(?relation), 'wiki')) " \
         "filter (!contains(str(?object), 'http://www.w3.org/2002/07/owl')) " \
+        "filter (!contains(str(?object), 'http://www.wikidata.org/entity')) " \
         "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
         "filter (?relation not in (dbp:width, dbp:icon, dbp:image, dbp:align, dbp:float, dbp:direction, dbp:imagewidth, dbp:iconWidth) " \
         "|| contains(str(?object), 'http://dbpedia.org/resource/'))} LIMIT 500"

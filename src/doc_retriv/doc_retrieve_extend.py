@@ -65,6 +65,16 @@ def get_entity_docs_from_es(doc_and_line):
     return all_doc_dict
 
 
+def prepare_es_entity_docs(es_data_l, output_file):
+    es_enttiy_docs = []
+    with tqdm(total=len(es_data_l), desc=f"preparing es entity docs") as pbar:
+        for idx, example in enumerate(es_data_l):
+            doc_and_line = example['doc_and_line']
+            doc_dict = get_entity_docs_from_es(doc_and_line)
+            es_enttiy_docs.update({'id': example['id'], 'es_entity_docs': doc_dict})
+    save_intermidiate_results(es_enttiy_docs, output_file)
+
+
 def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: Path):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     flush_save = []
@@ -410,11 +420,16 @@ def do_dev_set():
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
     # prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
+
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
+    prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
+
+
+    # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
     # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
     # prepare_claim_graph(data, data_with_es[0:10000], folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
-    data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
-    prepare_claim_graph(data, data_with_es[10000:19998], folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
+    # prepare_claim_graph(data, data_with_es[10000:19998], folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)
     # data_context = read_json_rows(folder / "claim_graph_10000.jsonl")

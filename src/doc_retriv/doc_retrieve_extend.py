@@ -83,6 +83,7 @@ def prepare_es_entity_docs(es_data_l, output_file):
             doc_and_line = example['doc_and_line']
             doc_dict = get_entity_docs_from_es(doc_and_line)
             es_enttiy_docs.append({'id': example['id'], 'es_entity_docs': doc_dict})
+            pbar.update(1)
     save_intermidiate_results(es_enttiy_docs, output_file)
 
 
@@ -433,7 +434,7 @@ def do_dev_set():
 
 
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
+    prepare_es_entity_docs(data_with_es, folder / "re_es_entity_docs.jsonl")
 
 
     # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")

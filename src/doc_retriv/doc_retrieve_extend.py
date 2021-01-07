@@ -95,7 +95,7 @@ def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: 
     with tqdm(total=len(data_l), desc=f"constructing claim graph") as pbar:
         for idx, example in enumerate(data_l):
             example_with_es = data_with_es[idx]
-            extend_entity_docs = get_entity_docs_from_es(example_with_es['doc_and_line'])
+            extend_entity_docs = example_with_es['es_entity_docs']
             example = prepare_claim_graph_for_example(example, extend_entity_docs=extend_entity_docs, bc=bc)
             flush_save.append(example)
             flush_num -= 1
@@ -433,13 +433,14 @@ def do_dev_set():
     # prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
 
-    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    prepare_es_entity_docs(data_with_es, folder / "re_es_entity_docs.jsonl")
-
-
     # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
-    # prepare_claim_graph(data, data_with_es[0:10000], folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
+    # prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
+
+
+    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    assert(len(data_with_es_entities) == 19998)
+    data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
+    prepare_claim_graph(data, data_with_es_entities[0:10000], folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, data_with_es[10000:19998], folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 

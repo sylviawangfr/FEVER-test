@@ -432,13 +432,13 @@ def do_dev_set():
     # prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
 
-    # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    # prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
-
-
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
-    prepare_claim_graph(data, data_with_es[0:10000], folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
+    prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
+
+
+    # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)[0:10000]
+    # prepare_claim_graph(data, data_with_es[0:10000], folder / "claim_graph_10000.jsonl", folder / "claim_graph_10000.log")
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, data_with_es[10000:19998], folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 

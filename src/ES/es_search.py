@@ -27,7 +27,7 @@ def search_doc(phrases):
         search = search.query(Q('bool', must=must, should=should)). \
                  highlight('lines', number_of_fragments=0). \
                  sort({'_score': {"order": "desc"}}). \
-                 source(include=['id'])[0:15]
+                 source(include=['id'])[0:10]
 
         response = search.execute()
         r_list = []

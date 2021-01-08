@@ -430,14 +430,14 @@ def do_testset_graph2(folder):
 
 
 def do_dev_set():
-    folder = config.RESULT_PATH / "extend_20210106"
+    folder = config.RESULT_PATH / "extend_20210107"
 
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
     # prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
 
-    # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    # prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
+    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
+    prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
 
 
     # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
@@ -460,8 +460,8 @@ def do_dev_set():
     # assert(len(es_data) == len(data_original) and (len(ent_data) == len(data_original)))
     # prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
     # rerun_failed_graph(folder)
-    error_data = read_json_rows(folder / 'candidate_docs.log')
-    redo_example_docs(error_data, folder / "redo09.log")
+    # error_data = read_json_rows(folder / 'candidate_docs.log')
+    # redo_example_docs(error_data, folder / "redo09.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[2:3]
     # prepare_claim_graph(data, folder / "claim_graph_2.jsonl", folder / "claim_graph_2.log")

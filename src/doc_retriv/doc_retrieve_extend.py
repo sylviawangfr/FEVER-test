@@ -432,12 +432,12 @@ def do_testset_graph2(folder):
 def do_dev_set():
     folder = config.RESULT_PATH / "extend_20210107"
 
-    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
 
-    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
+    # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
+    # prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
 
 
     # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")

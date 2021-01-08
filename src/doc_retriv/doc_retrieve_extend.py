@@ -51,7 +51,7 @@ def get_entity_docs_from_es(doc_and_line):
     doc_and_line.sort(key=lambda x: x.get('score'), reverse=True)
     doc_and_line = doc_and_line[:15]
     all_phrases = list(set([p for d in doc_and_line for p in d['phrases']]))
-    all_docids = list(set([d['id'] for d in doc_and_line]))
+    all_docids = [d['id'] for d in doc_and_line]
     all_doc_dict = dict()
     docid_to_phrases = {d['id']: d['phrases'] for d in doc_and_line}
     for doc in all_docids:
@@ -63,13 +63,16 @@ def get_entity_docs_from_es(doc_and_line):
                 else:
                     all_doc_dict.update({p: [doc]})
     phrase_to_doc_links = dict()
+    hit_phrases = []
     for p in all_doc_dict:
         doc_ids = all_doc_dict[p]
         filtered_doc_ids = []
         for doc in doc_ids:
             doc_id_clean = convert_brc(doc).replace("_", " ")
-            if doc_id_clean.lower() == p.lower() or is_media(doc_id_clean) or len(docid_to_phrases[doc]) > 1:
+            if doc_id_clean.lower() == p.lower() or is_media(doc_id_clean) \
+                    or (len(docid_to_phrases[doc]) > 1 and docid_to_phrases[doc] not in hit_phrases):
                 filtered_doc_ids.append(doc)
+                hit_phrases.append(docid_to_phrases[doc])
         linked_phrase = lookup_doc_id(p, filtered_doc_ids)
         if len(linked_phrase) > 0:
             phrase_to_doc_links.update({p: linked_phrase})
@@ -444,22 +447,21 @@ def do_dev_set():
     # data = read_json_rows(config.FEVER_DEV_JSONL)[10000:19998]
     # prepare_claim_graph(data, data_with_es_entities[10000:19998], folder / "claim_graph_19998.jsonl", folder / "claim_graph_19998.log")
 
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
-    data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
-    assert(len(data_original) == len(data_context))
-    prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
-
+    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    # data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
+    # data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
+    # assert(len(data_original) == len(data_context))
+    # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    #
+    #
+    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    # assert(len(es_data) == len(data_original) and (len(ent_data) == len(data_original)))
+    # prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
     # rerun_failed_graph(folder)
-
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "entity_doc.jsonl")
-    assert(len(es_data) == len(data_original) and (len(ent_data) == len(data_original)))
-    prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
-    # rerun_failed_graph(folder)
-    # error_data = read_json_rows(folder / 'candidate_docs.log')
-    # redo_example_docs(error_data, folder / "redo09.log")
+    error_data = read_json_rows(folder / 'candidate_docs.log')
+    redo_example_docs(error_data, folder / "redo09.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)[2:3]
     # prepare_claim_graph(data, folder / "claim_graph_2.jsonl", folder / "claim_graph_2.log")

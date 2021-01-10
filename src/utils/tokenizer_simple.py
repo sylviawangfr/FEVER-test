@@ -25,7 +25,7 @@ def count_words(sent):
     return l
 
 
-REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\s)*(\'s)?' \
+REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\')?(\s)*(\'s)?' \
             r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(and\s)*(with\s)*(the\s)*(a\s)*' \
             r'(-?)(&?)(\.?)(:?)(\d*\s)*)*(?<!-\s)(:?([A-Z]+[\w]*(\s\d+[a-zA-Z]*(,?))*)|(of\s\d+))(\s\(.*\))*'
 

@@ -457,25 +457,25 @@ def do_dev_set_with_es_entity():
 
 
 def do_dev_set():
-    folder = config.RESULT_PATH / "extend_20210107"
+    folder = config.RESULT_PATH / "extend_20210108"
 
-    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
-    data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_claim_graph(data, None, folder / "claim_graph.jsonl", folder / "claim_graph.log")
-
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    data_context = read_json_rows(folder / "claim_graph.jsonl")
-    assert(len(data_original) == len(data_context))
-    prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    # data = read_json_rows(config.FEVER_DEV_JSONL)
+    # prepare_claim_graph(data, None, folder / "claim_graph.jsonl", folder / "claim_graph.log")
     #
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "entity_doc.jsonl")
-    assert(len(es_data) == len(data_original) and (len(ent_data) == len(data_original)))
-    prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
+    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    # data_context = read_json_rows(folder / "claim_graph.jsonl")
+    # assert(len(data_original) == len(data_context))
+    # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
 
+    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    # assert(len(es_data) == len(data_original) and (len(ent_data) == len(data_original)))
+    # prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
+#
 
 def run_dev_failed_docs():
     folder = config.RESULT_PATH / "extend_20210107"
@@ -493,5 +493,5 @@ def run_dev_failed_docs():
 if __name__ == '__main__':
     # folder = config.RESULT_PATH / "extend_test_20210102"
     # do_testset_es(folder)
-    do_dev_set_with_es_entity()
-    # do_dev_set()
+    # do_dev_set_with_es_entity()
+    do_dev_set()

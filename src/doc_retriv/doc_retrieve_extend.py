@@ -452,7 +452,7 @@ def do_dev_set_with_es_entity():
 def do_dev_set():
     folder = config.RESULT_PATH / "extend_20210109"
 
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    original_data = read_json_rows(config.FEVER_DEV_JSONL)[7:10]
     prepare_candidate_doc1(original_data, folder / "es_doc_10_1.jsonl", folder / "es_doc_10_1.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)

@@ -47,7 +47,16 @@ def get_ents_and_phrases(sentence):
     capitalized_phrased = list(set(split_claim_regex(sentence)))
 
     nouns = list(set(nouns_chunks))
-    entity_and_capitalized = [i for i in capitalized_phrased if i.lower() not in STOP_WORDS]
+    entity_and_capitalized = []
+    for i in capitalized_phrased:
+        if is_date_or_number(i) and i not in nouns:
+            nouns.append(i)
+            continue
+        else:
+            if i.lower() not in STOP_WORDS:
+                entity_and_capitalized.append(i)
+                continue
+
     for i in nouns_chunks:
         if is_date_or_number(i):
             continue
@@ -81,7 +90,7 @@ def get_ents_and_phrases(sentence):
     for i in ents:
         if (len(list(filter(lambda x: (i in x or x in i), entity_and_capitalized))) < 1 \
                 and i not in entity_and_capitalized \
-                and i not in nouns) or is_date_or_number(i):
+                and i not in nouns) or (is_date_or_number(i) and i not in nouns):
             nouns.append(i)
     for i in noun_tokens:
         if len(list(filter(lambda x: (i in x), entity_and_capitalized))) < 1 and i not in nouns:

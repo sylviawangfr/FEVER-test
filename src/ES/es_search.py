@@ -268,10 +268,11 @@ def search_entity_combinations(entitie_subsets):
 # in case there is no co-existing all phrases in one doc:
 # search in pairs and merge
 def has_overlap(str_l):
+    has_dup = False
     for i in str_l:
-        if len(list(filter(lambda x: (i in x), str_l))) > 1:
-            return True
-    return False
+        if len(list(filter(lambda x: (i in x and i != x), str_l))) > 0:
+            has_dup = True
+    return has_dup
 
 def search_subsets(phrases):
     result = []
@@ -347,7 +348,7 @@ def search_and_merge4(entities, nouns):
             sub_sets = [list(c) for c in itertools.combinations(phrase_l, i)]
             all_subsets.extend(sub_sets)
         filtered = []
-        for s in sub_sets:
+        for s in all_subsets:
             has_dup = False
             for item in s:
                 if len(list(filter(lambda x: item in x and x != item, s))) > 0:

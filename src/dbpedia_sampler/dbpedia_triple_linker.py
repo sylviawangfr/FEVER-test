@@ -150,12 +150,16 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
     sentence = text_clean.convert_brc(sentence)
     entities, chunks = get_phrases(sentence, doc_title)
     linked_phrases_l = []
+    not_linked_phrases_l = []
     if len(entities) < 1:
         phrases = chunks
-        not_linked_phrases_l = []
     else:
         phrases = entities
-        not_linked_phrases_l = chunks
+        for c in chunks:
+            if c.count(' ') > 0:
+                phrases.append(c)
+            else:
+                not_linked_phrases_l.append(c)
 
     for p in phrases:
         if is_date_or_number(p):

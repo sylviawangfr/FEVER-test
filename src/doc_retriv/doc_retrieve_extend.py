@@ -33,13 +33,6 @@ def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
     eval_doc_preds(data_l, 10, log_filename)
 
 
-def prepare_candidate_es_for_example(example):
-    claim = convert_brc(normalize(example['claim']))
-    nouns = get_phrases_and_nouns_merged(claim)
-    candidate_docs_1 = search_and_merge2(nouns)
-    return candidate_docs_1
-
-
 def prepare_candidate_es_for_example2(example):
     claim = convert_brc(normalize(example['claim']))
     entities, nouns = get_ents_and_phrases(claim)
@@ -457,10 +450,10 @@ def do_dev_set_with_es_entity():
 
 
 def do_dev_set():
-    folder = config.RESULT_PATH / "extend_20210108"
+    folder = config.RESULT_PATH / "extend_20210109"
 
     original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    prepare_candidate_doc1(original_data, folder / "es_doc_10_1.jsonl", folder / "es_doc_10_1.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)
     # prepare_claim_graph(data, None, folder / "claim_graph.jsonl", folder / "claim_graph.log")

@@ -346,7 +346,16 @@ def search_and_merge4(entities, nouns):
         for i in reversed(range(1, l + 1)):
             sub_sets = [list(c) for c in itertools.combinations(phrase_l, i)]
             all_subsets.extend(sub_sets)
-        return all_subsets
+        filtered = []
+        for s in sub_sets:
+            has_dup = False
+            for item in s:
+                if len(list(filter(lambda x: item in x and x != item, s))) > 0:
+                    has_dup = True
+                    break
+            if not has_dup:
+                filtered.append(s)
+        return filtered
 
     if len(entities) == 0:
         return search_and_merge2(nouns)
@@ -355,9 +364,9 @@ def search_and_merge4(entities, nouns):
         return search_entity_combinations(entity_subsets)
 
     entity_subsets = get_subsets(entities)
+    result = search_entity_combinations(entity_subsets)
     nouns_subsets = get_subsets(nouns)
     covered_set = set()
-    result = search_entity_combinations(entity_subsets)
     if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
         product = itertools.product(entity_subsets, nouns_subsets)
         for i in product:

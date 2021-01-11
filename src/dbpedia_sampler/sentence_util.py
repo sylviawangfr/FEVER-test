@@ -93,7 +93,7 @@ def get_ents_and_phrases(sentence):
                 and i not in nouns) or (is_date_or_number(i) and i not in nouns):
             nouns.append(i)
     for i in noun_tokens:
-        if len(list(filter(lambda x: (i in x), entity_and_capitalized))) < 1 and i not in nouns:
+        if len(list(filter(lambda x: (i in x and is_capitalized(x)), entity_and_capitalized))) < 1 and i not in nouns:
             nouns.append(i)
     entity_and_capitalized = [i for i in entity_and_capitalized if i.lower() not in STOP_WORDS]
     # entity_and_capitalized = merge_phrases_l1_to_l2(entity_and_capitalized, [])

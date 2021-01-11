@@ -5,9 +5,9 @@ import config
 from memory_profiler import profile
 
 STOP_WORDS = ['the', 'they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
-               'we', 'who', 'where', 'what', 'days', 'him', 'her', 'here', 'there', 'a', 'for',
+               'we', 'who', 'where', 'what', 'days', 'him', 'her', 'here', 'there', 'a', 'for', 'anything', 'everything',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
-              'third']
+              'third', 'life', 'all']
 
 
 log = log_util.get_logger('dbpedia_triple_linker')
@@ -40,31 +40,54 @@ def get_ents_and_phrases(sentence):
     doc_noun = nlp_eng_spacy(sentence)
     noun_tokens = []
     for token in doc_noun:
-        if token.pos_.lower() in ['propn', 'noun']:
+        if token.pos_.lower() in ['propn', 'noun'] or token.dep_ == 'dobj':
             noun_tokens.append(token.text)
     nouns_chunks = [remove_the_a(chunk.text) for chunk in doc_noun.noun_chunks]
     ents = [remove_the_a(ent.text) for ent in doc_noun.ents]
     capitalized_phrased = list(set(split_claim_regex(sentence)))
 
-    for i in ents:
-        if len(list(filter(lambda x: (i in x or x in i), capitalized_phrased))) < 1 \
-                and i not in capitalized_phrased \
-                and i not in nouns_chunks:
-            nouns_chunks.append(i)
-
     nouns = list(set(nouns_chunks))
     entity_and_capitalized = [i for i in capitalized_phrased if i.lower() not in STOP_WORDS]
     for i in nouns_chunks:
+        if is_date_or_number(i):
+            continue
         if len(list(filter(lambda x: (i in x), entity_and_capitalized))) > 0 and i in nouns:
+            for x in entity_and_capitalized:
+                if ' or ' in x or ' and ' in x:
+                    splits = split_combinations(x)
+                    if i in splits:
+                        entity_and_capitalized.append(i)
+                        break
+                if x.startswith('In ') or x.startswith('At ') or x.startswith('From ') or x.startswith('After '):
+                    entity_and_capitalized.append(i)
+                    break
             nouns.remove(i)
-    for i in nouns_chunks:
+            continue
+        if len(list(filter(lambda x: (x in i and (' ' in x)), entity_and_capitalized))) > 0 \
+                and i in nouns:
+            nouns.remove(i)
+            continue
         if len(list(filter(lambda x: (x in i and sentence.startswith(x) and ' ' not in x), entity_and_capitalized))) > 0 and i in nouns:
             nouns.remove(i)
             entity_and_capitalized.append(i)
+            continue
+        if (not is_capitalized(i)) \
+                and len(list(filter(lambda x: (x in i or i in x), entity_and_capitalized))) < 1 \
+                and 2 > i.count(' ') > 0:
+            entity_and_capitalized.append(i)
+            if i in nouns:
+                nouns.remove(i)
+            continue
+    for i in ents:
+        if (len(list(filter(lambda x: (i in x or x in i), entity_and_capitalized))) < 1 \
+                and i not in entity_and_capitalized \
+                and i not in nouns) or is_date_or_number(i):
+            nouns.append(i)
     for i in noun_tokens:
-        if len(list(filter(lambda x: (i in x), capitalized_phrased))) < 1 and i not in nouns:
+        if len(list(filter(lambda x: (i in x), entity_and_capitalized))) < 1 and i not in nouns:
             nouns.append(i)
     entity_and_capitalized = [i for i in entity_and_capitalized if i.lower() not in STOP_WORDS]
+    # entity_and_capitalized = merge_phrases_l1_to_l2(entity_and_capitalized, [])
     nouns = [i for i in nouns if i.lower() not in STOP_WORDS]
     return entity_and_capitalized, nouns
 
@@ -155,13 +178,18 @@ def merge_chunks_with_entities(chunks, ents):
 
 if __name__ == '__main__':
     # get_ents_and_phrases("The human brain contains a hypothalamus.")
-    get_ents_and_phrases("Turin's Juventus Stadium is the home arena for Juventus F.C.")
+    # print(get_ents_and_phrases("Psych's protagonist is not played by an American actor."))
+    # print(get_ents_and_phrases('Tom DeLonge formed a band with Mark Hoppus and Scott Raynor, who was a bassist and a drummer, respectively.'))
+    # print(get_ents_and_phrases("In 1947 José Ferrer won a Tony Award."))
+    # print(get_ents_and_phrases('The United States regulates franchising.'))
+    # print(get_ents_and_phrases('Uranium-235 was discovered by at least one physicist.'))
 
-    data = file_loader.read_json_rows(config.RESULT_PATH / "extend_20210106/candidate_docs2.log")[3:50]
+    data = file_loader.read_json_rows(config.RESULT_PATH / "extend_20210106/candidate_docs2.log")[300:350]
     for i in data:
         claim = i['claim']
         a, b = get_ents_and_phrases(claim)
         print(claim)
+        print(i['evidence'])
         print(a)
         print(b)
         print('*'*10)

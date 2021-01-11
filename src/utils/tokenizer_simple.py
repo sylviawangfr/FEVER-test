@@ -27,13 +27,21 @@ def count_words(sent):
 
 REGEX = r'([a-z0-9]*[A-Z]+[\w]*(\')?(\s)*(\'s)?' \
             r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(and\s)*(with\s)*(the\s)*(a\s)*' \
-            r'(-?)(&?)(\.?)(:?)(\d*\s)*)*(?<!-\s)(:?([A-Z]+[\w]*(\s\d+[a-zA-Z]*(,?))*)|(of\s\d+))(\s\(.*\))*'
+            r'(-?)(&?)(\.?)(:?)(\d*\s)*)*(?<!-\s)(:?([A-Z0-9]+[\w]*(\s\d+[a-zA-Z]*(,?))*)|(of\s\d+))(\s\(.*\))*'
+
+REGEX2 = r'([a-z0-9]*[A-Z]+[\w]*(\')?(\s)*(\'s)?(-?)(&?)(\.?)(:?)(\d*\s)*)*(?<!-\s)(:?([A-Z]+[\w]*(\s\d+[a-zA-Z]*)*))'
 
 
 def split_claim_regex(text):
     # get capital phrases
     # REGEX = r'(?<![.])([A-Z]+[\w]*\s)*([A-Z][\w]+)'
     regexp = regex.compile(REGEX)
+    matches = [m for m in regexp.finditer(text)]
+    tokens = [matches[i].group() for i in range(len(matches))]
+    return tokens
+
+def split_combinations(text):
+    regexp = regex.compile(REGEX2)
     matches = [m for m in regexp.finditer(text)]
     tokens = [matches[i].group() for i in range(len(matches))]
     return tokens

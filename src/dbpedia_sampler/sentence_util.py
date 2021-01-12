@@ -7,7 +7,7 @@ from memory_profiler import profile
 STOP_WORDS = ['the', 'they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
                'we', 'who', 'where', 'what', 'days', 'him', 'her', 'here', 'there', 'a', 'for', 'anything', 'everything',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
-              'third', 'life', 'all']
+              'third', 'life', 'all', 'part']
 
 
 log = log_util.get_logger('dbpedia_triple_linker')
@@ -42,8 +42,8 @@ def get_ents_and_phrases(sentence):
     for token in doc_noun:
         if token.pos_.lower() in ['propn', 'noun'] or token.dep_ == 'dobj':
             noun_tokens.append(token.text)
-    nouns_chunks = [remove_the_a(chunk.text) for chunk in doc_noun.noun_chunks]
-    ents = [remove_the_a(ent.text) for ent in doc_noun.ents]
+    nouns_chunks = [remove_the_a(chunk.text) for chunk in doc_noun.noun_chunks if chunk.text.lower() not in STOP_WORDS]
+    ents = [remove_the_a(ent.text) for ent in doc_noun.ents if ent.text.lower() not in STOP_WORDS]
     capitalized_phrased = list(set(split_claim_regex(sentence)))
 
     nouns = list(set(nouns_chunks))
@@ -55,14 +55,18 @@ def get_ents_and_phrases(sentence):
         else:
             if i.lower() not in STOP_WORDS:
                 entity_and_capitalized.append(i)
-                continue
+            if sentence.startswith(i) and i.startswith('The'):
+                remove_the = i.replace('The', '')
+                if remove_the not in entity_and_capitalized and remove_the.lower() not in STOP_WORDS:
+                    entity_and_capitalized.append(remove_the)
+            continue
 
     for i in nouns_chunks:
         if is_date_or_number(i):
             continue
         if len(list(filter(lambda x: (i in x), entity_and_capitalized))) > 0 and i in nouns:
             for x in entity_and_capitalized:
-                if ' or ' in x or ' and ' in x:
+                if ' or ' in x or ' and ' in x or ' of ':
                     splits = split_combinations(x)
                     if i in splits and i not in entity_and_capitalized:
                         entity_and_capitalized.append(i)
@@ -190,14 +194,13 @@ def merge_chunks_with_entities(chunks, ents):
 
 
 if __name__ == '__main__':
-    # get_ents_and_phrases("The human brain contains a hypothalamus.")
     # print(get_ents_and_phrases("Psych's protagonist is not played by an American actor."))
     # print(get_ents_and_phrases('Tom DeLonge formed a band with Mark Hoppus and Scott Raynor, who was a bassist and a drummer, respectively.'))
     # print(get_ents_and_phrases("In 1947 José Ferrer won a Tony Award."))
     # print(get_ents_and_phrases('The United States regulates franchising.'))
     # print(get_ents_and_phrases('Uranium-235 was discovered by at least one physicist.'))
 
-    data = file_loader.read_json_rows(config.RESULT_PATH / "extend_20210106/candidate_docs2.log")[300:350]
+    data = file_loader.read_json_rows(config.RESULT_PATH / "errors/es_doc_10.log")
     for i in data:
         claim = i['claim']
         a, b = get_ents_and_phrases(claim)

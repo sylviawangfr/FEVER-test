@@ -64,10 +64,12 @@ def get_ents_and_phrases(sentence):
             for x in entity_and_capitalized:
                 if ' or ' in x or ' and ' in x:
                     splits = split_combinations(x)
-                    if i in splits:
+                    if i in splits and i not in entity_and_capitalized:
                         entity_and_capitalized.append(i)
                         break
-                if x.startswith('In ') or x.startswith('At ') or x.startswith('From ') or x.startswith('After '):
+                if (x.startswith('In ') or x.startswith('At ') or x.startswith('From ') or x.startswith('After ')) \
+                        and i in x \
+                        and i not in entity_and_capitalized:
                     entity_and_capitalized.append(i)
                     break
             nouns.remove(i)
@@ -76,7 +78,9 @@ def get_ents_and_phrases(sentence):
                 and i in nouns:
             nouns.remove(i)
             continue
-        if len(list(filter(lambda x: (x in i and sentence.startswith(x) and ' ' not in x), entity_and_capitalized))) > 0 and i in nouns:
+        if len(list(filter(lambda x: (x in i and sentence.startswith(x) and ' ' not in x), entity_and_capitalized))) > 0 \
+                and i not in entity_and_capitalized \
+                and i in nouns:
             nouns.remove(i)
             entity_and_capitalized.append(i)
             continue

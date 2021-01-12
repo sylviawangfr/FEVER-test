@@ -216,6 +216,45 @@ def remove_the_a(ph):
         ph = ph.split(' ', 1)[1]
     return ph
 
+MEDIA = ['tv', 'film', 'book', 'novel', 'band', 'album', 'music', 'series', 'poem',
+         'song', 'advertisement', 'company', 'episode', 'season', 'animator',
+         'actor', 'singer', 'writer', 'drama', 'character']
+
+def search_media(entities):
+    r_list = []
+    for e in entities:
+        if not is_capitalized(e):
+            continue
+        must = []
+        should = []
+        must.append({'multi_match': {'query': e, "type": "phrase",
+                                         'fields': ['id^2'], 'analyzer': 'underscore_analyzer'}})
+        for m in MEDIA:
+            should.append({'multi_match': {'query': m, "type": "phrase",
+                                           'fields': ['id'], 'analyzer': 'underscore_analyzer'}})
+        search = Search(using=client, index=config.WIKIPAGE_INDEX)
+        search = search.query(Q('bool', must=must, should=should)). \
+                     highlight('lines', number_of_fragments=0). \
+                     sort({'_score': {"order": "desc"}}). \
+                     source(include=['id'])[0:10]
+
+        response = search.execute()
+        tmp_r = []
+        for hit in response['hits']['hits']:
+            score = hit['_score']
+            id = hit['_source']['id']
+            if 'highlight' in hit:
+                lines = hit['highlight']['lines'][0]
+                lines = lines.replace("</em> <em>", " ")
+            else:
+                lines = ""
+            doc_dic = {'score': score, 'phrases': entities, 'id': id, 'lines': lines}
+            tmp_r.append(doc_dic)
+        r_list.extend(tmp_r)
+
+    r_list.sort(key=lambda x: x.get('score'), reverse=True)
+    return r_list
+
 
 def search_entity_combinations(entitie_subsets):
     def construct_must_and_should(must_l, should_l):
@@ -258,9 +297,10 @@ def search_entity_combinations(entitie_subsets):
                     tmp_r.append(doc_dic)
                 r_list.extend(tmp_r)
 
-            r_list.sort(key=lambda x: x.get('score'), reverse=True)
+        r_list.sort(key=lambda x: x.get('score'), reverse=True)
         return r_list
     except:
+        print(f"es entity error: {entitie_subsets}")
         return []
 
 
@@ -362,10 +402,15 @@ def search_and_merge4(entities, nouns):
         return search_and_merge2(nouns)
     if len(nouns) == 0:
         entity_subsets = get_subsets(entities)
-        return search_entity_combinations(entity_subsets)
+        result = search_entity_combinations(entity_subsets)
+        result_media = search_media(entities)
+        result.extend(result_media)
+        return merge_result(result)
 
     entity_subsets = get_subsets(entities)
     result = search_entity_combinations(entity_subsets)
+    result_media = search_media(entities)
+    result.extend(result_media)
     nouns_subsets = get_subsets(nouns)
     covered_set = set()
     if len(entity_subsets) > 0 and len(nouns_subsets) > 0:

@@ -48,7 +48,11 @@ def split_combinations(text):
 
 
 def is_capitalized(text):
-    return regex.match(REGEX, text) is not None
+    r = split_claim_regex(text)
+    if len(r) > 0 and r[0] == text:
+        return True
+    else:
+        return False
 
 def merge_phrases_as_span(sent, phrase_l):
     doc_to_merge = nlp_eng_spacy(sent)

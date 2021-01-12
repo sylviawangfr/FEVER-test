@@ -56,7 +56,7 @@ def get_ents_and_phrases(sentence):
             if i.lower() not in STOP_WORDS:
                 entity_and_capitalized.append(i)
             if sentence.startswith(i) and i.startswith('The'):
-                remove_the = i.replace('The', '')
+                remove_the = i.replace('The ', '')
                 if remove_the not in entity_and_capitalized and remove_the.lower() not in STOP_WORDS:
                     entity_and_capitalized.append(remove_the)
             continue
@@ -194,13 +194,13 @@ def merge_chunks_with_entities(chunks, ents):
 
 
 if __name__ == '__main__':
-    # print(get_ents_and_phrases("Psych's protagonist is not played by an American actor."))
+    print(get_ents_and_phrases("Heroes' first season had 12 episodes."))
     # print(get_ents_and_phrases('Tom DeLonge formed a band with Mark Hoppus and Scott Raynor, who was a bassist and a drummer, respectively.'))
     # print(get_ents_and_phrases("In 1947 José Ferrer won a Tony Award."))
     # print(get_ents_and_phrases('The United States regulates franchising.'))
     # print(get_ents_and_phrases('Uranium-235 was discovered by at least one physicist.'))
 
-    data = file_loader.read_json_rows(config.RESULT_PATH / "errors/es_doc_10.log")
+    data = file_loader.read_json_rows(config.RESULT_PATH / "errors/es_doc_10_1.log")
     for i in data:
         claim = i['claim']
         a, b = get_ents_and_phrases(claim)

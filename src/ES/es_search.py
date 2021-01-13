@@ -428,9 +428,9 @@ def search_and_merge4(entities, nouns):
     else:
         return []
     # merged = merge_result(result)
-    # truncated = truncate_result(merged)
-    truncated = merge_result2(result)
-    return truncated
+    truncated = truncate_result(result)
+    merged = merge_result2(truncated)
+    return merged
 
 
 # entity, keywords

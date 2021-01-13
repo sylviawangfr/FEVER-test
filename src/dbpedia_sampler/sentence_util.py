@@ -49,20 +49,23 @@ def get_ents_and_phrases(sentence):
     nouns = list(set(nouns_chunks))
     entity_and_capitalized = []
     for i in capitalized_phrased:
-        if is_date_or_number(i) and i not in nouns:
+        if text_clean.is_date_or_number(i) and i not in nouns:
             nouns.append(i)
             continue
         else:
             if i.lower() not in STOP_WORDS:
                 entity_and_capitalized.append(i)
-            if sentence.startswith(i) and i.startswith('The'):
-                remove_the = i.replace('The ', '')
+            if sentence.startswith(i) and (i.startswith('The ') or i.startswith('A ')):
+                if i.startswith('The '):
+                    remove_the = i.replace('The ', '', 1)
+                if i.startswith('A '):
+                    remove_the = i.replace('A ', '', 1)
                 if remove_the not in entity_and_capitalized and remove_the.lower() not in STOP_WORDS:
                     entity_and_capitalized.append(remove_the)
             continue
 
     for i in nouns_chunks:
-        if is_date_or_number(i):
+        if text_clean.is_date_or_number(i):
             continue
         if len(list(filter(lambda x: (i in x), entity_and_capitalized))) > 0 and i in nouns:
             for x in entity_and_capitalized:
@@ -98,7 +101,7 @@ def get_ents_and_phrases(sentence):
     for i in ents:
         if (len(list(filter(lambda x: (i in x or x in i), entity_and_capitalized))) < 1 \
                 and i not in entity_and_capitalized \
-                and i not in nouns) or (is_date_or_number(i) and i not in nouns):
+                and i not in nouns) or (text_clean.is_date_or_number(i) and i not in nouns):
             nouns.append(i)
     for i in noun_tokens:
         if len(list(filter(lambda x: (i in x and is_capitalized(x)), entity_and_capitalized))) < 1 and i not in nouns:
@@ -162,10 +165,6 @@ def delete_ents_from_chunks(ents: list, chunks: list):
     return chunks
 
 
-def is_date_or_number(phrase):
-    return text_clean.is_date(phrase) or text_clean.is_number(phrase)
-
-
 def merge_phrases_l1_to_l2(l1, l2):
     to_delete = []
     for i in l1:
@@ -194,13 +193,13 @@ def merge_chunks_with_entities(chunks, ents):
 
 
 if __name__ == '__main__':
-    # print(get_ents_and_phrases("Heroes' first season had 12 episodes."))
-    # print(get_ents_and_phrases('Tom DeLonge formed a band with Mark Hoppus and Scott Raynor, who was a bassist and a drummer, respectively.'))
-    # print(get_ents_and_phrases("In 1947 José Ferrer won a Tony Award."))
-    # print(get_ents_and_phrases('The United States regulates franchising.'))
-    # print(get_ents_and_phrases('Uranium-235 was discovered by at least one physicist.'))
+    # print(get_ents_and_phrases("Home for the Holidays stars the fourth stepchild of Charlie Chaplin"))
+    # print(get_ents_and_phrases('The horse has changed in size as it evolved.'))
+    # print(get_ents_and_phrases('Camden, New Jersey is a large human settlement.'))
+    # print(get_ents_and_phrases('Soyuz was part of a space program.'))
+    # print(get_ents_and_phrases('The New Orleans Pelicans play in the Eastern Conference of the NBA.'))
 
-    data = file_loader.read_json_rows(config.RESULT_PATH / "errors/es_errors.jsonl")
+    data = file_loader.read_json_rows(config.RESULT_PATH / "errors/es_doc_10.log")
     for i in data:
         claim = i['claim']
         a, b = get_ents_and_phrases(claim)

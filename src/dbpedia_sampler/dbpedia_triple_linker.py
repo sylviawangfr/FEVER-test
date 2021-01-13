@@ -100,7 +100,7 @@ def link_sent_to_resources(sentence, doc_title='', lookup_hash=None):
     log.debug(f"all phrases to be linked: {phrases}")
 
     for p in phrases:
-        if is_date_or_number(p):
+        if text_clean.is_date_or_number(p):
             not_linked_phrases_l.append(p)
             continue
         if lookup_hash is not None and p in lookup_hash:
@@ -162,7 +162,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
                 not_linked_phrases_l.append(c)
 
     for p in phrases:
-        if is_date_or_number(p):
+        if text_clean.is_date_or_number(p):
             not_linked_phrases_l.append(p)
             continue
         if lookup_hash is not None and p in lookup_hash:
@@ -180,6 +180,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
             not_linked_phrases_l.append(p)
         else:
             linked_phrases_l.append(linked_phrase)
+    # filter_not_linked =
     return not_linked_phrases_l, linked_phrases_l
 
 
@@ -332,7 +333,7 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
     if len(embedding1) == 0:
         with_verbs = []
         for p in not_linked_phrases_l:
-            if is_date_or_number(p) and p in verb_d:
+            if text_clean.is_date_or_number(p) and p in verb_d:
                 with_verbs.append(verb_d[p]['verb'] + " " + p)
             else:
                 with_verbs.append(p)

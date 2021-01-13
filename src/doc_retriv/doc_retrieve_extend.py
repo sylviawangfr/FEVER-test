@@ -45,20 +45,20 @@ def get_entity_docs_from_es(doc_and_line):
     doc_and_line = doc_and_line[:15]
     all_phrases = list(set([p for d in doc_and_line for p in d['phrases']]))
     all_docids = [d['id'] for d in doc_and_line]
-    all_doc_dict = dict()
+    phrase_to_doc_dict = dict()
     docid_to_phrases = {d['id']: d['phrases'] for d in doc_and_line}
     for doc in all_docids:
         for p in all_phrases:
             doc_id_clean = convert_brc(doc).replace("_", " ")
-            if is_capitalized(p) and p.lower() in doc_id_clean.lower():
-                if p in all_doc_dict:
-                    all_doc_dict[p].append(doc)
+            if is_capitalized(p) and not is_date_or_number(p) and p.lower() in doc_id_clean.lower():
+                if p in phrase_to_doc_dict:
+                    phrase_to_doc_dict[p].append(doc)
                 else:
-                    all_doc_dict.update({p: [doc]})
+                    phrase_to_doc_dict.update({p: [doc]})
     phrase_to_doc_links = dict()
     hit_phrases = []
-    for p in all_doc_dict:
-        doc_ids = all_doc_dict[p]
+    for p in phrase_to_doc_dict:
+        doc_ids = phrase_to_doc_dict[p]
         filtered_doc_ids = []
         for doc in doc_ids:
             doc_id_clean = convert_brc(doc).replace("_", " ")
@@ -426,34 +426,34 @@ def do_testset_graph2(folder):
 
 
 def do_dev_set_with_es_entity():
-    folder = config.RESULT_PATH / "extend_20210107"
-    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
+    folder = config.RESULT_PATH / "extend_20210109"
+    data_with_es = read_json_rows(folder / "es_doc_10_1.jsonl")
     prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
 
-    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
-    assert(len(data_with_es_entities) == 19998)
-    data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_claim_graph(data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
-
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    data_context = read_json_rows(folder / "claim_graph.jsonl")
-    # data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
-    assert (len(data_original) == len(data_context))
-    prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
-
-    data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "entity_doc.jsonl")
-    assert (len(es_data) == len(data_original) and (len(ent_data) == len(data_original)))
-    prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl",
-                           folder / "candidate_docs.log")
+    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    # assert(len(data_with_es_entities) == 19998)
+    # data = read_json_rows(config.FEVER_DEV_JSONL)
+    # prepare_claim_graph(data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    #
+    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    # data_context = read_json_rows(folder / "claim_graph.jsonl")
+    # # data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
+    # assert (len(data_original) == len(data_context))
+    # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    #
+    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
+    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    # assert (len(es_data) == len(data_original) and (len(ent_data) == len(data_original)))
+    # prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl",
+    #                        folder / "candidate_docs.log")
 
 
 def do_dev_set():
     folder = config.RESULT_PATH / "extend_20210111"
 
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)
     # prepare_claim_graph(data, None, folder / "claim_graph.jsonl", folder / "claim_graph.log")
@@ -487,6 +487,6 @@ if __name__ == '__main__':
     # folder = config.RESULT_PATH / "extend_test_20210102"
     # do_testset_es(folder)
     # do_dev_set_with_es_entity()
-    do_dev_set()
-    # original_data = read_json_rows(config.RESULT_PATH / 'errors/es_errors.jsonl')
-    # prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_14.jsonl', config.RESULT_PATH / 'errors/es_doc_14.log')
+    # do_dev_set()
+    original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
+    prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_14.jsonl', config.RESULT_PATH / 'errors/es_doc_14.log')

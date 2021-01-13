@@ -95,6 +95,10 @@ def is_date(string, fuzzy=False):
         return False
 
 
+def is_date_or_number(phrase):
+    return is_date(phrase) or is_number(phrase)
+
+
 def easy_tokenize(text):
     if tok is None:
         tok.create_instance()

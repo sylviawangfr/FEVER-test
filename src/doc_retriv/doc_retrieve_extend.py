@@ -450,10 +450,10 @@ def do_dev_set_with_es_entity():
 
 
 def do_dev_set():
-    folder = config.RESULT_PATH / "extend_20210111"
+    folder = config.RESULT_PATH / "extend_20210112"
 
-    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
     # data = read_json_rows(config.FEVER_DEV_JSONL)
     # prepare_claim_graph(data, None, folder / "claim_graph.jsonl", folder / "claim_graph.log")
@@ -487,6 +487,6 @@ if __name__ == '__main__':
     # folder = config.RESULT_PATH / "extend_test_20210102"
     # do_testset_es(folder)
     # do_dev_set_with_es_entity()
-    # do_dev_set()
-    original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
-    prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_14.jsonl', config.RESULT_PATH / 'errors/es_doc_14.log')
+    do_dev_set()
+    # original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
+    # prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_14.jsonl', config.RESULT_PATH / 'errors/es_doc_14.log')

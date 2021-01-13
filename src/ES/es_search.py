@@ -6,6 +6,7 @@ from elasticsearch_dsl import Search, Q
 from utils.file_loader import *
 from utils.tokenizer_simple import *
 from dbpedia_sampler.sentence_util import merge_chunks_with_entities
+from functools import reduce
 
 client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT,
               'timeout': 60, 'max_retries': 5, 'retry_on_timeout': True}])
@@ -248,7 +249,7 @@ def search_media(entities):
                 lines = lines.replace("</em> <em>", " ")
             else:
                 lines = ""
-            doc_dic = {'score': score, 'phrases': entities, 'id': id, 'lines': lines}
+            doc_dic = {'score': score, 'phrases': [e], 'id': id, 'lines': lines}
             tmp_r.append(doc_dic)
         r_list.extend(tmp_r)
 
@@ -398,38 +399,38 @@ def search_and_merge4(entities, nouns):
                 filtered.append(s)
         return filtered
 
-    if len(entities) == 0:
-        return search_and_merge2(nouns)
-    if len(nouns) == 0:
+    if len(entities) > 0 and len(nouns) > 0:
         entity_subsets = get_subsets(entities)
         result = search_entity_combinations(entity_subsets)
         result_media = search_media(entities)
         result.extend(result_media)
-        return merge_result(result)
-
-    entity_subsets = get_subsets(entities)
-    result = search_entity_combinations(entity_subsets)
-    result_media = search_media(entities)
-    result.extend(result_media)
-    nouns_subsets = get_subsets(nouns)
-    covered_set = set()
-    if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
-        product = itertools.product(entity_subsets, nouns_subsets)
-        for i in product:
-            new_subset = []
-            new_subset.extend(i[0])
-            new_subset.extend(i[1])
-            if has_overlap(new_subset):
-                continue
-            r = search_doc(new_subset)
-            if len(r) > 0:
-                covered_set = covered_set | set(new_subset)
-                result.extend(r)
-        # not_covered = set(entities) - covered_set
-        # result7 = search_single_entity(not_covered)
-        # return merge_result(result + result7)
-    return merge_result(result)
-
+        nouns_subsets = get_subsets(nouns)
+        covered_set = set()
+        if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
+            product = itertools.product(entity_subsets, nouns_subsets)
+            for i in product:
+                new_subset = []
+                new_subset.extend(i[0])
+                new_subset.extend(i[1])
+                if has_overlap(new_subset):
+                    continue
+                r = search_doc(new_subset)
+                if len(r) > 0:
+                    covered_set = covered_set | set(new_subset)
+                    result.extend(r)
+    elif len(entities) == 0 and len(nouns) > 0:
+        result = search_and_merge2(nouns)
+    elif len(nouns) == 0 and len(entities) > 0:
+        entity_subsets = get_subsets(entities)
+        result = search_entity_combinations(entity_subsets)
+        result_media = search_media(entities)
+        result.extend(result_media)
+    else:
+        return []
+    # merged = merge_result(result)
+    # truncated = truncate_result(merged)
+    truncated = merge_result2(result)
+    return truncated
 
 
 # entity, keywords
@@ -456,6 +457,52 @@ def merge_result(result):
                     break
     merged.sort(key=lambda x: x.get('score'), reverse=True)
     return merged
+
+
+def merge_result2(result):
+    ids_l = []
+    for i in result:
+        if i['id'] not in ids_l:
+            ids_l.append(i['id'])
+    docs2phrases = dict()
+    for i in result:
+        i_id = i['id']
+        i_idx = ids_l.index(i_id)
+        if i_idx in docs2phrases:
+            docs2phrases[i_idx].append(i)
+        else:
+            docs2phrases.update({i_idx: [i]})
+    merged = []
+    for d in docs2phrases:
+        new_score = reduce(lambda x, y: x + y, [i['score'] for i in docs2phrases[d]])
+        new_phrases = reduce(lambda x, y:  list(set(x) | set(y)), [i['phrases'] for i in docs2phrases[d]])
+        new_r = {'score': new_score, 'id': ids_l[d], 'phrases': new_phrases, 'lines': ""}
+        merged.append(new_r)
+    merged.sort(key=lambda x: x.get('score'), reverse=True)
+    return merged
+
+
+def truncate_result(merged):
+    phrases_l = []
+    for i in merged:
+        if i['phrases'] not in phrases_l:
+            phrases_l.append(i['phrases'])
+    phrases2docs = dict()
+    for i in merged:
+        i_p = i['phrases']
+        i_idx = phrases_l.index(i_p)
+        if i_idx in phrases2docs:
+            phrases2docs[i_idx].append(i)
+        else:
+            phrases2docs.update({i_idx: [i]})
+    phrase_top_k = 4
+    truncated = []
+    for p in phrases2docs:
+        p_docs = phrases2docs[p]
+        p_docs.sort(key=lambda x: x.get('score'), reverse=True)
+        truncated.extend(p_docs[:phrase_top_k])
+    truncated.sort(key=lambda x: x.get('score'), reverse=True)
+    return truncated
 
 
 def has_phrase_covered(phrase_set1, phrase_set2):

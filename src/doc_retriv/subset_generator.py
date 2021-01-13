@@ -6,6 +6,22 @@ from utils.check_sentences import Evidences
 from utils.tokenizer_simple import *
 from dbpedia_sampler.sentence_util import get_ents_and_phrases
 
+def generate_es_error_items():
+    result_has_combination_evidence = []
+    data = read_json_rows(config.RESULT_PATH / "errors/es_doc_10_1.log")
+    for item in data:
+        has_multi = False
+        has_single = False
+        e_list = utils.check_sentences.check_and_clean_evidence(item)
+        for e in e_list:
+            if len(e) > 1:
+                has_multi = True
+            if len(e) == 1:
+                has_single = True
+        if not has_multi:
+            result_has_combination_evidence.append(item)
+    save_intermidiate_results(result_has_combination_evidence, config.RESULT_PATH / "errors/es_errors.jsonl")
+
 
 def generate_subset_multi_evidence_articals():
     data = read_json_rows(config.FEVER_DEV_JSONL)
@@ -43,4 +59,5 @@ def generate_subset_no_capital():
 
 
 if __name__ == '__main__':
-    generate_subset_no_capital()
+    # generate_subset_no_capital()
+    generate_es_error_items()

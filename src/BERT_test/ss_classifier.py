@@ -304,7 +304,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")
+    train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")
     ss_finetuning(train_data, output_folder="ss_3s_full" + get_current_time_str(), sampler='ss_tfidf')
 
 

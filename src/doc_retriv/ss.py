@@ -28,7 +28,7 @@ def filter_bert_claim_vs_sents(claim, docs):
 def prepare_candidate_sents2_bert_dev(original_data, data_with_candidate_docs, output_folder):
     paras = bert_para.PipelineParas()
     paras.pred = True
-    paras.mode = 'dev'
+    paras.mode = 'eval'
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
     paras.output_folder = output_folder

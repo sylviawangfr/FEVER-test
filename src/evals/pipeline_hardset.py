@@ -63,7 +63,7 @@ def pred_ss(input_data_path, origin_data_path, output_file):
 
     paras.output_folder = output_file
     paras.sample_n = 5
-    paras.mode = 'dev'
+    paras.mode = 'eval'
     paras.pred = True
     paras.original_data = read_json_rows(origin_data_path)
     paras.upstream_data = read_json_rows(input_data_path)
@@ -74,7 +74,7 @@ def pred_ss(input_data_path, origin_data_path, output_file):
 def nli(input_data_path, origin_data_path, output_file):
     paras = bert_para.PipelineParas()
     paras.pred = True
-    paras.mode = 'dev'
+    paras.mode = 'eval'
     paras.original_data = read_json_rows(origin_data_path)
     paras.upstream_data = read_json_rows(input_data_path)
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"

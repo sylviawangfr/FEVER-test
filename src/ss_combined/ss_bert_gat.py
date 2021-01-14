@@ -129,11 +129,11 @@ def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_
     paras.original_data = original_data
     paras.prob_thresholds = thresholds
     if eval:
-        paras.mode = 'dev'
+        paras.mode = 'eval'
     else:
         paras.mode = 'test'
 
-    if paras.mode == 'dev':
+    if paras.mode == 'eval':
         eval_mode = {'check_sent_id_correct': True, 'standard': False}
         if not isinstance(top_n, list):
             top_n = [top_n]

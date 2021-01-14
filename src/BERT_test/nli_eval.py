@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 def nli_eval_fever_score(paras : bert_para.PipelineParas, predicted_list):
-    if paras.mode == 'dev':
+    if paras.mode == 'eval':
         eval_mode = {'check_sent_id_correct': True, 'standard': True}
 
 

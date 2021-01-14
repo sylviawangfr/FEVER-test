@@ -66,11 +66,11 @@ def compute_metrics(task_name, preds, labels):
         raise KeyError(task_name)
 
 
-def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=None):
+def ss_finetuning(paras: bert_para.PipelineParas, sampler=None):
     bert_model = "bert-large-uncased"
     pretrained_model_name_or_path = config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz"
     cache_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning"
-    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"ss_{output_folder}"
+    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"ss_{paras.output_folder}"
     max_seq_length = 128
     do_lower_case = True
     train_batch_size = 32
@@ -157,7 +157,7 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
         model = torch.nn.DataParallel(model)
 
     # get train data
-    train_examples = processor.get_train_examples(upstream_train_data, sampler)
+    train_examples = processor.get_train_examples(paras, sampler)
     num_train_optimization_steps = int(
         len(train_examples) / train_batch_size / gradient_accumulation_steps) * num_train_epochs
     if local_rank != -1:
@@ -293,10 +293,9 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
         paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
         paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
         paras.pred = False
-        paras.mode = 'dev'
+        paras.mode = 'eval'
         paras.BERT_model = output_dir
         paras.BERT_tokenizer = output_dir
-        paras.output_folder = output_folder
         paras.prob_thresholds = 0.5
         paras.top_n = 5
         paras.sample_n = 3
@@ -304,8 +303,14 @@ def ss_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=Non
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")
-    ss_finetuning(train_data, output_folder="ss_3s_full" + get_current_time_str(), sampler='ss_tfidf')
+    paras = bert_para.PipelineParas()
+    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")
+    paras.pred = False
+    paras.mode = 'train'
+    paras.output_folder = "ss_train_2021"
+    paras.sample_n = 3
+    ss_finetuning(paras, sampler='ss_tfidf')
 
 
 

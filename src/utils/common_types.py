@@ -9,7 +9,7 @@ class PipelineParas(object):
     BERT_model = None
     BERT_tokenizer = None
     pred=False
-    mode='dev'
+    mode='eval'
     top_n = [5]
     prob_thresholds = 0.5
     sample_n = 5

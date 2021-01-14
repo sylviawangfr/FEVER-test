@@ -34,13 +34,30 @@ def lookup_phrase(phrase):
         linked_phrase['text'] = phrase
         linked_phrase['links'] = []
     for i in resource_dict:
-        media_dict = dict()
+        record_dict = dict()
         if isinstance(i, dict):
-            media_dict['categories'] = dbpedia_lookup.to_triples(i)
-            media_dict['URI'] = i['URI']
-            media_dict['text'] = phrase
-            media_dict['exact_match'] = i['exact_match']
-            linked_phrase['links'].append(media_dict)
+            record_dict['categories'] = dbpedia_lookup.to_triples(i)
+            record_dict['URI'] = i['URI']
+            record_dict['text'] = phrase
+            record_dict['exact_match'] = i['exact_match']
+            linked_phrase['links'].append(record_dict)
+    return linked_phrase
+
+
+def lookup_phrase_exact_match(phrase):
+    linked_phrase = dict()
+    resource_dict = dbpedia_lookup.lookup_label_exact_match(phrase)
+    if len(resource_dict) > 0:
+        linked_phrase['text'] = phrase
+        linked_phrase['links'] = []
+    for i in resource_dict:
+        record_dict = dict()
+        if isinstance(i, dict):
+            record_dict['categories'] = dbpedia_lookup.to_triples(i)
+            record_dict['URI'] = i['URI']
+            record_dict['text'] = phrase
+            record_dict['exact_match'] = True
+            linked_phrase['links'].append(record_dict)
     return linked_phrase
 
 
@@ -151,15 +168,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
     entities, chunks = get_phrases(sentence, doc_title)
     linked_phrases_l = []
     not_linked_phrases_l = []
-    if len(entities) < 1:
-        phrases = chunks
-    else:
-        phrases = entities
-        for c in chunks:
-            if c.count(' ') > 0:
-                phrases.append(c)
-            else:
-                not_linked_phrases_l.append(c)
+    phrases = entities + chunks
 
     for p in phrases:
         if text_clean.is_date_or_number(p):
@@ -168,7 +177,10 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
         if lookup_hash is not None and p in lookup_hash:
             linked_phrase = lookup_hash[p]
         else:
-            linked_phrase = lookup_phrase(p)
+            if is_capitalized(p):
+                linked_phrase = lookup_phrase(p)
+            else:
+                linked_phrase = lookup_phrase_exact_match(p)
             if extend_entity_docs is not None and p in extend_entity_docs:
                 es_doc_links = extend_entity_docs[p]
                 if len(es_doc_links) > 0:
@@ -180,7 +192,13 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
             not_linked_phrases_l.append(p)
         else:
             linked_phrases_l.append(linked_phrase)
-    # filter_not_linked =
+
+    # to_delete = []
+    # for i in not_linked_phrases_l:
+    #     if any([(i in x['text'] or x['text'] in i) for x in linked_phrases_l]):
+    #         to_delete.append(i)
+    # for t in to_delete:
+    #     not_linked_phrases_l.remove(t)
     return not_linked_phrases_l, linked_phrases_l
 
 
@@ -329,28 +347,28 @@ def filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, keyword_embed
     if len(not_linked_phrases_l) > CANDIDATE_UP_TO or len(not_linked_phrases_l) < 1:
         return []
 
-    embedding1 = keyword_embeddings['not_linked_phrases_l']
-    if len(embedding1) == 0:
+    not_linked_phrases_l_embeddings = keyword_embeddings['not_linked_phrases_l']
+    if len(not_linked_phrases_l_embeddings) == 0:
         with_verbs = []
         for p in not_linked_phrases_l:
             if text_clean.is_date_or_number(p) and p in verb_d:
                 with_verbs.append(verb_d[p]['verb'] + " " + p)
             else:
                 with_verbs.append(p)
-        embedding1 = bert_similarity.get_phrase_embedding(with_verbs, bc)
-        if len(embedding1) > 0:
-            keyword_embeddings['not_linked_phrases_l'] = embedding1
+        not_linked_phrases_l_embeddings = bert_similarity.get_phrase_embedding(with_verbs, bc)
+        if len(not_linked_phrases_l_embeddings) > 0:
+            keyword_embeddings['not_linked_phrases_l'] = not_linked_phrases_l_embeddings
         else:
             return []
 
     result = []
-    all_uris = dict()
+    uri2links_dict = dict()
     for i in linked_phrases_l:
         for u in i['links']:
-            if u['URI'] not in all_uris:
-                all_uris.update({u['URI']: u})
-    for m in all_uris.values():
-        tmp_result = similarity_between_nonlinked_and_linked(not_linked_phrases_l, embedding1, m, keyword_embeddings, bc)
+            if u['URI'] not in uri2links_dict:
+                uri2links_dict.update({u['URI']: u})
+    for m in uri2links_dict.values():
+        tmp_result = similarity_between_nonlinked_and_linked(not_linked_phrases_l, not_linked_phrases_l_embeddings, m, keyword_embeddings, bc)
         if len(tmp_result) > 0:
             result.extend(tmp_result)
     # only top 2 triples
@@ -391,7 +409,18 @@ def similarity_between_nonlinked_and_linked(not_linked_phrases_l, phrase_list_em
     if len(embedding2) == 0:
         return []
 
-    out = pw.cosine_similarity(phrase_list_embedding, embedding2).flatten()
+    resouce_text = linked_resource['text']
+    to_match_phrases = []
+    to_match_phrase_embeddings = []
+    for idx, p in enumerate(not_linked_phrases_l):
+        if p not in resouce_text and resouce_text not in p:
+            to_match_phrases.append(p)
+            to_match_phrase_embeddings.append(phrase_list_embedding[idx])
+
+    if len(to_match_phrases) == 0:
+        return []
+
+    out = pw.cosine_similarity(to_match_phrase_embeddings, embedding2).flatten()
     topk_idx = np.argsort(out)[::-1][:2]
     len2 = len(tri_keywords_l2)
 
@@ -401,7 +430,7 @@ def similarity_between_nonlinked_and_linked(not_linked_phrases_l, phrase_list_em
         if score < float(SCORE_CONFIDENCE_3):
             break
         else:
-            p1 = not_linked_phrases_l[item // len2]
+            p1 = to_match_phrases[item // len2]
             tri2 = candidates[item % len2]
             tri2['relatives'] = [p1, linked_resource['text']]
             tri2['text'] = linked_resource['text']
@@ -736,40 +765,16 @@ def test_similarity(ph1, ph2):
 
 
 if __name__ == '__main__':
-    si = test_similarity('United States', 'Germany')
+    # si = test_similarity('United States', 'Germany')
 
     # test()
     # test()
     # embedding1 = bert_similarity.get_phrase_embedding(['Advertising'])
     # embedding2 = bert_similarity.get_phrase_embedding(['Pranksters'])
     # out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
-    text = "Autonomous cars shift insurance liability toward manufacturers"
+    text = "Home for the Holidays stars the fourth stepchild of Charlie Chaplin"
+    link_sent_to_resources2(text)
     # claim = "Roman Atwood is a content creator."
-    # sentence1 = "Brett Atwood is a website editor , content strategist and former print and online journalist whose " \
-    #            "writings have appeared in Billboard , Rolling Stone , Vibe , " \
-    #            "The Hollywood Reporter and other publications "
-    # sentence2 = "Roman Bernard Atwood (born May 28, 1983) is an American YouTube personality and prankster."
-    # s1 = "Narrative can be organized in a number of thematic or formal categories : non-fiction -LRB- such as " \
-    #      "definitively including creative non-fiction , biography , journalism , transcript poetry , " \
-    #      "and historiography -RRB- ; fictionalization of historical events -LRB- such as anecdote , myth , " \
-    #      "legend , and historical fiction -RRB- ; and fiction proper -LRB- such as literature in prose and " \
-    #      "sometimes poetry , such as short stories , novels , and narrative poems and songs , and imaginary narratives " \
-    #      "as portrayed in other textual forms , games , or live or recorded performances -RRB- ."
-    # s2 = "'History of art includes architecture, dance, sculpture, music, painting, poetry " \
-    #      "literature, theatre, narrative, film, photography and graphic arts.'"
-    #
-    # s3 = "'Graphic arts - Graphic art further includes calligraphy , photography , painting , typography , " \
-    #      "computer graphics , and bindery .'"
-    #
-    # s4 = "Homeland is an American spy thriller television series developed by Howard Gordon and Alex Gansa based on" \
-    #      " the Israeli series Prisoners of War ( Original title חטופים Hatufim , literally `` Abductees '' ) , " \
-    #      "which was created by Gideon Raff .."
-    # s5 = "He is best known for hosting the talent competition show American Idol , " \
-    #      "as well as the syndicated countdown program American Top 40 and the KIIS-FM morning radio show On Air with Ryan Seacrest ."
-    # s6 = "Mozilla Firefox ( or simply Firefox ) is a free and open-source web browser developed by the Mozilla Foundation and its subsidiary the Mozilla Corporation ."
-    # s7 = "Firefox is a computer game."
-    # s8 = "Where the Heart Is ( 2000 film ) - The filmstars Natalie Portman , Stockard Channing , Ashley Judd , and Joan Cusack with supporting roles done by James Frain , Dylan Bruno , Keith David , and Sally Field ."
-    # no_l, l = link_sentence(s8, doc_title='')
 
     # all_phrases = no_l + [i['text'] for i in l]
     # verb_d = get_dependent_verb(s6, all_phrases)

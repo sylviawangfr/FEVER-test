@@ -426,8 +426,8 @@ def do_testset_graph2(folder):
 
 
 def do_dev_set_with_es_entity():
-    folder = config.RESULT_PATH / "extend_20210109"
-    data_with_es = read_json_rows(folder / "es_doc_10_1.jsonl")
+    folder = config.RESULT_PATH / "extend_20210111"
+    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
     prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
 
     # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
@@ -486,7 +486,7 @@ def run_dev_failed_docs():
 if __name__ == '__main__':
     # folder = config.RESULT_PATH / "extend_test_20210102"
     # do_testset_es(folder)
-    # do_dev_set_with_es_entity()
-    do_dev_set()
+    do_dev_set_with_es_entity()
+    # do_dev_set()
     # original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
     # prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_14.jsonl', config.RESULT_PATH / 'errors/es_doc_14.log')

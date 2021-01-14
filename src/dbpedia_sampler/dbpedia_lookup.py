@@ -47,23 +47,6 @@ def unwrap_record(lookup_rec):
     return record
 
 
-# def lookup_resource_no_filter(text_phrase):
-#     lookup_matches_ref = lookup_resource_ref_count(text_phrase)
-#     lookup_app_matches_label = lookup_resource_app_label(text_phrase)
-#     lookup_app_matches_query = lookup_resource_app_query(text_phrase)
-#     merged = []
-#     merge_resources(merged, lookup_matches_ref)
-#     merge_resources(merged, lookup_app_matches_label)
-#     merge_resources(merged, lookup_app_matches_query)
-#     keyword_matching_score = [difflib.SequenceMatcher(None, text_phrase,
-#                                                       i['Label'] if i['Label'] is not None else '').ratio()
-#                               for i in merged]
-#     sorted_matching_index = sorted(range(len(keyword_matching_score)), key=lambda k: keyword_matching_score[k],
-#                                    reverse=True)
-#     result = [merged[i] for i in sorted_matching_index]
-#     return result[:20]
-
-
 def merge_resources(merged_l, to_merge):
     for i in to_merge:
         if len(list(filter(lambda x: (x['URI'] == i['URI']), merged_l))) < 1:
@@ -136,25 +119,27 @@ def combine_lookup(text_phrase):
     lookup_app_matches.sort(key=lambda k: int(k['Refcount']), reverse=True)
     exact_match = get_exact_match(text_phrase, lookup_app_matches)
     media_match = get_media_subset_match(text_phrase, lookup_app_matches)
+    result = []
     if len(exact_match) > 0:
         log.debug(f"DBpedia lookup-app phrase: {text_phrase}, matching: {[i['URI'] for i in exact_match]}")
         for i in exact_match:
             i['exact_match'] = True
         result = exact_match
-        for i in media_match:
-            if len(list(filter(lambda x: (i['URI'] == x), exact_match))) < 1:
-                i['exact_match'] = False
-                result.append(i)
+    for i in media_match:
+        if len(list(filter(lambda x: (i['URI'] == x), exact_match))) < 1:
+            i['exact_match'] = False
+            result.append(i)
+    if text_phrase.count(' ') < 2:  # short phrase may have disambiguation
         top_ref = lookup_app_matches[0]
         if len(list(filter(lambda x: (x['URI'] == top_ref['URI']), result))) < 1 \
                 and score_bewteen_phrases(text_phrase, top_ref['Label']) > 0.3:
             top_ref['exact_match'] = False
             result.append(top_ref)
-        # print(f"link_phrase: {text_phrase}, count links: {len(result)}")
-        return result 
+    print(f"link_phrase: {text_phrase}, count links: {len(result)}")
+    if len(result) > 0:
+        return result
 
     top_match = []
-    # token_count = len(text_clean.easy_tokenize(text_phrase))
     token_count = text_phrase.count(' ') + 1
     if token_count < 2 and len(lookup_matches_ref) > 0:         # use lookup refCount
         partial_matches = []
@@ -202,7 +187,7 @@ def combine_lookup(text_phrase):
 def get_exact_match(text_phrase, lookup_records):
     result = []
     for i in lookup_records:
-        if i['Label'] is not None and text_phrase.lower() == i['Label'].lower():
+        if i['Label'] is not None and text_phrase.replace("_", ' ').lower() == i['Label'].lower():
             i['exact_match'] = True
             result.append(i)
     return result
@@ -214,7 +199,7 @@ def get_media_subset_match(text_phrase, lookup_records):
              'episode', 'season', 'animator', 'actor', 'singer', 'writer', 'drama', 'character']
     for i in lookup_records:
         label = i['Label']
-        if label is not None and text_phrase.lower() in label.lower() and any([j in label.lower() for j in media]):
+        if label is not None and text_phrase.replace('_', ' ').lower() in label.lower() and any([j in label.lower() for j in media]):
             media_match.append(i)
     return media_match
 
@@ -353,17 +338,17 @@ if __name__ == "__main__":
     #     test()
     #     gc.collect()
     # test()
-    lookup_resource("colin kaepernick")
-    lookup_resource("'Savages_(2012_film)")
+    # lookup_resource("Home for the Holidays")
+    # lookup_resource("Savages_(2012_film)")
     # lookup_resource("Winter's Tale")
 
     # lookup_resource_no_filter('Tool')
     # lookup_resource('Western Conference Southwest Division')
     # lookup_resource("the league 's Western Conference Southwest Division")
-    lookup_resource('A&E')
-    lookup_resource('a member club')
-    lookup_resource('The Pelicans')
-    lookup_resource('the National Basketball Association')
+    # lookup_resource('A&E')
+    # lookup_resource('a member club')
+    # lookup_resource('The Pelicans')
+    # lookup_resource('the National Basketball Association')
     # lookup_resource('Bret Easton Ellis')
     # lookup_resource('Robert Palmer')
     # lookup_resource('American')

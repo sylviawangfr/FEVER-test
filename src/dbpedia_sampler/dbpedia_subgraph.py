@@ -73,8 +73,8 @@ def construct_subgraph_for_claim(claim_text, extend_entity_docs=None, bc:BertCli
 
     for i in no_relatives_found:
     #     if len(t['categories']) < 1 or len(t['categories']) > 20:
-        if i in lookup_hash.values():
-            possible_links = i['links']
+        if i in lookup_hash:
+            possible_links = lookup_hash[i]['links']
             for t in possible_links:
                 if not dbpedia_triple_linker.does_node_exit_in_list(t['URI'], merged_result):
                     single_node = dict()
@@ -272,6 +272,7 @@ if __name__ == '__main__':
     # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
     # ss1 = "Cheese in the Trap (TV series) only stars animals."
     ss1 = "Michelle Obama's husband was born in Kenya"
-    claim_dict = construct_subgraph_for_claim(ss1)
+    text = "Home for the Holidays stars the fourth stepchild of Charlie Chaplin"
+    claim_dict = construct_subgraph_for_claim(text)
     # print(construct_subgraph_for_candidate(claim_dict, ss2, doc_title=''))
     # test_claim()

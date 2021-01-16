@@ -69,6 +69,8 @@ def get_categories(resource):
     for tri in tris:
         obj_split = uri_short_extract(tri['object'])
         tri['keywords'] = [obj_split]
+        tri['keyword1'] = 'type'
+        tri['keyword2'] = obj_split
     return tris
 
 
@@ -83,29 +85,31 @@ def get_categories2(resource):
     for tri in tris:
         obj_split = uri_short_extract(tri['object'])
         tri['keywords'] = [obj_split]
+        tri['keyword1'] = 'type'
+        tri['keyword2'] = obj_split
     return tris
 
 
-def get_categories_one_hop_child(ontology_uri):
-    query_str_inbound = f"SELECT distinct ?subject (<{PREFIX_SUBCLASSOF}> AS ?relation) (<{ontology_uri}> AS ?object) " \
-        "FROM <http://dbpedia.org> WHERE {" \
-        f"?subject <{PREFIX_SUBCLASSOF}> <{ontology_uri}> .}} LIMIT 500"
-    tris = get_triples(query_str_inbound)
-    for tri in tris:
-        subj_split = uri_short_extract(tri['subject'])
-        tri['keywords'] = [subj_split]
-    return tris
+# def get_categories_one_hop_child(ontology_uri):
+#     query_str_inbound = f"SELECT distinct ?subject (<{PREFIX_SUBCLASSOF}> AS ?relation) (<{ontology_uri}> AS ?object) " \
+#         "FROM <http://dbpedia.org> WHERE {" \
+#         f"?subject <{PREFIX_SUBCLASSOF}> <{ontology_uri}> .}} LIMIT 500"
+#     tris = get_triples(query_str_inbound)
+#     for tri in tris:
+#         subj_split = uri_short_extract(tri['subject'])
+#         tri['keywords'] = [subj_split]
+#     return tris
 
 
-def get_categories_one_hop_parent(ontology_uri):
-    query_str_outbound = f"SELECT distinct (<{ontology_uri}> AS ?subject) (<{PREFIX_SUBCLASSOF}> AS ?relation) ?object " \
-        "FROM <http://dbpedia.org> WHERE {" \
-        f"<{ontology_uri}> <{PREFIX_SUBCLASSOF}> ?object .}} LIMIT 500"
-    tris = get_triples(query_str_outbound)
-    for tri in tris:
-        obj_split = uri_short_extract(tri['object'])
-        tri['keywords'] = [obj_split]
-    return tris
+# def get_categories_one_hop_parent(ontology_uri):
+#     query_str_outbound = f"SELECT distinct (<{ontology_uri}> AS ?subject) (<{PREFIX_SUBCLASSOF}> AS ?relation) ?object " \
+#         "FROM <http://dbpedia.org> WHERE {" \
+#         f"<{ontology_uri}> <{PREFIX_SUBCLASSOF}> ?object .}} LIMIT 500"
+#     tris = get_triples(query_str_outbound)
+#     for tri in tris:
+#         obj_split = uri_short_extract(tri['object'])
+#         tri['keywords'] = [obj_split]
+#     return tris
 
 
 def get_properties(resource_uri):
@@ -123,6 +127,8 @@ def get_properties(resource_uri):
         else:
             rel_split = uri_short_extract(tri['relation'].split('^^')[0])
             tri['keywords'] = [rel_split, obj_split]
+            tri['keyword1'] = rel_split
+            tri['keyword2'] = obj_split
     for i in to_delete:
         tris.remove(i)
     return tris
@@ -162,6 +168,8 @@ def get_ontology_linked_values_outbound(resource_uri):
         else:
             rel_split = uri_short_extract(tri['relation'])
             tri['keywords'] = [rel_split, obj_split]
+            tri['keyword1'] = rel_split
+            tri['keyword2'] = obj_split
     # print(f"outbound re: {len(tris)}")
     for i in to_delete:
         tris.remove(i)
@@ -183,6 +191,8 @@ def get_ontology_linked_values_inbound(resource_uri):
         rel_split = uri_short_extract(tri['relation'])
         subj_split = uri_short_extract(tri['subject'])
         tri['keywords'] = [subj_split, rel_split]
+        tri['keyword1'] = rel_split
+        tri['keyword2'] = subj_split
     log.debug(f"inbound re: {len(tris)}")
     return tris
 
@@ -209,12 +219,19 @@ def get_outbounds(resource_uri):
         else:
             rel_split = uri_short_extract(tri['relation'])
             if rel_split == 'subject':
-                tri['keywords'] = [obj_split.replace('Category ', '')]
+                obj_split.replace('Category ', '')
+                tri['keywords'] = [obj_split]
+                tri['keyword1'] = 'category'
+                tri['keyword2'] = obj_split
                 continue
             if rel_split == 'rdf schema see Also':
                 tri['keywords'] = [obj_split]
+                tri['keyword1'] = 'see also'
+                tri['keyword2'] = obj_split
                 continue
             tri['keywords'] = [rel_split, obj_split]
+            tri['keyword1'] = rel_split
+            tri['keyword2'] = obj_split
     log.debug(f"outbound re: {len(tris)}")
     for i in to_delete:
         tris.remove(i)
@@ -245,52 +262,58 @@ def get_disambiguates_outbounds(resource_uri):
         else:
             rel_split = uri_short_extract(tri['relation'])
             if rel_split == 'subject':
-                tri['keywords'] = [obj_split.replace('Category ', '')]
-                continue
+                obj_split.replace('Category ', '')
+                tri['keywords'] = [obj_split]
+                tri['keyword1'] = 'category'
+                tri['keyword2'] = obj_split
             if rel_split == 'rdf schema see Also':
                 tri['keywords'] = [obj_split]
+                tri['keyword1'] = 'see also'
+                tri['keyword2'] = obj_split
                 continue
             tri['keywords'] = [rel_split, obj_split]
+            tri['keyword1'] = rel_split
+            tri['keyword2'] = obj_split
     log.debug(f"outbound re: {len(tris)}")
     for i in to_delete:
         tris.remove(i)
     return tris
 
 
-def get_inbounds(resource_uri):
-    query_str_inbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
-        f"SELECT distinct ?subject ?relation (<{resource_uri}> AS ?object) " \
-        "FROM <http://dbpedia.org> " \
-        f"WHERE {{ ?subject ?relation <{resource_uri}> . " \
-        "filter (!contains(str(?relation), 'wiki')) " \
-        "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
-        "filter (contains(str(?relation), 'ontology') " \
-        "|| contains(str(?subject), 'http://dbpedia.org/resource/') " \
-        "|| contains(str(?relation), 'http://dbpedia.org/property/'))} LIMIT 500"
-    tris = get_triples(query_str_inbound)
-    for tri in tris:
-        rel_split = uri_short_extract(tri['relation'])
-        subj_split = uri_short_extract(tri['subject'])
-        if does_reach_max_length(subj_split):
-            print('here')
-        tri['keywords'] = [subj_split, rel_split]
-    return tris
+# def get_inbounds(resource_uri):
+#     query_str_inbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
+#         f"SELECT distinct ?subject ?relation (<{resource_uri}> AS ?object) " \
+#         "FROM <http://dbpedia.org> " \
+#         f"WHERE {{ ?subject ?relation <{resource_uri}> . " \
+#         "filter (!contains(str(?relation), 'wiki')) " \
+#         "filter (?relation not in (dbo:thumbnail, dbo:abstract)) " \
+#         "filter (contains(str(?relation), 'ontology') " \
+#         "|| contains(str(?subject), 'http://dbpedia.org/resource/') " \
+#         "|| contains(str(?relation), 'http://dbpedia.org/property/'))} LIMIT 500"
+#     tris = get_triples(query_str_inbound)
+#     for tri in tris:
+#         rel_split = uri_short_extract(tri['relation'])
+#         subj_split = uri_short_extract(tri['subject'])
+#         if does_reach_max_length(subj_split):
+#             print('here')
+#         tri['keywords'] = [subj_split, rel_split]
+#     return tris
 
 
-def get_one_hop_resource_inbound(resource_uri):
-    query_str_inbound = f"SELECT distinct ?subject ?relation (<{resource_uri}> AS ?object) " \
-        f"WHERE {{ ?subject ?relation <{resource_uri}> . " \
-        "filter (!contains(str(?relation), \'wiki\')) " \
-        "filter (!contains(str(?relation), \'ontology\')) " \
-        "filter contains(str(?subject), \'http://dbpedia.org/resource/\')} LIMIT 500"
-    tris = get_triples(query_str_inbound)
-    for tri in tris:
-        rel_split = uri_short_extract(tri['relation'])
-        subj_split = uri_short_extract(tri['subject'])
-        if does_reach_max_length(subj_split):
-            print('here')
-        tri['keywords'] = [subj_split, rel_split]
-    return tris
+# def get_one_hop_resource_inbound(resource_uri):
+#     query_str_inbound = f"SELECT distinct ?subject ?relation (<{resource_uri}> AS ?object) " \
+#         f"WHERE {{ ?subject ?relation <{resource_uri}> . " \
+#         "filter (!contains(str(?relation), \'wiki\')) " \
+#         "filter (!contains(str(?relation), \'ontology\')) " \
+#         "filter contains(str(?subject), \'http://dbpedia.org/resource/\')} LIMIT 500"
+#     tris = get_triples(query_str_inbound)
+#     for tri in tris:
+#         rel_split = uri_short_extract(tri['relation'])
+#         subj_split = uri_short_extract(tri['subject'])
+#         if does_reach_max_length(subj_split):
+#             print('here')
+#         tri['keywords'] = [subj_split, rel_split]
+#     return tris
 
 
 def get_one_hop_resource_outbound(resource_uri):
@@ -306,15 +329,9 @@ def get_one_hop_resource_outbound(resource_uri):
         if does_reach_max_length(obj_split):
             print('here')
         tri['keywords'] = [rel_split, obj_split]
+        tri['keyword1'] = rel_split
+        tri['keyword2'] = obj_split
     return tris
-
-
-def get_similar_properties(resource1, resource2):
-    pass
-
-
-def get_relevant_triples(triple, keyword):
-    pass
 
 
 def does_reach_max_length(text):
@@ -325,7 +342,7 @@ def does_reach_max_length(text):
 if __name__ == "__main__":
     # res = "http://dbpedia.org/resource/Magic_Johnson"
     # res = "http://dbpedia.org/resource/Tap_dancer"
-    res = get_outbounds('http://dbpedia.org/resource/Germany')
+    res = get_outbounds('http://dbpedia.org/resource/Charlie_Chaplin')
     # get_categories2(res)
     # print(get_disambiguates_outbounds(res))
     # print(get_properties(res))

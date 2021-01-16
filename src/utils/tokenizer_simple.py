@@ -5,7 +5,7 @@ from memory_profiler import profile
 
 # nlp_eng = spacy.load("en_core_web_md")
 # nlp_eng = spacy.load("en_core_web_lg")
-nlp_eng_spacy = spacy.load("en_core_web_sm")
+nlp_eng_spacy = spacy.load("en_core_web_md")
 
 
 def split_claim_spacy(text):
@@ -76,7 +76,8 @@ def merge_phrases_as_span(sent, phrase_l):
 
 
 def get_dependent_verb(sent, phrase_l):
-    doc_merged = merge_phrases_as_span(sent, phrase_l)
+    phrase_to_merge_in_dep_tree = [i for i in phrase_l if is_capitalized(i)]
+    doc_merged = merge_phrases_as_span(sent, phrase_to_merge_in_dep_tree)
     # displacy.serve(doc_merged, style='dep')
     # svg = displacy.render(doc_merged, style="dep")
     # output_path = config.LOG_PATH / 'sentence.svg'
@@ -129,7 +130,14 @@ def get_phrase_token_indice(sent_token_l, phrase_token_l):
     return idx
 
 
+def get_lemma(text):
+    tokens = nlp_eng_spacy(text)
+    lemmas = [t.lemma_ for t in tokens]
+    return lemmas
+
+
 if __name__ == '__main__':
+    print(get_lemma('starring'))
     # ss1 = "Michelle Obama's husband was born in Kenya"
     # verbs = get_dependent_verb(ss1, ['Michelle Obama', 'husband', 'Kenya'])
 

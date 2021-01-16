@@ -222,6 +222,8 @@ def get_tfidf_sample(paras: bert_para.PipelineParas):
     err_log_f = config.LOG_PATH / f"{get_current_time_str()}_analyze_sample.log"
     count_truth = []
     for item in tqdm(d_list):
+        if item['verifiable'] == "NOT VERIFIABLE":
+            continue
         predicted_evidence = item["predicted_sentids"]
         ground_truth = item['evidence']
         if not paras.pred:
@@ -317,21 +319,21 @@ if __name__ == '__main__':
     logger.info("test")
     paras = bert_para.PipelineParas()
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:50]
-    paras.sample_n = 3
+    paras.sample_n = 5
     paras.pred = False
     sample_tfidf = get_tfidf_sample(paras)
     eval_sample_length(sample_tfidf)
     count_truth_examples(sample_tfidf)
 
-    paras2 = bert_para.PipelineParas()
-    dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:50]
-    paras2.upstream_data = dev_upstream_data
-    paras2.pred = False
-    paras2.post_filter_prob = 0.5
-    complete_upstream_train_data = get_full_list_sample(paras2)
-    filtered_train_data = complete_upstream_train_data
-    full_list = complete_upstream_train_data
-    eval_sample_length(full_list)
-    count_truth_examples(full_list)
+    # paras2 = bert_para.PipelineParas()
+    # dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:50]
+    # paras2.upstream_data = dev_upstream_data
+    # paras2.pred = False
+    # paras2.post_filter_prob = 0.5
+    # complete_upstream_train_data = get_full_list_sample(paras2)
+    # filtered_train_data = complete_upstream_train_data
+    # full_list = complete_upstream_train_data
+    # eval_sample_length(full_list)
+    # count_truth_examples(full_list)
 
 

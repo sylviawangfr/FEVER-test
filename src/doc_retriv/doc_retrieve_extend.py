@@ -450,7 +450,7 @@ def do_dev_set_with_es_entity():
 
 
 def do_dev_set():
-    folder = config.RESULT_PATH / "extend_20210112"
+    folder = config.RESULT_PATH / "extend_20210115"
 
     original_data = read_json_rows(config.FEVER_DEV_JSONL)
     prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
@@ -486,7 +486,7 @@ def run_dev_failed_docs():
 if __name__ == '__main__':
     # folder = config.RESULT_PATH / "extend_test_20210102"
     # do_testset_es(folder)
-    do_dev_set_with_es_entity()
+    # do_dev_set_with_es_entity()
     # do_dev_set()
-    # original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
-    # prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_14.jsonl', config.RESULT_PATH / 'errors/es_doc_14.log')
+    original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
+    prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_16.jsonl', config.RESULT_PATH / 'errors/es_doc_16.log')

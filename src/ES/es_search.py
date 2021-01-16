@@ -428,8 +428,9 @@ def search_and_merge4(entities, nouns):
     else:
         return []
     # merged = merge_result(result)
-    truncated = truncate_result(result)
-    merged = merge_result2(truncated)
+    # truncated = truncate_result(result)
+    # merged = merge_result2(truncated)
+    merged = merge_result2(result)
     return merged
 
 
@@ -480,6 +481,34 @@ def merge_result2(result):
         merged.append(new_r)
     merged.sort(key=lambda x: x.get('score'), reverse=True)
     return merged
+
+
+def merge_result3(result):
+    ids_l = []
+    for i in result:
+        if i['id'] not in ids_l:
+            ids_l.append(i['id'])
+    docs2phrases = dict()
+    for i in result:
+        i_id = i['id']
+        i_idx = ids_l.index(i_id)
+        if i_idx in docs2phrases:
+            docs2phrases[i_idx].append(i)
+        else:
+            docs2phrases.update({i_idx: [i]})
+    merged = []
+    for d in docs2phrases:
+        new_score = 0
+        new_phrases = set()
+        for i in docs2phrases[d]:
+            if len(set(i['phrases']) | new_phrases) > len(new_phrases) or len(i['phrases']) == 1:
+                new_score += i['score']
+                new_phrases = set(i['phrases']) | new_phrases
+        new_r = {'score': new_score, 'id': ids_l[d], 'phrases': list(new_phrases), 'lines': ""}
+        merged.append(new_r)
+    merged.sort(key=lambda x: x.get('score'), reverse=True)
+    return merged
+
 
 
 def truncate_result(merged):

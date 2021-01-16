@@ -304,10 +304,13 @@ def to_triples(record_json):
     triples = []
     for i in record_json['Classes']:
         tri = dict()
+        obj_split = uri_short_extract(i)
         tri['subject'] = subject
         tri['relation'] = relation
         tri['object'] = i
-        tri['keywords'] = [uri_short_extract(i)]
+        tri['keywords'] = [obj_split]
+        tri['keyword1'] = 'type'
+        tri['keyword2'] = obj_split
         triples.append(tri)
     # print(json.dumps(triples, indent=4))
     return triples

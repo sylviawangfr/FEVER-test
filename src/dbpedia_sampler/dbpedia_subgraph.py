@@ -4,7 +4,7 @@ import sklearn.metrics.pairwise as pw
 import log_util
 from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_triple_linker
-from utils.tokenizer_simple import get_dependent_verb
+from utils.tokenizer_simple import get_dependent_verb, is_capitalized
 from memory_profiler import profile
 from bert_serving.client import BertClient
 import gc
@@ -39,33 +39,33 @@ def construct_subgraph_for_claim(claim_text, extend_entity_docs=None, bc:BertCli
         for u in uris:
             if u['URI'] not in all_uris:
                 all_uris.update({u['URI']: u})
-    embeddings_hash = {key: {'one_hop': []} for key in all_uris}
+    embeddings_hash = {key: {'one_hop': [], 'keyword1': [], 'keyword2': []} for key in all_uris}
     embeddings_hash.update({p: [] for p in all_phrases})
-    embeddings_hash.update({'not_linked_phrases_l': [], 'linked_phrases_l': []})
+    embeddings_hash.update({'all_phrases': []})
     lookup_hash = dict()
     for i in linked_phrases_l:
         lookup_hash[i['text']] = i
 
     verb_d = get_dependent_verb(claim_text, all_phrases)
-    r0 = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d, bc=bc)
+    r0 = dbpedia_triple_linker.filter_text_vs_one_hop(all_phrases, linked_phrases_l, embeddings_hash, bc=bc)
     r1 = dbpedia_triple_linker.filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d)
-    r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, fuzzy_match=True, bc=bc)
+    r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l)
+    r3 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embeddings_hash, bc=bc)
     merged_result = []
-    for i in r0 + r1 + r2:
+    for i in r0 + r1 + r2 + r3:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
             merged_result.append(i)
     # only keyword-match on those no exact match triples
     fill_relative_hash(relative_hash, merged_result)
-    isolated_node = []
-    for i in relative_hash:
-        if len(relative_hash[i]) == 0 and i in lookup_hash:
-            isolated_node.append(lookup_hash[i])
-    r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(isolated_node, linked_phrases_l, embeddings_hash, fuzzy_match=False, bc=bc)
-    for i in r3:
-        if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
-            merged_result.append(i)
-    fill_relative_hash(relative_hash, r3)
-
+    # isolated_node = []
+    # for i in relative_hash:
+    #     if len(relative_hash[i]) == 0 and i in lookup_hash:
+    #         isolated_node.append(lookup_hash[i])
+    # r4 = dbpedia_triple_linker.filter_keyword_vs_keyword(isolated_node, linked_phrases_l, embeddings_hash, fuzzy_match=False, bc=bc)
+    # for i in r4:
+    #     if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
+    #         merged_result.append(i)
+    # fill_relative_hash(relative_hash, r3)
     no_relatives_found = []
     for i in relative_hash:
         if len(relative_hash[i]) == 0:
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     # ss1 = "Giada at Home was only available on DVD ."
     # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
     # ss1 = "Cheese in the Trap (TV series) only stars animals."
-    ss1 = "Michelle Obama's husband was born in Kenya"
+    # ss1 = "Michelle Obama's husband was born in Kenya"
     text = "Home for the Holidays stars the fourth stepchild of Charlie Chaplin"
     claim_dict = construct_subgraph_for_claim(text)
     # print(construct_subgraph_for_candidate(claim_dict, ss2, doc_title=''))

@@ -57,7 +57,7 @@ DBPEDIA_LOOKUP_APP_URL_LABEL = f"http://{LOCALHOST}:{DBPEDIA_LOOKUP_APP_PORT}/lo
 DBPEDIA_SPOTLIGHT_PORT = 2222 if platform.system() == 'Linux' else 5006
 DBPEDIA_SPOTLIGHT_URL = f"http://{LOCALHOST}:{DBPEDIA_SPOTLIGHT_PORT}/rest/annotate"
 
-DBPEDIA_GRAPH_PORT = 8890 if platform.system() == 'Linux' else 5002
+DBPEDIA_GRAPH_PORT = 8890 if platform.system() == 'Linux' else 5008
 DBPEDIA_GRAPH_URL = f"http://{LOCALHOST}:{DBPEDIA_GRAPH_PORT}/sparql"
 
 BERT_SERVICE_PORT = 5555 if platform.system() == 'Linux' else 5003

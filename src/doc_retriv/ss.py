@@ -170,7 +170,7 @@ def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences, can
             extend_sentences = candidate_sentences[s].extend_sentences
             for extend_s in extend_sentences:
                 new_evidence = copy.deepcopy(e_s)
-                new_evidence.add_sent(extend_s)
+                new_evidence.add_sent_sid(extend_s)
                 new_evidence_set.append(new_evidence)
     new_evidence_set = list(set(new_evidence_set))
     return new_evidence_set
@@ -275,7 +275,7 @@ def generate_triple_sentence_combination(list_of_triples, list_of_evidence: List
                 else:
                     tmp_evidence_l = copy.deepcopy(list_of_evidence)
                     for e in tmp_evidence_l:
-                        e.add_sent(tri_sid)
+                        e.add_sent_sid(tri_sid)
                     new_evidence_l.extend(tmp_evidence_l)
         return generate_triple_sentence_combination(list_of_triples, new_evidence_l)
 

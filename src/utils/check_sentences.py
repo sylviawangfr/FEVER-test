@@ -2,7 +2,7 @@ import json
 import sqlite3
 
 from tqdm import tqdm
-from typing import Iterable, Tuple, List
+from typing import Iterable
 
 SENT_LINE2 = '(-.-)'
 
@@ -19,22 +19,26 @@ class Evidences(object):
     #     # print(evidences_list)
     #     self.evidences_list = evidences_list
 
-    def __init__(self, sid: str):
-        evidences_l = []
-        doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
-        if doc_id is not None and ln is not None:
-            evidences_l.append((doc_id, ln))
-        self.evidences_list = evidences_l
+    def __init__(self, sids):
+        if isinstance(sids, Iterable):
+            evidences_set = set()
+            for sid in sids:
+                doc_id = sid.split(SENT_LINE2)[0]
+                ln = sid.split(SENT_LINE2)[1]
+                if doc_id != 'None' and ln != 'None':
+                    evidences_set.add((doc_id, int(ln)))
+            evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
+            self.evidences_list = evidences_list
+        if isinstance(sids, str):
+            evidences_l = []
+            doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
+            if doc_id is not None and ln is not None:
+                evidences_l.append((doc_id, ln))
+            self.evidences_list = evidences_l
 
-    def __init__(self, sids: Iterable[str]):
-        evidences_set = set()
-        for sid in sids:
-            doc_id = sid.split(SENT_LINE2)[0]
-            ln = sid.split(SENT_LINE2)[1]
-            if doc_id != 'None' and ln != 'None':
-                evidences_set.add((doc_id, int(ln)))
-        evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
-        self.evidences_list = evidences_list
+    def add_sent_sid(self, sid: str):
+        doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
+        self.add_sent(doc_id, ln)
 
     def add_sent(self, sent, ln):
         o_set = set(self.evidences_list)
@@ -44,25 +48,21 @@ class Evidences(object):
 
     def add_sents(self, sids: Iterable[str]):
         for s in sids:
-            self.add_sent(s)
-
-    def add_sent(self, sid):
-        doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
-        self.add_sent(doc_id, ln)
+            self.add_sent_sid(s)
 
     def pop_sent(self, index):
         del_item = self.evidences_list.pop(index)
         return del_item
+
+    def contains_sid(self, sid: str):
+        doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
+        return self.contains(doc_id, ln)
 
     def contains(self, doc_id, ln):
         for d, l in self.evidences_list:
             if doc_id == d and l == ln:
                 return True
         return False
-
-    def contains(self, sid):
-        doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
-        return self.contains(doc_id, ln)
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Evidences):

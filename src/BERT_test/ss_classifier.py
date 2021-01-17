@@ -308,8 +308,8 @@ if __name__ == "__main__":
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")
     paras.pred = False
     paras.mode = 'train'
-    paras.output_folder = "ss_train_2021_2"
-    paras.sample_n = 5
+    paras.output_folder = "ss_train_2021_4"
+    paras.sample_n = 4
     ss_finetuning(paras, sampler='ss_tfidf')
 
 

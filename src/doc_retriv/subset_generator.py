@@ -27,22 +27,29 @@ def generate_subset_multi_evidence_articals():
     data = read_json_rows(config.FEVER_DEV_JSONL)
     result_combination_evidence_only = []
     result_has_combination_evidence = []
+    result_has_more_than_one_docs = []
     for item in data:
         has_multi = False
         has_single = False
+        has_more_docs = False
         e_list = utils.check_sentences.check_and_clean_evidence(item)
         for e in e_list:
             if len(e) > 1:
                 has_multi = True
             if len(e) == 1:
                 has_single = True
+            if len(set(i[0] for i in e.evidences_list)) > 1:
+                has_more_docs = True
         if has_multi:
             result_has_combination_evidence.append(item)
         if has_multi and not has_single:
             result_combination_evidence_only.append(item)
+        if has_more_docs:
+            result_has_more_than_one_docs.append(item)
+    print(f"multi-sentence:{len(result_has_combination_evidence)}, multi_docs:{len(result_has_more_than_one_docs)}")
 
-    save_intermidiate_results(result_combination_evidence_only, config.DATA_ROOT / "dev_has_multi_evidence_only.jsonl")
-    save_intermidiate_results(result_has_combination_evidence, config.DATA_ROOT / "dev_has_multi_evidence.jsonl")
+    # save_intermidiate_results(result_combination_evidence_only, config.DATA_ROOT / "dev_has_multi_evidence_only.jsonl")
+    # save_intermidiate_results(result_has_combination_evidence, config.DATA_ROOT / "dev_has_multi_evidence.jsonl")
 
 
 def generate_subset_no_capital():
@@ -59,5 +66,7 @@ def generate_subset_no_capital():
 
 
 if __name__ == '__main__':
+    generate_subset_multi_evidence_articals()
     # generate_subset_no_capital()
-    generate_es_error_items()
+    # t = read_json_rows(config.DATA_ROOT / "dev_has_multi_evidence.jsonl")
+    # generate_es_error_items()

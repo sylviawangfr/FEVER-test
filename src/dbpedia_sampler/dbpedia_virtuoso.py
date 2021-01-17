@@ -196,6 +196,44 @@ def get_ontology_linked_values_inbound(resource_uri):
     log.debug(f"inbound re: {len(tris)}")
     return tris
 
+
+def get_outbounds2(resource_uri):
+    query_str = f"SELECT distinct (<{resource_uri}> AS ?subject) ?relation ?object " \
+        "FROM <http://dbpedia.org> WHERE { " \
+        f" <{resource_uri}> ?relation ?object . " \
+        "filter (regex(?relation, " \
+        "'^(?!.*?(wiki|comment|label|sameAs|exactMatch|abstract|align|image|photo|wasDerivedFrom|isPrimaryTopicOf|property/[0-9]+)).*$'))" \
+        "filter (regex(?object, '^(?!.*?(wikidata)).*$')) " \
+        "} LIMIT 500"
+    tris = get_triples(query_str)
+    to_delete = []
+    for tri in tris:
+        obj_split = uri_short_extract(tri['object'])
+        if does_reach_max_length(obj_split) or obj_split == '':
+            to_delete.append(tri)
+            continue
+        else:
+            rel_split = uri_short_extract(tri['relation'])
+            if rel_split == 'subject':
+                obj_split = obj_split.replace('Category ', '')
+                tri['keywords'] = [obj_split]
+                tri['keyword1'] = 'category'
+                tri['keyword2'] = obj_split
+                continue
+            if rel_split == 'rdf schema see Also':
+                tri['keywords'] = [obj_split]
+                tri['keyword1'] = 'see also'
+                tri['keyword2'] = obj_split
+                continue
+            tri['keywords'] = [rel_split, obj_split]
+            tri['keyword1'] = rel_split
+            tri['keyword2'] = obj_split
+    log.debug(f"outbound re: {len(tris)}")
+    for i in to_delete:
+        tris.remove(i)
+    return tris
+
+
 # @profile
 def get_outbounds(resource_uri):
     query_str_outbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
@@ -219,11 +257,51 @@ def get_outbounds(resource_uri):
         else:
             rel_split = uri_short_extract(tri['relation'])
             if rel_split == 'subject':
-                obj_split.replace('Category ', '')
+                obj_split = obj_split.replace('Category ', '')
                 tri['keywords'] = [obj_split]
                 tri['keyword1'] = 'category'
                 tri['keyword2'] = obj_split
                 continue
+            if rel_split == 'rdf schema see Also':
+                tri['keywords'] = [obj_split]
+                tri['keyword1'] = 'see also'
+                tri['keyword2'] = obj_split
+                continue
+            tri['keywords'] = [rel_split, obj_split]
+            tri['keyword1'] = rel_split
+            tri['keyword2'] = obj_split
+    log.debug(f"outbound re: {len(tris)}")
+    for i in to_delete:
+        tris.remove(i)
+    return tris
+
+
+def get_disambiguates_outbounds2(resource_uri):
+    query_str_outbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
+        "PREFIX disambiguates: <http://dbpedia.org/ontology/wikiPageDisambiguates> " \
+        "PREFIX redirects: <http://dbpedia.org/ontology/wikiPageRedirects> " \
+        "SELECT distinct ?subject ?relation ?object where { " \
+        f"<{resource_uri}> ?x ?subject. " \
+        "?subject ?relation ?object. " \
+        "filter (?x in (disambiguates:, redirects:)) " \
+        "filter (regex(?relation, " \
+        "'^(?!.*?(wiki|comment|label|sameAs|exactMatch|abstract|align|image|photo|wasDerivedFrom|isPrimaryTopicOf|property/[0-9]+)).*$')) " \
+        "filter (regex(?object, '^(?!.*?(wikidata)).*$')) " \
+        "} LIMIT 500"
+    tris = get_triples(query_str_outbound)
+    to_delete = []
+    for tri in tris:
+        obj_split = uri_short_extract(tri['object'])
+        if does_reach_max_length(obj_split) or obj_split == '':
+            to_delete.append(tri)
+            continue
+        else:
+            rel_split = uri_short_extract(tri['relation'])
+            if rel_split == 'subject':
+                obj_split = obj_split.replace('Category ', '')
+                tri['keywords'] = [obj_split]
+                tri['keyword1'] = 'category'
+                tri['keyword2'] = obj_split
             if rel_split == 'rdf schema see Also':
                 tri['keywords'] = [obj_split]
                 tri['keyword1'] = 'see also'
@@ -262,7 +340,7 @@ def get_disambiguates_outbounds(resource_uri):
         else:
             rel_split = uri_short_extract(tri['relation'])
             if rel_split == 'subject':
-                obj_split.replace('Category ', '')
+                obj_split = obj_split.replace('Category ', '')
                 tri['keywords'] = [obj_split]
                 tri['keyword1'] = 'category'
                 tri['keyword2'] = obj_split
@@ -341,10 +419,10 @@ def does_reach_max_length(text):
 
 if __name__ == "__main__":
     # res = "http://dbpedia.org/resource/Magic_Johnson"
-    # res = "http://dbpedia.org/resource/Tap_dancer"
-    res = get_outbounds('http://dbpedia.org/resource/Charlie_Chaplin')
+    res = "http://dbpedia.org/resource/Tap_dancer"
+    # res = get_outbounds('http://dbpedia.org/resource/Charlie_Chaplin')
     # get_categories2(res)
-    # print(get_disambiguates_outbounds(res))
+    print(get_disambiguates_outbounds2(res))
     # print(get_properties(res))
     # on = "http://dbpedia.org/ontology/City"
     # o1 = get_categories_one_hop_child(on)

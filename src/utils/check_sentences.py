@@ -116,7 +116,7 @@ def check_and_clean_evidence(item):
         for evidence in one_annotator_evidences_list:
             docid, sent_num = evidence[-2], evidence[-1]
             # print(docid, sent_num)
-            cleaned_one_annotator_evidences_list.append(f"{docid}{SENT_LINE2}{sent_num}")
+            cleaned_one_annotator_evidences_list.append((docid, sent_num))
 
         one_annotator_evidences = Evidences(cleaned_one_annotator_evidences_list)
         # if not evidence_list_exist_in_set(one_annotator_evidences, evidences_list_set):
@@ -190,9 +190,6 @@ def check_evidence(item, cursor):
 # The evidence is considered to be correct if there exists a complete list of actual evidence that is a subset of the predicted evidence.
 
 if __name__ == '__main__':
-    # d_list = load_data('/Users/Eason/projects/downloaded_repos/fever-baselines/data/fever-data/shared_task_dev.jsonl')
-    d_list = load_data('/Users/Eason/projects/downloaded_repos/fever-baselines/data/fever-data/shared_task_dev.jsonl')
-    # # print(d_list[0])
     # rand_ind = 12
     # check_and_clean_evidence(d_list[rand_ind])
 
@@ -209,7 +206,7 @@ if __name__ == '__main__':
     save_path = '/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db'
     conn = sqlite3.connect(save_path)
     c = conn.cursor()
-    none_num = 0
+    # none_num = 0
     # rand_ind = 191
     # check_evidence(d_list[rand_ind], c)
 
@@ -217,26 +214,26 @@ if __name__ == '__main__':
 
     count = 0
 
-    for item in tqdm(d_list):
-        e_list = check_and_clean_evidence(item)
-        if len(e_list) >= 3:
+    # for item in tqdm(d_list):
+    #     e_list = check_and_clean_evidence(item)
+    #     if len(e_list) >= 3:
             # print(e_list)
-            count += 1
+            # count += 1
 
     # print(count)
-        print("Claim:", item['claim'])
+    #     print("Claim:", item['claim'])
+    #
+    #     for evidences in e_list:
+    #         evidences_length.append(len(evidences))
+    #         print("Evidence:")
+    #         for docid, line_num in evidences:
+    #             _id, text, h_links = check_evidence_in_db(c, docid, line_num)
+    #             # print(docid, line_num)
+    #             # print(_id)
+    #             # print(item[''])
+    #             print(text)
 
-        for evidences in e_list:
-            evidences_length.append(len(evidences))
-            print("Evidence:")
-            for docid, line_num in evidences:
-                _id, text, h_links = check_evidence_in_db(c, docid, line_num)
-                # print(docid, line_num)
-                # print(_id)
-                # print(item[''])
-                print(text)
-
-        print("----------------")
+        # print("----------------")
                 # print(h_links)
                 # if _id is None:
                 #     none_num += 1

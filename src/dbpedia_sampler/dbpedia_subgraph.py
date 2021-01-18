@@ -9,8 +9,8 @@ from memory_profiler import profile
 from bert_serving.client import BertClient
 import gc
 
-CANDIDATE_UP_TO = 150
-SCORE_CONFIDENCE = 0.6
+# CANDIDATE_UP_TO = 150
+# SCORE_CONFIDENCE = 0.6
 
 log = log_util.get_logger("subgraph")
 

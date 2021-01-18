@@ -19,7 +19,7 @@ import time
 import gc
 
 
-CANDIDATE_UP_TO = 150
+CANDIDATE_UP_TO = 200
 SCORE_CONFIDENCE_1 = 0.6
 SCORE_CONFIDENCE_2 = 0.75
 SCORE_CONFIDENCE_3 = 0.8
@@ -36,7 +36,7 @@ def lookup_phrase(phrase):
     for i in resource_dict:
         record_dict = dict()
         if isinstance(i, dict):
-            record_dict['categories'] = dbpedia_lookup.to_triples(i)
+            # record_dict['categories'] = []
             record_dict['URI'] = i['URI']
             record_dict['text'] = phrase
             record_dict['exact_match'] = i['exact_match']
@@ -53,7 +53,7 @@ def lookup_phrase_exact_match(phrase):
     for i in resource_dict:
         record_dict = dict()
         if isinstance(i, dict):
-            record_dict['categories'] = dbpedia_lookup.to_triples(i)
+            # record_dict['categories'] = dbpedia_lookup.to_triples(i)
             record_dict['URI'] = i['URI']
             record_dict['text'] = phrase
             record_dict['exact_match'] = True
@@ -70,7 +70,7 @@ def lookup_doc_id(phrase, doc_ids):
         for i in resource_dict:
             r_dict = dict()
             if isinstance(i, dict):
-                r_dict['categories'] = dbpedia_lookup.to_triples(i)
+                # r_dict['categories'] = []
                 r_dict['URI'] = i['URI']
                 r_dict['text'] = phrase
                 r_dict['exact_match'] = (phrase.lower() == tmp_d)
@@ -85,9 +85,9 @@ def lookup_doc_id(phrase, doc_ids):
 # @profile
 def query_resource(uri):
     context = dict()
-    outbounds = dbpedia_virtuoso.get_outbounds(uri)
+    outbounds = dbpedia_virtuoso.get_outbounds2(uri)
     if len(outbounds) < 1:
-        outbounds = dbpedia_virtuoso.get_disambiguates_outbounds(uri)
+        outbounds = dbpedia_virtuoso.get_disambiguates_outbounds2(uri)
     context['outbounds'] = outbounds
     return context
 
@@ -99,7 +99,7 @@ def link_sentence(sentence, extend_entity_docs=None, doc_title='', lookup_hash=N
                                                                      extend_entity_docs=extend_entity_docs,
                                                                      doc_title=doc_title,
                                                                      lookup_hash=lookup_hash)
-    add_categories(linked_phrases_l)
+    add_outbounds(linked_phrases_l)
     return not_linked_phrases_l, linked_phrases_l
 
 
@@ -202,13 +202,13 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
     return not_linked_phrases_l, linked_phrases_l
 
 
-def add_categories(linked_ps):
+def add_outbounds(linked_ps):
     for i in linked_ps:
         for j in i['links']:
             if 'outbounds' not in j:
                 j.update(query_resource(j['URI']))
-            if 'categories' not in j:
-                j['categories'] = dbpedia_virtuoso.get_categories(j['URI'])
+            # if 'categories' not in j:
+            #     j['categories'] = dbpedia_virtuoso.get_categories2(j['URI'])
 
 
 def keyword_matching(text, str_l):
@@ -841,7 +841,8 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings_ha
 
 def get_one_hop(linked_dict):
     # one_hop = linked_dict['categories'] + linked_dict['inbounds'] + linked_dict['outbounds']
-    one_hop = linked_dict['categories'] + linked_dict['outbounds']
+    # one_hop = linked_dict['categories'] + linked_dict['outbounds']
+    one_hop = linked_dict['outbounds']
     return one_hop
 
 
@@ -877,10 +878,10 @@ if __name__ == '__main__':
 
     # test()
     # test()
-    # embedding1 = bert_similarity.get_phrase_embedding(['starring'])
-    # embedding2 = bert_similarity.get_phrase_embedding(['stars'])
-    # out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
-    # print(out)
+    embedding1 = bert_similarity.get_phrase_embedding(['network'])
+    embedding2 = bert_similarity.get_phrase_embedding(['concept'])
+    out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
+    print(out)
 
     # import spacy
     #

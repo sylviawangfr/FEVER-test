@@ -40,7 +40,7 @@ def prepare_candidate_es_for_example2(example):
     return candidate_docs_1
 
 
-def get_entity_docs_from_es(doc_and_line):
+def get_es_entity_links(doc_and_line):
     doc_and_line.sort(key=lambda x: x.get('score'), reverse=True)
     doc_and_line = doc_and_line[:15]
     all_phrases = list(set([p for d in doc_and_line for p in d['phrases']]))
@@ -72,12 +72,12 @@ def get_entity_docs_from_es(doc_and_line):
     return phrase_to_doc_links
 
 
-def prepare_es_entity_docs(es_data_l, output_file):
+def prepare_es_entity_links(es_data_l, output_file):
     es_enttiy_docs = []
     with tqdm(total=len(es_data_l), desc=f"preparing es entity docs") as pbar:
         for idx, example in enumerate(es_data_l):
             doc_and_line = example['doc_and_line']
-            doc_dict = get_entity_docs_from_es(doc_and_line)
+            doc_dict = get_es_entity_links(doc_and_line)
             es_enttiy_docs.append({'id': example['id'], 'es_entity_docs': doc_dict})
             pbar.update(1)
     save_intermidiate_results(es_enttiy_docs, output_file)
@@ -399,7 +399,7 @@ def redo_example_docs(error_data, log_filename):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     for example in tqdm(error_data):
         es_doc_and_lines = prepare_candidate_es_for_example2(example)
-        entity_docs = get_entity_docs_from_es(es_doc_and_lines)
+        entity_docs = get_es_entity_links(es_doc_and_lines)
         graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs, bc=bc)
         ent_resource_docs = prepare_candidate2_example(graph_data_example)
         merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
@@ -426,14 +426,14 @@ def do_testset_graph2(folder):
 
 
 def do_dev_set_with_es_entity():
-    folder = config.RESULT_PATH / "extend_20210111"
-    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    prepare_es_entity_docs(data_with_es, folder / "es_entity_docs.jsonl")
+    folder = config.RESULT_PATH / "extend0120"
+    data_with_es = read_json_rows(folder / "es_doc_10.log")
+    prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
-    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
-    # assert(len(data_with_es_entities) == 19998)
-    # data = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_claim_graph(data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    assert(len(data_with_es_entities) == 19998)
+    data = read_json_rows(config.FEVER_DEV_JSONL)
+    prepare_claim_graph(data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
     #
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)
     # data_context = read_json_rows(folder / "claim_graph.jsonl")
@@ -484,9 +484,11 @@ def run_dev_failed_docs():
 
 
 if __name__ == '__main__':
+    # data = read_json_rows(config.DATA_ROOT /"dev_has_multi_evidence.jsonl")
+    # redo_example_docs(data, config.LOG_PATH / "test.log")
     # folder = config.RESULT_PATH / "extend_test_20210102"
     # do_testset_es(folder)
-    # do_dev_set_with_es_entity()
+    do_dev_set_with_es_entity()
     # do_dev_set()
-    original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
-    prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_16.jsonl', config.RESULT_PATH / 'errors/es_doc_16.log')
+    # original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
+    # prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_16.jsonl', config.RESULT_PATH / 'errors/es_doc_16.log')

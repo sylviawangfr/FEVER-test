@@ -180,6 +180,7 @@ def generate_sentence_combination(list_of_sentences):
     new_evidence_set = set()
     for i in len(list_of_sentences):
         combination_set = itertools.combinations(list_of_sentences, i)
+        sids i []
         evid_l = [Evidences(s.sid) for s in combination_set]
         new_evidence_set.update(set(evid_l))
     return list(new_evidence_set)

@@ -48,9 +48,9 @@ def generate_subset_multi_evidence_articals():
             result_has_more_than_one_docs.append(item)
     print(f"multi-sentence:{len(result_has_combination_evidence)}, multi_docs:{len(result_has_more_than_one_docs)}")
 
-    save_intermidiate_results(result_combination_evidence_only, config.DATA_ROOT / "dev_has_multi_evidence_only.jsonl")
-    save_intermidiate_results(result_has_combination_evidence, config.DATA_ROOT / "dev_has_multi_evidence.jsonl")
-    save_intermidiate_results(result_has_more_than_one_docs, config.DATA_ROOT / "dev_has_multi_doc_evidence.jsonl")
+    save_intermidiate_results(result_combination_evidence_only, config.RESULT_PATH / "hardset2021/dev_has_multi_evidence_only.jsonl")
+    save_intermidiate_results(result_has_combination_evidence, config.DATA_ROOT / "hardset2021/dev_has_multi_evidence.jsonl")
+    save_intermidiate_results(result_has_more_than_one_docs, config.DATA_ROOT / "hardset2021/dev_has_multi_doc_evidence.jsonl")
 
 
 def generate_subset_no_capital():

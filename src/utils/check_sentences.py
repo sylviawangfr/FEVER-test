@@ -9,32 +9,33 @@ SENT_LINE2 = '(-.-)'
 
 class Evidences(object):
     # Evidences is a list of docid and sentences line number
-    # def __init__(self, evidences: Iterable[Tuple]):
-    #     evidences_set = set()
-    #     for doc_id, line_num in evidences:
-    #         if doc_id is not None and line_num is not None:
-    #             evidences_set.add((doc_id, line_num))
-    #
-    #     evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
-    #     # print(evidences_list)
-    #     self.evidences_list = evidences_list
+    def __init__(self, evidences: Iterable):
+        evidences_set = set()
+        for doc_id, line_num in evidences:
+            if doc_id is not None and line_num is not None:
+                evidences_set.add((doc_id, line_num))
 
-    def __init__(self, sids):
-        if isinstance(sids, Iterable):
-            evidences_set = set()
-            for sid in sids:
-                doc_id = sid.split(SENT_LINE2)[0]
-                ln = sid.split(SENT_LINE2)[1]
-                if doc_id != 'None' and ln != 'None':
-                    evidences_set.add((doc_id, int(ln)))
-            evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
-            self.evidences_list = evidences_list
-        if isinstance(sids, str):
-            evidences_l = []
-            doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
-            if doc_id is not None and ln is not None:
-                evidences_l.append((doc_id, ln))
-            self.evidences_list = evidences_l
+        evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
+        # print(evidences_list)
+        self.evidences_list = evidences_list
+
+    # def __init__(self, sids):
+    #     if isinstance(sids, Iterable):
+    #
+    #         evidences_set = set()
+    #         for item in sids:
+    #             doc_id = item.split(SENT_LINE2)[0]
+    #             ln = item.split(SENT_LINE2)[1]
+    #             if doc_id != 'None' and ln != 'None':
+    #                 evidences_set.add((doc_id, int(ln)))
+    #         evidences_list = sorted(evidences_set, key=lambda x: (x[0], x[1]))
+    #         self.evidences_list = evidences_list
+    #     if isinstance(sids, str):
+    #         evidences_l = []
+    #         doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
+    #         if doc_id is not None and ln is not None:
+    #             evidences_l.append((doc_id, ln))
+    #         self.evidences_list = evidences_l
 
     def add_sent_sid(self, sid: str):
         doc_id, ln = sid.split(SENT_LINE2)[0], int(sid.split(SENT_LINE2)[1])
@@ -122,6 +123,15 @@ def check_and_clean_evidence(item):
         evidences_list_set.add(one_annotator_evidences)
 
     return evidences_list_set
+
+
+def sids_to_tuples(sids):
+    raw_evidences_list = []
+    for sampled_e in sids:
+        doc_ids = sampled_e.split(SENT_LINE2)[0]
+        ln = int(sampled_e.split(SENT_LINE2)[1])
+        raw_evidences_list.append((doc_ids, ln))
+    return raw_evidences_list
 
 
 def get_predicted_evidence(item):

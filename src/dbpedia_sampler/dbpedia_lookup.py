@@ -115,6 +115,8 @@ def combine_lookup(text_phrase):
     for i in lookup_app_matches_label:
         if len(list(filter(lambda x: (x['Label'] == i['Label'] and x['URI'] == i['URI']), lookup_app_matches))) < 1:
             lookup_app_matches.append(i)
+    if len(lookup_app_matches) == 0:
+        return []
 
     lookup_app_matches.sort(key=lambda k: int(k['Refcount']), reverse=True)
     exact_match = get_exact_match(text_phrase, lookup_app_matches)

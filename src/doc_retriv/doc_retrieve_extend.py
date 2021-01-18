@@ -31,6 +31,7 @@ def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
             example['doc_and_line'] = candidate_docs_1
     save_intermidiate_results(data_l, out_filename)
     eval_doc_preds(data_l, 10, log_filename)
+    return data_l
 
 
 def prepare_candidate_es_for_example2(example):
@@ -81,6 +82,7 @@ def prepare_es_entity_links(es_data_l, output_file):
             es_enttiy_docs.append({'id': example['id'], 'es_entity_docs': doc_dict})
             pbar.update(1)
     save_intermidiate_results(es_enttiy_docs, output_file)
+    return es_enttiy_docs
 
 
 def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: Path):
@@ -426,14 +428,17 @@ def do_testset_graph2(folder):
 
 
 def do_dev_set_with_es_entity():
-    folder = config.RESULT_PATH / "extend0120"
-    data_with_es = read_json_rows(folder / "es_doc_10.log")
-    prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    folder = config.RESULT_PATH / "hardset2021"
+    original_data = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    data_with_es = prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
-    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
-    assert(len(data_with_es_entities) == 19998)
-    data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_claim_graph(data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    # data_with_es = read_json_rows(folder / "es_doc_10.log")
+    data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+
+    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    assert(len(data_with_es_entities) == len(data_with_es))
+    # data = read_json_rows(config.FEVER_DEV_JSONL)
+    prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
     #
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)
     # data_context = read_json_rows(folder / "claim_graph.jsonl")

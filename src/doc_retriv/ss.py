@@ -13,7 +13,7 @@ from dbpedia_sampler.uri_util import isURI
 from dbpedia_sampler.dbpedia_virtuoso import get_categories2
 from bert_serving.client import BertClient
 from doc_retriv.SentenceEvidence import *
-from utils.check_sentences import Evidences
+from utils.check_sentences import Evidences, sids_to_tuples
 import copy
 from typing import List
 import itertools
@@ -176,13 +176,15 @@ def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences, can
     return new_evidence_set
 
 
-def generate_sentence_combination(list_of_sentences):
+def generate_sentence_combination(list_of_sentences: List):
     new_evidence_set = set()
-    for i in len(list_of_sentences):
+    for i in range(len(list_of_sentences)):
         combination_set = itertools.combinations(list_of_sentences, i)
-        sids i []
-        evid_l = [Evidences(s.sid) for s in combination_set]
-        new_evidence_set.update(set(evid_l))
+        for c in combination_set:
+            sids = [s['sid'] for s in c]
+            raw_doc_ln = sids_to_tuples(sids)
+            evid = Evidences(raw_doc_ln)
+            new_evidence_set.add(evid)
     return list(new_evidence_set)
 
 

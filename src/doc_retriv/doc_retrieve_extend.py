@@ -106,6 +106,7 @@ def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: 
                 flush_num = batch
                 flush_save = []
     bc.close()
+    print("done with claim graph.")
 
 
 def prepare_claim_graph_for_example(example, extend_entity_docs=None, bc: BertClient=None):
@@ -435,23 +436,23 @@ def do_dev_set_with_es_entity():
     # data_with_es = read_json_rows(folder / "es_doc_10.log")
     # data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
-    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     # assert(len(data_with_es_entities) == len(data_with_es))
     # data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    # prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
     #
-    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    # data_context = read_json_rows(folder / "claim_graph.jsonl")
+    # original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    data_context = read_json_rows(folder / "claim_graph.jsonl")
     # # data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
     # assert (len(data_original) == len(data_context))
-    # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    prepare_candidate_doc2(original_data, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
     #
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    # ent_data = read_json_rows(folder / "entity_doc.jsonl")
-    # assert (len(es_data) == len(data_original) and (len(ent_data) == len(data_original)))
-    # prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl",
-    #                        folder / "candidate_docs.log")
+    es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    assert (len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
+    prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl",
+                           folder / "candidate_docs.log")
 
 
 def do_dev_set():

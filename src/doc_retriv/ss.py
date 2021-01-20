@@ -373,7 +373,7 @@ def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
 
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
-    hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.json")
+    hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
     prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
     # org_data = read_json_rows(config.FEVER_DEV_JSONL)[2:4]

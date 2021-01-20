@@ -1,17 +1,9 @@
-from ES.es_search import search_and_merge, search_doc_id, search_and_merge2, search_and_merge4, merge_result, search_doc_id_and_keywords, search_doc_id_and_keywords_in_sentences
-from utils.c_scorer import *
-from utils.common import thread_exe
+from ES.es_search import  search_doc_id_and_keywords_in_sentences
+# from utils.c_scorer import *
 from utils.fever_db import *
-from utils.file_loader import read_json_rows, get_current_time_str, read_all_files, save_and_append_results
-from dbpedia_sampler.dbpedia_triple_linker import link_sentence
-from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
-from dbpedia_sampler.sentence_util import get_ents_and_phrases, get_phrases_and_nouns_merged
-import difflib
-from utils.text_clean import convert_brc
-from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim, construct_subgraph_for_candidate
-from dbpedia_sampler.uri_util import isURI
-from dbpedia_sampler.dbpedia_virtuoso import get_categories2
-from bert_serving.client import BertClient
+# from dbpedia_sampler.sentence_util import get_phrases_and_nouns_merged
+from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_candidate
+
 from doc_retriv.SentenceEvidence import *
 from utils.check_sentences import Evidences, sids_to_tuples
 import copy
@@ -54,7 +46,7 @@ def prepare_candidate_sents3_from_triples(data_with_graph, data_with_res_doc, ou
                 tri['tri_id'] = idx_tri
                 triples.append(Triple(tri))
             tri_sentence_dict = search_triples_in_docs(triples, resouce_doc_dict)
-            result.append({'id': example['id'], 'triple_sentences': tri_sentence_dict, "triples": triples.__dict__})
+            result.append({'id': example['id'], 'triple_sentences': tri_sentence_dict, "triples": [t.__dict__ for t in triples]})
     save_intermidiate_results(result, output_file)
 
 
@@ -108,42 +100,42 @@ def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]
 #     return possible_sentences
 
 
-def strategy_over_all(claim):
-    # 1. ES search phrases
-    nouns = get_phrases_and_nouns_merged(claim)
-    # 2. get ES page candidates -> candidate docs 1
-    #  . BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
-    candidate_docs_1 = search_and_merge2(nouns)
-    # candidate_sentences_1 = filter_bert_claim_vs_sents(claim, candidate_docs_1)
-    claim_dict = construct_subgraph_for_claim(claim)
-    claim_graph = claim_dict['graph']
-    if len(claim_graph) > 0:
-        # 1. ES search all linked entity page -> candidate docs 2
-        candidate_docs_2 = search_entity_docs_for_triples(claim_graph)
-        candidate_docs = candidate_docs_1 + candidate_docs_2
-        # 2. BERT filter: claim VS candidate docs sents -> candidate sentences 2
-        candidate_sents_2 = filter_bert_claim_vs_sents(claim, candidate_docs)
-        linked_triples = get_linked_triples(claim_graph)
-        candidate_sentences_3 = []
-        if len(linked_triples) > 0:
-            # 3. ES filter: linked triples VS candidate docs 2 -> candidate sentences 3
-            candidate_sentences_3 = search_triples_in_docs(linked_triples, candidate_docs_2)
-        # 4. sort candidate sentences 2 + 3 -> candidate sentence 4
-        candidate_sentences_4 = candidate_sents_2 + candidate_sentences_3
-        isolated_phrases = claim_dict['no_relatives']
-        if len(isolated_phrases) > 0:
-            # 5. isolated_nodes candidate docs 2 sentences to sent_context_graph -> new entities
-            # 6. ES search sent_context_graph new entity pages -> candidate docs 3
-            # 7. BERT filter:  extended context triples VS candidate docs 3 sentences  -> candidate sentence 3
-            # 8. aggregate envidence set -> candidate sentences 4
-            candidate_sentence_set = strategy_one_hop(claim_dict, linked_triples, candidate_sentences_4)
-
-    else:
-        # *. BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
-        # cannot extract context graph, return candidate sentences 1
-        candidate_docs = candidate_docs_1
-        candidate_sentences_1 = filter_bert_claim_vs_sents(claim, candidate_docs_1)
-    pass
+# def strategy_over_all(claim):
+#     # 1. ES search phrases
+#     nouns = get_phrases_and_nouns_merged(claim)
+#     # 2. get ES page candidates -> candidate docs 1
+#     #  . BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
+#     candidate_docs_1 = search_and_merge2(nouns)
+#     # candidate_sentences_1 = filter_bert_claim_vs_sents(claim, candidate_docs_1)
+#     claim_dict = construct_subgraph_for_claim(claim)
+#     claim_graph = claim_dict['graph']
+#     if len(claim_graph) > 0:
+#         # 1. ES search all linked entity page -> candidate docs 2
+#         candidate_docs_2 = search_entity_docs_for_triples(claim_graph)
+#         candidate_docs = candidate_docs_1 + candidate_docs_2
+#         # 2. BERT filter: claim VS candidate docs sents -> candidate sentences 2
+#         candidate_sents_2 = filter_bert_claim_vs_sents(claim, candidate_docs)
+#         linked_triples = get_linked_triples(claim_graph)
+#         candidate_sentences_3 = []
+#         if len(linked_triples) > 0:
+#             # 3. ES filter: linked triples VS candidate docs 2 -> candidate sentences 3
+#             candidate_sentences_3 = search_triples_in_docs(linked_triples, candidate_docs_2)
+#         # 4. sort candidate sentences 2 + 3 -> candidate sentence 4
+#         candidate_sentences_4 = candidate_sents_2 + candidate_sentences_3
+#         isolated_phrases = claim_dict['no_relatives']
+#         if len(isolated_phrases) > 0:
+#             # 5. isolated_nodes candidate docs 2 sentences to sent_context_graph -> new entities
+#             # 6. ES search sent_context_graph new entity pages -> candidate docs 3
+#             # 7. BERT filter:  extended context triples VS candidate docs 3 sentences  -> candidate sentence 3
+#             # 8. aggregate envidence set -> candidate sentences 4
+#             candidate_sentence_set = strategy_one_hop(claim_dict, linked_triples, candidate_sentences_4)
+#
+#     else:
+#         # *. BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
+#         # cannot extract context graph, return candidate sentences 1
+#         candidate_docs = candidate_docs_1
+#         candidate_sentences_1 = filter_bert_claim_vs_sents(claim, candidate_docs_1)
+#     pass
 
 
 def filter_bert_claim_vs_sents():

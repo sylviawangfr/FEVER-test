@@ -297,7 +297,7 @@ def ss_finetuning(paras: bert_para.PipelineParas, sampler=None):
         paras.BERT_model = output_dir
         paras.BERT_tokenizer = output_dir
         paras.prob_thresholds = 0.5
-        paras.top_n = 5
+        paras.top_n = 10
         # paras.sample_n = 3
         eval_ss_and_save(paras)
 
@@ -308,7 +308,7 @@ if __name__ == "__main__":
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")
     paras.pred = False
     paras.mode = 'train'
-    paras.output_folder = "ss_train_2021_4"
+    paras.output_folder = "ss_train_2021_5"
     paras.sample_n = 4
     ss_finetuning(paras, sampler='ss_tfidf')
 

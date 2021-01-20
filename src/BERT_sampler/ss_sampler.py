@@ -322,6 +322,7 @@ if __name__ == '__main__':
     paras.sample_n = 5
     paras.pred = False
     sample_tfidf = get_tfidf_sample(paras)
+    sample_full = get_full_list_sample(paras)
     eval_sample_length(sample_tfidf)
     count_truth_examples(sample_tfidf)
 

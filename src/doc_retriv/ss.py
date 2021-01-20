@@ -38,7 +38,7 @@ def prepare_candidate_sents2_bert_dev(original_data, data_with_candidate_docs, o
     paras.upstream_data = data_with_candidate_docs
     paras.sample_n = 10
     paras.top_n = [10, 5]
-    paras.prob_thresholds = [0.4, 0.6]
+    paras.prob_thresholds = [0.4, 0.5]
     pred_ss_and_save(paras)
 
 

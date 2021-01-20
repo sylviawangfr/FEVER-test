@@ -141,7 +141,7 @@ def get_predicted_evidence(item):
     cleaned_one_annotator_evidences_list = []
     for one_annotator_evidences_list in whole_annotators_evidences:
         docid, sent_num = one_annotator_evidences_list[0], one_annotator_evidences_list[1]
-        cleaned_one_annotator_evidences_list.append(f"{docid}{SENT_LINE2}{sent_num}")
+        cleaned_one_annotator_evidences_list.append((docid, sent_num))
 
     one_annotator_evidences = Evidences(cleaned_one_annotator_evidences_list)
     evidences_list_set.add(one_annotator_evidences)

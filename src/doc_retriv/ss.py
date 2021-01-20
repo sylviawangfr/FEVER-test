@@ -29,14 +29,16 @@ def prepare_candidate_sents2_bert_dev(original_data, data_with_candidate_docs, o
     paras = bert_para.PipelineParas()
     paras.pred = True
     paras.mode = 'eval'
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
     paras.output_folder = output_folder
     paras.original_data = original_data
     paras.upstream_data = data_with_candidate_docs
     paras.sample_n = 10
     paras.top_n = [10, 5]
-    paras.prob_thresholds = [0.4, 0.5]
+    paras.prob_thresholds = [0.4, 0.6]
     pred_ss_and_save(paras)
 
 
@@ -370,11 +372,14 @@ def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
 
 
 if __name__ == '__main__':
-    folder = config.RESULT_PATH / "extend_20210104"
-    org_data = read_json_rows(config.FEVER_DEV_JSONL)[2:4]
-    graph_data = read_json_rows(folder / "claim_graph_10000.jsonl")[2:4]
-    entity_data = read_json_rows(folder / "entity_doc.jsonl")[2:4]
+    folder = config.RESULT_PATH / "hardset2021"
+    hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.json")
+    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
+    prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
+    # org_data = read_json_rows(config.FEVER_DEV_JSONL)[2:4]
+    # graph_data = read_json_rows(folder / "claim_graph_10000.jsonl")[2:4]
+    # entity_data = read_json_rows(folder / "entity_doc.jsonl")[2:4]
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
     # prepare_candidate_sents_bert_dev(original_data, candidate_docs, folder)
-    prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_2-4.jsonl", folder / "tri_2-4.log")
+    # prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_2-4.jsonl", folder / "tri_2-4.log")
 

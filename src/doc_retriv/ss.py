@@ -373,13 +373,13 @@ def filter_bert_claim_vs_triplesents_and_hlinks(claim, sentence):
 
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
-    hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
-    # org_data = read_json_rows(config.FEVER_DEV_JSONL)[2:4]
-    # graph_data = read_json_rows(folder / "claim_graph_10000.jsonl")[2:4]
-    # entity_data = read_json_rows(folder / "entity_doc.jsonl")[2:4]
+    # hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    # prepare_candidate_sents_bert_dev(original_data, candidate_docs, folder)
-    # prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_2-4.jsonl", folder / "tri_2-4.log")
+    # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
+
+
+    graph_data = read_json_rows(folder / "claim_graph.jsonl")
+    entity_data = read_json_rows(folder / "entity_doc.jsonl")
+    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
+    prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 

@@ -307,10 +307,10 @@ if __name__ == "__main__":
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
     # paras.pred = False
     # paras.mode = 'dev'
-    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
-    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202101_92.9"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202101_92.9"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202101_92.9"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202101_92.9"
     paras.output_folder = "bert_ss_" + get_current_time_str()
     paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
@@ -319,7 +319,7 @@ if __name__ == "__main__":
     paras.sample_n = 10
     # paras.post_filter_prob = 0.5
     paras.top_n = [10, 5]
-    paras.prob_thresholds = 0.5
+    paras.prob_thresholds = [0.4, 0.5]
     # pred_ss_and_save(paras)
     eval_ss_and_save(paras)
 

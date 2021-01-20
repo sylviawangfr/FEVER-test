@@ -320,8 +320,8 @@ if __name__ == "__main__":
     # paras.post_filter_prob = 0.5
     paras.top_n = [10, 5]
     paras.prob_thresholds = 0.5
-    pred_ss_and_save(paras)
-    # eval_ss_and_save(paras)
+    # pred_ss_and_save(paras)
+    eval_ss_and_save(paras)
 
     # paras.original_data = read_json_rows(config.FEVER_TEST_JSONL)
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / 'doc_test_2020_09_21_10:05:13.jsonl')

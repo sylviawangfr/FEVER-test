@@ -298,7 +298,7 @@ def ss_finetuning(paras: bert_para.PipelineParas, sampler=None):
         paras.BERT_tokenizer = output_dir
         paras.prob_thresholds = 0.5
         paras.top_n = 5
-        paras.sample_n = 3
+        # paras.sample_n = 3
         eval_ss_and_save(paras)
 
 

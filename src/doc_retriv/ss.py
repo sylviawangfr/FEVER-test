@@ -31,8 +31,8 @@ def prepare_candidate_sents2_bert_dev(original_data, data_with_candidate_docs, o
     paras.mode = 'eval'
     # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
     # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202101_93.9"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202101_93.9"
     paras.output_folder = output_folder
     paras.original_data = original_data
     paras.upstream_data = data_with_candidate_docs

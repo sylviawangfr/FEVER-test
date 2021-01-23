@@ -47,6 +47,7 @@ def prepare_candidate_sents3_from_triples(data_with_graph, data_with_res_doc, ou
                 triples.append(Triple(tri))
             tri_sentence_dict = search_triples_in_docs(triples, resouce_doc_dict)
             result.append({'id': example['id'], 'triple_sentences': tri_sentence_dict, "triples": [t.__dict__ for t in triples]})
+            pbar.update(1)
     save_intermidiate_results(result, output_file)
 
 

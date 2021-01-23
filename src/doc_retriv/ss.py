@@ -424,17 +424,17 @@ if __name__ == '__main__':
     # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
 
-    graph_data = read_json_rows(folder / "claim_graph.jsonl")[4:5]
-    entity_data = read_json_rows(folder / "entity_doc.jsonl")[4:5]
+    graph_data = read_json_rows(folder / "claim_graph.jsonl")
+    entity_data = read_json_rows(folder / "entity_doc.jsonl")
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
     prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
-    tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
+    # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
     # eval_tri_ss(hardset_original, tri_ss_data)
     # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
     # c_scorer.get_macro_ss_recall_precision(bert_ss_data, 5)
-    context_graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    pass
+    # context_graph_data = read_json_rows(folder / "claim_graph.jsonl")
+    # pass
     # prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, context_graph_data, folder / "nli_sids.jsonl")
 
 

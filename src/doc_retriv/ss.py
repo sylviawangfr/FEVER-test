@@ -47,7 +47,7 @@ def prepare_candidate_sents3_from_triples(data_with_graph, data_with_res_doc, ou
                 triples.append(Triple(tri))
             tri_sentence_dict = search_triples_in_docs(triples, resouce_doc_dict)
             result.append({'id': example['id'], 'triple_sentences': tri_sentence_dict, "triples": [t.__dict__ for t in triples]})
-    # save_intermidiate_results(result, output_file)
+    save_intermidiate_results(result, output_file)
 
 
 def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s, data_with_tri_s, data_with_context_graph, output_file):

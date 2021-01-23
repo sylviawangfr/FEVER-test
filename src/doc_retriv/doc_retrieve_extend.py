@@ -266,7 +266,7 @@ def search_entity_docs(resources):
             possible_doc_id = item.split('/')[-1]
             verified_id_es = search_doc_id(possible_doc_id)
             for r_es in verified_id_es:
-                if r_es['id'] == possible_doc_id and len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
+                if convert_brc(r_es['id']) == possible_doc_id and len(list(filter(lambda x: (x['id'] == r_es['id']), docs))) < 1:
                     docs.append({'id': r_es['id'], 'score': r_es['score'], 'phrases': [resource['text']]})
         if len(docs) > 0:
             docs_all.update({resource_uri: docs})
@@ -290,7 +290,7 @@ def search_entity_docs_for_triples(triples: List[Triple]):
             possible_doc_id = item.split('/')[-1]
             verified_id_es = search_doc_id(possible_doc_id)
             for r_es in verified_id_es:
-                if r_es['id'] == possible_doc_id and len(list(filter(lambda x: (x['id'] == r_es['id']), entity_pages))) < 1:
+                if convert_brc(r_es['id']) == possible_doc_id and len(list(filter(lambda x: (x['id'] == r_es['id']), entity_pages))) < 1:
                     entity_pages.append({'id': r_es['id'],
                                  'score': r_es['score'],
                                  'phrases': all_resources[resource_uri]})

@@ -318,11 +318,11 @@ def eval_sample_length(samples):
 if __name__ == '__main__':
     logger.info("test")
     paras = bert_para.PipelineParas()
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:50]
-    paras.sample_n = 5
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
+    paras.sample_n = 4
     paras.pred = False
     sample_tfidf = get_tfidf_sample(paras)
-    sample_full = get_full_list_sample(paras)
+    # sample_full = get_full_list_sample(paras)
     eval_sample_length(sample_tfidf)
     count_truth_examples(sample_tfidf)
 

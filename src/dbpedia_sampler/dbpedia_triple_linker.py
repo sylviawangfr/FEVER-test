@@ -440,11 +440,15 @@ def remove_duplicate_triples(triples):
             for m in merged:
                 if m['subject'] == r['subject'] \
                         and m['relation'] == r['relation'] \
-                        and m['object'] == r['object'] \
-                        and m['score'] < r['score']:
-                    merged.remove(m)
-                    merged.append(r)
-                    break
+                        and m['object'] == r['object']:
+                    if m['score'] < r['score']:
+                        merged.remove(m)
+                        r['relatives'] = list(set(m['relatives']) | set(r['relatives']))
+                        merged.append(r)
+                        break
+                    else:
+                        m['relatives'] = list(set(m['relatives']) | set(r['relatives']))
+                        break
     return merged
 
 

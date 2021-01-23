@@ -350,7 +350,7 @@ if __name__ == "__main__":
     # lookup_resource_no_filter('Tool')
     # lookup_resource('Western Conference Southwest Division')
     # lookup_resource("the league 's Western Conference Southwest Division")
-    # lookup_resource('A&E')
+    lookup_resource('Jennifer Lopez')
     # lookup_resource('a member club')
     # lookup_resource('The Pelicans')
     # lookup_resource('the National Basketball Association')

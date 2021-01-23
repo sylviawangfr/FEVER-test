@@ -47,9 +47,14 @@ class Evidences(object):
         o_set = sorted(o_set, key=lambda x: (x[0], x[1]))
         self.evidences_list = list(o_set)
 
-    def add_sents(self, sids: Iterable[str]):
+    def add_sents_sids(self, sids: Iterable[str]):
         for s in sids:
             self.add_sent_sid(s)
+
+    def add_sents_tuples(self, doc_ln_l: Iterable):
+        for doc, ln in doc_ln_l:
+            self.add_sent(doc, ln)
+
 
     def pop_sent(self, index):
         del_item = self.evidences_list.pop(index)

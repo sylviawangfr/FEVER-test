@@ -144,12 +144,14 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title='', b
             claim_dict['lookup_hash'][i['text']] = i
 
     verb_d = get_dependent_verb(candidate_sent, all_phrases)
-    sent_graph = dbpedia_triple_linker.filter_text_vs_one_hop(not_linked_phrases_l, linked_phrases_l, embeddings_hash, verb_d, bc=bc)
+    sent_graph = []
+    r0 = dbpedia_triple_linker.filter_text_vs_one_hop(all_phrases, linked_phrases_l, embeddings_hash, bc=bc)
     r1 = dbpedia_triple_linker.filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d)
-    r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l, embeddings_hash, fuzzy_match=True, bc=bc)
-
+    r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l)
+    r3 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embeddings_hash, bc=bc)
     # only keyword-match on those no exact match triples
-    for i in r1 + r2:
+
+    for i in r0 + r1 + r2 + r3:
         if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
             sent_graph.append(i)
     fill_relative_hash(relative_hash, sent_graph)
@@ -158,11 +160,11 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title='', b
         if len(relative_hash[i]) == 0 and i in claim_dict['lookup_hash']:
             no_relatives_found.append(claim_dict['lookup_hash'][i])
 
-    r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_relatives_found, embeddings_hash, fuzzy_match=False, bc=bc)
-    for i in r3:
-        if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
-            sent_graph.append(i)
-    fill_relative_hash(relative_hash, r3)
+    # r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_relatives_found, embeddings_hash, fuzzy_match=False, bc=bc)
+    # for i in r3:
+    #     if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
+    #         sent_graph.append(i)
+    # fill_relative_hash(relative_hash, r3)
     claim_isolated_nodes = []
     for tri in claim_graph:
         if tri['relation'] == "" and tri['object'] == "":

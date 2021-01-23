@@ -336,14 +336,43 @@ def update_relative_hash(relative_hash:dict, connected_phrases):
             relative_hash[i] = list(set(relative_hash[i]))
 
 
-def strategy_one_hop(claim_dict, linked_triples, candidate_sentences: List[SentenceEvidence]):
+# candidate_sentences: list of sids
+def strategy_one_hop(claim_dict, subgraph: List[Triple], candidate_sentences: List[str]):
     # 5. isolated_nodes candidate docs 2 sentences to sent_context_graph -> new entities
     # 6. ES search sent_context_graph new entity pages -> candidate docs 3
     # 7. BERT filter:  extended context triples VS candidate docs 3 sentences  -> candidate sentence 3
     # 8. aggregate envidence set -> candidate sentences 4
     # extend_evidence_l = []
     # isolated_nodes_copy = copy.deepcopy(isolated_nodes)
-    relative_hash = claim_dict['relative_hash']
+    doc_and_lines = dict()
+    for s in candidate_sentences:
+        doc_id, ln = s.split(c_scorer.SENT_LINE2)
+        if doc_id in doc_and_lines:
+            doc_and_lines[doc_id].append(ln)
+        else:
+            doc_and_lines.update({doc_id: [ln]})
+
+    linked_phrases = [i['text'] for i in claim_dict['linked_phrases_l']]
+    all_phrases = claim_dict['not_linked_phrases_l'] + linked_phrases
+    tri_sentences = []
+    has_relatives = []
+    no_relatives = []
+    for tri in subgraph:
+        if len(tri.sentences) > 0:
+            tri_sentences.append(tri.sentences)
+            has_relatives.extend(tri.relatives)
+    no_relatives = list(set(all_phrases) - set(has_relatives))
+    phrase_to_docs = dict()
+    resource_to_docs = dict()
+
+
+
+
+
+
+
+
+
     for c_s in candidate_sentences:
         sent_context_graph, extend_triples = construct_subgraph_for_candidate(claim_dict, c_s['lines'], c_s['doc_id'])
         if len(extend_triples) < 1:
@@ -358,7 +387,7 @@ def strategy_one_hop(claim_dict, linked_triples, candidate_sentences: List[Sente
             c_s.extend_sentences.append(e_s.sid)
 
     # sort out minimal evidence set, then BERT filter h_links
-    possible_evidence_set = merge_sentences_and_generate_evidence_set(linked_triples, candidate_sentences)
+    possible_evidence_set = merge_sentences_and_generate_evidence_set(subgraph, candidate_sentences)
     # BERT filter: (minimal set + h_link_sentence) VS claim
     no_relatives_found = []
     for i in relative_hash:
@@ -425,17 +454,16 @@ if __name__ == '__main__':
     # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
 
-    graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    entity_data = read_json_rows(folder / "entity_doc.jsonl")
+    # graph_data = read_json_rows(folder / "claim_graph.jsonl")
+    # entity_data = read_json_rows(folder / "entity_doc.jsonl")
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    # prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
-    # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
+    tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
     # eval_tri_ss(hardset_original, tri_ss_data)
-    # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
+    bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
     # c_scorer.get_macro_ss_recall_precision(bert_ss_data, 5)
-    # context_graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    # pass
-    # prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, context_graph_data, folder / "nli_sids.jsonl")
+    context_graph_data = read_json_rows(folder / "claim_graph.jsonl")
+    prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, context_graph_data, folder / "nli_sids.jsonl")
 
 

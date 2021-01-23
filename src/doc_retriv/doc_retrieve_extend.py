@@ -436,10 +436,10 @@ def do_dev_set_with_es_entity():
     # data_with_es = read_json_rows(folder / "es_doc_10.log")
     # data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
-    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     # assert(len(data_with_es_entities) == len(data_with_es))
     # data = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
     #
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
     data_context = read_json_rows(folder / "claim_graph.jsonl")

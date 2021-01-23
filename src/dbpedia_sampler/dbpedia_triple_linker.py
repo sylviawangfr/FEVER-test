@@ -882,10 +882,10 @@ if __name__ == '__main__':
 
     # test()
     # test()
-    embedding1 = bert_similarity.get_phrase_embedding(['network'])
-    embedding2 = bert_similarity.get_phrase_embedding(['concept'])
-    out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
-    print(out)
+    # embedding1 = bert_similarity.get_phrase_embedding(['network'])
+    # embedding2 = bert_similarity.get_phrase_embedding(['concept'])
+    # out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
+    # print(out)
 
     # import spacy
     #
@@ -899,8 +899,8 @@ if __name__ == '__main__':
     #     for token2 in tokens:
     #         print(token1.text, token2.text, token1.similarity(token2))
 
-    text = "Home for the Holidays stars the fourth stepchild of Charlie Chaplin"
-    # link_sent_to_resources2(text)
+    text = "Giada at Home was only available on DVD."
+    link_sent_to_resources2(text)
     # claim = "Roman Atwood is a content creator."
 
     # all_phrases = no_l + [i['text'] for i in l]

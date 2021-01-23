@@ -69,7 +69,7 @@ def get_ents_and_phrases(sentence):
             continue
         if len(list(filter(lambda x: (i in x), entity_and_capitalized))) > 0 and i in nouns:
             for x in entity_and_capitalized:
-                if ' or ' in x or ' and ' in x or ' of ':
+                if ' or ' in x or ' and ' in x or ' of ' in x:
                     splits = split_combinations(x)
                     if i in splits and i not in entity_and_capitalized:
                         entity_and_capitalized.append(i)
@@ -193,7 +193,7 @@ def merge_chunks_with_entities(chunks, ents):
 
 
 if __name__ == '__main__':
-    # print(get_ents_and_phrases("Home for the Holidays stars the fourth stepchild of Charlie Chaplin"))
+    print(get_ents_and_phrases("Giada at Home was only available on DVD."))
     # print(get_ents_and_phrases('The horse has changed in size as it evolved.'))
     # print(get_ents_and_phrases('Camden, New Jersey is a large human settlement.'))
     # print(get_ents_and_phrases('Soyuz was part of a space program.'))

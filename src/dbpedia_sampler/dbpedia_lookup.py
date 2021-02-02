@@ -134,7 +134,7 @@ def combine_lookup(text_phrase):
     if text_phrase.count(' ') < 2:  # short phrase may have disambiguation
         top_ref = lookup_app_matches[0]
         if len(list(filter(lambda x: (x['URI'] == top_ref['URI']), result))) < 1 \
-                and score_bewteen_phrases(text_phrase, top_ref['Label']) > 0.3:
+                and score_bewteen_phrases(text_phrase, top_ref['Label']) > 0.5:
             top_ref['exact_match'] = False
             result.append(top_ref)
     print(f"link_phrase: {text_phrase}, count links: {len(result)}")
@@ -350,7 +350,7 @@ if __name__ == "__main__":
     # lookup_resource_no_filter('Tool')
     # lookup_resource('Western Conference Southwest Division')
     # lookup_resource("the league 's Western Conference Southwest Division")
-    lookup_resource('Jennifer Lopez')
+    lookup_resource('Homeland')
     # lookup_resource('a member club')
     # lookup_resource('The Pelicans')
     # lookup_resource('the National Basketball Association')

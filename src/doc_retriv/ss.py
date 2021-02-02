@@ -363,8 +363,13 @@ def generate_extend_sentences(data_with_graph, data_with_tri_s, data_with_s, out
         sids = get_bert_sids(scored_sentids)
         triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
         claim_dict = data_with_graph[idx]['claim_dict']
-        isolated_nodes = data_with_graph[idx]['isolated_nodes']
-        no_relative_phrase = data_with_graph[idx]['no_relatives']
+        # isolated_nodes = data_with_graph[idx]['isolated_nodes']
+        no_relative_phrase = claim_dict['no_relatives']
+        linked_pharses = {i['text']: i for i in claim_dict['linked_phrases_l']}
+        isolated_nodes = []
+        for i in no_relative_phrase:
+            if i in linked_pharses:
+                isolated_nodes.append(linked_pharses[i])
         # 1. more than one entity is not linked
         if len(isolated_nodes) > 0:
             sid_to_extend_sids, candidate_context_graph, extend_triples_json = strategy_one_hop(claim_dict, triples, sids, bc=bc)

@@ -8,7 +8,7 @@ from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
 from dbpedia_sampler.sentence_util import get_ents_and_phrases, get_phrases_and_nouns_merged
 import difflib
 from utils.text_clean import convert_brc
-from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim
+from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_sentence
 from dbpedia_sampler.dbpedia_virtuoso import get_categories2
 from bert_serving.client import BertClient
 from doc_retriv.SentenceEvidence import *
@@ -111,12 +111,13 @@ def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: 
 
 def prepare_claim_graph_for_example(example, extend_entity_docs=None, bc: BertClient=None):
      claim = convert_brc(normalize(example['claim']))
-     claim_dict = construct_subgraph_for_claim(claim, extend_entity_docs=extend_entity_docs, bc=bc)
+     claim_dict = construct_subgraph_for_sentence(claim, extend_entity_docs=extend_entity_docs, bc=bc)
      claim_dict.pop('embedding')
      example['claim_dict'] = claim_dict
      return example
 
 
+# resource to docs
 def prepare_candidate_doc2(data_original, data_with_claim_dict_l, out_filename: Path, log_filename: Path):
     flush_save = []
     batch = 10
@@ -138,6 +139,7 @@ def prepare_candidate_doc2(data_original, data_with_claim_dict_l, out_filename: 
                 flush_save = []
 
 
+# resource to docs
 def prepare_candidate2_example(example):
     claim_dict = example['claim_dict']
     claim_graph = claim_dict['graph']
@@ -334,7 +336,7 @@ def read_claim_context_graphs(dir):
         if 'claim_links' in i and len(i['claim_links']) > 0:
             cached_graph_d[i['id']] = i['claim_links']
         else:
-            c_d = construct_subgraph_for_claim(i['claim'])
+            c_d = construct_subgraph_for_sentence(i['claim'])
             if 'graph' in c_d:
                 cached_graph_d[i['id']] = c_d['graph']
     return cached_graph_d
@@ -357,7 +359,7 @@ def run_claim_context_graph(data):
     bert_client = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     for i in data:
         claim = i['claim']
-        claim_gragh_dict = construct_subgraph_for_claim(claim, bert_client)
+        claim_gragh_dict = construct_subgraph_for_sentence(claim, bert_client)
         claim_g = claim_gragh_dict['graph']
         print(claim)
         print(json.dumps(claim_g, indent=2))
@@ -381,7 +383,7 @@ def rerun_failed_graph(folder):
     for idx, i in enumerate(data_context):
         if i['id'] in failed_items:
             claim = convert_brc(normalize(i['claim']))
-            claim_dict = construct_subgraph_for_claim(claim, bc)
+            claim_dict = construct_subgraph_for_sentence(claim, bc)
             claim_dict.pop('embedding')
             i['claim_dict'] = claim_dict
             # print(json.dumps(i['claim_dict'].get('linked_phrases_l'), indent=2))
@@ -442,17 +444,17 @@ def do_dev_set_with_es_entity():
     prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
     #
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    data_context = read_json_rows(folder / "claim_graph.jsonl")
+    # data_context = read_json_rows(folder / "claim_graph.jsonl")
     # # data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
     # assert (len(data_original) == len(data_context))
-    prepare_candidate_doc2(original_data, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    # prepare_candidate_doc2(original_data, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
     #
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "entity_doc.jsonl")
-    assert (len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
-    prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl",
-                           folder / "candidate_docs.log")
+    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    # assert (len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
+    # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl",
+    #                        folder / "candidate_docs.log")
 
 
 def do_dev_set():

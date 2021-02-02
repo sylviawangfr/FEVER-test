@@ -8,7 +8,7 @@ from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
 from dbpedia_sampler.sentence_util import get_phrases, get_phrases_and_nouns_merged
 import difflib
 from utils.text_clean import convert_brc
-from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_claim
+from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_sentence
 from dbpedia_sampler.uri_util import isURI
 
 
@@ -121,7 +121,7 @@ def read_claim_context_graphs(dir):
         if 'claim_links' in i and len(i['claim_links']) > 0:
             cached_graph_d[i['id']] = i['claim_links']
         else:
-            c_d = construct_subgraph_for_claim(i['claim'])
+            c_d = construct_subgraph_for_sentence(i['claim'])
             if 'graph' in c_d:
                 cached_graph_d[i['id']] = c_d['graph']
     return cached_graph_d

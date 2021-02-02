@@ -615,15 +615,23 @@ def lookup_or_update_phrase_embedding_hash(keyword, embedding_hash, bc:BertClien
 
 
 def lookup_or_update_all_phrases_embedding_hash(phrases, embedding_hash, bc:BertClient=None):
-    if "all_phrases" in embedding_hash:
-        all_phrase_embedding = embedding_hash['all_phrases']
-    if len(all_phrase_embedding) == 0:
-        all_phrase_embedding = bert_similarity.get_phrase_embedding(phrases, bc)
-        if len(all_phrase_embedding) > 0:
-            embedding_hash['all_phrases'] = all_phrase_embedding
-            for idx, p in enumerate(phrases):
-                if p not in embedding_hash or (p in embedding_hash and len(embedding_hash[p]) == 0):
-                    embedding_hash.update({p: all_phrase_embedding[idx]})
+    no_embeding_phrases = []
+    for i in phrases:
+        if i not in embedding_hash or len(embedding_hash[i]) == 0:
+            no_embeding_phrases.append(i)
+    if len(no_embeding_phrases) > 0:
+        retrieve_embeddings = bert_similarity.get_phrase_embedding(no_embeding_phrases, bc)
+        if len(retrieve_embeddings) == 0:
+            return []
+        for idx, ph_to_retrieve in enumerate(no_embeding_phrases):
+            embedding_hash.update({ph_to_retrieve: retrieve_embeddings[idx]})
+
+    all_phrase_embedding = []
+    for ph in phrases:
+        if ph in embedding_hash:
+            all_phrase_embedding.append(embedding_hash[ph])
+        else:
+            return []
     return all_phrase_embedding
 
 
@@ -654,6 +662,33 @@ def lookup_or_update_keyword_embedding_hash(linked_resource, embedding_hash, bc:
         embedding_hash[linked_resource['URI']]['keyword1'] = keyword_vec1
         embedding_hash[linked_resource['URI']]['keyword2'] = keyword_vec2
     return keyword_vec1, keyword_vec2
+
+
+def filter_resource_vs_keyword2(one_text_resources, to_compare_resource_list):
+    result = []
+    resource1 = one_text_resources
+    for res1 in resource1['links']:
+        re1_uri = res1['URI']
+        for resource2 in to_compare_resource_list:
+            if resource1['text'] == resource2['text']:
+                continue
+            resource2_l = resource2['links']
+            for re2 in resource2_l:
+                re2_uri = re2['URI']
+                if re1_uri == re2_uri:
+                    continue
+                candidates = get_one_hop(re2)
+                for item in candidates:
+                    if re1_uri in [item['subject'], item['relation'], item['object']]:
+                        # uri_matched = True
+                        if not does_tri_exit_in_list(item, result):  # perfectly linked uri
+                            item['relatives'] = [re2['text'], resource1['text']]
+                            item['text'] = re2['text']
+                            item['URI'] = re2['URI']
+                            item['score'] = float(1)
+                            item['exact_match'] = resource1['exact_match'] | re2['exact_match']
+                            result.append(item)
+    return result
 
 
 # @profile
@@ -708,9 +743,9 @@ def filter_resource_vs_keyword(linked_phrases_l):
     return result
 
 
-def filter_keyword_vs_keyword(isolated_nodes, linked_phrases_l, keyword_embeddings, fuzzy_match=False, bc:BertClient=None):
+def filter_keyword_vs_keyword(linked_phrases_l1, linked_phrases_l2, keyword_embeddings, fuzzy_match=False, bc:BertClient=None):
     result = []
-    for i in itertools.product(isolated_nodes, linked_phrases_l):
+    for i in itertools.product(linked_phrases_l1, linked_phrases_l2):
         resource1 = i[0]
         resource2 = i[1]
 

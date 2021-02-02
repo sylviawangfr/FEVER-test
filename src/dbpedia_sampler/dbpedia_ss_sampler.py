@@ -85,7 +85,7 @@ def get_tfidf_sample(paras: bert_para.PipelineParas):
         all_sent_list = ss_sampler.convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
                                                   id_tokenized=True)
 
-        claim_dict = dbpedia_subgraph.construct_subgraph_for_claim(convert_brc(item['claim']), bc=paras.bert_client)
+        claim_dict = dbpedia_subgraph.construct_subgraph_for_sentence(convert_brc(item['claim']), bc=paras.bert_client)
         example_l = []
         for i, sent_item in enumerate(all_sent_list):
             sent_item['selection_id'] = str(item['id']) + "<##>" + str(sent_item['sid'])
@@ -147,7 +147,7 @@ def get_full_list_from_upstream_ss(paras: bert_para.PipelineParas):
 
         all_sent_list = ss_sampler.convert_to_formatted_sent(zipped_s_id_list, None, contain_head=True,
                                                              id_tokenized=True)
-        claim_dict = dbpedia_subgraph.construct_subgraph_for_claim(convert_brc(item['claim']), bc=paras.bert_client)
+        claim_dict = dbpedia_subgraph.construct_subgraph_for_sentence(convert_brc(item['claim']), bc=paras.bert_client)
         example_l = []
         for i, sent_item in enumerate(all_sent_list):
             sent_item['selection_id'] = str(item['id']) + "<##>" + str(sent_item['sid'])

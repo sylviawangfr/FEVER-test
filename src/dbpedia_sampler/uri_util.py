@@ -13,6 +13,13 @@ def uri_short_extract(uri):
     one_phrase = ' '.join(p for p in phrases)
     return one_phrase
 
+
+def uri_short_extract2(uri):
+    lastword = uri.split('/')[-1]
+    lastword = lastword.split('#')[-1]
+    return lastword
+
+
 def wildcase_split(text):
     p_l = re.findall(r'(?:\d+\.\d+)|(?:\d+)|(?:[a-zA-Z]+)', text)
     return list(filter(None, p_l))

@@ -28,8 +28,17 @@ def fill_relative_hash(relative_hash, graph):
 
 
 # @profile
-def construct_subgraph_for_claim(claim_text, extend_entity_docs=None, bc:BertClient=None):
-    not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text, extend_entity_docs=extend_entity_docs, doc_title='')
+def construct_subgraph_for_sentence(claim_text, extend_entity_docs=None, doc_title='',  bc:BertClient=None):
+    not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(claim_text,
+                                                                                 extend_entity_docs=extend_entity_docs,
+                                                                                 doc_title=doc_title)
+    if doc_title != "":
+        for i in linked_phrases_l:
+            if i.text == doc_title:
+                doc_title_linked = dbpedia_triple_linker.lookup_doc_id(doc_title, [doc_title])
+                if len(doc_title_linked) > 0 and len(doc_title_linked['links']) > 0:
+                    i['links'] = doc_title_linked['links']
+
     linked_phrases = [i['text'] for i in linked_phrases_l]
     all_phrases = not_linked_phrases_l + linked_phrases
     relative_hash = {key: [] for key in all_phrases}
@@ -71,21 +80,21 @@ def construct_subgraph_for_claim(claim_text, extend_entity_docs=None, bc:BertCli
         if len(relative_hash[i]) == 0:
             no_relatives_found.append(i)
 
+    isolated_nodes = []
     for i in no_relatives_found:
-    #     if len(t['categories']) < 1 or len(t['categories']) > 20:
         if i in lookup_hash:
-            possible_links = lookup_hash[i]['links']
-            for t in possible_links:
-                if not dbpedia_triple_linker.does_node_exit_in_list(t['URI'], merged_result):
-                    single_node = dict()
-                    single_node['subject'] = t['URI']
-                    single_node['object'] = ''
-                    single_node['relation'] = ''
-                    single_node['keywords'] = t['text']
-                    single_node['relatives'] = []
-                    single_node['text'] = t['text']
-                    single_node['exact_match'] = t['exact_match']
-                    merged_result.append(single_node)
+            isolated_nodes.append(lookup_hash[i])
+            # possible_links = lookup_hash[i]['links']
+            # for t in possible_links:
+            #     if not dbpedia_triple_linker.does_node_exit_in_list(t['URI'], merged_result):
+            #         single_node = dict()
+            #         single_node['subject'] = t['URI']
+            #         single_node['object'] = ''
+            #         single_node['relation'] = ''
+            #         single_node['keywords'] = t['text']
+            #         single_node['relatives'] = []
+            #         single_node['text'] = t['text']
+            #         single_node['exact_match'] = t['exact_match']
             # continue
 
         # for i in t['categories']:
@@ -100,6 +109,7 @@ def construct_subgraph_for_claim(claim_text, extend_entity_docs=None, bc:BertCli
     claim_d['embedding'] = embeddings_hash
     claim_d['lookup_hash'] = lookup_hash
     claim_d['no_relatives'] = no_relatives_found
+    claim_d['isolated_nodes'] = isolated_nodes
     claim_d['relative_hash'] = relative_hash
     return claim_d
 
@@ -179,6 +189,49 @@ def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title='', b
     return sent_graph, extend_triples
 
 
+def construct_subgraph_for_candidate2(candidate_sent, doc_title='', additional_phrase=[], additional_resources=[], bc:BertClient=None):
+    # sentence graph
+    graph_dict = construct_subgraph_for_sentence(candidate_sent, doc_title=doc_title, bc=bc)
+    triples_extended_one_hop = extend_graph(graph_dict, additional_phrase, additional_resources, bc=bc)
+    graph = graph_dict['graph']
+    extend_triples = []
+    for i in triples_extended_one_hop:
+        if not dbpedia_triple_linker.does_tri_exit_in_list(i, extend_triples):
+            extend_triples.append(i)
+    return graph, extend_triples
+
+
+def extend_graph(graph_dict, additional_resources=[], additional_linked_phrases=[], bc:BertClient=None):
+    embedding_hash = graph_dict['embedding']
+    linked_phrase_l = graph_dict['linked_phrases_l']
+    extend_result = []
+    # 1. additional resource VS graph resource one_hop
+    all_tmp_result = []
+    all_linked_phrases = [i['text'] for i in linked_phrase_l]
+    filtered_additional_phrases = [i for i in additional_linked_phrases if i not in all_linked_phrases]
+    for a_res in additional_resources:
+        tmp_result = dbpedia_triple_linker.filter_resource_vs_keyword2(a_res, linked_phrase_l)
+        if len(tmp_result) > 0:
+            all_tmp_result.extend(tmp_result)
+
+    tmp_result = dbpedia_triple_linker.filter_text_vs_one_hop(filtered_additional_phrases, linked_phrase_l, embedding_hash, bc=bc)
+    if len(tmp_result) > 0:
+        all_tmp_result.extend(tmp_result)
+    # 2. additional resource one_hop VS graph resource
+    graph_linked_phs = [i['text'] for i in linked_phrase_l]
+    tmp_result = dbpedia_triple_linker.filter_text_vs_one_hop(graph_linked_phs, filtered_additional_phrases, embedding_hash, bc=bc)
+    if len(tmp_result) > 0:
+        all_tmp_result.extend(tmp_result)
+    # 3. additional resource one_hop VS graph resouce one_hop
+    tmp_result = dbpedia_triple_linker.filter_keyword_vs_keyword(linked_phrase_l, filtered_additional_phrases, fuzzy_match=False)
+    if len(tmp_result) > 0:
+        all_tmp_result.extend(tmp_result)
+    for tr in all_tmp_result:
+        if not dbpedia_triple_linker.does_tri_exit_in_list(tr, extend_result):
+            extend_result.append(tr)
+    return extend_result
+
+
 def get_isolated_nodes(claim_dict):
     claim_graph = claim_dict['graph']
     claim_linked_phrases_l = claim_dict['linked_phrases_l']
@@ -249,7 +302,7 @@ def test_claim():
          "to a select few establishments ."
 
     for i in range(5):
-        t = construct_subgraph_for_claim(cc1)
+        t = construct_subgraph_for_sentence(cc1)
         s = construct_subgraph_for_candidate(t, s9, "")
         del s
         del t
@@ -275,6 +328,6 @@ if __name__ == '__main__':
     # ss1 = "Cheese in the Trap (TV series) only stars animals."
     # ss1 = "Michelle Obama's husband was born in Kenya"
     text = "Home for the Holidays stars the fourth stepchild of Charlie Chaplin"
-    claim_dict = construct_subgraph_for_claim(text)
+    claim_dict = construct_subgraph_for_sentence(text)
     # print(construct_subgraph_for_candidate(claim_dict, ss2, doc_title=''))
     # test_claim()

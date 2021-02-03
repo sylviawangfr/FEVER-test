@@ -3,6 +3,8 @@ from pytorch_pretrained_bert.modeling import BertForSequenceClassification
 from pytorch_pretrained_bert.tokenization import BertTokenizer
 import config
 from utils.fever_db import *
+from bert_serving.client import BertClient
+
 
 class Singleton(object):
     def __init__(self, cls):
@@ -43,7 +45,7 @@ class BERTSSModel(object):
 @Singleton
 class FeverDBResource(object):
     def __init__(self):
-        self.cursor, self.conn = fever_db.get_cursor()
+        self.cursor, self.conn = get_cursor()
 
     def get_cursor(self):
         return self.cursor
@@ -51,5 +53,17 @@ class FeverDBResource(object):
     def __del__(self):
         self.cursor.close()
         self.conn.close()
+
+
+@Singleton
+class BERTClientResource(object):
+    def __init__(self):
+        self.bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+
+    def get_client(self):
+        return self.bc
+
+    def __del__(self):
+        self.bc.close()
 
 

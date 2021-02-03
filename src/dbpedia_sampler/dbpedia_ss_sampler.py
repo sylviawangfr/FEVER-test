@@ -98,7 +98,19 @@ def get_tfidf_sample(paras: bert_para.PipelineParas):
                 sentence = sentence.replace(f"{doc_title} - ", "")
             sent_item['graph'] = dbpedia_subgraph.construct_subgraph_for_candidate(claim_dict, sentence, doc_title, bc=paras.bert_client)
             example_l.append(sent_item)
-
+        claim_iso_nodes = dbpedia_subgraph.get_isolated_nodes(claim_dict['no_relatives'], claim_dict['linked_phrases_l'])
+        if len(claim_iso_nodes) > 0:
+            for i_node in claim_iso_nodes:
+                for t in i_node['links']:
+                    single_node = dict()
+                    single_node['subject'] = t['URI']
+                    single_node['object'] = ''
+                    single_node['relation'] = ''
+                    single_node['keywords'] = t['text']
+                    single_node['relatives'] = []
+                    single_node['text'] = t['text']
+                    single_node['exact_match'] = t['exact_match']
+                    claim_dict['graph'].append(single_node)
         one_full_example['claim_links'] = claim_dict['graph']
         one_full_example['examples'] = example_l
         dbpedia_examples_l.append(one_full_example)

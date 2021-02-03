@@ -276,6 +276,9 @@ def search_entity_docs(resources):
 
 
 def search_entity_docs_for_triples(triples: List[Triple]):
+    if len(triples) == 0:
+        return []
+
     docs = dict()
     all_resources = dict()
     for tri in triples:

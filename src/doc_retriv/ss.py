@@ -1,6 +1,6 @@
 from ES.es_search import  search_doc_id_and_keywords_in_sentences
 # from utils.c_scorer import *
-from utils.fever_db import *
+from utils.fever_db import get_evidence
 # from dbpedia_sampler.sentence_util import get_phrases_and_nouns_merged
 from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_candidate2
 
@@ -13,6 +13,7 @@ from BERT_test.ss_eval import *
 from doc_retriv.doc_retrieve_extend import search_entity_docs_for_triples
 from bert_serving.client import BertClient
 from dbpedia_sampler.uri_util import uri_short_extract2, isURI
+from utils.resource_manager import *
 
 
 def filter_bert_claim_vs_sents(claim, docs):
@@ -375,6 +376,11 @@ def generate_extend_sentences(data_with_graph, data_with_tri_s, data_with_s, out
             sid_to_extend_sids, candidate_context_graph, extend_triples_json = strategy_one_hop(claim_dict, triples, sids, bc=bc)
 
 
+def get_text_and_hlinks(doc_id, ln):
+    feverDB = FeverDBResource()
+    _, text, hlinks = get_evidence(feverDB.get_cursor(), doc_id, ln)
+    return text, list(set(hlinks))
+
 
 # candidate_sentences: list of sids
 def strategy_one_hop(claim_dict, subgraph: List[Triple], candidate_sentences: List[str], bc:BertClient=None):
@@ -431,18 +437,19 @@ def strategy_one_hop(claim_dict, subgraph: List[Triple], candidate_sentences: Li
     # isolated_entities = find_isolated_entity(claim_graph, claim_dict)
     # isolated_entity_phs = [ent['text'] for ent in isolated_entities]
     # candidate_sentences_sids = filter_sentences_for_subgraph(claim_dict)
-    claim_linked_phrases_l = claim_dict["linked_phrase_l"]
+    claim_linked_phrases_l = claim_dict["linked_phrases_l"]
     claim_linked_phs = [i['text'] for i in claim_linked_phrases_l]
     claim_linked_resources = []
-    for t in subgraph:
-        claim_linked_resources.append(t.subject)
-        if t.object != "" and isURI(t.object):
-            claim_linked_resources.append(t.object)
-    claim_linked_resources = list(set(claim_linked_resources))
+    # for t in subgraph:
+    #     claim_linked_resources.append(t.subject)
+    #     if t.object != "" and isURI(t.object):
+    #         claim_linked_resources.append(t.object)
+    # claim_linked_resources = list(set(claim_linked_resources))
+    claim_linked_resources = claim_linked_phrases_l
     for candidate_sent_sid in candidate_sentences:
         # extend_triples is in json format
-        candidate_sent_text = ""
-        doc_title, _ = candidate_sent_sid.split(c_scorer.SENT_LINE2)[0], int(candidate_sent_sid.split(c_scorer.SENT_LINE2)[1])
+        doc_title, ln = candidate_sent_sid.split(c_scorer.SENT_LINE2)[0], int(candidate_sent_sid.split(c_scorer.SENT_LINE2)[1])
+        candidate_sent_text, hlinks = get_text_and_hlinks(doc_title, ln)
         candidate_context_graph, extend_triples_json = construct_subgraph_for_candidate2(candidate_sent_text,
                                                                                     doc_title=doc_title,
                                                                                     additional_phrase=claim_linked_phs,

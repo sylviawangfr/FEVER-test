@@ -22,8 +22,8 @@ def get_phrases(sentence, doc_title=''):
     else:
         sent = sentence
     entity_and_capitalized, nouns = get_ents_and_phrases(sent)
-    if not doc_title == '':
-        entity_and_capitalized = list(set(entity_and_capitalized) | {doc_title})
+    # if not doc_title == '':
+    #     entity_and_capitalized = list(set(entity_and_capitalized) | {doc_title})
     return entity_and_capitalized, nouns
 
 

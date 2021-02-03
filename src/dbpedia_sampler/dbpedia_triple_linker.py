@@ -169,8 +169,14 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
     linked_phrases_l = []
     not_linked_phrases_l = []
     phrases = entities + chunks
+    clean_doc_title = convert_brc(doc_title).replace('_', ' ')
+    doc_title_linked = lookup_doc_id(clean_doc_title, [doc_title])
+    if len(doc_title_linked) > 0 and len(doc_title_linked['links']) > 0:
+        linked_phrases_l.append(doc_title_linked)
 
     for p in phrases:
+        if doc_title != '' and p == clean_doc_title:
+            continue
         if text_clean.is_date_or_number(p):
             not_linked_phrases_l.append(p)
             continue
@@ -670,7 +676,7 @@ def filter_resource_vs_keyword2(one_text_resources, to_compare_resource_list):
     for res1 in resource1['links']:
         re1_uri = res1['URI']
         for resource2 in to_compare_resource_list:
-            if resource1['text'] == resource2['text']:
+            if resource1['text'] in resource2['text'] or resource2['text'] in resource1['text']:
                 continue
             resource2_l = resource2['links']
             for re2 in resource2_l:
@@ -686,7 +692,7 @@ def filter_resource_vs_keyword2(one_text_resources, to_compare_resource_list):
                             item['text'] = re2['text']
                             item['URI'] = re2['URI']
                             item['score'] = float(1)
-                            item['exact_match'] = resource1['exact_match'] | re2['exact_match']
+                            item['exact_match'] = res1['exact_match'] | re2['exact_match']
                             result.append(item)
     return result
 

@@ -205,7 +205,7 @@ def get_outbounds2(resource_uri):
         f" <{resource_uri}> ?relation ?object . " \
         "filter (regex(?relation, " \
         "'^(?!.*?(wiki|comment|label|sameAs|exactMatch|abstract|align|image|photo|wasDerivedFrom|isPrimaryTopicOf|property/[0-9]+)).*$'))" \
-        "filter (regex(?object, '^(?!.*?(wikidata)).*$')) " \
+        "filter (!contains(str(?object), \'wikidata\')) " \
         "} LIMIT 500"
     tris = get_triples(query_str)
     to_delete = []

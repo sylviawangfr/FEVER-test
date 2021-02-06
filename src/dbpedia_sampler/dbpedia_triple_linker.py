@@ -102,7 +102,6 @@ def link_sentence(sentence, extend_entity_docs=None, doc_title='', lookup_hash=N
     else:
         not_linked_phrases_l, linked_phrases_l = link_sent_to_resources2(sentence,
                                                                          extend_entity_docs=extend_entity_docs,
-                                                                         doc_title=doc_title,
                                                                          lookup_hash=lookup_hash)
     add_outbounds(linked_phrases_l)
     return not_linked_phrases_l, linked_phrases_l
@@ -144,7 +143,7 @@ def link_sent_to_resources1(sentence, doc_title='', lookup_hash=None):
     return not_linked_phrases_l, linked_phrases_l
 
 
-def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', lookup_hash=None):
+def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None):
     def merge_links(linked_p, es_linked_p):
         if len(es_linked_p) == 0:
             return linked_p
@@ -159,18 +158,12 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, doc_title='', loo
         return linked_p
 
     sentence = text_clean.convert_brc(sentence)
-    entities, chunks = get_phrases(sentence, doc_title)
+    entities, chunks = get_phrases(sentence, '')
     linked_phrases_l = []
     not_linked_phrases_l = []
     phrases = entities + chunks
-    clean_doc_title = convert_brc(doc_title).replace('_', ' ')
-    doc_title_linked = lookup_doc_id(clean_doc_title, [doc_title])
-    if len(doc_title_linked) > 0 and len(doc_title_linked['links']) > 0:
-        linked_phrases_l.append(doc_title_linked)
 
     for p in phrases:
-        if doc_title != '' and p == clean_doc_title:
-            continue
         if text_clean.is_date_or_number(p):
             not_linked_phrases_l.append(p)
             continue

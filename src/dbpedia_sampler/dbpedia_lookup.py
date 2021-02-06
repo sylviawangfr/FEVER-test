@@ -9,7 +9,7 @@ import config
 import log_util
 from dbpedia_sampler.uri_util import uri_short_extract
 from utils.file_loader import read_json_rows
-from utils.tokenizer_simple import split_claim_regex
+from utils.tokenizer_simple import split_claim_regex, get_lemma
 from utils.resource_manager import CountryNationality
 from memory_profiler import profile
 import time
@@ -89,16 +89,21 @@ def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
 
 
 def lookup_label_exact_match(text_phrase):
-    lookup_app_matches_label = lookup_resource_app_label(text_phrase)
-    lookup_app_matches_query = lookup_resource_app_query(text_phrase)
-    lookup_app_matches = []
-    merge_resources(lookup_app_matches, lookup_app_matches_label)
-    merge_resources(lookup_app_matches, lookup_app_matches_query)
-    lookup_rec = get_exact_match(text_phrase, lookup_app_matches)
-    if len(lookup_rec) < 1:
+    def lookup_exact(text):
+        lookup_app_matches_label = lookup_resource_app_label(text)
+        lookup_app_matches_query = lookup_resource_app_query(text)
+        lookup_app_matches = []
+        merge_resources(lookup_app_matches, lookup_app_matches_label)
+        merge_resources(lookup_app_matches, lookup_app_matches_query)
+        lookup_rec = get_exact_match(text, lookup_app_matches)
+        return lookup_rec
+    result = lookup_exact(text_phrase)
+    if len(result) < 1 and ' ' not in text_phrase and text_phrase not in get_lemma(text_phrase):
+        result = lookup_exact(' '.join(get_lemma(text_phrase)))
+    if len(result) < 1:
         return []
     else:
-        unwrapped_rec = [unwrap_record(i) for i in lookup_rec]
+        unwrapped_rec = [unwrap_record(i) for i in result]
         return unwrapped_rec
 
 # @profile

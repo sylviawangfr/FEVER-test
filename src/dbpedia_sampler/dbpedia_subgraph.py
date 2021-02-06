@@ -264,7 +264,8 @@ if __name__ == '__main__':
     # s9 = 'Tap Tap was a series of rhythm games by Tapulous available for the iOS of which several versions , both purchasable and free , have been produced .'
     # s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
     # s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
-    ss1 = "Giada at Home was only available on DVD ."
+    # ss1 = "Giada at Home was only available on DVD ."
+    ss1= "George Lucas has three cars"
     # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
     # ss1 = "Cheese in the Trap (TV series) only stars animals."
     # ss1 = "Michelle Obama's husband was born in Kenya"

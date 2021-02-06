@@ -240,7 +240,10 @@ def merge_es_and_entity_docs(r_es, r_ents):
 
 def merge_entity_and_triple_docs(entity_docs, triple_docs):
     merged_dict = entity_docs
-    all_tri_docs = [d for docs in triple_docs.values() for d in docs]
+    if len(triple_docs) == 0:
+        all_tri_docs = []
+    else:
+        all_tri_docs = [d for docs in triple_docs.values() for d in docs]
     all_tri_doc_ids = dict()
     for d in all_tri_docs:
         if d['id'] not in all_tri_doc_ids:
@@ -434,15 +437,15 @@ def do_testset_graph2(folder):
 def do_dev_set_with_es_entity():
     folder = config.RESULT_PATH / "hardset2021"
     original_data = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    data_with_es = prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    # data_with_es = prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
     # data_with_es = read_json_rows(folder / "es_doc_10.log")
-    data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    # data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
     # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
-    assert(len(data_with_es_entities) == len(data_with_es))
+    # assert(len(data_with_es_entities) == len(data_with_es))
     # data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    # prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
     #
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
     data_context = read_json_rows(folder / "claim_graph.jsonl")

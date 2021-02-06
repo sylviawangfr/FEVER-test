@@ -28,10 +28,10 @@ def fill_relative_hash(relative_hash, graph):
 
 
 # @profile
-def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None, doc_title='', bc:BertClient=None):
+def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None, doc_title='', lookup_hash=None, embedding_hash=None):
     not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(sentence_text,
                                                                                  extend_entity_docs=extend_entity_docs,
-                                                                                 doc_title=doc_title)
+                                                                                 doc_title=doc_title, lookup_hash=lookup_hash)
 
     linked_phrases = [i['text'] for i in linked_phrases_l]
     all_phrases = not_linked_phrases_l + linked_phrases
@@ -42,24 +42,29 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None, doc_
         for u in uris:
             if u['URI'] not in all_uris:
                 all_uris.update({u['URI']: u})
-    embeddings_hash = {key: {'one_hop': [], 'keyword1': [], 'keyword2': []} for key in all_uris}
-    embeddings_hash.update({p: [] for p in all_phrases})
-    embeddings_hash.update({'all_phrases': []})
+    if embedding_hash is None:
+        embeddings_hash = {key: {'one_hop': [], 'keyword1': [], 'keyword2': []} for key in all_uris}
+        embeddings_hash.update({p: [] for p in all_phrases})
+    else:
+        for key in all_uris:
+            if key not in embedding_hash:
+                embedding_hash.update({key: {'one_hop': [], 'keyword1': [], 'keyword2': []}})
+        for p in all_phrases:
+            if p not in embedding_hash:
+                embedding_hash.update({p: []})
     lookup_hash = dict()
     for i in linked_phrases_l:
         lookup_hash[i['text']] = i
 
     verb_d = get_dependent_verb(sentence_text, all_phrases)
-    r0 = dbpedia_triple_linker.filter_text_vs_one_hop(all_phrases, linked_phrases_l, embeddings_hash, bc=bc)
+    r0 = dbpedia_triple_linker.filter_text_vs_one_hop(all_phrases, linked_phrases_l, embeddings_hash)
     r1 = dbpedia_triple_linker.filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d)
     r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l)
-    r3 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embeddings_hash, bc=bc)
-    merged_result = []
-    for i in r0 + r1 + r2 + r3:
-        if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
-            merged_result.append(i)
+    r3 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embeddings_hash)
+    tmp_result = r0 + r1 + r2 + r3
+    sent_graph = dbpedia_triple_linker.remove_duplicate_triples(tmp_result)
     # only keyword-match on those no exact match triples
-    fill_relative_hash(relative_hash, merged_result)
+    fill_relative_hash(relative_hash, sent_graph)
     # isolated_node = []
     # for i in relative_hash:
     #     if len(relative_hash[i]) == 0 and i in lookup_hash:
@@ -106,12 +111,12 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None, doc_
     claim_d = dict()
     claim_d['linked_phrases_l'] = linked_phrases_l
     claim_d['not_linked_phrases_l'] = not_linked_phrases_l
-    claim_d['graph'] = merged_result
+    claim_d['graph'] = sent_graph
     claim_d['embedding'] = embeddings_hash
-    claim_d['lookup_hash'] = lookup_hash
+    # claim_d['lookup_hash'] = lookup_hash
     claim_d['no_relatives'] = no_relatives_found
     # claim_d['isolated_nodes'] = isolated_nodes
-    claim_d['relative_hash'] = relative_hash
+    # claim_d['relative_hash'] = relative_hash
     return claim_d
 
 
@@ -124,121 +129,63 @@ def get_isolated_nodes(no_relative_phrases, linked_phrases_l):
     return isolated_nodes
 
 
-# @profile
-def construct_subgraph_for_candidate(claim_dict, candidate_sent, doc_title='', bc:BertClient=None):
-    claim_linked_phrases_l = claim_dict['linked_phrases_l']
-    claim_graph = claim_dict['graph']
-    embeddings_hash = claim_dict['embedding']
-
-    # sentence graph
-    not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(candidate_sent,
-                                                                                 doc_title=doc_title,
-                                                                                 lookup_hash=claim_dict['lookup_hash'])
-
-    sent_linked_phrases = [i['text'] for i in linked_phrases_l]
-    all_phrases = not_linked_phrases_l + sent_linked_phrases
-    relative_hash = {key: set() for key in sent_linked_phrases}
-    all_uris_dict = dict()
-    for i in linked_phrases_l:
-        uris = i['links']
-        for u in uris:
-            if u['URI'] not in all_uris_dict:
-                all_uris_dict.update({u['URI']: u})
-
-    claim_all_uris = dict()
+@profile
+def construct_subgraph_for_candidate(claim_dict_with_embedding, candidate_sent, doc_title=''):
+    claim_linked_phrases_l = claim_dict_with_embedding['linked_phrases_l']
+    embedding_hash = claim_dict_with_embedding['embedding']
+    lookup_hash = dict()
     for i in claim_linked_phrases_l:
-        claim_uris = i['links']
-        for u in claim_uris:
-            if u['URI'] not in claim_all_uris:
-                claim_all_uris.update({u['URI']: u})
+        lookup_hash[i['text']] = i
 
-    for i in all_uris_dict.keys():
-        if i not in embeddings_hash:
-            embeddings_hash.update({i: {'one_hop': []}})
-    for p in all_phrases:
-        if p not in embeddings_hash:
-            embeddings_hash.update({p: []})
-    embeddings_hash.update({'not_linked_phrases_l': [], 'linked_phrases_l': []})
-    for i in linked_phrases_l:
-        if not i['text'] in claim_dict['lookup_hash']:
-            claim_dict['lookup_hash'][i['text']] = i
-
-    verb_d = get_dependent_verb(candidate_sent, all_phrases)
-    sent_graph = []
-    r0 = dbpedia_triple_linker.filter_text_vs_one_hop(all_phrases, linked_phrases_l, embeddings_hash, bc=bc)
-    r1 = dbpedia_triple_linker.filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d)
-    r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l)
-    r3 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embeddings_hash, bc=bc)
-    # only keyword-match on those no exact match triples
-
-    for i in r0 + r1 + r2 + r3:
-        if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
-            sent_graph.append(i)
-    fill_relative_hash(relative_hash, sent_graph)
-    no_relatives_found = []
-    for i in relative_hash:
-        if len(relative_hash[i]) == 0 and i in claim_dict['lookup_hash']:
-            no_relatives_found.append(claim_dict['lookup_hash'][i])
-
-    # r3 = dbpedia_triple_linker.filter_keyword_vs_keyword(no_relatives_found, embeddings_hash, fuzzy_match=False, bc=bc)
-    # for i in r3:
-    #     if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
-    #         sent_graph.append(i)
-    # fill_relative_hash(relative_hash, r3)
-    claim_isolated_nodes = get_isolated_nodes(claim_dict['no_relatives'], claim_dict['linked_phrases_l'])
-    # for tri in claim_graph:
-    #     if tri['relation'] == "" and tri['object'] == "":
-    #         claim_isolated_nodes.append(claim_all_uris[tri['subject']])
-    sent_extended_one_hop = extend_connection_between_claim_and_sent(claim_isolated_nodes, sent_graph, linked_phrases_l, embeddings_hash, bc=bc)
-    extend_triples = []
-    for i in sent_extended_one_hop:
-        if not dbpedia_triple_linker.does_tri_exit_in_list(i, sent_graph):
-            sent_graph.append(i)
-            extend_triples.append(i)
-
-    return sent_graph, extend_triples
-
-
-def construct_subgraph_for_candidate2(candidate_sent, doc_title='', additional_phrase=[], additional_resources=[], bc:BertClient=None):
-    # sentence graph
-    graph_dict = construct_subgraph_for_sentence(candidate_sent, doc_title=doc_title, bc=bc)
-    triples_extended_one_hop = extend_graph(graph_dict, additional_resources, additional_phrase, bc=bc)
+    graph_dict = construct_subgraph_for_sentence(candidate_sent, doc_title=doc_title, lookup_hash=lookup_hash, embedding_hash=embedding_hash)
+    claim_linked_resources = claim_dict["linked_phrases_l"]
+    claim_linked_phs = [i['text'] for i in claim_linked_resources]
+    triples_extended_one_hop = extend_graph(graph_dict, claim_linked_resources, claim_linked_phs)
     graph = graph_dict['graph']
-    extend_triples = []
-    for i in triples_extended_one_hop:
-        if not dbpedia_triple_linker.does_tri_exit_in_list(i, extend_triples):
-            extend_triples.append(i)
-    return graph, extend_triples
+    return graph, triples_extended_one_hop
 
 
-def extend_graph(graph_dict, additional_resources=[], additional_linked_phrases=[], bc:BertClient=None):
+def construct_subgraph_for_candidate2(candidate_sent, doc_title='', additional_phrase=[], additional_resources=[]):
+    # sentence graph
+    additional_linked_phrases_l = additional_resources
+    lookup_hash = dict()
+    for i in additional_linked_phrases_l:
+        lookup_hash[i['text']] = i
+    graph_dict = construct_subgraph_for_sentence(candidate_sent, doc_title=doc_title, lookup_hash=lookup_hash)
+    triples_extended_one_hop = extend_graph(graph_dict, additional_resources, additional_phrase)
+    graph = graph_dict['graph']
+    return graph, triples_extended_one_hop
+
+
+def extend_graph(graph_dict, additional_resources=[], additional_phrases=[]):
     embedding_hash = graph_dict['embedding']
     linked_phrase_l = graph_dict['linked_phrases_l']
-    extend_result = []
     # 1. additional resource VS graph resource one_hop
     all_tmp_result = []
     all_linked_phrases = [i['text'] for i in linked_phrase_l]
-    filtered_additional_phrases = [i for i in additional_linked_phrases if i not in all_linked_phrases]
-    for a_res in additional_resources:
+    filtered_additional_phrases = [i for i in additional_phrases if i not in all_linked_phrases]
+    filtered_additional_resources = [i for i in additional_resources if i['text'] not in all_linked_phrases]
+    for a_res in filtered_additional_resources:
         tmp_result = dbpedia_triple_linker.filter_resource_vs_keyword2(a_res, linked_phrase_l)
         if len(tmp_result) > 0:
             all_tmp_result.extend(tmp_result)
-
-    tmp_result = dbpedia_triple_linker.filter_text_vs_one_hop(filtered_additional_phrases, linked_phrase_l, embedding_hash, bc=bc)
+    to_compare_linked_phrases_l = [i for i in linked_phrase_l if i['text'] not in additional_phrases]
+    tmp_result = dbpedia_triple_linker.filter_text_vs_one_hop(filtered_additional_phrases, to_compare_linked_phrases_l, embedding_hash, threshold=0.6)
     if len(tmp_result) > 0:
+        tmp_result = dbpedia_triple_linker.filter_triples(tmp_result, top_k=4)
         all_tmp_result.extend(tmp_result)
-    # 2. additional resource one_hop VS graph resource
-    graph_linked_phs = [i['text'] for i in linked_phrase_l]
-    tmp_result = dbpedia_triple_linker.filter_text_vs_one_hop(graph_linked_phs, filtered_additional_phrases, embedding_hash, bc=bc)
-    if len(tmp_result) > 0:
-        all_tmp_result.extend(tmp_result)
+    # # 2. additional resource one_hop VS graph resource
+    # graph_linked_phs = [i['text'] for i in linked_phrase_l if i['text'] not in additional_phrases]
+    # filtered_additional_resources = [i for i in additional_resources if i['text'] not in all_linked_phrases]
+    # tmp_result = dbpedia_triple_linker.filter_text_vs_one_hop(graph_linked_phs, filtered_additional_resources, embedding_hash, threshold=0.645)
+    # if len(tmp_result) > 0:
+    #     all_tmp_result.extend(tmp_result)
     # 3. additional resource one_hop VS graph resouce one_hop
-    tmp_result = dbpedia_triple_linker.filter_keyword_vs_keyword(linked_phrase_l, filtered_additional_phrases, fuzzy_match=False)
+    tmp_result = dbpedia_triple_linker.filter_keyword_vs_keyword(to_compare_linked_phrases_l, filtered_additional_resources, embedding_hash, fuzzy_match=False)
     if len(tmp_result) > 0:
+        tmp_result = dbpedia_triple_linker.filter_triples(tmp_result, top_k=4)
         all_tmp_result.extend(tmp_result)
-    for tr in all_tmp_result:
-        if not dbpedia_triple_linker.does_tri_exit_in_list(tr, extend_result):
-            extend_result.append(tr)
+    extend_result = dbpedia_triple_linker.remove_duplicate_triples(all_tmp_result)
     return extend_result
 
 
@@ -249,7 +196,7 @@ def does_node_exist_in_graph(node_uri, graph):
     return False
 
 
-def extend_connection_between_claim_and_sent(claim_isolated_nodes_origin, sent_graph, linked_phrases_l, embeddings_hash, bc:BertClient=None):
+def extend_connection_between_claim_and_sent(claim_isolated_nodes_origin, sent_graph, linked_phrases_l, embeddings_hash):
     claim_isolated_nodes = []
     sent_possible_links = linked_phrases_l
     for c_n in claim_isolated_nodes_origin:
@@ -279,7 +226,7 @@ def extend_connection_between_claim_and_sent(claim_isolated_nodes_origin, sent_g
                 continue
 
             try:
-                out = dbpedia_triple_linker.get_topk_similar_triples(c_phrase, i, embeddings_hash, top_k=3, threshold=0.6, bc=bc)
+                out = dbpedia_triple_linker.get_topk_similar_triples(c_phrase, i, embeddings_hash, top_k=3, threshold=0.6)
             except Exception as err:
                 log.error(err)
                 continue

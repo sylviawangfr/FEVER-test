@@ -167,7 +167,7 @@ def search_doc_id_and_keywords_in_sentences(possible_id, subject, keywords):
     r_list = []
     phrases = [possible_id]
     phrases.extend(keywords)
-    top_n = 1
+    top_n = 3
     for hit in response['hits']['hits']:
         if top_n < 1:
             break

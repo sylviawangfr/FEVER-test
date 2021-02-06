@@ -1,6 +1,7 @@
 import regex
 import spacy
 from spacy.symbols import nsubj, dobj, pobj, VERB, nsubjpass
+import config
 from memory_profiler import profile
 
 # nlp_eng = spacy.load("en_core_web_md")

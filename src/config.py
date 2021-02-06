@@ -29,6 +29,8 @@ TOKENIZED_DOC_ID = DATA_ROOT / "tokenized_doc_id.json"
 
 WN_FEATURE_CACHE_PATH = DATA_ROOT / "wn_feature_p"
 
+COUNTRY_NAMES = PRO_ROOT / "src" / "utils" / "country.json"
+
 ES_INIT_LOG_PATH = LOG_PATH / "es_init"
 
 ELASTIC_HOST = "localhost"

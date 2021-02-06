@@ -9,6 +9,8 @@ STOP_WORDS = ['the', 'they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
               'third', 'life', 'all', 'part']
 
+DO_NOT_LINK = ['American', 'German', 'Spanish']
+
 
 log = log_util.get_logger('dbpedia_triple_linker')
 
@@ -110,6 +112,7 @@ def get_ents_and_phrases(sentence):
     # entity_and_capitalized = merge_phrases_l1_to_l2(entity_and_capitalized, [])
     nouns = [i for i in nouns if i.lower() not in STOP_WORDS]
     return entity_and_capitalized, nouns
+
 
 
 def get_phrases_and_nouns_merged(sentence):

@@ -10,6 +10,7 @@ import log_util
 from dbpedia_sampler.uri_util import uri_short_extract
 from utils.file_loader import read_json_rows
 from utils.tokenizer_simple import split_claim_regex
+from utils.resource_manager import CountryNationality
 from memory_profiler import profile
 import time
 import gc
@@ -120,6 +121,10 @@ def combine_lookup(text_phrase):
 
     lookup_app_matches.sort(key=lambda k: int(k['Refcount']), reverse=True)
     exact_match = get_exact_match(text_phrase, lookup_app_matches)
+    country_nationality = CountryNationality()
+    if country_nationality.is_country(text_phrase) or country_nationality.is_nationality(text_phrase):
+        return exact_match
+
     media_match = get_media_subset_match(text_phrase, lookup_app_matches)
     result = []
     if len(exact_match) > 0:

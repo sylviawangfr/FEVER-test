@@ -4,6 +4,7 @@ from pytorch_pretrained_bert.tokenization import BertTokenizer
 import config
 from utils.fever_db import *
 from bert_serving.client import BertClient
+from utils.file_loader import read_json
 
 
 class Singleton(object):
@@ -61,9 +62,33 @@ class BERTClientResource(object):
         self.bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
 
     def get_client(self):
+        if self.bc is None or self.bc.status['num_request'] > 50:
+            self.bc.close()
+            self.bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
         return self.bc
 
     def __del__(self):
         self.bc.close()
+        self.bc = None
 
+
+@Singleton
+class CountryNationality(object):
+    def __init__(self):
+        country_nationality = read_json(config.COUNTRY_NAMES)
+        self.nationalities = {i['nationality'] for i in country_nationality}
+        self.countries = {i['en_short_name'] for i in country_nationality}
+        self.nationalities.add('English')
+
+    def is_nationality(self, phrase):
+        if phrase in self.nationalities:
+            return True
+        else:
+            return False
+
+    def is_country(self, phrase):
+        if phrase in self.countries:
+            return True
+        else:
+            return False
 

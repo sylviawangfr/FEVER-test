@@ -97,7 +97,7 @@ def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: 
                 extend_entity_docs = example_with_es['es_entity_docs']
             else:
                 extend_entity_docs = None
-            example = prepare_claim_graph_for_example(example, extend_entity_docs=extend_entity_docs, bc=bc)
+            example = prepare_claim_graph_for_example(example, extend_entity_docs=extend_entity_docs)
             flush_save.append(example)
             flush_num -= 1
             pbar.update(1)
@@ -109,9 +109,9 @@ def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: 
     print("done with claim graph.")
 
 
-def prepare_claim_graph_for_example(example, extend_entity_docs=None, bc: BertClient=None):
+def prepare_claim_graph_for_example(example, extend_entity_docs=None):
      claim = convert_brc(normalize(example['claim']))
-     claim_dict = construct_subgraph_for_sentence(claim, extend_entity_docs=extend_entity_docs, bc=bc)
+     claim_dict = construct_subgraph_for_sentence(claim, extend_entity_docs=extend_entity_docs)
      claim_dict.pop('embedding')
      example['claim_dict'] = claim_dict
      return example
@@ -382,11 +382,10 @@ def rerun_failed_graph(folder):
     data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
     data_entity = read_json_rows(folder / "entity_doc.jsonl")
 
-    bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     for idx, i in enumerate(data_context):
         if i['id'] in failed_items:
             claim = convert_brc(normalize(i['claim']))
-            claim_dict = construct_subgraph_for_sentence(claim, bc)
+            claim_dict = construct_subgraph_for_sentence(claim)
             claim_dict.pop('embedding')
             i['claim_dict'] = claim_dict
             # print(json.dumps(i['claim_dict'].get('linked_phrases_l'), indent=2))
@@ -404,11 +403,10 @@ def rerun_failed_graph(folder):
 
 
 def redo_example_docs(error_data, log_filename):
-    bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     for example in tqdm(error_data):
         es_doc_and_lines = prepare_candidate_es_for_example2(example)
         entity_docs = get_es_entity_links(es_doc_and_lines)
-        graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs, bc=bc)
+        graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs)
         ent_resource_docs = prepare_candidate2_example(graph_data_example)
         merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
         example['candidate_docs'] = merged
@@ -434,30 +432,30 @@ def do_testset_graph2(folder):
 
 
 def do_dev_set_with_es_entity():
-    folder = config.RESULT_PATH / "hardset2021"
+    folder = config.RESULT_PATH / "hardset2021_2"
     original_data = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # data_with_es = prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    data_with_es = prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
     # data_with_es = read_json_rows(folder / "es_doc_10.log")
-    # data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
-    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
-    # assert(len(data_with_es_entities) == len(data_with_es))
+    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    assert(len(data_with_es_entities) == len(data_with_es))
     # data = read_json_rows(config.FEVER_DEV_JSONL)
     prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
     #
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    # data_context = read_json_rows(folder / "claim_graph.jsonl")
+    data_context = read_json_rows(folder / "claim_graph.jsonl")
     # # data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
     # assert (len(data_original) == len(data_context))
-    # prepare_candidate_doc2(original_data, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    prepare_candidate_doc2(original_data, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
     #
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    # ent_data = read_json_rows(folder / "entity_doc.jsonl")
-    # assert (len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
-    # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl",
-    #                        folder / "candidate_docs.log")
+    es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    assert (len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
+    prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl",
+                           folder / "candidate_docs.log")
 
 
 def do_dev_set():

@@ -204,7 +204,7 @@ def get_outbounds2(resource_uri):
         "FROM <http://dbpedia.org> WHERE { " \
         f" <{resource_uri}> ?relation ?object . " \
         "filter (regex(?relation, " \
-        "'^(?!.*?(wiki|comment|label|sameAs|exactMatch|abstract|align|image|photo|wasDerivedFrom|isPrimaryTopicOf|property/[0-9]+)).*$'))" \
+        "'^(?!.*?(wiki|comment|label|sameAs|exactMatch|abstract|align|image|photo|wasDerivedFrom|logo|width|height|dimension|isPrimaryTopicOf|property/[0-9]+)).*$'))" \
         "filter (!contains(str(?object), \'wikidata\')) " \
         "} LIMIT 500"
     tris = get_triples(query_str)

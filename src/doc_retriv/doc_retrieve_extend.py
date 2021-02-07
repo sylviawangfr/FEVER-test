@@ -497,7 +497,7 @@ def run_dev_failed_docs():
 
 
 if __name__ == '__main__':
-    data = read_json_rows(config.DATA_ROOT /"dev_has_multi_evidence.jsonl")
+    data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_evidence.jsonl")
     # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.log")
     redo_example_docs(data, config.LOG_PATH / "test.log")
     # folder = config.RESULT_PATH / "extend_test_20210102"

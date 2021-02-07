@@ -432,7 +432,7 @@ def search_and_merge4(entities, nouns):
     # merged = merge_result(result)
     # truncated = truncate_result(result)
     # merged = merge_result2(truncated)
-    merged = merge_result2(result)
+    merged = merge_result3(result)
     return merged
 
 

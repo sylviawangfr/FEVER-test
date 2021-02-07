@@ -73,7 +73,7 @@ def get_ents_and_phrases(sentence):
             continue
         if len(list(filter(lambda x: (i in x), entity_and_capitalized))) > 0 and i in nouns:
             for x in entity_and_capitalized:
-                if (' or ' in x) or (' and ' in x) or (' of ' in x) or (' by ' in x):
+                if (' or ' in x) or (' and ' in x) or (' of ' in x) or (' by ' in x) or (' in ' in x):
                     splits = split_combinations(x)
                     if i in splits and i not in entity_and_capitalized:
                         entity_and_capitalized.append(i)

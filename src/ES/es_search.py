@@ -472,10 +472,10 @@ def merge_result2(result):
         i_id = i['id']
         i_idx = ids_l.index(i_id)
         if i_idx in docs2phrases:
-            for record in docs2phrases[i_idx]:
-                if record['phrases'] == i['phrases'] and record['score'] <= i['score']:
-                    docs2phrases[i_idx].remove(record)
-                    break
+            # for record in docs2phrases[i_idx]:
+            #     if record['phrases'] == i['phrases'] and record['score'] <= i['score']:
+            #         docs2phrases[i_idx].remove(record)
+            #         break
             docs2phrases[i_idx].append(i)
         else:
             docs2phrases.update({i_idx: [i]})

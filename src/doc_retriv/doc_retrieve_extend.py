@@ -497,12 +497,12 @@ def run_dev_failed_docs():
 
 
 if __name__ == '__main__':
-    entities, nouns = get_ents_and_phrases('The Road to El Dorado stars an actor.')
-    candidate_docs_1 = search_and_merge4(entities, nouns)
+    # entities, nouns = get_ents_and_phrases('The Road to El Dorado stars an actor.')
+    # candidate_docs_1 = search_and_merge4(entities, nouns)
 
     data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")
     # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.log")
-    # redo_example_docs(data, config.LOG_PATH / "test.log")
+    redo_example_docs(data, config.LOG_PATH / "test.log")
     # folder = config.RESULT_PATH / "extend_test_20210102"
     # do_testset_es(folder)
     # do_dev_set_with_es_entity()

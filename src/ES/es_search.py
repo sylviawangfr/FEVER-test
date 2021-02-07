@@ -300,7 +300,6 @@ def search_entity_combinations(entitie_subsets):
                     tmp_r.append(doc_dic)
                 r_list.extend(tmp_r)
 
-        r_list = merge_result(r_list)
         r_list.sort(key=lambda x: x.get('score'), reverse=True)
         return r_list
     except:

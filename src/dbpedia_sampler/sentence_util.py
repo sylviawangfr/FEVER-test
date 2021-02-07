@@ -62,6 +62,8 @@ def get_ents_and_phrases(sentence):
                     remove_the = i.replace('The ', '', 1)
                 if i.startswith('A '):
                     remove_the = i.replace('A ', '', 1)
+                if i.startswith('An '):
+                    remove_the = i.replace('An ', '', 1)
                 if remove_the not in entity_and_capitalized and remove_the.lower() not in STOP_WORDS:
                     entity_and_capitalized.append(remove_the)
             continue
@@ -71,7 +73,7 @@ def get_ents_and_phrases(sentence):
             continue
         if len(list(filter(lambda x: (i in x), entity_and_capitalized))) > 0 and i in nouns:
             for x in entity_and_capitalized:
-                if ' or ' in x or ' and ' in x or ' of ' in x:
+                if (' or ' in x) or (' and ' in x) or (' of ' in x):
                     splits = split_combinations(x)
                     if i in splits and i not in entity_and_capitalized:
                         entity_and_capitalized.append(i)
@@ -202,7 +204,7 @@ if __name__ == '__main__':
     # print(get_ents_and_phrases('Soyuz was part of a space program.'))
     # print(get_ents_and_phrases('The New Orleans Pelicans play in the Eastern Conference of the NBA.'))
 
-    data = file_loader.read_json_rows(config.RESULT_PATH / "errors/es_doc_10.log")
+    data = file_loader.read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.log")
     for i in data:
         claim = i['claim']
         a, b = get_ents_and_phrases(claim)

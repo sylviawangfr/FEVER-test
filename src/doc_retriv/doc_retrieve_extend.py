@@ -438,10 +438,10 @@ def do_testset_graph2(folder):
 def do_dev_set_with_es_entity():
     folder = config.RESULT_PATH / "hardset2021"
     original_data = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # data_with_es = prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    data_with_es = prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
     # data_with_es = read_json_rows(folder / "es_doc_10.log")
-    # data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
     # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     # assert(len(data_with_es_entities) == len(data_with_es))

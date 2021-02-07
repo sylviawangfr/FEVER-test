@@ -7,6 +7,7 @@ from utils.file_loader import *
 from utils.tokenizer_simple import *
 from dbpedia_sampler.sentence_util import merge_chunks_with_entities
 from functools import reduce
+from utils.resource_manager import CountryNationality
 
 client = es([{'host': config.ELASTIC_HOST, 'port': config.ELASTIC_PORT,
               'timeout': 60, 'max_retries': 5, 'retry_on_timeout': True}])
@@ -223,8 +224,9 @@ MEDIA = ['tv', 'film', 'book', 'novel', 'band', 'album', 'music', 'series', 'poe
 
 def search_media(entities):
     r_list = []
+    country_nationality = CountryNationality()
     for e in entities:
-        if not is_capitalized(e):
+        if (not is_capitalized(e)) or country_nationality.is_nationality(e) or country_nationality.is_country(e):
             continue
         must = []
         should = []

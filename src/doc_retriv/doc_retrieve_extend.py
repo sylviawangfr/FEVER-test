@@ -408,10 +408,11 @@ def rerun_failed_graph(folder):
 def redo_example_docs(error_data, log_filename):
     for example in tqdm(error_data):
         es_doc_and_lines = prepare_candidate_es_for_example2(example)
-        entity_docs = get_es_entity_links(es_doc_and_lines)
-        graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs)
-        ent_resource_docs = prepare_candidate2_example(graph_data_example)
-        merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
+        # entity_docs = get_es_entity_links(es_doc_and_lines)
+        # graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs)
+        # ent_resource_docs = prepare_candidate2_example(graph_data_example)
+        # merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
+        merged = es_doc_and_lines
         example['candidate_docs'] = merged
         example['predicted_docids'] = [j.get('id') for j in merged][:10]
     eval_doc_preds(error_data, 10, log_filename)
@@ -496,11 +497,12 @@ def run_dev_failed_docs():
 
 
 if __name__ == '__main__':
-    # data = read_json_rows(config.DATA_ROOT /"dev_has_multi_evidence.jsonl")
-    # redo_example_docs(data, config.LOG_PATH / "test.log")
+    data = read_json_rows(config.DATA_ROOT /"dev_has_multi_evidence.jsonl")
+    # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.log")
+    redo_example_docs(data, config.LOG_PATH / "test.log")
     # folder = config.RESULT_PATH / "extend_test_20210102"
     # do_testset_es(folder)
-    do_dev_set_with_es_entity()
+    # do_dev_set_with_es_entity()
     # do_dev_set()
     # original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
     # prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_16.jsonl', config.RESULT_PATH / 'errors/es_doc_16.log')

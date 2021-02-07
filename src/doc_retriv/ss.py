@@ -361,13 +361,15 @@ def generate_candidate_graphs(data_with_graph, data_with_tri_s, data_with_s, sid
 
     sid_to_extend_sids_l = []
     candidate_context_graph_l = []
-    for idx, bert_example in enumerate(data_with_s):
-        sids = get_bert_sids(bert_example, data_with_tri_s[idx])
-        triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
-        claim_dict = data_with_graph[idx]['claim_dict']
-        sid_to_extend_sids, sid_to_graph = strategy_one_hop(claim_dict, triples, sids)
-        sid_to_extend_sids_l.append({'id': bert_example['id'], 'sid2sids': sid_to_extend_sids})
-        candidate_context_graph_l.append({'id': bert_example['id'], 'sid2graphs': sid_to_graph})
+    with tqdm(total=len(data_with_graph), desc=f"constructing candidate graphs") as pbar:
+        for idx, bert_example in enumerate(data_with_s):
+            sids = get_bert_sids(bert_example, data_with_tri_s[idx])
+            triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
+            claim_dict = data_with_graph[idx]['claim_dict']
+            sid_to_extend_sids, sid_to_graph = strategy_one_hop(claim_dict, triples, sids)
+            sid_to_extend_sids_l.append({'id': bert_example['id'], 'sid2sids': sid_to_extend_sids})
+            candidate_context_graph_l.append({'id': bert_example['id'], 'sid2graphs': sid_to_graph})
+            pbar.update(1)
     save_intermidiate_results(sid_to_extend_sids, sid_output_file)
     save_intermidiate_results(candidate_context_graph_l, graph_output_file)
 

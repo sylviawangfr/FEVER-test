@@ -224,6 +224,8 @@ MEDIA = ['tv', 'film', 'book', 'novel', 'band', 'album', 'music', 'series', 'poe
 
 def search_media(entities):
     r_list = []
+    no_resource_found = []
+    has_resource_found = []
     country_nationality = CountryNationality()
     for e in entities:
         if (not is_capitalized(e)) or country_nationality.is_nationality(e) or country_nationality.is_country(e):
@@ -243,12 +245,19 @@ def search_media(entities):
 
         response = search.execute()
         tmp_r = []
-        if len(response['hits']['hits']) == 0 and "\'s " in e:
-            splits = e.split("\'s ")
-            for s in splits:
-                if s not in entities:
-                     entities.append(s)
+        if len(response['hits']['hits']) == 0:
+            no_resource_found.append(e)
+            if (' or ' in e) or (' and ' in e) or (' of ' in e) or (' by ' in e) or (' in ' in e) or ("\'s " in e):
+                splits = split_combinations(e)
+                for i in splits:
+                    if i not in entities:
+                        entities.append(i)
             continue
+            # splits = e.split("\'s ")
+            # for s in splits:
+            #     if s not in entities:
+            #          entities.append(s)
+            # continue
 
         for hit in response['hits']['hits']:
             score = hit['_score']
@@ -260,8 +269,8 @@ def search_media(entities):
                 lines = ""
             doc_dic = {'score': score, 'phrases': [e], 'id': id, 'lines': lines}
             tmp_r.append(doc_dic)
+            has_resource_found.append(e)
         r_list.extend(tmp_r)
-
     r_list.sort(key=lambda x: x.get('score'), reverse=True)
     return r_list
 
@@ -430,9 +439,9 @@ def search_and_merge4(entities, nouns):
     elif len(entities) == 0 and len(nouns) > 0:
         result = search_and_merge2(nouns)
     elif len(nouns) == 0 and len(entities) > 0:
+        result_media = search_media(entities)
         entity_subsets = get_subsets(entities)
         result = search_entity_combinations(entity_subsets)
-        result_media = search_media(entities)
         result.extend(result_media)
     else:
         return []

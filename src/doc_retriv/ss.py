@@ -554,7 +554,7 @@ if __name__ == '__main__':
     # eval_tris_berts(tri_ss_data, bert_ss_data, 10)
     # c_scorer.get_macro_ss_recall_precision(bert_ss_data, 5)
     # context_graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    # generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data, folder / "sids.jsonl", folder / "sid2graph.jsonl")
-    prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, context_graph_data, folder / "nli_sids.jsonl")
+    generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data, folder / "sids.jsonl", folder / "sid2graph.jsonl")
+    # prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, context_graph_data, folder / "nli_sids.jsonl")
 
 

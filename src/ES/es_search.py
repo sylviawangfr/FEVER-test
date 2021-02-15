@@ -243,6 +243,13 @@ def search_media(entities):
 
         response = search.execute()
         tmp_r = []
+        if len(response['hits']['hits']) == 0 and "\'s " in e:
+            splits = e.split("\'s ")
+            for s in splits:
+                if s not in entities:
+                     entities.append(s)
+            continue
+
         for hit in response['hits']['hits']:
             score = hit['_score']
             id = hit['_source']['id']
@@ -402,9 +409,9 @@ def search_and_merge4(entities, nouns):
         return filtered
 
     if len(entities) > 0 and len(nouns) > 0:
+        result_media = search_media(entities)
         entity_subsets = get_subsets(entities)
         result = search_entity_combinations(entity_subsets)
-        result_media = search_media(entities)
         result.extend(result_media)
         nouns_subsets = get_subsets(nouns)
         covered_set = set()

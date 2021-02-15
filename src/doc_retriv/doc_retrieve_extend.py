@@ -513,6 +513,7 @@ def run_dev_failed_docs():
 
 if __name__ == '__main__':
     # claim = "Henry VIII (TV serial) stars a stage actor who has yet to act in film or television."
+    # claim = "Turin's Juventus Stadium is the home arena for Juventus F.C."
     # entities, nouns = get_ents_and_phrases(claim)
     # candidate_docs_1 = search_and_merge4(entities, nouns)
 

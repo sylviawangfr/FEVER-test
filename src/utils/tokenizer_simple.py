@@ -27,11 +27,11 @@ def count_words(sent):
 
 
 REGEX = r'([a-z0-9]*[A-Z]+[\w-]*(\')?(\s)*(\'s)?' \
-            r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(by\s)*(and\s)*(with\s)*(the\s)*(a\s)*' \
+            r'(of\s)*(to\s)*(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(by\s)*(and\s)*(with\s)*(the\s)*(a\s)*(an\s)*' \
             r'(-?)(&?)(\.?)(:?)(\d*\s)*)*(?<!-\s)(:?([A-Z0-9]+[\w]*(\s\d+[a-zA-Z]*(,?))*)|(of\s\d+))(\s\(.*\))*'
 
 REGEX2 = r'([a-z0-9]*[A-Z]+[\w]*(\')?(\s)*(\'s)?' \
-         r'(of\s)*(for\s)*(on\s)*(from\s)*(with\s)*(the\s)*(a\s)*' \
+         r'(for\s)*(on\s)*(from\s)*(with\s)*(the\s)*(a\s)*(an\s)*' \
          r'(-?)(&?)(\.?)(:?)(\d*\s)*)*(?<!-\s)(:?([A-Z]+[\w]*(\s\d+[a-zA-Z]*)*))'
 
 

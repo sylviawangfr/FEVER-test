@@ -418,30 +418,66 @@ def redo_example_docs(error_data, log_filename):
     eval_doc_preds(error_data, 10, log_filename)
 
 
-def do_testset_es(folder):
-    data = read_json_rows(config.FEVER_TEST_JSONL)
-    prepare_candidate_doc1(data, folder / "test_es_doc_10.jsonl", folder / "test_es_doc_10.log")
+def do_testset_all(folder):
+    original_data1 = read_json_rows(config.FEVER_TEST_JSONL)
+    prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    del original_data1
+
+    data_with_es = read_json_rows(folder / "es_doc_10.log")
+    prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+
+    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    assert (len(data_with_es_entities) == len(data_with_es))
+    original_data2 = read_json_rows(config.FEVER_TEST_JSONL)
+    prepare_claim_graph(original_data2, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    del original_data2
+
+    original_data3 = read_json_rows(config.FEVER_TEST_JSONL)
+    data_context = read_json_rows(folder / "claim_graph.jsonl")
+    prepare_candidate_doc2(original_data3, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    del original_data3
+
+    original_data4 = read_json_rows(config.FEVER_TEST_JSONL)
+    es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    assert (len(es_data) == len(original_data4) and (len(ent_data) == len(original_data4)))
+    prepare_candidate_docs(original_data4, es_data, ent_data, folder / "candidate_docs.jsonl",
+                           folder / "candidate_docs.log")
 
 
-def do_testset_graph1(folder):
-    data = read_json_rows(config.FEVER_TEST_JSONL)[0:10000]
-    prepare_claim_graph(data, folder / "test_claim_graph_10000.jsonl", folder / "test_claim_graph_10000.log")
-    # data = read_json_rows(config.FEVER_TEST_JSONL)[10000:19998]
-    # prepare_claim_graph(data, folder / "test_claim_graph_19998.jsonl", folder / "test_claim_graph_19998.log")
+def do_devset_all(folder):
+    original_data1 = read_json_rows(config.DOC_RETRV_DEV)
+    prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    del original_data1
+
+    data_with_es = read_json_rows(folder / "es_doc_10.log")
+    prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+
+    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    assert(len(data_with_es_entities) == len(data_with_es))
+    original_data2 = read_json_rows(config.DOC_RETRV_DEV)
+    prepare_claim_graph(original_data2, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    del original_data2
+
+    original_data3 = read_json_rows(config.FEVER_DEV_JSONL)
+    data_context = read_json_rows(folder / "claim_graph.jsonl")
+    prepare_candidate_doc2(original_data3, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    del original_data3
+
+    original_data4 = read_json_rows(config.FEVER_DEV_JSONL)
+    es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    assert (len(es_data) == len(original_data4) and (len(ent_data) == len(original_data4)))
+    prepare_candidate_docs(original_data4, es_data, ent_data, folder / "candidate_docs.jsonl",
+                           folder / "candidate_docs.log")
 
 
-def do_testset_graph2(folder):
-    data = read_json_rows(config.FEVER_TEST_JSONL)[10000:19998]
-    prepare_claim_graph(data, folder / "test_claim_graph_19998.jsonl", folder / "test_claim_graph_19998.log")
-
-
-def do_dev_set_with_es_entity():
-    folder = config.RESULT_PATH / "hardset2021"
+def do_dev_hardset_with_es_entity(folder):
     original_data = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    data_with_es = prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    data_with_es = prepare_candidate_doc1(original_data, folder / "2es_doc_10.jsonl", folder / "2es_doc_10.log")
 
     # data_with_es = read_json_rows(folder / "es_doc_10.log")
-    data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    # data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
     # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     # assert(len(data_with_es_entities) == len(data_with_es))
@@ -449,39 +485,18 @@ def do_dev_set_with_es_entity():
     # prepare_claim_graph(original_data, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
     #
     # original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    data_context = read_json_rows(folder / "claim_graph.jsonl")
+    # data_context = read_json_rows(folder / "claim_graph.jsonl")
     # # data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
     # assert (len(data_original) == len(data_context))
-    prepare_candidate_doc2(original_data, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    # prepare_candidate_doc2(original_data, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
     #
-    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "entity_doc.jsonl")
-    assert (len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
-    prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl",
-                           folder / "candidate_docs.log")
-
-
-def do_dev_set():
-    folder = config.RESULT_PATH / "extend_20210115"
-
-    original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    prepare_candidate_doc1(original_data, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
-
-    # data = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_claim_graph(data, None, folder / "claim_graph.jsonl", folder / "claim_graph.log")
-    #
-    # data_original = read_json_rows(config.FEVER_DEV_JSONL)
-    # data_context = read_json_rows(folder / "claim_graph.jsonl")
-    # assert(len(data_original) == len(data_context))
-    # prepare_candidate_doc2(data_original, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
-
     # data_original = read_json_rows(config.FEVER_DEV_JSONL)
     # es_data = read_json_rows(folder / "es_doc_10.jsonl")
     # ent_data = read_json_rows(folder / "entity_doc.jsonl")
-    # assert(len(es_data) == len(data_original) and (len(ent_data) == len(data_original)))
-    # prepare_candidate_docs(data_original, es_data, ent_data, folder / "candidate_docs.jsonl", folder / "candidate_docs.log")
-#
+    # assert (len(es_data) == len(original_data) and (len(ent_data) == len(original_data)))
+    # prepare_candidate_docs(original_data, es_data, ent_data, folder / "candidate_docs.jsonl",
+    #                        folder / "candidate_docs.log")
+
 
 def run_dev_failed_docs():
     folder = config.RESULT_PATH / "extend_20210107"
@@ -497,15 +512,27 @@ def run_dev_failed_docs():
 
 
 if __name__ == '__main__':
-    # entities, nouns = get_ents_and_phrases('The Road to El Dorado stars an actor.')
+    # claim = "Henry VIII (TV serial) stars a stage actor who has yet to act in film or television."
+    # entities, nouns = get_ents_and_phrases(claim)
     # candidate_docs_1 = search_and_merge4(entities, nouns)
 
+
     # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")
-    # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.log")
+    # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.jsonl")
+    # eval_doc_preds(data, 10, config.RESULT_PATH / 'none1')
+    # from ES.es_search import truncate_result
+    # for item in data:
+    #     doc_and_line = item['doc_and_line']
+    #     candidate_docs_trunc = truncate_result(doc_and_line)
+    #     item['predicted_docids'] = [j.get('id') for j in candidate_docs_trunc][:10]
+    # eval_doc_preds(data, 10, config.RESULT_PATH / 'none2')
     # redo_example_docs(data, config.LOG_PATH / "test.log")
-    # folder = config.RESULT_PATH / "extend_test_20210102"
+
+    # folder = config.RESULT_PATH / "test_2021"
     # do_testset_es(folder)
-    do_dev_set_with_es_entity()
-    # do_dev_set()
-    # original_data = read_json_rows(config.RESULT_PATH / 'errors/es_doc_10.log')
-    # prepare_candidate_doc1(original_data, config.RESULT_PATH / 'errors/es_doc_16.jsonl', config.RESULT_PATH / 'errors/es_doc_16.log')
+
+    folder = config.RESULT_PATH / "hardset2021"
+    do_dev_hardset_with_es_entity(folder)
+
+    # folder = config.RESULT_PATH / "dev_2021"
+    # do_devset_all()

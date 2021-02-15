@@ -319,7 +319,9 @@ def has_overlap(str_l):
 
 def search_subsets(phrases):
     result = []
+    phrase_set = set(phrases)
     covered_set = set([])
+    searched_subsets = []
     l = len(phrases)
     if l > 1:
         l = 5 if l > 4 else l + 1
@@ -404,14 +406,9 @@ def search_and_merge4(entities, nouns):
         result = search_entity_combinations(entity_subsets)
         result_media = search_media(entities)
         result.extend(result_media)
-        capitalized_entities = [e for e in entities if is_capitalized(e)]
-        for e in entities:
-            if not is_capitalized(e):
-                nouns.append(e)
         nouns_subsets = get_subsets(nouns)
-        capitalized_subsets = get_subsets(capitalized_entities)
         covered_set = set()
-        if len(capitalized_subsets) > 0:
+        if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
             product = itertools.product(entity_subsets, nouns_subsets)
             for i in product:
                 new_subset = []
@@ -423,10 +420,6 @@ def search_and_merge4(entities, nouns):
                 if len(r) > 0:
                     covered_set = covered_set | set(new_subset)
                     result.extend(r)
-        else:
-            tmp_result = search_and_merge2(nouns)
-            if len(tmp_result) > 0:
-                result.extend(tmp_result)
     elif len(entities) == 0 and len(nouns) > 0:
         result = search_and_merge2(nouns)
     elif len(nouns) == 0 and len(entities) > 0:

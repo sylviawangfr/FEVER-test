@@ -147,7 +147,7 @@ def combine_lookup(text_phrase):
                 and score_bewteen_phrases(text_phrase, top_ref['Label']) > 0.5:
             top_ref['exact_match'] = False
             result.append(top_ref)
-    print(f"link_phrase: {text_phrase}, count links: {len(result)}")
+    # print(f"link_phrase: {text_phrase}, count links: {len(result)}")
     if len(result) > 0:
         return result
 

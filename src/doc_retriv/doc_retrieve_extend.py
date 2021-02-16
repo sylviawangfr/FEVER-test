@@ -88,7 +88,6 @@ def prepare_es_entity_links(es_data_l, output_file):
 
 
 def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path, data_with_entity_docs=None, data_with_es=None):
-    bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     flush_save = []
     batch = 20
     flush_num = batch
@@ -114,7 +113,6 @@ def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path, data_wit
                 save_and_append_results(flush_save, idx + 1, out_filename, log_filename)
                 flush_num = batch
                 flush_save = []
-    bc.close()
     print("done with claim graph.")
 
 
@@ -414,17 +412,16 @@ def rerun_failed_graph(folder):
     save_intermidiate_results(data_entity, folder / "rerun_entity_doc.jsonl")
 
 
-def redo_example_docs(error_data, log_filename):
-    for example in tqdm(error_data):
-        es_doc_and_lines = prepare_candidate_es_for_example(example)
-        # entity_docs = get_es_entity_links(es_doc_and_lines)
-        # graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs)
-        # ent_resource_docs = prepare_candidate2_example(graph_data_example)
-        # merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
-        merged = es_doc_and_lines
+def redo_example_docs(data, log_filename):
+    for example in tqdm(data):
+        es_doc_and_lines, entities, nouns = prepare_candidate_es_for_example(example)
+        entity_docs = get_es_entity_links(es_doc_and_lines)
+        graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs, entities=entities, nouns=nouns)
+        ent_resource_docs = prepare_candidate2_example(graph_data_example)
+        merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
         example['candidate_docs'] = merged
         example['predicted_docids'] = [j.get('id') for j in merged][:10]
-    eval_doc_preds(error_data, 10, log_filename)
+    eval_doc_preds(data, 10, log_filename)
 
 
 def do_testset_all(folder):
@@ -529,7 +526,7 @@ if __name__ == '__main__':
     # candidate_docs_1 = search_and_merge4(entities, nouns)
 
 
-    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")
+    data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")
     # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.jsonl")
     # eval_doc_preds(data, 10, config.RESULT_PATH / 'none1')
     # from ES.es_search import truncate_result
@@ -538,7 +535,7 @@ if __name__ == '__main__':
     #     candidate_docs_trunc = truncate_result(doc_and_line)
     #     item['predicted_docids'] = [j.get('id') for j in candidate_docs_trunc][:10]
     # eval_doc_preds(data, 10, config.RESULT_PATH / 'none2')
-    # redo_example_docs(data, config.LOG_PATH / "test.log")
+    redo_example_docs(data, config.LOG_PATH / "test.log")
 
     # folder = config.RESULT_PATH / "test_2021"
     # do_testset_es(folder)

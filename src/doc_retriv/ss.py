@@ -347,7 +347,7 @@ def find_isolated_entity(subgraph: List[Triple], graph_context):
     return isolated_entity
 
 
-def generate_candidate_graphs(data_with_graph, data_with_tri_s, data_with_s, sid_output_file, graph_output_file):
+def generate_candidate_graphs(data_with_graph, data_with_tri_s, data_with_s, sid_output_file, graph_output_file, sid_log, graph_log):
     def get_bert_sids(bert_item, tri_item, max_evidence=10):
         bert_sids = bert_item["predicted_sentids"] if max_evidence is None else \
             bert_item["predicted_sentids"][:max_evidence]
@@ -361,6 +361,8 @@ def generate_candidate_graphs(data_with_graph, data_with_tri_s, data_with_s, sid
 
     sid_to_extend_sids_l = []
     candidate_context_graph_l = []
+    batch = 20
+    flush_num = batch
     with tqdm(total=len(data_with_graph), desc=f"constructing candidate graphs") as pbar:
         for idx, bert_example in enumerate(data_with_s):
             sids = get_bert_sids(bert_example, data_with_tri_s[idx])
@@ -369,9 +371,14 @@ def generate_candidate_graphs(data_with_graph, data_with_tri_s, data_with_s, sid
             sid_to_extend_sids, sid_to_graph = strategy_one_hop(claim_dict, triples, sids)
             sid_to_extend_sids_l.append({'id': bert_example['id'], 'sid2sids': sid_to_extend_sids})
             candidate_context_graph_l.append({'id': bert_example['id'], 'sid2graphs': sid_to_graph})
+            flush_num -= 1
+            if flush_num == 0 or idx == (len(data_with_s) - 1):
+                save_and_append_results(sid_to_extend_sids_l, idx + 1, sid_output_file, sid_log)
+                save_and_append_results(candidate_context_graph_l, idx + 1, graph_output_file, graph_log)
+                flush_num = batch
+                sid_to_extend_sids_l = []
+                candidate_context_graph_l = []
             pbar.update(1)
-    save_intermidiate_results(sid_to_extend_sids, sid_output_file)
-    save_intermidiate_results(candidate_context_graph_l, graph_output_file)
 
 
 def get_text_and_hlinks(doc_id, ln):
@@ -555,7 +562,9 @@ if __name__ == '__main__':
     # eval_tris_berts(tri_ss_data, bert_ss_data, 10)
     # c_scorer.get_macro_ss_recall_precision(bert_ss_data, 5)
     # context_graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data, folder / "sids.jsonl", folder / "sid2graph.jsonl")
+    generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
+                              folder / "sids.jsonl", folder / "sid2graph.jsonl",
+                              folder / "sids.log", folder / "graph.log")
     # prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, context_graph_data, folder / "nli_sids.jsonl")
 
 

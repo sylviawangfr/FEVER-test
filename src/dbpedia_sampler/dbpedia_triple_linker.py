@@ -163,7 +163,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
         entities, nouns = get_phrases(sentence, '')
     linked_phrases_l = []
     not_linked_phrases_l = []
-    phrases = entities + nouns
+    phrases = list(set(entities + nouns))
 
     for p in phrases:
         if text_clean.is_date_or_number(p):

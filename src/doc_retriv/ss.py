@@ -361,7 +361,7 @@ def generate_candidate_graphs(data_with_graph, data_with_tri_s, data_with_s, sid
 
     sid_to_extend_sids_l = []
     candidate_context_graph_l = []
-    batch = 1
+    batch = 10
     flush_num = batch
     with tqdm(total=len(data_with_graph), desc=f"constructing candidate graphs") as pbar:
         for idx, bert_example in enumerate(data_with_s):
@@ -564,7 +564,7 @@ if __name__ == '__main__':
     # context_graph_data = read_json_rows(folder / "claim_graph.jsonl")
     generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
                               folder / "sids.jsonl", folder / "sid2graph.jsonl",
-                              folder / "sids.log", folder / "graph.log")
+                              folder / "sids.log", folder / "sid2graph.log")
     # prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, context_graph_data, folder / "nli_sids.jsonl")
 
 

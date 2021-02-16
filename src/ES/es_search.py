@@ -417,9 +417,9 @@ def search_and_merge4(entities, nouns):
         entity_subsets = get_subsets(entities)
         result = search_entity_combinations(entity_subsets)
         result.extend(result_media)
-        for i in entities:
-            if i in nouns:
-                nouns.remove(i)
+        # for i in entities:
+        #     if i in nouns:
+        #         nouns.remove(i)
         nouns_subsets = get_subsets(nouns)
         covered_set = set()
         if len(entity_subsets) > 0 and len(nouns_subsets) > 0:

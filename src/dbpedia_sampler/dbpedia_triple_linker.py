@@ -113,7 +113,7 @@ def link_sent_to_resources1(sentence, doc_title='', lookup_hash=None, entities=[
         entities, nouns = get_phrases(sentence, doc_title)
     linked_phrases_l = []
     not_linked_phrases_l = []
-    phrases = entities +  nouns
+    phrases = list(set(entities + nouns))
     clean_doc_title = convert_brc(doc_title).replace('_', ' ')
     doc_title_linked = lookup_doc_id(clean_doc_title, [doc_title])
     if len(doc_title_linked) > 0 and len(doc_title_linked['links']) > 0:

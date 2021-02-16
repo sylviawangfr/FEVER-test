@@ -537,6 +537,7 @@ def eval_tris_berts(tris, berts, max_evidence):
     print(f"at least one ss hit: {one_hit}, total: {total}, rate: {one_hit / total}")
     c_scorer.get_macro_ss_recall_precision(berts, 10)
 
+
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")

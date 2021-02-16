@@ -28,10 +28,19 @@ def fill_relative_hash(relative_hash, graph):
 
 
 # @profile
-def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None, doc_title='', lookup_hash=None, embedding_hash=None):
+def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
+                                    doc_title='',
+                                    lookup_hash=None,
+                                    embedding_hash=None,
+                                    entities=[],
+                                    nouns=[]):
     not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(sentence_text,
                                                                                  extend_entity_docs=extend_entity_docs,
-                                                                                 doc_title=doc_title, lookup_hash=lookup_hash)
+                                                                                 doc_title=doc_title,
+                                                                                 lookup_hash=lookup_hash,
+                                                                                 entities=entities,
+                                                                                 nouns=nouns
+                                                                                 )
 
     linked_phrases = [i['text'] for i in linked_phrases_l]
     all_phrases = not_linked_phrases_l + linked_phrases

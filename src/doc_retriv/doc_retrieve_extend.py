@@ -21,7 +21,7 @@ import itertools
 
 def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
     for example in tqdm(data_l):
-        candidate_docs_1 = prepare_candidate_es_for_example2(example)
+        candidate_docs_1, entities, nouns = prepare_candidate_es_for_example(example)
         if len(candidate_docs_1) < 1:
             print("failed claim:", example.get('id'))
             example['predicted_docids'] = []
@@ -29,16 +29,18 @@ def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
         else:
             example['predicted_docids'] = [j.get('id') for j in candidate_docs_1][:10]
             example['doc_and_line'] = candidate_docs_1
+        example['entities'] = entities
+        example['nouns'] = nouns
     save_intermidiate_results(data_l, out_filename)
     eval_doc_preds(data_l, 10, log_filename)
     return data_l
 
 
-def prepare_candidate_es_for_example2(example):
+def prepare_candidate_es_for_example(example):
     claim = convert_brc(normalize(example['claim']))
     entities, nouns = get_ents_and_phrases(claim)
     candidate_docs_1 = search_and_merge4(entities, nouns)
-    return candidate_docs_1
+    return candidate_docs_1, entities, nouns
 
 
 def get_es_entity_links(doc_and_line):
@@ -85,19 +87,26 @@ def prepare_es_entity_links(es_data_l, output_file):
     return es_enttiy_docs
 
 
-def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: Path):
+def prepare_claim_graph(data_l, out_filename: Path, log_filename: Path, data_with_entity_docs=None, data_with_es=None):
     bc = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     flush_save = []
     batch = 20
     flush_num = batch
     with tqdm(total=len(data_l), desc=f"constructing claim graph") as pbar:
         for idx, example in enumerate(data_l):
+            example_with_entity_docs = data_with_entity_docs[idx]
             example_with_es = data_with_es[idx]
-            if data_with_es is not None:
-                extend_entity_docs = example_with_es['es_entity_docs']
+            if data_with_entity_docs is not None:
+                extend_entity_docs = example_with_entity_docs['es_entity_docs']
             else:
                 extend_entity_docs = None
-            example = prepare_claim_graph_for_example(example, extend_entity_docs=extend_entity_docs)
+            if data_with_es is not None:
+                entities = example_with_es['entities']
+                nouns = example_with_es['nouns']
+            else:
+                entities = []
+                nouns = []
+            example = prepare_claim_graph_for_example(example, extend_entity_docs=extend_entity_docs, entities=entities, nouns=nouns)
             flush_save.append(example)
             flush_num -= 1
             pbar.update(1)
@@ -109,9 +118,9 @@ def prepare_claim_graph(data_l, data_with_es, out_filename: Path, log_filename: 
     print("done with claim graph.")
 
 
-def prepare_claim_graph_for_example(example, extend_entity_docs=None):
+def prepare_claim_graph_for_example(example, extend_entity_docs=None, entities=[], nouns=[]):
      claim = convert_brc(normalize(example['claim']))
-     claim_dict = construct_subgraph_for_sentence(claim, extend_entity_docs=extend_entity_docs)
+     claim_dict = construct_subgraph_for_sentence(claim, extend_entity_docs=extend_entity_docs, entities=entities, nouns=nouns)
      claim_dict.pop('embedding')
      example['claim_dict'] = claim_dict
      return example
@@ -333,19 +342,19 @@ def search_extended_URIs(sub_obj_l):
     return docs
 
 
-def read_claim_context_graphs(dir):
-    # config.RESULT_PATH / "sample_ss_graph_dev_test"
-    data_dev = read_all_files(dir)
-    # data_dev = read_json_rows(dir)
-    cached_graph_d = dict()
-    for i in data_dev:
-        if 'claim_links' in i and len(i['claim_links']) > 0:
-            cached_graph_d[i['id']] = i['claim_links']
-        else:
-            c_d = construct_subgraph_for_sentence(i['claim'])
-            if 'graph' in c_d:
-                cached_graph_d[i['id']] = c_d['graph']
-    return cached_graph_d
+# def read_claim_context_graphs(dir):
+#     # config.RESULT_PATH / "sample_ss_graph_dev_test"
+#     data_dev = read_all_files(dir)
+#     # data_dev = read_json_rows(dir)
+#     cached_graph_d = dict()
+#     for i in data_dev:
+#         if 'claim_links' in i and len(i['claim_links']) > 0:
+#             cached_graph_d[i['id']] = i['claim_links']
+#         else:
+#             c_d = construct_subgraph_for_sentence(i['claim'])
+#             if 'graph' in c_d:
+#                 cached_graph_d[i['id']] = c_d['graph']
+#     return cached_graph_d
 
 
 def eval_doc_preds(doc_list, top_k, log_file):
@@ -361,15 +370,15 @@ def eval_doc_preds(doc_list, top_k, log_file):
     print(fever_score(doc_list, doc_list, mode=eval_mode, max_evidence=top_k, error_analysis_file=log_file))
 
 
-def run_claim_context_graph(data):
-    bert_client = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
-    for i in data:
-        claim = i['claim']
-        claim_gragh_dict = construct_subgraph_for_sentence(claim, bert_client)
-        claim_g = claim_gragh_dict['graph']
-        print(claim)
-        print(json.dumps(claim_g, indent=2))
-        print("----------------------------")
+# def run_claim_context_graph(data):
+#     bert_client = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
+#     for i in data:
+#         claim = i['claim']
+#         claim_gragh_dict = construct_subgraph_for_sentence(claim, bert_client)
+#         claim_g = claim_gragh_dict['graph']
+#         print(claim)
+#         print(json.dumps(claim_g, indent=2))
+#         print("----------------------------")
 
 
 def rerun_failed_graph(folder):
@@ -407,7 +416,7 @@ def rerun_failed_graph(folder):
 
 def redo_example_docs(error_data, log_filename):
     for example in tqdm(error_data):
-        es_doc_and_lines = prepare_candidate_es_for_example2(example)
+        es_doc_and_lines = prepare_candidate_es_for_example(example)
         # entity_docs = get_es_entity_links(es_doc_and_lines)
         # graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs)
         # ent_resource_docs = prepare_candidate2_example(graph_data_example)
@@ -429,7 +438,8 @@ def do_testset_all(folder):
     data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     assert (len(data_with_es_entities) == len(data_with_es))
     original_data2 = read_json_rows(config.FEVER_TEST_JSONL)
-    prepare_claim_graph(original_data2, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    prepare_claim_graph(original_data2, folder / "claim_graph.jsonl", folder / "claim_graph.log",
+                        data_with_entity_docs=data_with_es_entities, data_with_es=data_with_es)
     del original_data2
 
     original_data3 = read_json_rows(config.FEVER_TEST_JSONL)
@@ -456,7 +466,8 @@ def do_devset_all(folder):
     data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     assert(len(data_with_es_entities) == len(data_with_es))
     original_data2 = read_json_rows(config.DOC_RETRV_DEV)
-    prepare_claim_graph(original_data2, data_with_es_entities, folder / "claim_graph.jsonl", folder / "claim_graph.log")
+    prepare_claim_graph(original_data2, folder / "claim_graph.jsonl", folder / "claim_graph.log",
+                        data_with_entity_docs=data_with_es_entities, data_with_es=data_with_es)
     del original_data2
 
     original_data3 = read_json_rows(config.FEVER_DEV_JSONL)
@@ -513,9 +524,9 @@ def run_dev_failed_docs():
 
 if __name__ == '__main__':
     # claim = "Henry VIII (TV serial) stars a stage actor who has yet to act in film or television."
-    claim = "Turin's Juventus Stadium is the home arena for Juventus F.C."
-    entities, nouns = get_ents_and_phrases(claim)
-    candidate_docs_1 = search_and_merge4(entities, nouns)
+    # claim = "Turin's Juventus Stadium is the home arena for Juventus F.C."
+    # entities, nouns = get_ents_and_phrases(claim)
+    # candidate_docs_1 = search_and_merge4(entities, nouns)
 
 
     # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")

@@ -3,7 +3,7 @@ from ES.es_search import  search_doc_id_and_keywords_in_sentences
 from utils.fever_db import get_evidence
 # from dbpedia_sampler.sentence_util import get_phrases_and_nouns_merged
 from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_candidate2
-
+from utils.file_loader import save_and_append_results
 from doc_retriv.SentenceEvidence import *
 from utils.check_sentences import Evidences, sids_to_tuples
 import copy
@@ -361,7 +361,7 @@ def generate_candidate_graphs(data_with_graph, data_with_tri_s, data_with_s, sid
 
     sid_to_extend_sids_l = []
     candidate_context_graph_l = []
-    batch = 20
+    batch = 1
     flush_num = batch
     with tqdm(total=len(data_with_graph), desc=f"constructing candidate graphs") as pbar:
         for idx, bert_example in enumerate(data_with_s):

@@ -211,11 +211,11 @@ def get_outbounds2(resource_uri):
     to_delete = []
     for tri in tris:
         obj_split = uri_short_extract(tri['object'])
-        if does_reach_max_length(obj_split) or obj_split == '':
+        rel_split = uri_short_extract(tri['relation'])
+        if does_reach_max_length(obj_split) or obj_split == '' or rel_split == '':
             to_delete.append(tri)
             continue
         else:
-            rel_split = uri_short_extract(tri['relation'])
             if rel_split == 'subject':
                 obj_split = obj_split.replace('Category ', '')
                 tri['keywords'] = [obj_split]

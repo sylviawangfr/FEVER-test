@@ -407,6 +407,7 @@ def strategy_one_hop(claim_dict, subgraph: List[Triple], candidate_sentences: Li
     # tri_sentences = []
     # has_relatives = []
     #
+
     # resources_in_graph = []
     # for tri in subgraph:
     #     resources_in_graph.append(tri.subject)
@@ -441,7 +442,7 @@ def strategy_one_hop(claim_dict, subgraph: List[Triple], candidate_sentences: Li
         for ex_sids in extend_triples_dict.values():
             if len(ex_sids) > 0:
                 all_e_sids.extend(ex_sids)
-        sid_to_extend_sids.update({candidate_sent_sid: all_e_sids})
+        sid_to_extend_sids.update({candidate_sent_sid: list(set(all_e_sids))})
 
     return sid_to_extend_sids, sid2graph_l
 

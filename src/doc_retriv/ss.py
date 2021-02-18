@@ -549,20 +549,19 @@ def eval_tris_berts(tris, berts, max_evidence):
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
+    # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
+    # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    entity_data = read_json_rows(folder / "entity_doc.jsonl")
-    prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    # entity_data = read_json_rows(folder / "entity_doc.jsonl")
+    # prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
     tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
     bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
     # hit_eval(bert_ss_data, 10)
     # eval_tri_ss(hardset_original, tri_ss_data)
     # eval_tris_berts(tri_ss_data, bert_ss_data, 10)
-    # c_scorer.get_macro_ss_recall_precision(bert_ss_data, 5)
-    # context_graph_data = read_json_rows(folder / "claim_graph.jsonl")
+    # c_scorer.fever_score(bert_ss_data, hardset_original, max_evidence=5, mode={'check_sent_id_correct': True, 'standard': False}, error_analysis_file=folder / "test.log")
     generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
                               folder / "sids.jsonl", folder / "sid2graph.jsonl",
                               folder / "sids.log", folder / "sid2graph.log")

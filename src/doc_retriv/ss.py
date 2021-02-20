@@ -562,9 +562,10 @@ if __name__ == '__main__':
     # eval_tri_ss(hardset_original, tri_ss_data)
     # eval_tris_berts(tri_ss_data, bert_ss_data, 10)
     # c_scorer.fever_score(bert_ss_data, hardset_original, max_evidence=5, mode={'check_sent_id_correct': True, 'standard': False}, error_analysis_file=folder / "test.log")
-    generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
-                              folder / "sids.jsonl", folder / "sid2graph.jsonl",
-                              folder / "sids.log", folder / "sid2graph.log")
-    # prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, context_graph_data, folder / "nli_sids.jsonl")
+    # generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
+    #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",
+    #                           folder / "sids.log", folder / "sid2graph.log")
+
+    prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, graph_data, folder / "nli_sids.jsonl")
 
 

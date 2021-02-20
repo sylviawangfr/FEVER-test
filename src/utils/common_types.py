@@ -26,13 +26,7 @@ class PipelineParas(object):
         return config.PRO_ROOT / f"saved_models/bert_finetuning/{self.output_folder}/{task}_{self.mode}"
 
     def get_eval_data_file(self, task):
-        return config.RESULT_PATH / f"{self.output_folder}/eval_data_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.jsonl"
+        return config.RESULT_PATH / f"{self.output_folder}/{task}.jsonl"
 
     def get_eval_item_file(self, task):
-        return config.RESULT_PATH / f"{self.output_folder}/eval_items_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.jsonl"
-
-    def get_pred_data_file(self, task):
-        return config.RESULT_PATH / f"{self.output_folder}/pred_data_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.jsonl"
-
-    def get_pred_item_file(self, task):
-        return config.RESULT_PATH / f"{self.output_folder}/pred_items_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.jsonl"
+        return config.RESULT_PATH / f"{self.output_folder}/{task}.jsonl"

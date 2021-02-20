@@ -550,4 +550,4 @@ if __name__ == '__main__':
     # do_dev_hardset_with_es_entity(folder)
 
     folder = config.RESULT_PATH / "dev_2021"
-    do_devset_all()
+    do_devset_all(folder)

@@ -453,16 +453,17 @@ def do_testset_all(folder):
 
 
 def do_devset_all(folder):
-    original_data1 = read_json_rows(config.DOC_RETRV_DEV)
-    prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
-    del original_data1
+    # original_data1 = read_json_rows(config.FEVER_DEV_JSONL)
+    # prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    # del original_data1
 
     data_with_es = read_json_rows(folder / "es_doc_10.log")
-    prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    # prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
     data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    original_data2 = read_json_rows(config.FEVER_DEV_JSONL)
     assert(len(data_with_es_entities) == len(data_with_es))
-    original_data2 = read_json_rows(config.DOC_RETRV_DEV)
+    assert (len(data_with_es_entities) == len(original_data2))
     prepare_claim_graph(original_data2, folder / "claim_graph.jsonl", folder / "claim_graph.log",
                         data_with_entity_docs=data_with_es_entities, data_with_es=data_with_es)
     del original_data2

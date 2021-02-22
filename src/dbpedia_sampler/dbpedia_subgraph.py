@@ -274,11 +274,12 @@ if __name__ == '__main__':
     # s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
     # s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
     # ss1 = "Giada at Home was only available on DVD ."
-    ss1= "The Block (album) was released by the band the New Kids on the Block."
+    ss1= "Telemundo is a English-language television network."
     # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
     # ss1 = "Cheese in the Trap (TV series) only stars animals."
     # ss1 = "Michelle Obama's husband was born in Kenya"
     # text = "Home for the Holidays stars the fourth stepchild of Charlie Chaplin"
     claim_dict = construct_subgraph_for_sentence(ss1)
+    print(claim_dict['graph'])
     # print(construct_subgraph_for_candidate(claim_dict, ss2, doc_title=''))
     # test_claim()

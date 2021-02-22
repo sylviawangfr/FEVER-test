@@ -8,7 +8,7 @@ from utils.tokenizer_simple import get_dependent_verb, is_capitalized
 from memory_profiler import profile
 from bert_serving.client import BertClient
 import gc
-
+import json
 # CANDIDATE_UP_TO = 150
 # SCORE_CONFIDENCE = 0.6
 
@@ -280,6 +280,6 @@ if __name__ == '__main__':
     # ss1 = "Michelle Obama's husband was born in Kenya"
     # text = "Home for the Holidays stars the fourth stepchild of Charlie Chaplin"
     claim_dict = construct_subgraph_for_sentence(ss1)
-    print(claim_dict['graph'])
+    print(json.dumps(claim_dict['graph'], indent=4))
     # print(construct_subgraph_for_candidate(claim_dict, ss2, doc_title=''))
     # test_claim()

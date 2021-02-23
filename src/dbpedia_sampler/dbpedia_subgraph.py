@@ -71,7 +71,8 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
     r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l)
     r3 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embeddings_hash)
     tmp_result = r0 + r1 + r2 + r3
-    sent_graph = dbpedia_triple_linker.remove_duplicate_triples(tmp_result)
+    tmp_result = dbpedia_triple_linker.remove_duplicate_triples(tmp_result)
+    sent_graph = dbpedia_triple_linker.filter_triples(tmp_result)
     # only keyword-match on those no exact match triples
     fill_relative_hash(relative_hash, sent_graph)
     # isolated_node = []
@@ -274,7 +275,7 @@ if __name__ == '__main__':
     # s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
     # s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
     # ss1 = "Giada at Home was only available on DVD ."
-    ss1= "Telemundo is a English-language television network."
+    ss1= "Nicholas Brody is a character on Homeland."
     # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
     # ss1 = "Cheese in the Trap (TV series) only stars animals."
     # ss1 = "Michelle Obama's husband was born in Kenya"

@@ -487,7 +487,7 @@ def do_dev_hardset_with_es_entity(folder):
     # del original_data1
 
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    # prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
     data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     original_data2 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
@@ -534,7 +534,7 @@ if __name__ == '__main__':
 
 
     # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")
-    # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.jsonl")
+    # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.jsonl")[1:3]
     # eval_doc_preds(data, 10, config.RESULT_PATH / 'none1')
     # from ES.es_search import truncate_result
     # for item in data:
@@ -542,13 +542,13 @@ if __name__ == '__main__':
     #     candidate_docs_trunc = truncate_result(doc_and_line)
     #     item['predicted_docids'] = [j.get('id') for j in candidate_docs_trunc][:10]
     # eval_doc_preds(data, 10, config.RESULT_PATH / 'none2')
-    # redo_example_docs(data, config.LOG_PATH / "test.log")
+    # redo_example_docs(data, config.RESULT_PATH / "tmp.log")
 
     # folder = config.RESULT_PATH / "test_2021"
     # do_testset_es(folder)
 
-    # folder = config.RESULT_PATH / "hardset2021"
-    # do_dev_hardset_with_es_entity(folder)
+    folder = config.RESULT_PATH / "hardset2021"
+    do_dev_hardset_with_es_entity(folder)
 
-    folder = config.RESULT_PATH / "dev_2021"
-    do_devset_all(folder)
+    # folder = config.RESULT_PATH / "dev_2021"
+    # do_devset_all(folder)

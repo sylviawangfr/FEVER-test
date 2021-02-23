@@ -63,13 +63,20 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s, data_with_t
             sid = raw_sid.replace(c_scorer.SENT_LINE, c_scorer.SENT_LINE2)
             sids.append(sid)
         return sids
+
+    def get_linked_entities(claim_dict):
+        linked_phrases = claim_dict['linked_phrases_l']
+        entities = [p['text'] for p in linked_phrases]
+        return entities
+
     for idx, example in enumerate(data_origin):
         # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
         bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
         triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
         context_graph = data_with_context_graph[idx]['claim_dict']
         sid2sids = data_sid2sids[idx]['sid2sids']
-        sid_sets = merge_sentences_and_generate_evidence_set(triples, bert_s, context_graph, sid2sids)
+        ents = get_linked_entities(context_graph)
+        sid_sets = merge_sentences_and_generate_evidence_set(triples, bert_s, context_graph, sid2sids, ents)
         example.update({'nli_sids': sid_sets})
     save_intermidiate_results(data_origin, output_file)
 
@@ -122,55 +129,25 @@ def search_sentences_for_triples(triples: List[Triple]):
 #     return possible_sentences
 
 
-# def strategy_over_all(claim):
-#     # 1. ES search phrases
-#     nouns = get_phrases_and_nouns_merged(claim)
-#     # 2. get ES page candidates -> candidate docs 1
-#     #  . BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
-#     candidate_docs_1 = search_and_merge2(nouns)
-#     # candidate_sentences_1 = filter_bert_claim_vs_sents(claim, candidate_docs_1)
-#     claim_dict = construct_subgraph_for_claim(claim)
-#     claim_graph = claim_dict['graph']
-#     if len(claim_graph) > 0:
-#         # 1. ES search all linked entity page -> candidate docs 2
-#         candidate_docs_2 = search_entity_docs_for_triples(claim_graph)
-#         candidate_docs = candidate_docs_1 + candidate_docs_2
-#         # 2. BERT filter: claim VS candidate docs sents -> candidate sentences 2
-#         candidate_sents_2 = filter_bert_claim_vs_sents(claim, candidate_docs)
-#         linked_triples = get_linked_triples(claim_graph)
-#         candidate_sentences_3 = []
-#         if len(linked_triples) > 0:
-#             # 3. ES filter: linked triples VS candidate docs 2 -> candidate sentences 3
-#             candidate_sentences_3 = search_triples_in_docs(linked_triples, candidate_docs_2)
-#         # 4. sort candidate sentences 2 + 3 -> candidate sentence 4
-#         candidate_sentences_4 = candidate_sents_2 + candidate_sentences_3
-#         isolated_phrases = claim_dict['no_relatives']
-#         if len(isolated_phrases) > 0:
-#             # 5. isolated_nodes candidate docs 2 sentences to sent_context_graph -> new entities
-#             # 6. ES search sent_context_graph new entity pages -> candidate docs 3
-#             # 7. BERT filter:  extended context triples VS candidate docs 3 sentences  -> candidate sentence 3
-#             # 8. aggregate envidence set -> candidate sentences 4
-#             candidate_sentence_set = strategy_one_hop(claim_dict, linked_triples, candidate_sentences_4)
-#
-#     else:
-#         # *. BERT filter: claim VS candidate docs 1 sents -> candidate sentences 1
-#         # cannot extract context graph, return candidate sentences 1
-#         candidate_docs = candidate_docs_1
-#         candidate_sentences_1 = filter_bert_claim_vs_sents(claim, candidate_docs_1)
-#     pass
+def strategy_over_all(data_origin, data_with_bert_s, data_with_tri_s, data_with_context_graph, data_sid2sids, output_file):
+    # 1. well linked and tri_s in bert_s -> tri_s ^ bert_S
+    # 2. well linked and tri_s not in bert_s -> tri_s + bert_s
+    # 3. partially linked and tri_s > 0 -> tri_s + bert_s + extend
+    # 4. not linked -> bert_s
+    pass
 
 
 
 def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences: List[Triple],
                                               candidate_sentences: List[str],
-                                              context_graph, sid2sids):
+                                              context_graph, sid2sids, entities):
     subgraphs, subgraph_sentences_l = generate_triple_subgraphs(linked_triples_with_sentences, context_graph)
     evidence_set_from_triple = []
     for sub_g in subgraphs:
         tmp_evi_from_tri_subgraph = generate_triple_sentence_combination(sub_g, [])
         evidence_set_from_triple.extend(tmp_evi_from_tri_subgraph)
     evidence_set_from_triple = list(set(evidence_set_from_triple))
-    evidence_set_from_sentences = generate_sentence_combination(candidate_sentences)
+    evidence_set_from_sentences = generate_sentence_combination(candidate_sentences, entities)
     new_evidence_set = copy.deepcopy(evidence_set_from_triple)
     for evid_s in evidence_set_from_sentences:
         for evid_t in evidence_set_from_triple:
@@ -195,7 +172,7 @@ def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences: Lis
     return new_evidence_set
 
 
-def generate_sentence_combination(list_of_sentences: List):
+def generate_sentence_combination(list_of_sentences: List, entities):
     new_evidence_set = set()
     max_s = 3 if len(list_of_sentences) > 3 else len(list_of_sentences)
     for i in reversed(range(1, max_s + 1)):
@@ -506,6 +483,7 @@ def hit_eval(data, max_evidence, with_doc=False):
 def eval_tris_berts(tris, berts, max_evidence):
     total = 0
     one_hit = 0
+    overlap_not_hit = 0
     for idx, example in enumerate(berts):
         if example["label"].upper() != "NOT ENOUGH INFO":
             total += 1.0
@@ -516,30 +494,43 @@ def eval_tris_berts(tris, berts, max_evidence):
             bert_sids = example["predicted_evidence"] if max_evidence is None else \
                     example["predicted_evidence"][:max_evidence]
             tri_sids = [[i.split(c_scorer.SENT_LINE2)[0], int(i.split(c_scorer.SENT_LINE2)[1])] for i in sids]
+
+            overlap_sids = []
+            for i in tri_sids:
+                if i in bert_sids:
+                    overlap_sids.append(i)
+            for prediction in overlap_sids:
+                if prediction not in all_evi:
+                    overlap_not_hit += 1.0
+                    break
+
             for i in tri_sids:
                 if i not in bert_sids:
                     bert_sids.append(i)
+            for prediction in bert_sids:
+                if prediction in all_evi:
+                    one_hit += 1.0
+                    break
+
             example["predicted_evidence"] = bert_sids
-        for prediction in bert_sids:
-            if prediction in all_evi:
-                one_hit += 1.0
-                break
-    print(f"at least one ss hit: {one_hit}, total: {total}, rate: {one_hit / total}")
+
+    print(f"merged: at least one ss hit: {one_hit}, total: {total}, rate: {one_hit / total}")
+    print(f"overlap not hit: {overlap_not_hit}, total: {total}, rate: {overlap_not_hit / total}")
     c_scorer.get_macro_ss_recall_precision(berts, 10)
 
 
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
-    hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")[1:]
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
     # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    # entity_data = read_json_rows(folder / "entity_doc.jsonl")
-    # prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    entity_data = read_json_rows(folder / "entity_doc.jsonl")
+    prepare_candidate_sents3_from_triples(graph_data, entity_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
-    tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
-    bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
+    # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
+    # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
 
     # hit_eval(bert_ss_data, 10)
     # eval_tri_ss(hardset_original, tri_ss_data)
@@ -549,7 +540,8 @@ if __name__ == '__main__':
     #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",
     #                           folder / "sids.log", folder / "sid2graph.log")
 
-    sid2sids_data = read_json_rows(folder / "sids.jsonl")
-    prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, graph_data, sid2sids_data, folder / "nli_sids.jsonl")
+    # sid2sids_data = read_json_rows(folder / "sids.jsonl")
+    # docs_data = read_json_rows(folder / "es_doc_10.jsonl")
+    # prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, graph_data, sid2sids_data, folder / "nli_sids.jsonl")
 
 

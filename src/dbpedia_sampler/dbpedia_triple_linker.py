@@ -410,8 +410,8 @@ def filter_verb_vs_one_hop(verb_dict, linked_phrases_l, keyword_embeddings_hash)
                         result.append(record)
     result.sort(key=lambda k: k['score'], reverse=True)
     merged = remove_duplicate_triples(result)
-    filted_result = filter_triples(merged)
-    return filted_result
+    # merged = filter_triples(merged)
+    return merged
 
 
 def filter_text_vs_one_hop(all_phrases, linked_phrases_l, keyword_embeddings_hash, threshold=SCORE_CONFIDENCE_3):
@@ -435,8 +435,8 @@ def filter_text_vs_one_hop(all_phrases, linked_phrases_l, keyword_embeddings_has
             result.extend(tmp_result)
     merged = remove_duplicate_triples(result)
     # only top 2 triples
-    filted_result = filter_triples(merged)
-    return filted_result
+    # merged = filter_triples(merged)
+    return merged
 
 
 def remove_duplicate_triples(triples):
@@ -784,7 +784,7 @@ def filter_resource_vs_keyword(linked_phrases_l):
         #     for item in filtered_triples:
         #         if not does_tri_exit_in_list(item, result):
         #             result.append(item)
-    result = filter_triples(result)
+    # result = filter_triples(result)
     return result
 
 

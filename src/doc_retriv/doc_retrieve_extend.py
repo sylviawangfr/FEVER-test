@@ -390,7 +390,7 @@ def rerun_failed_graph(folder):
     # data_entity = read_json_rows(folder / "entity_doc_19998.jsonl")
     data_context = read_json_rows(folder / "claim_graph_10000.jsonl")
     data_context.extend(read_json_rows(folder / "claim_graph_19998.jsonl"))
-    data_entity = read_json_rows(folder / "entity_doc.jsonl")
+    data_entity = read_json_rows(folder / "graph_resource_docs.jsonl")
 
     for idx, i in enumerate(data_context):
         if i['id'] in failed_items:
@@ -409,7 +409,7 @@ def rerun_failed_graph(folder):
     # save_intermidiate_results(data_context, folder / "rerun_claim_graph_19998.jsonl")
     # save_intermidiate_results(data_entity, folder / "rerun_entity_doc_19998.jsonl")
     save_intermidiate_results(data_context, folder / "rerun_claim_graph.jsonl")
-    save_intermidiate_results(data_entity, folder / "rerun_entity_doc.jsonl")
+    save_intermidiate_results(data_entity, folder / "rerun_graph_resource_docs.jsonl")
 
 
 def redo_example_docs(data, log_filename):
@@ -441,12 +441,12 @@ def do_testset_all(folder):
 
     original_data3 = read_json_rows(config.FEVER_TEST_JSONL)
     data_context = read_json_rows(folder / "claim_graph.jsonl")
-    prepare_candidate_doc2(original_data3, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    prepare_candidate_doc2(original_data3, data_context, folder / "graph_resource_docs.jsonl", folder / "graph_resource_docs.log")
     del original_data3
 
     original_data4 = read_json_rows(config.FEVER_TEST_JSONL)
     es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    ent_data = read_json_rows(folder / "graph_resource_docs.jsonl")
     assert (len(es_data) == len(original_data4) and (len(ent_data) == len(original_data4)))
     prepare_candidate_docs(original_data4, es_data, ent_data, folder / "candidate_docs.jsonl",
                            folder / "candidate_docs.log")
@@ -470,12 +470,12 @@ def do_devset_all(folder):
 
     original_data3 = read_json_rows(config.FEVER_DEV_JSONL)
     data_context = read_json_rows(folder / "claim_graph.jsonl")
-    prepare_candidate_doc2(original_data3, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    prepare_candidate_doc2(original_data3, data_context, folder / "graph_resource_docs.jsonl", folder / "graph_resource_docs.log")
     del original_data3
 
     original_data4 = read_json_rows(config.FEVER_DEV_JSONL)
     es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    ent_data = read_json_rows(folder / "graph_resource_docs.jsonl")
     assert (len(es_data) == len(original_data4) and (len(ent_data) == len(original_data4)))
     prepare_candidate_docs(original_data4, es_data, ent_data, folder / "candidate_docs.jsonl",
                            folder / "candidate_docs.log")
@@ -502,12 +502,12 @@ def do_dev_hardset_with_es_entity(folder):
 
     original_data3 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     data_context = read_json_rows(folder / "claim_graph.jsonl")
-    prepare_candidate_doc2(original_data3, data_context, folder / "entity_doc.jsonl", folder / "entity_doc.log")
+    prepare_candidate_doc2(original_data3, data_context, folder / "graph_resource_docs.jsonl", folder / "graph_resource_docs.log")
     del original_data3
 
     original_data4 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    ent_data = read_json_rows(folder / "entity_doc.jsonl")
+    ent_data = read_json_rows(folder / "graph_resource_docs.jsonl")
     assert (len(es_data) == len(original_data4) and (len(ent_data) == len(original_data4)))
     prepare_candidate_docs(original_data4, es_data, ent_data, folder / "candidate_docs.jsonl",
                            folder / "candidate_docs.log")

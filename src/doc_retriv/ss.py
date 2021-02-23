@@ -133,7 +133,7 @@ def strategy_over_all(data_origin, data_with_bert_s, data_with_tri_s, data_with_
     # 1. well linked and tri_s in bert_s -> tri_s ^ bert_S
     # 2. well linked and tri_s not in bert_s -> tri_s + bert_s
     # 3. partially linked and tri_s > 0 -> tri_s + bert_s + extend
-    # 4. not linked -> bert_s
+    # 4. not linked or tri_s == 0 -> bert_s
     pass
 
 

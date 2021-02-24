@@ -125,10 +125,12 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s, data_with_t
         resource2docids = data_resource_docs[idx]['resource_docs']
         # ents = get_linked_entities()
         candidate_sid_sets = []
+        all_tri_docs_sids = get_subgraph_docids(triples)
         if len(triples) > 0:
             subgraphs, subgraph_sentences_l = generate_triple_subgraphs(triples, claim_dict)
             subgraph_s = get_tri_sentences(subgraph_sentences_l)
             for subgraph in subgraphs:
+                tmp_sid_sets = []
                 if is_well_linked(subgraph, claim_dict) and len(subgraph_s) > 0 and subgraph_s in bert_s:
                     # 1. well linked and tri_s in bert_s -> tri_s ^ bert_s
                     # 2. well linked and has tri_s not in bert_s -> tri_s + bert_s
@@ -141,11 +143,23 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s, data_with_t
                         docid = bs.split(c_scorer.SENT_LINE2)[0]
                         if docid in subgraph_docids:
                             bert_candidate.append(bs)
+                            all_tri_docs_sids.append(bs)
                     # subgraph_s + bert_candidate
                     tmp_sid_sets = merge_sentences_and_generate_evidence_set(subgraph, bert_candidate, claim_dict, sid2sids)
                 candidate_sid_sets.extend(tmp_sid_sets)
+
+            bert_ss_doc_not_in_tris = []
+            for bs in bert_s:
+                docid = bs.split(c_scorer.SENT_LINE2)[0]
+                if docid not in all_tri_docs_sids:
+                    bert_ss_doc_not_in_tris.append(bs)
+            if len(bert_ss_doc_not_in_tris) > 0:
+                tmp_sid_sets = generate_sentence_combination(bert_ss_doc_not_in_tris)
+            candidate_sid_sets.extend(tmp_sid_sets)
+
         else:
             candidate_sid_sets = generate_sentence_combination(bert_s)
+        candidate_sid_sets = list(set(candidate_sid_sets))
         example.update({'nli_sids': candidate_sid_sets})
     save_intermidiate_results(data_origin, output_file)
 
@@ -603,10 +617,10 @@ if __name__ == '__main__':
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
     resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
-    tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
-    bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
+    # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
+    # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
 
     # hit_eval(bert_ss_data, 10)
     # eval_tri_ss(hardset_original, tri_ss_data)
@@ -616,7 +630,7 @@ if __name__ == '__main__':
     #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",
     #                           folder / "sids.log", folder / "sid2graph.log")
 
-    sid2sids_data = read_json_rows(folder / "sids.jsonl")
-    prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, graph_data, sid2sids_data, resource2docs_data, folder / "nli_sids.jsonl")
+    # sid2sids_data = read_json_rows(folder / "sids.jsonl")
+    # prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, graph_data, sid2sids_data, resource2docs_data, folder / "nli_sids.jsonl")
 
 

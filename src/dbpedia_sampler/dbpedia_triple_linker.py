@@ -430,7 +430,7 @@ def filter_text_vs_one_hop(all_phrases, linked_phrases_l, keyword_embeddings_has
             if u['URI'] not in uri2links_dict:
                 uri2links_dict.update({u['URI']: u})
     for m in uri2links_dict.values():
-        tmp_result = similarity_between_phrase_and_linked_one_hop2(all_phrases, all_phrases_embedding, m,
+        tmp_result = similarity_between_phrase_and_linked_one_hop(all_phrases, all_phrases_embedding, m,
                                                                   keyword_embeddings_hash, threshold=threshold)
         if len(tmp_result) > 0:
             result.extend(tmp_result)

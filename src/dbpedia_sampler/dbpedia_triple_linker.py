@@ -4,7 +4,7 @@ from utils.text_clean import convert_brc
 import dateutil.parser as dateutil
 import numpy as np
 import sklearn.metrics.pairwise as pw
-
+import copy
 import log_util
 from dbpedia_sampler import bert_similarity
 from dbpedia_sampler import dbpedia_lookup
@@ -303,11 +303,12 @@ def filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d):
         for j in all_date_properties:
             short_obj = dbpedia_virtuoso.uri_short_extract(j['object'])
             if text_clean.is_date(short_obj) and (dateutil.parse(short_obj) == date_i):
-                j['relatives'] = [j['text'], i]
-                j['score'] = float(1)
-                j['URI'] = j['subject']
-                j['exact_match'] = True
-                p_exact_match.append(j)
+                tmp_j = copy.deepcopy(j)
+                tmp_j['relatives'] = [j['text'], i]
+                tmp_j['score'] = float(1)
+                tmp_j['URI'] = j['subject']
+                tmp_j['exact_match'] = True
+                p_exact_match.append(tmp_j)
 
         if len(p_exact_match) < 1:
             no_exact_match_phrase.append(i)
@@ -335,7 +336,7 @@ def filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d):
                 for j in sorted_matching_index:
                     score = keyword_matching_score[j]
                     if score >= 0.5:
-                        tmp_tri = all_date_properties[j]
+                        tmp_tri = copy.deepcopy(all_date_properties[j])
                         tmp_tri['relatives'] = [tmp_tri['text'], i]
                         tmp_tri['URI'] = tmp_tri['subject']
                         tmp_tri['score'] = score
@@ -379,7 +380,7 @@ def filter_verb_vs_one_hop(verb_dict, linked_phrases_l, keyword_embeddings_hash)
                 for idx, rel in enumerate(keyword1_l):
                     rel_lemma = get_lemma(rel)
                     if len(set(verb_lemma) & set(rel_lemma)) > 0:
-                        record = candidates[idx]
+                        record = copy.deepcopy(candidates[idx])
                         record['score'] = difflib.SequenceMatcher(None, ' '.join(verb_lemma),
                                                                   ' '.join(rel_lemma)).ratio()
                         record['relatives'] = [resource['text'], verb]
@@ -401,7 +402,7 @@ def filter_verb_vs_one_hop(verb_dict, linked_phrases_l, keyword_embeddings_hash)
                     if idx_score < float(SCORE_CONFIDENCE_4):
                         break
                     else:
-                        record = candidates[idx]
+                        record = copy.deepcopy(candidates[idx])
                         record['score'] = idx_score
                         record['relatives'] = [resource['text'], verb]
                         record['text'] = resource['text']
@@ -410,7 +411,7 @@ def filter_verb_vs_one_hop(verb_dict, linked_phrases_l, keyword_embeddings_hash)
                         result.append(record)
     result.sort(key=lambda k: k['score'], reverse=True)
     merged = remove_duplicate_triples(result)
-    # merged = filter_triples(merged)
+    merged = filter_triples(merged)
     return merged
 
 
@@ -429,13 +430,13 @@ def filter_text_vs_one_hop(all_phrases, linked_phrases_l, keyword_embeddings_has
             if u['URI'] not in uri2links_dict:
                 uri2links_dict.update({u['URI']: u})
     for m in uri2links_dict.values():
-        tmp_result = similarity_between_phrase_and_linked_one_hop(all_phrases, all_phrases_embedding, m,
+        tmp_result = similarity_between_phrase_and_linked_one_hop2(all_phrases, all_phrases_embedding, m,
                                                                   keyword_embeddings_hash, threshold=threshold)
         if len(tmp_result) > 0:
             result.extend(tmp_result)
     merged = remove_duplicate_triples(result)
     # only top 2 triples
-    # merged = filter_triples(merged)
+    merged = filter_triples(merged)
     return merged
 
 
@@ -447,8 +448,7 @@ def remove_duplicate_triples(triples):
         else:
             for m in merged:
                 if m['subject'] == r['subject'] \
-                        and m['relation'] == r['relation'] \
-                        and m['object'] == r['object']:
+                        and m['keywords'] == r['keywords']:
                     if m['score'] < r['score']:
                         mr = list(set(m['relatives']) | set(r['relatives']))
                         r['relatives'] = merge_phs(mr)
@@ -535,7 +535,7 @@ def similarity_between_phrase_and_linked_one_hop(all_phrases, phrase_list_embedd
                 break
             else:
                 p1 = to_match_phrases[item // len2]
-                tri2 = candidates[item % len2]
+                tri2 = copy.deepcopy(candidates[item % len2])
                 tri2['relatives'] = [p1, linked_resource['text']]
                 tri2['text'] = linked_resource['text']
                 tri2['URI'] = linked_resource['URI']
@@ -558,10 +558,66 @@ def similarity_between_phrase_and_linked_one_hop(all_phrases, phrase_list_embedd
     return merged
 
 
+def similarity_between_phrase_and_linked_one_hop2(all_phrases, phrase_list_embedding, linked_resource,
+                                                 keyword_embeddings_hash, threshold=SCORE_CONFIDENCE_3):
+    candidates = get_one_hop(linked_resource)
+    if len(candidates) > CANDIDATE_UP_TO:
+        return []
+    keywords_embedding_rel_and_obj = lookup_or_update_onehop_embedding_hash(linked_resource, keyword_embeddings_hash)
+    keyword_embedding_rel, keyword_embedding_obj = lookup_or_update_keyword_embedding_hash(linked_resource,
+                                                                                           keyword_embeddings_hash)
+    if len(keywords_embedding_rel_and_obj) == 0:
+        return []
+
+    resouce_text = linked_resource['text']
+    to_match_phrases = []
+    to_match_phrase_embeddings = []
+    for idx, p in enumerate(all_phrases):
+        if p not in resouce_text and resouce_text not in p:
+            to_match_phrases.append(p)
+            to_match_phrase_embeddings.append(phrase_list_embedding[idx])
+
+    if len(to_match_phrases) == 0:
+        return []
+
+    def similarity_check(candidate_keyword_embeddings):
+        tmp_result = []
+        for idx, p1 in enumerate(to_match_phrases):
+            phrase_embedding = to_match_phrase_embeddings[idx]
+            out = pw.cosine_similarity([phrase_embedding], candidate_keyword_embeddings).flatten()
+            topk_idx = np.argsort(out)[::-1][:2]
+            len2 = len(candidate_keyword_embeddings)
+            for item in topk_idx:
+                score = float(out[item])
+                if score < float(threshold):
+                    break
+                else:
+                    tri2 = copy.deepcopy(candidates[item % len2])
+                    tri2['relatives'] = [p1, linked_resource['text']]
+                    tri2['text'] = linked_resource['text']
+                    tri2['URI'] = linked_resource['URI']
+                    tri2['score'] = score
+                    tri2['exact_match'] = linked_resource['exact_match']
+                    tmp_result.append(tri2)
+        return tmp_result
+
+    result = []
+    if len(keywords_embedding_rel_and_obj) > 0:
+        tmp_tris = similarity_check(keywords_embedding_rel_and_obj)
+        result.extend(tmp_tris)
+    if len(keyword_embedding_rel) > 0:
+        tmp_tris = similarity_check(keyword_embedding_rel)
+        result.extend(tmp_tris)
+    if len(keyword_embedding_obj) > 0:
+        tmp_tris = similarity_check(keyword_embedding_obj)
+        result.extend(tmp_tris)
+    merged = remove_duplicate_triples(result)
+    return merged
+
+
 def does_tri_exit_in_list(tri, tri_l):
     for item in tri_l:
-        if tri['subject'] == item['subject'] \
-                and tri['keywords'] == item['keywords']:
+        if tri['subject'] == item['subject'] and tri['keywords'] == item['keywords']:
             return True
     return False
 
@@ -727,12 +783,13 @@ def filter_resource_vs_keyword2(one_text_resources, to_compare_resource_list):
                     if re1_uri in [item['subject'], item['relation'], item['object']]:
                         # uri_matched = True
                         if not does_tri_exit_in_list(item, result):  # perfectly linked uri
-                            item['relatives'] = [re2['text'], resource1['text']]
-                            item['text'] = re2['text']
-                            item['URI'] = re2['URI']
-                            item['score'] = float(1)
-                            item['exact_match'] = res1['exact_match'] | re2['exact_match']
-                            result.append(item)
+                            new_item = copy.deepcopy(item)
+                            new_item['relatives'] = [re2['text'], resource1['text']]
+                            new_item['text'] = re2['text']
+                            new_item['URI'] = re2['URI']
+                            new_item['score'] = float(1)
+                            new_item['exact_match'] = res1['exact_match'] | re2['exact_match']
+                            result.append(new_item)
     return result
 
 
@@ -762,12 +819,13 @@ def filter_resource_vs_keyword(linked_phrases_l):
                     if re1_uri in [item['subject'], item['relation'], item['object']]:
                         # uri_matched = True
                         if not does_tri_exit_in_list(item, result):  # perfectly linked uri
-                            item['relatives'] = [re2['text'], re1['text']]
-                            item['text'] = re2['text']
-                            item['URI'] = re2['URI']
-                            item['score'] = float(1)
-                            item['exact_match'] = re1['exact_match'] | re2['exact_match']
-                            result.append(item)
+                            new_item = copy.deepcopy(item)
+                            new_item['relatives'] = [re2['text'], re1['text']]
+                            new_item['text'] = re2['text']
+                            new_item['URI'] = re2['URI']
+                            new_item['score'] = float(1)
+                            new_item['exact_match'] = re1['exact_match'] | re2['exact_match']
+                            result.append(new_item)
 
         # if fuzzy_match and not uri_matched:
         #     if len(keyword_embeddings['linked_phrases_l']) < 1:
@@ -813,19 +871,21 @@ def filter_keyword_vs_keyword(linked_phrases_l1, linked_phrases_l2, keyword_embe
                 if item1['keywords'] == item2['keywords']:
                     exact_match = True
                     if not does_tri_exit_in_list(item1, result):
-                        item1['relatives'] = [resource1['text'], resource2['text']]
-                        item1['text'] = resource1['text']
-                        item1['URI'] = item1['subject']
-                        item1['score'] = float(1)
-                        item1['exact_match'] = i['exact_match']
-                        result.append(item1)
+                        new_item1 = copy.deepcopy(item1)
+                        new_item1['relatives'] = [resource1['text'], resource2['text']]
+                        new_item1['text'] = resource1['text']
+                        new_item1['URI'] = item1['subject']
+                        new_item1['score'] = float(1)
+                        new_item1['exact_match'] = i['exact_match']
+                        result.append(new_item1)
                     if not does_tri_exit_in_list(item2, result):
-                        item2['relatives'] = [resource2['text'], resource1['text']]
-                        item2['text'] = resource2['text']
-                        item2['URI'] = item2['subject']
-                        item2['exact_match'] = j['exact_match']
-                        item2['score'] = float(1)
-                        result.append(item2)
+                        new_item2 = copy.deepcopy(item2)
+                        new_item2['relatives'] = [resource2['text'], resource1['text']]
+                        new_item2['text'] = resource2['text']
+                        new_item2['URI'] = item2['subject']
+                        new_item2['exact_match'] = j['exact_match']
+                        new_item2['score'] = float(1)
+                        result.append(new_item2)
         if fuzzy_match and not exact_match:
             for re1 in resource1_l:
                 for re2 in resource2_l:
@@ -865,9 +925,8 @@ def get_most_close_pairs(resource1, resource2, keyword_embeddings, top_k=5):
         if score < float(SCORE_CONFIDENCE_3):
             break
         else:
-            tri1 = candidates1[item // len2]
-            tri2 = candidates2[item % len2]
-
+            tri1 = copy.deepcopy(candidates1[item // len2])
+            tri2 = copy.deepcopy(candidates2[item % len2])
             tri1['relatives'] = [resource1['text'], resource2['text']]
             tri1['text'] = resource1['text']
             tri1['URI'] = resource1['URI']
@@ -912,7 +971,7 @@ def get_topk_similar_triples(single_phrase, linked_phrase, keyword_embeddings_ha
             if idx_score < float(threshold):
                 break
             else:
-                record = candidates[idx]
+                record = copy.deepcopy(candidates[idx])
                 record['score'] = idx_score
                 record['relatives'] = [single_phrase, res['text']]
                 record['text'] = res['text']
@@ -966,8 +1025,8 @@ if __name__ == '__main__':
     # test()
     embedding1 = bert_similarity.get_phrase_embedding(['type'])
     embedding2 = bert_similarity.get_phrase_embedding(['owned'])
-    out = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
-    print(out)
+    out1 = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
+    print(out1)
 
     # import spacy
     #

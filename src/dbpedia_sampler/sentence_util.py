@@ -45,6 +45,8 @@ def get_ents_and_phrases(sentence):
         if token.pos_.lower() in ['propn', 'noun'] or token.dep_ == 'dobj':
             noun_tokens.append(token.text)
     nouns_chunks = [remove_the_a(chunk.text) for chunk in doc_noun.noun_chunks if chunk.text.lower() not in STOP_WORDS]
+    for tt in doc_noun.ents:
+        print(tt)
     ents = [remove_the_a(ent.text) for ent in doc_noun.ents if ent.text.lower() not in STOP_WORDS]
     capitalized_phrased = list(set(split_claim_regex(sentence)))
 

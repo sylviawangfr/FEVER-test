@@ -43,6 +43,7 @@ def split_claim_regex(text):
     tokens = [matches[i].group() for i in range(len(matches))]
     return tokens
 
+
 def split_combinations(text):
     regexp = regex.compile(REGEX2)
     matches = [m for m in regexp.finditer(text)]
@@ -56,6 +57,15 @@ def is_capitalized(text):
         return True
     else:
         return False
+
+
+def is_person(phrase):
+    t = nlp_eng_spacy(phrase)
+    for tt in t.ents:
+        if tt.label_ == 'PERSON':
+            return True
+    return False
+
 
 def merge_phrases_as_span(sent, phrase_l):
     doc_to_merge = nlp_eng_spacy(sent)

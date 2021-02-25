@@ -55,6 +55,8 @@ class Evidences(object):
         for doc, ln in doc_ln_l:
             self.add_sent(doc, ln)
 
+    def to_sids(self):
+        return [f"{d}{SENT_LINE2}{l}" for d, l in self.evidences_list]
 
     def pop_sent(self, index):
         del_item = self.evidences_list.pop(index)

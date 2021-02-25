@@ -154,7 +154,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
         links1 = linked_p['links']
         links2 = es_linked_p['links']
         for i in links2:
-            if i['URI'] not in links1:
+            if len(list(filter(lambda x: i['URI'] == x['URI'], links1))) == 0:
                 links1.append(i)
         return linked_p
 
@@ -430,7 +430,7 @@ def filter_text_vs_one_hop(all_phrases, linked_phrases_l, keyword_embeddings_has
             if u['URI'] not in uri2links_dict:
                 uri2links_dict.update({u['URI']: u})
     for m in uri2links_dict.values():
-        tmp_result = similarity_between_phrase_and_linked_one_hop(all_phrases, all_phrases_embedding, m,
+        tmp_result = similarity_between_phrase_and_linked_one_hop2(all_phrases, all_phrases_embedding, m,
                                                                   keyword_embeddings_hash, threshold=threshold)
         if len(tmp_result) > 0:
             result.extend(tmp_result)
@@ -583,13 +583,17 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, phrase_list_embed
     def similarity_check(candidate_keyword_embeddings):
         tmp_result = []
         for idx, p1 in enumerate(to_match_phrases):
+            if is_person(p1):
+                this_threshold = SCORE_CONFIDENCE_4
+            else:
+                this_threshold = threshold
             phrase_embedding = to_match_phrase_embeddings[idx]
             out = pw.cosine_similarity([phrase_embedding], candidate_keyword_embeddings).flatten()
             topk_idx = np.argsort(out)[::-1][:2]
             len2 = len(candidate_keyword_embeddings)
             for item in topk_idx:
                 score = float(out[item])
-                if score < float(threshold):
+                if score < float(this_threshold):
                     break
                 else:
                     tri2 = copy.deepcopy(candidates[item % len2])

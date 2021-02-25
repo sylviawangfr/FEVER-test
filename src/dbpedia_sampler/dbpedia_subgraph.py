@@ -33,7 +33,7 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
                                     lookup_hash=None,
                                     embedding_hash=None,
                                     entities=[],
-                                    nouns=[]):
+                                    nouns=[], hlinks=[]):
     not_linked_phrases_l, linked_phrases_l = dbpedia_triple_linker.link_sentence(sentence_text,
                                                                                  extend_entity_docs=extend_entity_docs,
                                                                                  doc_title=doc_title,
@@ -155,13 +155,13 @@ def construct_subgraph_for_candidate(claim_dict_with_embedding, candidate_sent, 
     return graph, triples_extended_one_hop
 
 
-def construct_subgraph_for_candidate2(candidate_sent, doc_title='', additional_phrase=[], additional_resources=[]):
+def construct_subgraph_for_candidate2(candidate_sent, doc_title='', additional_phrase=[], additional_resources=[], hlinks=[]):
     # sentence graph
     additional_linked_phrases_l = additional_resources
     lookup_hash = dict()
     for i in additional_linked_phrases_l:
         lookup_hash[i['text']] = i
-    graph_dict = construct_subgraph_for_sentence(candidate_sent, doc_title=doc_title, lookup_hash=lookup_hash)
+    graph_dict = construct_subgraph_for_sentence(candidate_sent, doc_title=doc_title, lookup_hash=lookup_hash, hlinks=hlinks)
     triples_extended_one_hop = extend_graph(graph_dict, additional_resources, additional_phrase)
     graph = graph_dict['graph']
     return graph, triples_extended_one_hop

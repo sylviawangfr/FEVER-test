@@ -187,7 +187,8 @@ def search_triples_in_docs(triples: List[Triple], docs:dict):  #  list[Triple]
         if len(resource_docs) > 0:
             for doc in resource_docs:
                 doc_id = doc['id']
-                tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, tri.text, tri.keywords)
+                subject_text = uri_short_extract2(tri.subject)
+                tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, subject_text, tri.keywords)
                 if len(tmp_sentences) > 0:
                     for i in tmp_sentences:
                         # i['tri_id'] = tri.tri_id
@@ -612,7 +613,7 @@ def hit_eval(data, max_evidence, with_doc=False):
 
 def eval_tris_berts(tris, berts, max_evidence):
     total = 0
-    one_hit = 0
+    bert_one_hit = 0
     overlap_not_hit = 0
     tris_total = 0
     tris_hit = 0
@@ -624,6 +625,8 @@ def eval_tris_berts(tris, berts, max_evidence):
     not_overlap_hit = 0
     hit_idx = []
     not_overlap_total = 0
+    merged = []
+    merge_one_hit = 0
     for idx, example in enumerate(berts):
         if example["label"].upper() != "NOT ENOUGH INFO":
             total += 1.0
@@ -636,8 +639,6 @@ def eval_tris_berts(tris, berts, max_evidence):
             tri_sids = [[i.split(c_scorer.SENT_LINE2)[0], int(i.split(c_scorer.SENT_LINE2)[1])] for i in sids]
             if len(sids) == 0:
                 empty_tri_s += 1
-
-
 
             overlap_sids = []
             for i in tri_sids:
@@ -654,22 +655,30 @@ def eval_tris_berts(tris, berts, max_evidence):
                     overlap_not_hit += 1.0
                     break
 
-            for i in tri_sids:
-                if i not in bert_sids:
-                    bert_sids.append(i)
-                    not_overlap_total += 1
-                if i not in bert_sids and i in all_evi:
-                    not_overlap_hit += 1
-
             for prediction in bert_sids:
                 if prediction in all_evi:
-                    one_hit += 1.0
+                    bert_one_hit += 1.0
                     break
 
             for idx, i in enumerate(bert_sids):
                 if i in all_evi:
                     bert_hit += 1.0
                     hit_idx.append(idx)
+                    if idx > max_evidence:
+                        print(idx)
+
+            merged = copy.deepcopy(bert_sids)
+            for i in tri_sids:
+                if i not in bert_sids:
+                    merged.append(i)
+                    not_overlap_total += 1
+                if i not in bert_sids and i in all_evi:
+                    not_overlap_hit += 1
+
+            for prediction in merged:
+                if prediction in all_evi:
+                    merge_one_hit += 1.0
+                    break
 
             bert_total += len(bert_sids)
             for i in tri_sids:
@@ -678,7 +687,7 @@ def eval_tris_berts(tris, berts, max_evidence):
             tris_total += len(tri_sids)
             example["predicted_evidence"] = bert_sids
     print(f"empty tri_s: {empty_tri_s}")
-    print(f"merged: at least one ss hit: {one_hit}, total: {total}, rate: {one_hit / total}")
+    print(f"merged: at least one ss hit: {merge_one_hit}, total: {total}, rate: {merge_one_hit / total}")
     print(f"overlap hit: {overlap_hit}, overlap total: {overlap_total}, rate: {overlap_hit / overlap_total}")
     print(f"overlap not hit: {overlap_not_hit}, total: {total}, rate: {overlap_not_hit / total}")
     print(f"not overlap hit: {not_overlap_hit}, not overlap total: {not_overlap_total}, rate: {not_overlap_hit / not_overlap_total}")
@@ -688,25 +697,25 @@ def eval_tris_berts(tris, berts, max_evidence):
     count = Counter()
     count.update(hit_idx)
     print(count.most_common())
-    print(sorted(list(count.most_common()), key=lambda x: -x[0]))
+    # print(sorted(list(count.most_common()), key=lambda x: -x[0]))
 
 
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
+    # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
-    # graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    # resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    graph_data = read_json_rows(folder / "claim_graph.jsonl")
+    resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
+    prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
     # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
     # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
 
     # hit_eval(bert_ss_data, 10)
     # eval_tri_ss(hardset_original, tri_ss_data)
-    # eval_tris_berts(tri_ss_data, bert_ss_data, 5)
+    # eval_tris_berts(tri_ss_data, bert_ss_data, 10)
     # c_scorer.fever_score(bert_ss_data, hardset_original, max_evidence=5, mode={'check_sent_id_correct': True, 'standard': False}, error_analysis_file=folder / "test.log")
     # generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
     #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",

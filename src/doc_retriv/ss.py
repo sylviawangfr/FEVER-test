@@ -710,12 +710,12 @@ if __name__ == '__main__':
     resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
     prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
-    # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
-    # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
+    tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
+    bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
 
     # hit_eval(bert_ss_data, 10)
     # eval_tri_ss(hardset_original, tri_ss_data)
-    # eval_tris_berts(tri_ss_data, bert_ss_data, 10)
+    eval_tris_berts(tri_ss_data, bert_ss_data, 10)
     # c_scorer.fever_score(bert_ss_data, hardset_original, max_evidence=5, mode={'check_sent_id_correct': True, 'standard': False}, error_analysis_file=folder / "test.log")
     # generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
     #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",

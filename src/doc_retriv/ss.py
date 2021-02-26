@@ -14,6 +14,7 @@ from doc_retriv.doc_retrieve_extend import search_entity_docs_for_triples
 from bert_serving.client import BertClient
 from dbpedia_sampler.uri_util import uri_short_extract2, isURI
 from utils.resource_manager import *
+from collections import Counter
 
 
 def filter_bert_claim_vs_sents(claim, docs):
@@ -620,6 +621,9 @@ def eval_tris_berts(tris, berts, max_evidence):
     overlap_hit = 0
     overlap_total =0
     empty_tri_s = 0
+    not_overlap_hit = 0
+    hit_idx = []
+    not_overlap_total = 0
     for idx, example in enumerate(berts):
         if example["label"].upper() != "NOT ENOUGH INFO":
             total += 1.0
@@ -632,6 +636,8 @@ def eval_tris_berts(tris, berts, max_evidence):
             tri_sids = [[i.split(c_scorer.SENT_LINE2)[0], int(i.split(c_scorer.SENT_LINE2)[1])] for i in sids]
             if len(sids) == 0:
                 empty_tri_s += 1
+
+
 
             overlap_sids = []
             for i in tri_sids:
@@ -651,15 +657,20 @@ def eval_tris_berts(tris, berts, max_evidence):
             for i in tri_sids:
                 if i not in bert_sids:
                     bert_sids.append(i)
+                    not_overlap_total += 1
+                if i not in bert_sids and i in all_evi:
+                    not_overlap_hit += 1
 
             for prediction in bert_sids:
                 if prediction in all_evi:
                     one_hit += 1.0
                     break
 
-            for i in bert_sids:
+            for idx, i in enumerate(bert_sids):
                 if i in all_evi:
                     bert_hit += 1.0
+                    hit_idx.append(idx)
+
             bert_total += len(bert_sids)
             for i in tri_sids:
                 if i in all_evi:
@@ -668,18 +679,23 @@ def eval_tris_berts(tris, berts, max_evidence):
             example["predicted_evidence"] = bert_sids
     print(f"empty tri_s: {empty_tri_s}")
     print(f"merged: at least one ss hit: {one_hit}, total: {total}, rate: {one_hit / total}")
-    print(f"overlap hit: {overlap_hit}, total: {overlap_total}, rate: {overlap_hit / overlap_total}")
+    print(f"overlap hit: {overlap_hit}, overlap total: {overlap_total}, rate: {overlap_hit / overlap_total}")
     print(f"overlap not hit: {overlap_not_hit}, total: {total}, rate: {overlap_not_hit / total}")
-    print(f"bert hit: {bert_hit}, total: {bert_total}, rate: {bert_hit / bert_total}")
-    print(f"tri hit: {tris_hit}, total: {tris_total}, rate: {tris_hit / tris_total}")
+    print(f"not overlap hit: {not_overlap_hit}, not overlap total: {not_overlap_total}, rate: {not_overlap_hit / not_overlap_total}")
+    print(f"bert hit: {bert_hit}, bert total: {bert_total}, rate: {bert_hit / bert_total}")
+    print(f"tri hit: {tris_hit}, tri total: {tris_total}, rate: {tris_hit / tris_total}")
     c_scorer.get_macro_ss_recall_precision(berts, 10)
+    count = Counter()
+    count.update(hit_idx)
+    print(count.most_common())
+    print(sorted(list(count.most_common()), key=lambda x: -x[0]))
 
 
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
+    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
+    prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
     resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")

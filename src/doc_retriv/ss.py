@@ -478,9 +478,9 @@ def generate_candidate_graphs(data_with_graph, data_with_tri_s, data_with_s, sid
     with tqdm(total=len(data_with_graph), desc=f"constructing candidate graphs") as pbar:
         for idx, bert_example in enumerate(data_with_s):
             sids = get_bert_sids(bert_example, data_with_tri_s[idx])
-            triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
+            # triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
             claim_dict = data_with_graph[idx]['claim_dict']
-            sid_to_extend_sids, sid_to_graph = extend_candidate_one_hop(claim_dict, triples, sids)
+            sid_to_extend_sids, sid_to_graph = extend_candidate_one_hop(claim_dict, sids)
             sid_to_extend_sids_l.append({'id': bert_example['id'], 'sid2sids': sid_to_extend_sids})
             candidate_context_graph_l.append({'id': bert_example['id'], 'sid2graphs': sid_to_graph})
             flush_num -= 1
@@ -683,14 +683,14 @@ if __name__ == '__main__':
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
     resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
-    tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
-    bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
+    # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
+    # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
 
     # hit_eval(bert_ss_data, 10)
     # eval_tri_ss(hardset_original, tri_ss_data)
-    eval_tris_berts(tri_ss_data, bert_ss_data, 5)
+    # eval_tris_berts(tri_ss_data, bert_ss_data, 5)
     # c_scorer.fever_score(bert_ss_data, hardset_original, max_evidence=5, mode={'check_sent_id_correct': True, 'standard': False}, error_analysis_file=folder / "test.log")
     # generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
     #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",

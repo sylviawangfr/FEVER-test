@@ -29,4 +29,4 @@ class PipelineParas(object):
         return config.RESULT_PATH / f"{self.output_folder}/{task}.jsonl"
 
     def get_eval_item_file(self, task):
-        return config.RESULT_PATH / f"{self.output_folder}/{task}.jsonl"
+        return config.RESULT_PATH / f"{self.output_folder}/item_{task}.jsonl"

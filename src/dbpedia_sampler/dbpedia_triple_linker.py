@@ -496,9 +496,17 @@ def filter_triples(triples, top_k=2):
             if t['relatives'] == r:
                 tri_r.append(t)
         tri_r.sort(key=lambda k: k['score'], reverse=True)
-        for idx, i in enumerate(tri_r):
-            if i['score'] > 0.9 or idx < top_k:
-                all_triples.append(i)
+        tmp_filtered_tris = []
+        while len(tri_r) > 0:
+            tmp_tri = tri_r.pop()
+            if tmp_tri['score'] > 0.9 or len(tmp_filtered_tris) < top_k:
+                tmp_filtered_tris.append(tmp_tri)
+            elif len(tmp_filtered_tris) >= top_k:
+                if round(tmp_tri['score'], 3) == round(tmp_filtered_tris[-1]['score'], 3):
+                    tmp_filtered_tris.append(tmp_tri)
+                else:
+                    break
+        all_triples.extend(tmp_filtered_tris)
     return all_triples
 
 

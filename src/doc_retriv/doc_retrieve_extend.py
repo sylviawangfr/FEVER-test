@@ -505,10 +505,10 @@ def do_dev_hardset_with_es_entity(folder):
                         data_with_es=data_with_es)
     del original_data2
     #
-    # original_data3 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # data_context = read_json_rows(folder / "claim_graph.jsonl")
-    # prepare_candidate_doc2(original_data3, data_context, folder / "graph_resource_docs.jsonl", folder / "graph_resource_docs.log")
-    # del original_data3
+    original_data3 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    data_context = read_json_rows(folder / "claim_graph.jsonl")
+    prepare_candidate_doc2(original_data3, data_context, folder / "graph_resource_docs.jsonl", folder / "graph_resource_docs.log")
+    del original_data3
     #
     original_data4 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     es_data = read_json_rows(folder / "es_doc_10.jsonl")
@@ -538,7 +538,7 @@ if __name__ == '__main__':
     # candidate_docs_1 = search_and_merge4(entities, nouns)
 
 
-    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")
+    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[3:]
     # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.jsonl")[1:3]
     # eval_doc_preds(data, 10, config.RESULT_PATH / 'none1')
     # from ES.es_search import truncate_result

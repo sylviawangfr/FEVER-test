@@ -199,7 +199,9 @@ def combine_lookup(text_phrase):
 def get_exact_match(text_phrase, lookup_records):
     result = []
     for i in lookup_records:
-        if i['Label'] is not None and text_phrase.replace("_", ' ').lower() == i['Label'].lower():
+        if i['Label'] is not None \
+                and text_phrase.replace("_", ' ').lower() == i['Label'].lower() \
+                and "/Category:" not in i['URI']:
             i['exact_match'] = True
             result.append(i)
     return result

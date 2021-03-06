@@ -14,10 +14,13 @@ from dbpedia_sampler.sentence_util import *
 from bert_serving.client import BertClient
 from utils import c_scorer, text_clean
 from memory_profiler import profile
-from dbpedia_sampler.uri_util import isURI
+from dbpedia_sampler.uri_util import isURI, uri_short_extract
 import time
 import gc
 from utils import resource_manager
+from doc_retriv.SentenceEvidence import Triple
+from typing import List
+
 
 CANDIDATE_UP_TO = 200
 SCORE_CONFIDENCE_1 = 0.6
@@ -80,7 +83,6 @@ def lookup_doc_id(phrase, doc_ids):
     if len(links) > 0:
         linked_phrase['text'] = phrase
         linked_phrase['links'] = links
-        linked_phrase['text'] = phrase
     return linked_phrase
 
 
@@ -415,13 +417,13 @@ def filter_verb_vs_one_hop(verb_dict, linked_phrases_l, keyword_embeddings_hash)
     return merged
 
 
-def filter_text_vs_one_hop(all_phrases, linked_phrases_l, keyword_embeddings_hash, threshold=SCORE_CONFIDENCE_3):
+def filter_text_vs_one_hop(all_phrases, linked_phrases_l, embeddings_hash, threshold=SCORE_CONFIDENCE_3):
     if len(all_phrases) > CANDIDATE_UP_TO or len(all_phrases) < 1:
         return []
 
-    all_phrases_embedding = lookup_or_update_all_phrases_embedding_hash(all_phrases, keyword_embeddings_hash)
-    if len(all_phrases_embedding) == 0:
-        return []
+    # all_phrases_embedding = lookup_or_update_all_phrases_embedding_hash(all_phrases, keyword_embeddings_hash)
+    # if len(all_phrases_embedding) == 0:
+    #     return []
 
     result = []
     uri2links_dict = dict()
@@ -430,8 +432,8 @@ def filter_text_vs_one_hop(all_phrases, linked_phrases_l, keyword_embeddings_has
             if u['URI'] not in uri2links_dict:
                 uri2links_dict.update({u['URI']: u})
     for m in uri2links_dict.values():
-        tmp_result = similarity_between_phrase_and_linked_one_hop2(all_phrases, all_phrases_embedding, m,
-                                                                  keyword_embeddings_hash, threshold=threshold)
+        tmp_result = similarity_between_phrase_and_linked_one_hop2(all_phrases, m,
+                                                                  embeddings_hash, threshold=threshold)
         if len(tmp_result) > 0:
             result.extend(tmp_result)
     merged = remove_duplicate_triples(result)
@@ -566,27 +568,62 @@ def similarity_between_phrase_and_linked_one_hop(all_phrases, phrase_list_embedd
     return merged
 
 
-def similarity_between_phrase_and_linked_one_hop2(all_phrases, phrase_list_embedding, linked_resource,
-                                                 keyword_embeddings_hash, threshold=SCORE_CONFIDENCE_3):
+def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
+                                                 embeddings_hash, threshold=SCORE_CONFIDENCE_3):
     candidates = get_one_hop(linked_resource)
     if len(candidates) > CANDIDATE_UP_TO:
         return []
-    keywords_embedding_rel_and_obj = lookup_or_update_onehop_embedding_hash(linked_resource, keyword_embeddings_hash)
-    keyword_embedding_rel, keyword_embedding_obj = lookup_or_update_keyword_embedding_hash(linked_resource,
-                                                                                           keyword_embeddings_hash)
-    if len(keywords_embedding_rel_and_obj) == 0:
-        return []
-
     resouce_text = linked_resource['text']
     to_match_phrases = []
-    to_match_phrase_embeddings = []
+    to_match_phrase_idx = []
     for idx, p in enumerate(all_phrases):
         if p not in resouce_text and resouce_text not in p:
             to_match_phrases.append(p)
-            to_match_phrase_embeddings.append(phrase_list_embedding[idx])
-
+            to_match_phrase_idx.append(idx)
     if len(to_match_phrases) == 0:
         return []
+    candidate_keywords = [' '.join(tri['keywords']) for tri in candidates]
+
+    def partial_match(ph1, ph2):
+        if ph1.lower() == ph2.lower():
+            return True
+        elif ' ' + ph1.lower() in ph2.lower() or ph1.lower() + ' ' in ph2.lower():
+            return True
+        elif ' ' + ph2.lower() in ph1.lower() or ph2.lower() + ' ' in ph1.lower():
+            return True
+        else:
+            return False
+
+    def keyword_matching_check():
+        tmp_result = []
+        for idx1, p1 in enumerate(to_match_phrases):
+            for idx2, p2 in enumerate(candidate_keywords):
+                if partial_match(p1, p2):
+                    tri1 = copy.deepcopy(candidates[idx2])
+                    tri1['relatives'] = [p1, linked_resource['text']]
+                    tri1['text'] = linked_resource['text']
+                    tri1['URI'] = linked_resource['URI']
+                    tri1['score'] = float(1)
+                    tri1['exact_match'] = linked_resource['exact_match']
+                    tmp_result.append(tri1)
+        return tmp_result
+
+    result = []
+    tmp_tris = keyword_matching_check()
+    result.extend(tmp_tris)
+    result = remove_duplicate_triples(result)
+
+    phrase_list_embedding = lookup_or_update_all_phrases_embedding_hash(all_phrases, embeddings_hash)
+    if len(phrase_list_embedding) == 0:
+        return result
+    keywords_embedding_rel_and_obj = lookup_or_update_onehop_embedding_hash(linked_resource, embeddings_hash)
+    if len(keywords_embedding_rel_and_obj) == 0:
+        return result
+    keyword_embedding_rel, keyword_embedding_obj = lookup_or_update_keyword_embedding_hash(linked_resource,
+                                                                                           embeddings_hash)
+    to_match_phrase_embeddings = []
+    for idx in to_match_phrase_idx:
+        to_match_phrase_embeddings.append(phrase_list_embedding[idx])
 
     def similarity_check(candidate_keyword_embeddings):
         tmp_result = []
@@ -613,7 +650,6 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, phrase_list_embed
                     tmp_result.append(tri2)
         return tmp_result
 
-    result = []
     if len(keywords_embedding_rel_and_obj) > 0:
         tmp_tris = similarity_check(keywords_embedding_rel_and_obj)
         result.extend(tmp_tris)
@@ -639,6 +675,31 @@ def does_node_exit_in_list(node_uri, tri_l):
         if node_uri == item['subject'] or node_uri == item['relation'] or node_uri == item['object']:
             return True
     return False
+
+
+def filter_phrase_vs_two_hop(phrases, triples: List[Triple], threshold=SCORE_CONFIDENCE_3):
+    embedding_hash = {p: [] for p in phrases}
+    one_hop_nodes = []
+    for tri in triples:
+        obj = tri.object
+        if isURI(obj) and "http://dbpedia.org/resource/" in obj and "Categories:" not in obj:
+            one_hop_nodes.append(obj)
+    if len(one_hop_nodes) == 0:
+        return []
+    two_hop_hash = dict()
+    for res in one_hop_nodes:
+        if res not in two_hop_hash:
+            res_dict = {'URI': res, 'text': uri_short_extract(res), 'exact_match': True}
+            res_dict.update(query_resource(res))    # get_outbounds
+            two_hop_hash.update({res: res_dict})
+    result = []
+    for two_hop_resource in two_hop_hash.values():
+        tmp_result = similarity_between_phrase_and_linked_one_hop2(phrases, two_hop_resource,
+                                                                  embedding_hash, threshold=threshold)
+        if len(tmp_result) > 0:
+            result.extend(tmp_result)
+    merged = remove_duplicate_triples(result)
+    return merged
 
 
 def filter_node_vs_two_hop(linked_phrases_l, isolated_nodes, keyword_embeddings, threshold=0.65):
@@ -707,16 +768,16 @@ def filter_node_vs_two_hop(linked_phrases_l, isolated_nodes, keyword_embeddings,
     return result
 
 
-def lookup_or_update_phrase_embedding_hash(keyword, embedding_hash):
+def lookup_or_update_phrase_embedding_hash(phrase, embedding_hash):
     keyword_vec = []
-    if keyword in embedding_hash:
-        keyword_vec = embedding_hash[keyword]
+    if phrase in embedding_hash:
+        keyword_vec = embedding_hash[phrase]
     if len(keyword_vec) == 0:
         bc_obj = resource_manager.BERTClientResource()
-        tmp_embedding = bert_similarity.get_phrase_embedding([keyword], bc_obj.get_client())
+        tmp_embedding = bert_similarity.get_phrase_embedding([phrase], bc_obj.get_client())
         if len(tmp_embedding) > 0:
             keyword_vec = tmp_embedding[0]
-            embedding_hash[keyword] = keyword_vec
+            embedding_hash[phrase] = keyword_vec
     return keyword_vec
 
 

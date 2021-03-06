@@ -154,7 +154,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
         return add_linked_sid
 
     for idx, example in enumerate(data_origin):
-        if idx < 4:
+        if idx < 6:
             continue
         # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
         bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
@@ -226,14 +226,10 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                                 tmp_sid_sets = extend_evi
                         candidate_sid_sets.extend(tmp_sid_sets)
         else:
-            if len(bert_s) > 0:
-                if len(linked_phrases) > 1:
-                    # 2. candidate sent two hop
-                    candidate_sid_sets = extend_evidence_two_hop_sentences(claim_dict, bert_s)
-                else:
-                    candidate_sid_sets = generate_sentence_combination(bert_s)
-            else:
-                candidate_sid_sets = []
+            if len(bert_and_tri_s) > 0 and len(linked_phrases) > 1:
+                # 2. candidate sent two hop
+                extend_sid_set = extend_evidence_two_hop_sentences(claim_dict, bert_s)
+                candidate_sid_sets.extend(extend_sid_set)
 
         candidate_sid_sets = list(set(candidate_sid_sets))
         example.update({'nli_sids': candidate_sid_sets})

@@ -136,7 +136,7 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
         # Matching id
         eval_list[i]['score'] = float(scores[i])
         eval_list[i]['prob'] = float(probs[i])
-        eval_list[i]['predicted_label'] = preds[i]
+        eval_list[i]['predicted_label'] = int(preds[i])
     # fever score and saving
     result = compute_metrics(preds, all_label_ids.numpy(), average='macro')
     result['eval_loss'] = eval_loss

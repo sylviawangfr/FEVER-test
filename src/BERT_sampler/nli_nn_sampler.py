@@ -108,6 +108,7 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
             if mode == 'train':
                 additional_data = item['predicted_sentids']
                 n_e = len(evidence)
+                selected_additional_samples = []
                 # extend_number >= 2
                 extend_number = 2  # >= 2
                 # extend S and R
@@ -121,6 +122,7 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                                 extended_RS_list.append(extended_SR_evidences)
                                 break
                             if sample_not_in_evidence_set(sampled_e, e_set):
+                                selected_additional_samples.append(sampled_e)
                                 doc_ids = sampled_e.split(c_scorer.SENT_LINE)[0]
                                 ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
                                 extended_SR_evidences.add_sent(doc_ids, ln)
@@ -131,7 +133,7 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                     extended_NEI_evidence = copy.deepcopy(evidence)
                     extended_NEI_evidence.pop_sent(i)
                     additional_sample_num = random.randint(2-n_e, 5 - n_e)
-                    for sampled_e in additional_data:
+                    for sampled_e in selected_additional_samples:
                         if additional_sample_num <= 0 and extended_NEI_evidence not in extended_NEI_list:
                             extended_NEI_list.append(extended_NEI_evidence)
                             break

@@ -154,11 +154,11 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
     # if the item has multiple evidence set
     save_intermidiate_results(eval_list, paras.get_eval_item_file('nli_items'))
     print("Done with nli item eval")
-    return eval_list
+    return eval_list, eval_examples
 
 
 def eval_nli_and_save(paras : bert_para.PipelineParas):
-    eval_list = eval_nli_examples(paras)
+    eval_list, _ = eval_nli_examples(paras)
     post_step_nli_eval(eval_list, paras)
 
 
@@ -191,8 +191,8 @@ def post_step_nli_eval(eval_list, paras: bert_para.PipelineParas):
 
 
 def nli_pred_evi_score_only(paras : bert_para.PipelineParas):
-    eval_list = eval_nli_examples(paras)
-    nli_evi_set_post_step(eval_list, paras)
+    eval_list, eval_examples = eval_nli_examples(paras)
+    nli_evi_set_post_step(eval_examples, eval_list, paras)
 
 
 def nli_evi_set_post_step(eval_examples, eval_list, paras: bert_para.PipelineParas):

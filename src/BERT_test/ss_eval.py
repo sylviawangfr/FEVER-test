@@ -247,7 +247,6 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
         item['predicted_sentids'] = [sid for sid, _, _ in item['scored_sentids']][:top_n]
         item['predicted_evidence'] = convert_evidence2scoring_format(item['predicted_sentids'])
         # item['predicted_label'] = item['label']  # give ground truth label
-
     return d_list
 
 

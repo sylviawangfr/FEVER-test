@@ -49,7 +49,7 @@ def get_sample_data(upstream_data, data_from_pred=True, mode='pred'):
                             else:
                                 new_item['label'] = 'NOT ENOUGH INFO'
                         sampled_data_list.append(new_item)
-        pbar.update(1)
+                pbar.update(1)
     else:
         sampled_data_list = nli_nn_sampler.get_sample_data(upstream_data, data_from_pred=False, mode='train')
     print(f"Sampled evidences: {len(sampled_data_list)}")

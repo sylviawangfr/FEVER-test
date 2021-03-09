@@ -152,7 +152,6 @@ def get_predicted_evidence(item):
 
     one_annotator_evidences = Evidences(cleaned_one_annotator_evidences_list)
     evidences_list_set.add(one_annotator_evidences)
-
     return evidences_list_set
 
 

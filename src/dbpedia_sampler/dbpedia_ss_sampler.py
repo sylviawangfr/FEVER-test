@@ -43,7 +43,7 @@ def get_tfidf_sample(paras: bert_para.PipelineParas):
         one_full_example['id'] = item['id']
         predicted_evidence = item["predicted_sentids"]
         ground_truth = item['evidence']
-        if paras.pred:            # If pred, then reset to not containing ground truth evidence.
+        if paras.data_from_pred:            # If pred, then reset to not containing ground truth evidence.
             all_evidence_set = None
             r_list = []
             id_list = []
@@ -186,11 +186,11 @@ def collate(samples):
 
 
 # @profile
-def convert_to_graph_sampler(upstream_data, output_file, pred=False):
+def convert_to_graph_sampler(upstream_data, output_file, data_from_pred=False):
     batch_size = 10
     dt = get_current_time_str()
     paras = bert_para.PipelineParas()
-    paras.pred = pred
+    paras.data_from_pred = data_from_pred
     paras.bert_client = BertClient(port=config.BERT_SERVICE_PORT, port_out=config.BERT_SERVICE_PORT_OUT, timeout=60000)
     sample_dataloader = DataLoader(upstream_data, batch_size=batch_size, collate_fn=collate)
     # sample_dataloader = BasketIterable(tfidf_data, batch_size)
@@ -198,7 +198,7 @@ def convert_to_graph_sampler(upstream_data, output_file, pred=False):
     with tqdm(total=len(sample_dataloader), desc=f"Sampling") as pbar:
         for batched_sample in sample_dataloader:
             paras.upstream_data = batched_sample
-            if pred:
+            if data_from_pred:
                 paras.sample_n = 10
                 samples = get_full_list_from_upstream_ss(paras)
             else:
@@ -222,7 +222,7 @@ if __name__ == '__main__':
     # dev_data = dev_data[15000:len(dev_data)]
     dev_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")
     dev_data = dev_data[19550:]
-    convert_to_graph_sampler(dev_data, config.RESULT_PATH / "sample_ss_graph_dev_pred" / f"6_{get_current_time_str()}.jsonl", pred=True)
+    convert_to_graph_sampler(dev_data, config.RESULT_PATH / "sample_ss_graph_dev_pred" / f"6_{get_current_time_str()}.jsonl", data_from_pred=True)
     # # #
     #
     # tfidf_train_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[93420:100000]

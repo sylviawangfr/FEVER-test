@@ -5,7 +5,7 @@ import random
 from collections import Counter
 
 import numpy as np
-
+import utils.common_types as bert_para
 from BERT_test.eval_util import convert_evidence2scoring_format
 from data_util.tokenizers import SpacyTokenizer
 from utils import c_scorer, common
@@ -23,10 +23,10 @@ def easy_tokenize(text):
     return tok.tokenize(text_clean.normalize(text)).words()
 
 
-def sample_data_for_item(item, pred=False):
+def sample_data_for_item(item, data_from_pred=False, mode='train'):
     res_sentids_list = []
     flags = []
-    if pred:
+    if data_from_pred:
         e_list = check_sentences.get_predicted_evidence(item)
         return functools.reduce(operator.concat, e_list)
 
@@ -120,7 +120,7 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
     return ' '.join(current_evidence_text)
 
 
-def get_sample_data(upstream_data, tokenized=True, pred=False):
+def get_sample_data(upstream_data, data_from_pred=False, mode='train'):
     cursor, conn = fever_db.get_cursor()
     if not isinstance(upstream_data, list):
         d_list = read_json_rows(upstream_data)
@@ -131,20 +131,15 @@ def get_sample_data(upstream_data, tokenized=True, pred=False):
 
     for item in tqdm(d_list):
         # e_list = check_sentences.check_and_clean_evidence(item)
-        sampled_e_list, flags = sample_data_for_item(item, pred=pred)
+        sampled_e_list, flags = sample_data_for_item(item, data_from_pred=data_from_pred, mode=mode)
         # print(flags)
         for i, (sampled_evidence, flag) in enumerate(zip(sampled_e_list, flags)):
             new_item = dict()
             evidence_text = evidence_list_to_text(cursor, sampled_evidence,
-                                                  contain_head=True, id_tokenized=tokenized)
+                                                  contain_head=True, id_tokenized=False)
 
             new_item['id'] = str(item['id']) + '#' + str(i)
-
-            if tokenized:
-                new_item['claim'] = item['claim']
-            else:
-                new_item['claim'] = ' '.join(easy_tokenize(item['claim']))
-
+            new_item['claim'] = item['claim']
             new_item['evid'] = evidence_text
             new_item['predicted_sentids'] = item['predicted_sentids']
             new_item['predicted_evidence'] = convert_evidence2scoring_format(item['predicted_sentids'])
@@ -161,7 +156,7 @@ def get_sample_data(upstream_data, tokenized=True, pred=False):
 
 
 def eval_sample_length():
-    sampled_d_list = get_sample_data(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl", tokenized=True)
+    sampled_d_list = get_sample_data(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
     count = Counter()
     length_list = []
     for item in sampled_d_list:
@@ -178,6 +173,6 @@ def eval_sample_length():
 
 if __name__ == '__main__':
     additional_file = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:3]
-    t = get_sample_data(additional_file, tokenized=True)
+    t = get_sample_data(additional_file)
     print(t)
 

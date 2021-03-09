@@ -1,6 +1,6 @@
 import difflib
 import itertools
-from utils.text_clean import convert_brc
+from utils.text_clean import convert_brc, is_date
 import dateutil.parser as dateutil
 import numpy as np
 import sklearn.metrics.pairwise as pw
@@ -603,7 +603,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                     tri1['relatives'] = [p1, linked_resource['text']]
                     tri1['text'] = linked_resource['text']
                     tri1['URI'] = linked_resource['URI']
-                    tri1['score'] = float(1)
+                    tri1['score'] = SCORE_CONFIDENCE_3
                     tri1['exact_match'] = linked_resource['exact_match']
                     tmp_result.append(tri1)
         return tmp_result
@@ -628,7 +628,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
     def similarity_check(candidate_keyword_embeddings):
         tmp_result = []
         for idx, p1 in enumerate(to_match_phrases):
-            if is_person(p1):
+            if is_person(p1) or is_date(p1):
                 this_threshold = SCORE_CONFIDENCE_4
             else:
                 this_threshold = threshold

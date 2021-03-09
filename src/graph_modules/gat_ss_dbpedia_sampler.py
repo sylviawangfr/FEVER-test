@@ -16,13 +16,13 @@ __all__ = ['DBpediaGATSampler']
 
 
 class DBpediaGATSampler(Dataset):
-    def __init__(self, dbpedia_sampled_data, parallel=True, num_worker=3, pred=False):
+    def __init__(self, dbpedia_sampled_data, parallel=True, num_worker=3, data_from_pred=False):
         super(DBpediaGATSampler, self).__init__()
         self.graph_instances = []
         self.labels = []
         self.parallel = parallel
         self.num_worker = num_worker
-        self.pred = pred
+        self.data_from_pred = data_from_pred
         self.lock = threading.Lock()
         self._load(dbpedia_sampled_data)
         self.failed_count = 0

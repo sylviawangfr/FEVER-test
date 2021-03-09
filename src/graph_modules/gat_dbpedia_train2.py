@@ -152,7 +152,7 @@ def eval(model_or_path, dbpedia_data, gpu):
     return loss_eval_chart, accuracy_argmax, accuracy_sampled
 
 
-def pred_prob(model_or_path, original_data, dbpedia_data, output_dir, gpu=0, thredhold=0.4, pred=True, eval=True):
+def pred_prob(model_or_path, original_data, dbpedia_data, output_dir, gpu=0, thredhold=0.4, data_from_pred=True, eval=True):
     loss_func = nn.CrossEntropyLoss()
     is_cuda = True if torch.cuda.is_available() else False
     device = torch.device(f"cuda:{gpu}" if is_cuda else "cpu")
@@ -170,7 +170,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_dir, gpu=0, thr
             model.load_state_dict(torch.load(model_or_path, map_location=torch.device('cpu')))
     else:
         model = model_or_path
-    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8, pred=pred)
+    testset = DBpediaGATSampler(dbpedia_data, parallel=True, num_worker=8, data_from_pred=data_from_pred)
     print(f"done with sampling, data count: {testset.__len__()}, failed count: {testset.failed_count}")
     model.eval()
     # Convert a list of tuples to two lists
@@ -223,7 +223,7 @@ def pred_prob(model_or_path, original_data, dbpedia_data, output_dir, gpu=0, thr
     paras = model_para.PipelineParas()
     paras.output_folder = output_dir
     paras.original_data = original_data
-    paras.pred = pred
+    paras.data_from_pred = data_from_pred
     paras.top_n = [10]
     paras.prob_thresholds = thredhold
     if eval:

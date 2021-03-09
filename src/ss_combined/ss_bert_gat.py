@@ -73,7 +73,7 @@ def eval_and_save(bert_data, gat_data, output_folder, top_n=5, thresholds=0.1, e
     score_for_ss_evidence_list(merged, dev_original, output_folder, eval=eval, thresholds=thresholds, top_n=[top_n], save=save)
     return
 
-def redo_error_items(error_items, mode='dev'):
+def redo_error_items(error_items, mode='eval'):
     output_dir = config.RESULT_PATH / "error_rerun"
     # doc retrive
     for j in error_items:
@@ -85,7 +85,7 @@ def redo_error_items(error_items, mode='dev'):
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
     paras.output_folder = "error_rerun/ss_bert"
     paras.mode = mode
-    paras.pred = True
+    paras.data_from_pred = True
     paras.top_n = [10]
     paras.sample_n = 10
     paras.prob_thresholds = 0.01
@@ -95,11 +95,11 @@ def redo_error_items(error_items, mode='dev'):
     dbpedia_output = output_dir / "ss_gat" / f"dbpedia_sample.jsonl"
     convert_to_graph_sampler(ss_bert,
                              dbpedia_output,
-                             pred=True)
+                             data_from_pred=True)
     print("done with dbpedia sampler")
     model_path = config.SAVED_MODELS_PATH / 'gat_ss_0.0001_epoch400_65.856_66.430'
     gat_output = config.RESULT_PATH / "error_rerun/ss_gat"
-    ss_gat = pred_prob(model_path, error_items, ss_bert, gat_output, thredhold=0.1, pred=True, gpu=2, eval=True)
+    ss_gat = pred_prob(model_path, error_items, ss_bert, gat_output, thredhold=0.1, data_from_pred=True, gpu=2, eval=True)
 
     # merge
     merged = eval_and_save(ss_bert, ss_gat, output_dir, top_n=5, thresholds=0.1, eval=True, save=True)

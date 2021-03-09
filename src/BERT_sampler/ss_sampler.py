@@ -49,7 +49,7 @@ def get_full_list_sample(paras: bert_para.PipelineParas):
     for item in tqdm(d_list, desc="Sampling:"):
         doc_ids = item["predicted_docids"]
 
-        if not paras.pred:
+        if not paras.data_from_pred:
             if item['evidence'] is not None:
                 # ground truth
                 e_list = utils.check_sentences.check_and_clean_evidence(item)
@@ -151,7 +151,7 @@ def trucate_item(d_list, top_k=None):
     return
 
 # @profile
-def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True, id_tokenized=True):
+def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True, id_tokenized=False):
     sent_list = []
     for sent, sid in zipped_s_id_list:
         sent_item = dict()
@@ -226,7 +226,7 @@ def get_tfidf_sample(paras: bert_para.PipelineParas):
             continue
         predicted_evidence = item["predicted_sentids"]
         ground_truth = item['evidence']
-        if not paras.pred:
+        if not paras.data_from_pred:
             if ground_truth is not None and len(ground_truth) > 0:
                 e_list = utils.check_sentences.check_and_clean_evidence(item)
                 all_evidence_set = set(itertools.chain.from_iterable([evids.evidences_list for evids in e_list]))
@@ -272,7 +272,7 @@ def get_tfidf_sample(paras: bert_para.PipelineParas):
         zipped_s_id_list = sorted(zipped_s_id_list, key=lambda x: (x[1][0], x[1][1]))
 
         all_sent_list = convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
-                                                  id_tokenized=True)
+                                                  id_tokenized=False)
         cur_id = item['id']
         for i, sent_item in enumerate(all_sent_list):
             sent_item['selection_id'] = str(cur_id) + "<##>" + str(sent_item['sid'])
@@ -320,7 +320,7 @@ if __name__ == '__main__':
     paras = bert_para.PipelineParas()
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
     paras.sample_n = 4
-    paras.pred = False
+    paras.data_from_pred = False
     sample_tfidf = get_tfidf_sample(paras)
     # sample_full = get_full_list_sample(paras)
     eval_sample_length(sample_tfidf)

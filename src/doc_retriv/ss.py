@@ -22,7 +22,7 @@ def filter_bert_claim_vs_sents(claim, docs):
 
 def prepare_candidate_sents2_bert_dev(original_data, data_with_candidate_docs, output_folder):
     paras = bert_para.PipelineParas()
-    paras.pred = True
+    paras.data_from_pred = True
     paras.mode = 'eval'
     # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
     # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
@@ -154,8 +154,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
         return add_linked_sid
 
     for idx, example in enumerate(data_origin):
-        if idx < 6:
-            continue
+        # if idx < 8:
+        #     continue
         # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
         bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
         triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -209,15 +209,12 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                     else:
                         subgraph = subgraphs[item]
                         tmp_sid_sets = generate_triple_sentence_combination(subgraph, [])
-                        has_extend_in_ss = False
                         extend_sid_set = []
-                        for tss in tmp_sid_sets:
-                            extend_evi = add_linked_doc_ss(tss)
-                            if len(extend_evi) > 0:
-                                extend_sid_set.extend(extend_evi)
-                                has_extend_in_ss = True
-                        tmp_sid_sets.extend(extend_sid_set)
-                        if not has_extend_in_ss:
+                        extend_evi = add_linked_doc_ss(tmp_sid_sets)
+                        if len(extend_evi) > 0:
+                            extend_sid_set.extend(extend_evi)
+                            tmp_sid_sets.extend(extend_sid_set)
+                        else:
                             # 1. candidate tri two hop
                             # get not linked phrase, match two hop nodes
                             not_linked_phrases = partial_linked_no_relatives_phrases[idx]
@@ -232,7 +229,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                 candidate_sid_sets.extend(extend_sid_set)
 
         candidate_sid_sets = list(set(candidate_sid_sets))
-        example.update({'nli_sids': candidate_sid_sets})
+        example.update({'nli_sids': [e.to_sids() for e in candidate_sid_sets]})
     save_intermidiate_results(data_origin, output_file)
 
 

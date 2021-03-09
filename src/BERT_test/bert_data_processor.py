@@ -1,12 +1,12 @@
 from __future__ import absolute_import, division, print_function
-
 import logging
-
 import BERT_sampler.nli_nn_sampler as nli_nn_sampler
 import BERT_sampler.nli_tfidf_sampler as nli_tfidf_sampler
 import BERT_sampler.ss_sampler as ss_sampler
 import utils.common_types as bert_para
+import BERT_sampler.nli_evi_set_sampler as nli_evi_set_sampler
 from utils.text_clean import *
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +45,11 @@ class InputFeatures(object):
 class DataProcessor(object):
     """Base class for data converters for sequence classification data sets."""
 
-    def get_train_examples(self, original_data, upstream_data):
+    def get_train_examples(self, upstream_data):
         """Gets a collection of `InputExample`s for the train set."""
         raise NotImplementedError()
 
-    def get_dev_examples(self, original_data, upstream_data):
+    def get_dev_examples(self, upstream_data):
         """Gets a collection of `InputExample`s for the dev set."""
         raise NotImplementedError()
 
@@ -98,22 +98,23 @@ class FeverSSProcessor(DataProcessor):
 
 class FeverNliProcessor(DataProcessor):
 
-    def get_train_examples(self,upstream_data, sampler='nli_nn'):
+    def get_train_examples(self, upstream_data, sampler='nli_nn'):
         sampler_fun = get_sampler(sampler)
-        train_list = sampler_fun(upstream_data, tokenized=True, mode='train')
+        train_list = sampler_fun(upstream_data, data_from_pred=False, mode='train')
         return self._create_examples(train_list)
 
-    def get_dev_examples(self, upstream_data, sampler='nli_nn'):
+    def get_dev_examples(self, upstream_data, data_from_pred=False, sampler='nli_nn'):
         """See base class."""
         sampler_fun = get_sampler(sampler)
-        dev_list = sampler_fun(upstream_data, tokenized=True, mode='eval')
+        dev_list = sampler_fun(upstream_data, data_from_pred=data_from_pred, mode='eval')
         return self._create_examples(dev_list), dev_list
 
     def get_test_examples(self, upstream_data, sampler='nli_nn'):
         """See base class."""
         sampler_fun = get_sampler(sampler)
-        dev_list = sampler_fun(upstream_data, tokenized=True, mode='pred')
+        dev_list = sampler_fun(upstream_data, data_from_pred=True, mode='pred')
         return self._create_examples(dev_list), dev_list
+
 
     def get_labels(self):
         """See base class."""
@@ -140,7 +141,8 @@ def get_sampler(s):
         "ss_tfidf": ss_sampler.get_tfidf_sample,
         "ss_full": ss_sampler.get_full_list_sample,
         "nli_tfidf": nli_tfidf_sampler.get_sample_data,
-        "nli_nn": nli_nn_sampler.get_sample_data
+        "nli_nn": nli_nn_sampler.get_sample_data,
+        "nli_evis": nli_evi_set_sampler.get_sample_data
     }
     return processors[s]
 

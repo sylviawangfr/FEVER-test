@@ -8,13 +8,14 @@ class PipelineParas(object):
     log_foder = None
     BERT_model = None
     BERT_tokenizer = None
-    pred=False
-    mode='eval'
+    data_from_pred=False
+    mode='eval' # mode in ['train', 'pred', 'eval']
     top_n = [5]
     prob_thresholds = 0.5
     sample_n = 5
     post_filter_prob = 1
     bert_client = None
+    sampler = None
 
     def get_f1_log_file(self, task):
         return config.LOG_PATH / f"{self.output_folder}/f1_analyze_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.log"

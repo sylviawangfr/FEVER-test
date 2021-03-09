@@ -317,7 +317,7 @@ if __name__ == "__main__":
     paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
     paras.mode = 'eval'
-    paras.pred = True
+    paras.data_from_pred = True
     paras.sample_n = 10
     # paras.post_filter_prob = 0.5
     paras.top_n = [10, 5]

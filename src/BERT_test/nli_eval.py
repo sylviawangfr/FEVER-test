@@ -17,8 +17,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from typing import Dict
-
+from typing import Dict, List
 import torch
 from pytorch_pretrained_bert.modeling import BertForSequenceClassification
 from pytorch_pretrained_bert.tokenization import BertTokenizer
@@ -28,8 +27,6 @@ from torch.utils.data import (DataLoader, SequentialSampler,
                               TensorDataset)
 from tqdm import tqdm
 import numpy as np
-
-import utils.common_types as bert_para
 from BERT_test.bert_data_processor import *
 from BERT_test.eval_util import compute_metrics
 from data_util.toChart import *
@@ -39,11 +36,9 @@ from utils.file_loader import read_json_rows, save_file, save_intermidiate_resul
 logger = logging.getLogger(__name__)
 
 
-def nli_eval_fever_score(paras : bert_para.PipelineParas, predicted_list):
+def nli_eval_fever_score(paras: bert_para.PipelineParas, predicted_list):
     if paras.mode == 'eval':
         eval_mode = {'check_sent_id_correct': True, 'standard': True}
-
-
         strict_score, acc_score, pr, rec, f1 = c_scorer.fever_score(predicted_list,
                                                                 paras.original_data,
                                                                 mode=eval_mode,
@@ -66,7 +61,7 @@ def nli_eval_fever_score(paras : bert_para.PipelineParas, predicted_list):
         save_intermidiate_results(clean_result, paras.get_eval_data_file('nli'))
 
 
-def eval_nli_and_save(paras : bert_para.PipelineParas):
+def eval_nli_examples(paras : bert_para.PipelineParas):
     model = BertForSequenceClassification.from_pretrained(paras.BERT_model, num_labels=3)
     tokenizer = BertTokenizer.from_pretrained(paras.BERT_tokenizer, do_lower_case=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -74,14 +69,12 @@ def eval_nli_and_save(paras : bert_para.PipelineParas):
     eval_batch_size = 8
     sequence_length = 300
     processor = FeverNliProcessor()
-
-
-    sampler = 'nli_nn'
+    # sampler = 'nli_nn'
 
     if paras.mode == 'eval':
-        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, sampler)
+        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, paras.sampler)
     else:
-        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, sampler)
+        eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, paras.sampler)
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), sequence_length, tokenizer)
@@ -127,7 +120,7 @@ def eval_nli_and_save(paras : bert_para.PipelineParas):
             preds[0] = np.append(
                 preds[0], logits.detach().cpu().numpy(), axis=0)
 
-    if not paras.pred:
+    if paras.mode == 'eval':
         draw_loss_epoch_detailed(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), f"nli_eval_{paras.output_folder}")
         eval_loss = eval_loss / nb_eval_steps
 
@@ -147,46 +140,78 @@ def eval_nli_and_save(paras : bert_para.PipelineParas):
     result['eval_loss'] = eval_loss
 
     logger.info("***** Eval results *****")
-    if not paras.pred:
+    if paras.mode == 'eval':
         pred_log = ''
         for key in sorted(result.keys()):
             pred_log = pred_log + key + ":" + str(result[key]) + "\n"
             logger.info("  %s = %s", key, str(result[key]))
             print(key, str(result[key]))
-        save_file(pred_log, paras.get_eval_log_file(sampler))
+        save_file(pred_log, paras.get_eval_log_file(paras.sampler))
 
     # not for training, but for test set predict
     # if the item has multiple evidence set
-    if paras.pred:
-        id2label = {
-            0: "SUPPORTS",
-            1: "REFUTES",
-            2: "NOT ENOUGH INFO"
-        }
-        augmented_dict: Dict[int, Dict[str,str]] = dict()
-        for evids_item in tqdm(eval_list):
-            evids_id = evids_item['id']  # The id for the current one selection.
-            org_id = int(evids_id.split('#')[0])
-            remain_index = evids_id.split('#')[1]
-            evids_item['id'] = org_id
-            #assert remain_index == 0
-            if not org_id in augmented_dict:
-                aug_i = {'predicted_label': str(evids_item["predicted_label"]), 'predicted_evidence': evids_item["predicted_evidence"]}
-                augmented_dict[org_id] = aug_i
-            # else:
-            #     print("Exist:", evids_item["id"])
+    print("Done with nli item eval")
+    return eval_list
 
 
-         #todo:verify Dict len
-        for item in paras.upstream_data:
-            if int(item['id']) not in augmented_dict:
-                print("not found this example:\n", item)
-            else:
-                item["predicted_label"] = id2label[int(augmented_dict[int(item['id'])]['predicted_label'])]
-                item["predicted_evidence"] = augmented_dict[int(item['id'])]["predicted_evidence"]
+def eval_nli_and_save(paras : bert_para.PipelineParas):
+    eval_list = eval_nli_examples(paras)
+    post_step_nli_eval(eval_list, paras)
 
-        nli_eval_fever_score(paras, paras.upstream_data)
 
+def post_step_nli_eval(eval_list, paras: bert_para.PipelineParas):
+    id2label = {
+        0: "SUPPORTS",
+        1: "REFUTES",
+        2: "NOT ENOUGH INFO"
+    }
+    augmented_dict: Dict[int, Dict[str, str]] = dict()
+    for evids_item in tqdm(eval_list):
+        evids_id = evids_item['id']  # The id for the current one selection.
+        org_id = int(evids_id.split('#')[0])
+        # remain_index = evids_id.split('#')[1]
+        evids_item['id'] = org_id
+        # assert remain_index == 0
+        if not org_id in augmented_dict:
+            aug_i = {'predicted_label': str(evids_item["predicted_label"]),
+                     'predicted_evidence': evids_item["predicted_evidence"]}
+            augmented_dict[org_id] = aug_i
+
+    for item in paras.upstream_data:
+        if int(item['id']) not in augmented_dict:
+            print("not found this example:\n", item)
+        else:
+            item["predicted_label"] = id2label[int(augmented_dict[int(item['id'])]['predicted_label'])]
+            item["predicted_evidence"] = augmented_dict[int(item['id'])]["predicted_evidence"]
+    nli_eval_fever_score(paras, paras.upstream_data)
+    print("Done with nli evaluation")
+
+
+def nli_pred_evi_score_only(paras : bert_para.PipelineParas):
+    eval_list = eval_nli_examples(paras)
+    nli_evi_set_post_step(eval_list, paras)
+
+
+def nli_evi_set_post_step(eval_list, paras: bert_para.PipelineParas):
+    augmented_dict: Dict[int, List[Dict]] = dict()
+    for evids_item in tqdm(eval_list):
+        evids_id = evids_item['id']  # The id for the current one selection.
+        org_id = int(evids_id.split('#')[0])
+        remain_index = evids_id.split('#')[1]
+        evids_item['id'] = org_id
+        aug_i = {'evi_idx': remain_index, 'predicted_label': str(evids_item["predicted_label"]),
+                 'score': evids_item["score"]}
+        if not org_id in augmented_dict:
+            augmented_dict.update({org_id: [aug_i]})
+        else:
+            augmented_dict[org_id].append(aug_i)
+
+    for item in paras.upstream_data:
+        if int(item['id']) not in augmented_dict:
+            print("not found this example:\n", item)
+        else:
+            item["evi_nli"] = augmented_dict[int(item['id'])]
+    save_intermidiate_results(paras.upstream_data, paras.output_folder)
     print("Done with nli evaluation")
 
 
@@ -194,7 +219,6 @@ def delete_unused_evidence(d_list):
     for item in d_list:
         if item['predicted_label'] == 'NOT ENOUGH INFO':
             item['predicted_evidence'] = []
-
 
 
 if __name__ == "__main__":

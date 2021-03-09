@@ -154,11 +154,11 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
     # if the item has multiple evidence set
     save_intermidiate_results(eval_list, paras.get_eval_item_file('nli_items'))
     print("Done with nli item eval")
-    return eval_list, eval_examples
+    return eval_list
 
 
 def eval_nli_and_save(paras : bert_para.PipelineParas):
-    eval_list, _ = eval_nli_examples(paras)
+    eval_list = eval_nli_examples(paras)
     post_step_nli_eval(eval_list, paras)
 
 
@@ -191,21 +191,20 @@ def post_step_nli_eval(eval_list, paras: bert_para.PipelineParas):
 
 
 def nli_pred_evi_score_only(paras : bert_para.PipelineParas):
-    eval_list, eval_examples = eval_nli_examples(paras)
-    nli_evi_set_post_step(eval_examples, eval_list, paras)
+    eval_list = eval_nli_examples(paras)
+    nli_evi_set_post_step(eval_list, paras)
 
 
-def nli_evi_set_post_step(eval_examples, eval_list, paras: bert_para.PipelineParas):
+def nli_evi_set_post_step(eval_list, paras: bert_para.PipelineParas):
     augmented_dict: Dict[int, List[Dict]] = dict()
     with tqdm(total=len(eval_list), desc=f"nli evi post step...") as pbar:
         for idx, evids_item in enumerate(eval_list):
-            example = eval_examples[idx]
             evids_id = evids_item['id']  # The id for the current one example.
             org_id = int(evids_id.split('#')[0])
             # remain_index = evids_id.split('#')[1]
             evids_item['id'] = org_id
             aug_i = {'example_idx': evids_id, 'predicted_label': str(evids_item["predicted_label"]),
-                     'score': evids_item["score"], 'prob': evids_item["prob"], 'sids': example['sids']}
+                     'score': evids_item["score"], 'prob': evids_item["prob"]}
             if not org_id in augmented_dict:
                 augmented_dict.update({org_id: [aug_i]})
             else:

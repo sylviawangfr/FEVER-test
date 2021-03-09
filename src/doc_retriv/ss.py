@@ -155,8 +155,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
 
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
-            # if idx < 8:
-            #     continue
+            if idx < 62:
+                continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -660,8 +660,6 @@ def extend_candidate_one_hop(claim_dict, candidate_sentences: List[str]):
                 all_e_sids.extend(ex_sids)
         sid_to_extend_sids.update({candidate_sent_sid: list(set(all_e_sids))})
     return sid_to_extend_sids, sid2graph_l
-
-
 
 
 if __name__ == '__main__':

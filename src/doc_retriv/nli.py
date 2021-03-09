@@ -25,7 +25,7 @@ def nli_vote(data_nli_with_score):
 def nli_eval(data_nli, output_folder):
     paras = bert_para.PipelineParas()
     paras.mode = 'eval'
-    paras.data_from_pred = 'False'
+    paras.data_from_pred = False
     paras.upstream_data = data_nli
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"

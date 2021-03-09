@@ -153,83 +153,85 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                             add_linked_sid.append(tmp_e_s)
         return add_linked_sid
 
-    for idx, example in enumerate(data_origin):
-        # if idx < 8:
-        #     continue
-        # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
-        bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
-        triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
-        claim_dict = data_with_context_graph[idx]['claim_dict']
-        linked_phrases = claim_dict['linked_phrases_l']
-        linked_entities = [ent['text'] for ent in linked_phrases]
-        candidate_sid_sets = []
-        tri_s = list(set([s for tt in triples for s in tt.sentences]))
-        bert_and_tri_s = list(set(bert_s) | set(tri_s))
-        docid2sids, sid2linkedsids = get_docid_to_sids_hlinks(bert_and_tri_s)
+    with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
+        for idx, example in enumerate(data_origin):
+            # if idx < 8:
+            #     continue
+            # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
+            bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
+            triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
+            claim_dict = data_with_context_graph[idx]['claim_dict']
+            linked_phrases = claim_dict['linked_phrases_l']
+            linked_entities = [ent['text'] for ent in linked_phrases]
+            candidate_sid_sets = []
+            tri_s = list(set([s for tt in triples for s in tt.sentences]))
+            bert_and_tri_s = list(set(bert_s) | set(tri_s))
+            docid2sids, sid2linkedsids = get_docid_to_sids_hlinks(bert_and_tri_s)
 
-        for linked_ent in linked_entities:
-            for docid in docid2sids:
-                if linked_ent.lower() in convert_brc(docid).replace("_", " ").lower():
-                    tmp_sids = docid2sids[docid]
-                    sid_combination = generate_sentence_combination(tmp_sids)
-                    candidate_sid_sets.extend(sid_combination)
+            for linked_ent in linked_entities:
+                for docid in docid2sids:
+                    if linked_ent.lower() in convert_brc(docid).replace("_", " ").lower():
+                        tmp_sids = docid2sids[docid]
+                        sid_combination = generate_sentence_combination(tmp_sids)
+                        candidate_sid_sets.extend(sid_combination)
 
-        candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets))
+            candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets))
 
-        if len(triples) > 0:
-            subgraphs, _ = generate_triple_subgraphs(triples, claim_dict)
-            claim_relative_hash = init_relative_hash()
-            well_linked_sg_idx = []
-            partial_linked_idx = []
-            partial_linked_no_relatives_phrases = []
-            all_subgraph_sids = []
-            for subgraph in subgraphs:
-                tmp_sids = []
-                for tt in subgraph:
-                    tmp_sids.append(tt.sentences)
-                all_subgraph_sids.append(tmp_sids)
-            for idx, subgraph in enumerate(subgraphs):
-                subgraph_sids = all_subgraph_sids[idx]
-                no_relative = get_not_linked_phrases(subgraph, claim_relative_hash)
-                if len(no_relative) == 0 and all([len(s) > 0 for s in subgraph_sids]):
-                    well_linked_sg_idx.append(idx)
-                else:
-                    partial_linked_idx.append(idx)
-                    partial_linked_no_relatives_phrases.append(no_relative)
-            if len(well_linked_sg_idx) > 0:
-                for idx in well_linked_sg_idx:
-                    good_subgraph = subgraphs[idx]
-                    tmp_sid_sets = generate_triple_sentence_combination(good_subgraph, [])
-                    candidate_sid_sets.extend(tmp_sid_sets)
-            elif len(partial_linked_idx) > 0:
-                for idx, item in enumerate(partial_linked_idx):
-                    subgraph_sids = all_subgraph_sids[item]
-                    if all([len(s) == 0 for s in subgraph_sids]):
-                        continue
+            if len(triples) > 0:
+                subgraphs, _ = generate_triple_subgraphs(triples, claim_dict)
+                claim_relative_hash = init_relative_hash()
+                well_linked_sg_idx = []
+                partial_linked_idx = []
+                partial_linked_no_relatives_phrases = []
+                all_subgraph_sids = []
+                for subgraph in subgraphs:
+                    tmp_sids = []
+                    for tt in subgraph:
+                        tmp_sids.append(tt.sentences)
+                    all_subgraph_sids.append(tmp_sids)
+                for idx, subgraph in enumerate(subgraphs):
+                    subgraph_sids = all_subgraph_sids[idx]
+                    no_relative = get_not_linked_phrases(subgraph, claim_relative_hash)
+                    if len(no_relative) == 0 and all([len(s) > 0 for s in subgraph_sids]):
+                        well_linked_sg_idx.append(idx)
                     else:
-                        subgraph = subgraphs[item]
-                        tmp_sid_sets = generate_triple_sentence_combination(subgraph, [])
-                        extend_sid_set = []
-                        extend_evi = add_linked_doc_ss(tmp_sid_sets)
-                        if len(extend_evi) > 0:
-                            extend_sid_set.extend(extend_evi)
-                            tmp_sid_sets.extend(extend_sid_set)
-                        else:
-                            # 1. candidate tri two hop
-                            # get not linked phrase, match two hop nodes
-                            not_linked_phrases = partial_linked_no_relatives_phrases[idx]
-                            extend_evi = extend_evidence_two_hop_nodes(not_linked_phrases, subgraph)
-                            if len(extend_evi) > 0:
-                                tmp_sid_sets = extend_evi
+                        partial_linked_idx.append(idx)
+                        partial_linked_no_relatives_phrases.append(no_relative)
+                if len(well_linked_sg_idx) > 0:
+                    for idx in well_linked_sg_idx:
+                        good_subgraph = subgraphs[idx]
+                        tmp_sid_sets = generate_triple_sentence_combination(good_subgraph, [])
                         candidate_sid_sets.extend(tmp_sid_sets)
-        else:
-            if len(bert_and_tri_s) > 0 and len(linked_phrases) > 1:
-                # 2. candidate sent two hop
-                extend_sid_set = extend_evidence_two_hop_sentences(claim_dict, bert_s)
-                candidate_sid_sets.extend(extend_sid_set)
+                elif len(partial_linked_idx) > 0:
+                    for idx, item in enumerate(partial_linked_idx):
+                        subgraph_sids = all_subgraph_sids[item]
+                        if all([len(s) == 0 for s in subgraph_sids]):
+                            continue
+                        else:
+                            subgraph = subgraphs[item]
+                            tmp_sid_sets = generate_triple_sentence_combination(subgraph, [])
+                            extend_sid_set = []
+                            extend_evi = add_linked_doc_ss(tmp_sid_sets)
+                            if len(extend_evi) > 0:
+                                extend_sid_set.extend(extend_evi)
+                                tmp_sid_sets.extend(extend_sid_set)
+                            else:
+                                # 1. candidate tri two hop
+                                # get not linked phrase, match two hop nodes
+                                not_linked_phrases = partial_linked_no_relatives_phrases[idx]
+                                extend_evi = extend_evidence_two_hop_nodes(not_linked_phrases, subgraph)
+                                if len(extend_evi) > 0:
+                                    tmp_sid_sets = extend_evi
+                            candidate_sid_sets.extend(tmp_sid_sets)
+            else:
+                if len(bert_and_tri_s) > 0 and len(linked_phrases) > 1:
+                    # 2. candidate sent two hop
+                    extend_sid_set = extend_evidence_two_hop_sentences(claim_dict, bert_s)
+                    candidate_sid_sets.extend(extend_sid_set)
 
-        candidate_sid_sets = list(set(candidate_sid_sets))
-        example.update({'nli_sids': [e.to_sids() for e in candidate_sid_sets]})
+            candidate_sid_sets = list(set(candidate_sid_sets))
+            example.update({'nli_sids': [e.to_sids() for e in candidate_sid_sets]})
+            pbar.update(1)
     save_intermidiate_results(data_origin, output_file)
 
 

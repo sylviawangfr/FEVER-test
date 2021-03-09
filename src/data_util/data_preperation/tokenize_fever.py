@@ -44,6 +44,7 @@ def tokenized_claim_list(in_list):
 
     return in_list
 
+
 def tokenize_docids(in_file, out_file):
     tok = spacy_tokenizer.SpacyTokenizer(annotators={'pos', 'lemma'}, model='en_core_web_sm')
     d_list = load_jsonl(in_file)

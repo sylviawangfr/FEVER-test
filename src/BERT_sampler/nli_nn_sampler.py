@@ -7,6 +7,7 @@ from utils import c_scorer, common, text_clean
 from utils import fever_db, check_sentences
 from utils.file_loader import read_json_rows
 import utils.common_types as bert_para
+from utils.resource_manager import FeverDBResource
 
 
 # def sample_data_for_item(item, pred=False):
@@ -158,7 +159,6 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
 
 # mode in ['train', 'pred', 'eval']
 def get_sample_data(upstream_data, data_from_pred=False, mode='train'):
-    cursor, conn = fever_db.get_cursor()
     if isinstance(upstream_data, list):
         d_list = upstream_data
     else:
@@ -172,12 +172,12 @@ def get_sample_data(upstream_data, data_from_pred=False, mode='train'):
         # print(flags)
         for i, sampled_evidence in enumerate(sampled_e_list):
             new_item = dict()
-            evidence_text = evidence_list_to_text(cursor, sampled_evidence,
+            evidence_text = evidence_list_to_text(sampled_evidence,
                                                   contain_head=True)
             new_item['id'] = str(item['id']) + '#' + str(i)
             new_item['claim'] = item['claim']
             new_item['evid'] = evidence_text
-
+            new_item['sids'] = sampled_evidence.to_sids()
             if mode == 'pred':
                 new_item['predicted_evidence'] = item['predicted_evidence']
                 new_item['predicted_sentids'] = item['predicted_sentids']
@@ -188,44 +188,44 @@ def get_sample_data(upstream_data, data_from_pred=False, mode='train'):
             sampled_data_list.append(new_item)
         if mode == 'train':
             def init_extended_evidence(tmp_extended_evidence):
-                extend_item = dict()
-                evidence_text = evidence_list_to_text(cursor, tmp_extended_evidence,
-                                                      contain_head=True, id_tokenized=False)
-                extend_item['id'] = str(item['id']) + '_' + str(i)
-                extend_item['claim'] = item['claim']
-                extend_item['evid'] = evidence_text
-                return extend_item
+                tmp_extend_item = dict()
+                tmp_evidence_text = evidence_list_to_text(tmp_extended_evidence, contain_head=True)
+                tmp_extend_item['id'] = str(item['id']) + '#' + 'EXTEND'
+                tmp_extend_item['claim'] = item['claim']
+                tmp_extend_item['evid'] = tmp_evidence_text
+                tmp_extend_item['sids'] = tmp_extended_evidence.to_sids()
+                return tmp_extend_item
 
             for idx, extended_evidence in enumerate(extended_RS_list):
                 extend_item = init_extended_evidence(extended_evidence)
-                extend_item['id'] = extend_item['id'] + '_rs'
+                extend_item['id'] = extend_item['id'] + '_RS_' + str(idx)
                 extend_item['label'] = item['label']
                 sampled_data_list.append(extend_item)
             for idx, extended_evidence in enumerate(extended_NEI_list):
                 extend_item = init_extended_evidence(extended_evidence)
-                extend_item['id'] = extend_item['id'] + '_nei'
+                extend_item['id'] = extend_item['id'] + '_NEI_' + str(idx)
                 extend_item['label'] = 'NOT ENOUGH INFO'
                 sampled_data_list.append(extend_item)
-
-    cursor.close()
     print(f"Sampled evidences: {len(sampled_data_list)}")
     return sampled_data_list
 
 
-def evidence_list_to_text(cursor, evidences, contain_head=True):
+def evidence_list_to_text(evidences, contain_head=True):
     current_evidence_text = []
     evidences = sorted(evidences, key=lambda x: (x[0], x[1]))
     cur_head = 'DO NOT INCLUDE THIS FLAG'
+    db = FeverDBResource()
+    cursor = db.get_cursor()
     for doc_id, line_num in evidences:
         _, e_text, _ = fever_db.get_evidence(cursor, doc_id, line_num)
         if contain_head and cur_head != doc_id:
             cur_head = doc_id
-            doc_id_natural_format = text_clean.convert_brc(doc_id).replace('_', ' ')
-            t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format))
+            # doc_id_natural_format = text_clean.convert_brc(doc_id).replace('_', ' ')
+            # t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format))
+            t_doc_id_natural_format = text_clean.convert_brc(text_clean.normalize(doc_id)).replace('_', ' ')
             if line_num != 0:
                 current_evidence_text.append(f"{t_doc_id_natural_format}{c_scorer.SENT_DOC_TITLE}")
         current_evidence_text.append(e_text)
-    # print(current_evidence_text)
     return ' '.join(current_evidence_text)
 
 

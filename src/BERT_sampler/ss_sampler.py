@@ -14,7 +14,7 @@ import log_util
 import utils.check_sentences
 import utils.common_types as bert_para
 from utils.resource_manager import FeverDBResource
-from data_util.data_preperation.tokenize_fever import easy_tokenize
+# from data_util.data_preperation.tokenize_fever import easy_tokenize
 from utils import common, c_scorer
 from utils.file_loader import *
 from utils.text_clean import convert_brc
@@ -151,21 +151,22 @@ def trucate_item(d_list, top_k=None):
     return
 
 # @profile
-def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True, id_tokenized=False):
+def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True):
     sent_list = []
     for sent, sid in zipped_s_id_list:
         sent_item = dict()
 
         cur_sent = sent
         doc_id, ln = sid.split('(-.-)')[0], int(sid.split('(-.-)')[1])
+        doc_id = normalize(doc_id)
         # print(sent, doc_id, ln)
         if contain_head:
-            if not id_tokenized:
-                doc_id_natural_format = convert_brc(doc_id).replace('_', ' ')
-                t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format, common.tokenizer_spacy))
-            else:
-                t_doc_id_natural_format = common.doc_id_to_tokenized_text(doc_id)
-
+            # if not id_tokenized:
+            #     doc_id_natural_format = convert_brc(doc_id).replace('_', ' ')
+            #     t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format, common.tokenizer_spacy))
+            # else:
+            #     t_doc_id_natural_format = common.doc_id_to_tokenized_text(doc_id)
+            t_doc_id_natural_format = text_clean.convert_brc(doc_id).replace('_', ' ')
             if ln != 0 and t_doc_id_natural_format.lower() not in sent.lower():
                 cur_sent = f"{t_doc_id_natural_format}{c_scorer.SENT_DOC_TITLE}" + sent
 

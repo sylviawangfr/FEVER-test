@@ -26,8 +26,8 @@ class PipelineParas(object):
     def get_model_folder(self, task):
         return config.PRO_ROOT / f"saved_models/bert_finetuning/{self.output_folder}/{task}_{self.mode}"
 
-    def get_eval_data_file(self, task):
-        return config.RESULT_PATH / f"{self.output_folder}/{task}.jsonl"
+    def get_eval_result_file(self, task):
+        return self.output_folder / f"{task}.jsonl"
 
     def get_eval_item_file(self, task):
-        return config.RESULT_PATH / f"{self.output_folder}/item_{task}.jsonl"
+        return self.output_folder / f"item_{task}.jsonl"

@@ -153,7 +153,7 @@ def score_for_ss_evidence_list(upstream_with_ss_evidence, original_data, output_
             # print("Strict score:", strict_score)
             # print(f"Eval Tracking score:", f"{tracking_score}")
         if save:
-            save_intermidiate_results(upstream_with_ss_evidence, paras.get_eval_data_file(f'bert_gat_ss_{n}'))
+            save_intermidiate_results(upstream_with_ss_evidence, paras.get_eval_result_file(f'bert_gat_ss_{n}'))
             print(f"results saved at: {paras.output_folder}")
         return upstream_with_ss_evidence
 

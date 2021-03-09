@@ -48,7 +48,7 @@ def nli_eval_fever_score(paras: bert_para.PipelineParas, predicted_list):
         print(f"Dev(raw_acc/pr/rec/f1):{acc_score}/{pr}/{rec}/{f1}/")
         print("Strict score:", strict_score)
         print(f"Eval Tracking score:", f"{tracking_score}")
-        save_intermidiate_results(predicted_list, paras.get_eval_data_file('nli'))
+        save_intermidiate_results(predicted_list, paras.get_eval_result_file('nli'))
     else:
         delete_unused_evidence(predicted_list)
         clean_result = []
@@ -58,7 +58,7 @@ def nli_eval_fever_score(paras: bert_para.PipelineParas, predicted_list):
                           'predicted_evidence': i['predicted_evidence'],
                           'predicted_label': i['predicted_label']}
             clean_result.append(clean_item)
-        save_intermidiate_results(clean_result, paras.get_eval_data_file('nli'))
+        save_intermidiate_results(clean_result, paras.get_eval_result_file('nli'))
 
 
 def eval_nli_examples(paras : bert_para.PipelineParas):
@@ -72,7 +72,9 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
     # sampler = 'nli_nn'
 
     if paras.mode == 'eval':
-        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data, paras.sampler)
+        eval_examples, eval_list = processor.get_dev_examples(paras.upstream_data,
+                                                              data_from_pred=paras.data_from_pred,
+                                                              sampler=paras.sampler)
     else:
         eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, paras.sampler)
 
@@ -150,6 +152,7 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
 
     # not for training, but for test set predict
     # if the item has multiple evidence set
+    save_intermidiate_results(eval_list, paras.get_eval_item_file('nli_items'))
     print("Done with nli item eval")
     return eval_list
 
@@ -192,26 +195,29 @@ def nli_pred_evi_score_only(paras : bert_para.PipelineParas):
     nli_evi_set_post_step(eval_list, paras)
 
 
-def nli_evi_set_post_step(eval_list, paras: bert_para.PipelineParas):
+def nli_evi_set_post_step(eval_examples, eval_list, paras: bert_para.PipelineParas):
     augmented_dict: Dict[int, List[Dict]] = dict()
-    for evids_item in tqdm(eval_list):
-        evids_id = evids_item['id']  # The id for the current one selection.
-        org_id = int(evids_id.split('#')[0])
-        remain_index = evids_id.split('#')[1]
-        evids_item['id'] = org_id
-        aug_i = {'evi_idx': remain_index, 'predicted_label': str(evids_item["predicted_label"]),
-                 'score': evids_item["score"]}
-        if not org_id in augmented_dict:
-            augmented_dict.update({org_id: [aug_i]})
-        else:
-            augmented_dict[org_id].append(aug_i)
+    with tqdm(total=len(eval_list), desc=f"nli evi post step...") as pbar:
+        for idx, evids_item in enumerate(eval_list):
+            example = eval_examples[idx]
+            evids_id = evids_item['id']  # The id for the current one example.
+            org_id = int(evids_id.split('#')[0])
+            # remain_index = evids_id.split('#')[1]
+            evids_item['id'] = org_id
+            aug_i = {'example_idx': evids_id, 'predicted_label': str(evids_item["predicted_label"]),
+                     'score': evids_item["score"], 'sids': example['sids']}
+            if not org_id in augmented_dict:
+                augmented_dict.update({org_id: [aug_i]})
+            else:
+                augmented_dict[org_id].append(aug_i)
+            pbar.update(1)
 
     for item in paras.upstream_data:
         if int(item['id']) not in augmented_dict:
             print("not found this example:\n", item)
         else:
             item["evi_nli"] = augmented_dict[int(item['id'])]
-    save_intermidiate_results(paras.upstream_data, paras.output_folder)
+    save_intermidiate_results(paras.upstream_data, paras.output_folder / "sids_nli.jsonl")
     print("Done with nli evaluation")
 
 

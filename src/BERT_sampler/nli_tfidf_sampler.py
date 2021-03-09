@@ -89,7 +89,7 @@ def sample_data_for_item(item, data_from_pred=False, mode='train'):
     return res_sentids_list, flags
 
 
-def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=False):
+def evidence_list_to_text(cursor, evidences, contain_head=True):
     current_evidence_text = []
     evidences = sorted(evidences, key=lambda x: (x[0], x[1]))
 
@@ -101,14 +101,12 @@ def evidence_list_to_text(cursor, evidences, contain_head=True, id_tokenized=Fal
 
         if contain_head and cur_head != doc_id:
             cur_head = doc_id
-
-            doc_id = normalize(doc_id)
-            if not id_tokenized:
-                doc_id_natural_format = fever_db.convert_brc(doc_id).replace('_', ' ')
-                t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format))
-            else:
-                t_doc_id_natural_format = common.doc_id_to_tokenized_text(doc_id)
-
+            # if not id_tokenized:
+            #     doc_id_natural_format = fever_db.convert_brc(doc_id).replace('_', ' ')
+            #     t_doc_id_natural_format = ' '.join(easy_tokenize(doc_id_natural_format))
+            # else:
+            #     t_doc_id_natural_format = common.doc_id_to_tokenized_text(doc_id)
+            t_doc_id_natural_format = text_clean.convert_brc(normalize(doc_id)).replace('_', ' ')
             if line_num != 0:
                 current_evidence_text.append(f"{t_doc_id_natural_format} <t>")
 

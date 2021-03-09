@@ -68,7 +68,7 @@ def pred_ss(input_data_path, origin_data_path, output_file):
     paras.original_data = read_json_rows(origin_data_path)
     paras.upstream_data = read_json_rows(input_data_path)
     pred_ss_and_save(paras)
-    return paras.get_eval_data_file()
+    return paras.get_eval_result_file()
 
 
 def nli(input_data_path, origin_data_path, output_file):

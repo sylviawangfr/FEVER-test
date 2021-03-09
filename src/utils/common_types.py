@@ -18,13 +18,13 @@ class PipelineParas(object):
     sampler = None
 
     def get_f1_log_file(self, task):
-        return config.LOG_PATH / f"{self.output_folder}/f1_analyze_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.log"
+        return self.output_folder / f"f1_analyze_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.log"
 
     def get_eval_log_file(self, task):
-        return config.LOG_PATH / f"{self.output_folder}/eval_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.log"
+        return self.output_folder / f"eval_{task}_{self.mode}_{self.prob_thresholds}_top{self.top_n}.log"
 
     def get_model_folder(self, task):
-        return config.PRO_ROOT / f"saved_models/bert_finetuning/{self.output_folder}/{task}_{self.mode}"
+        return config.PRO_ROOT / f"saved_models/bert_finetuning/{task}_{self.mode}"
 
     def get_eval_result_file(self, task):
         return self.output_folder / f"{task}.jsonl"

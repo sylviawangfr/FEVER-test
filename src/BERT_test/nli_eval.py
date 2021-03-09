@@ -122,9 +122,9 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
             preds[0] = np.append(
                 preds[0], logits.detach().cpu().numpy(), axis=0)
 
-    if paras.mode == 'eval':
-        draw_loss_epoch_detailed(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), f"nli_eval_{paras.output_folder}")
-        eval_loss = eval_loss / nb_eval_steps
+    # if paras.mode == 'eval':
+    #     draw_loss_epoch_detailed(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), f"nli_eval_{paras.output_folder}")
+    #     eval_loss = eval_loss / nb_eval_steps
 
     preds = preds[0]
     probs = softmax(preds)

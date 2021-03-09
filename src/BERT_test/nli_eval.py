@@ -134,8 +134,8 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
 
     for i in range(len(eval_list)):
         # Matching id
-        eval_list[i]['score'] = scores[i]
-        eval_list[i]['prob'] = probs[i]
+        eval_list[i]['score'] = float(scores[i])
+        eval_list[i]['prob'] = float(probs[i])
         eval_list[i]['predicted_label'] = preds[i]
     # fever score and saving
     result = compute_metrics(preds, all_label_ids.numpy(), average='macro')
@@ -205,7 +205,7 @@ def nli_evi_set_post_step(eval_examples, eval_list, paras: bert_para.PipelinePar
             # remain_index = evids_id.split('#')[1]
             evids_item['id'] = org_id
             aug_i = {'example_idx': evids_id, 'predicted_label': str(evids_item["predicted_label"]),
-                     'score': evids_item["score"], 'sids': example['sids']}
+                     'score': evids_item["score"], 'prob': evids_item["prob"], 'sids': example['sids']}
             if not org_id in augmented_dict:
                 augmented_dict.update({org_id: [aug_i]})
             else:

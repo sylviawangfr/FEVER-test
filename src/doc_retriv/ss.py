@@ -155,7 +155,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
 
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
-            if idx < 62:
+            if idx < 63:
                 continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
@@ -462,8 +462,11 @@ def generate_triple_subgraphs(list_of_triples: List[Triple], claim_dict):
         desc_rel_and_keywords = list(set(relative2) | set(desc_keywords))
         for t1 in tri_l1_tomerge:
             t1_rel = tri_dict[t1].relatives
-            if any([len(list(filter(lambda x: k1 in x or x in k1, desc_rel_and_keywords))) == 0 for k1 in t1_rel]):
+            if any([len(list(filter(lambda x: k1.lower() in x.lower() or x.lower() in k1.lower(), desc_rel_and_keywords))) == 0 for k1 in t1_rel]):
                 tri_l2_desc.append(t1)
+            relative2 = list(set([r for t2 in tri_l2_desc for r in tri_dict[t2].relatives]))
+            desc_keywords = list(set([k for x in tri_l2_desc for k in tri_dict[x].keywords]))
+            desc_rel_and_keywords = list(set(relative2) | set(desc_keywords))
         return tri_l2_desc
 
     def generate_subgraphs(tri_l, tri_dict, linked_l):
@@ -561,6 +564,7 @@ def generate_triple_sentence_combination(list_of_triples: List[Triple], list_of_
                 for e in tmp_evidence_l:
                     e.add_sent_sid(tri_sid)
                     new_evidence_l.append(e)
+        new_evidence_l = list(set(new_evidence_l))
         return generate_triple_sentence_combination(tmp_triples, new_evidence_l)
 
 

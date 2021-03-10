@@ -204,7 +204,7 @@ def nli_evi_set_post_step(eval_list, paras: bert_para.PipelineParas):
             # remain_index = evids_id.split('#')[1]
             evids_item['id'] = org_id
             aug_i = {'example_idx': evids_id, 'predicted_label': str(evids_item["predicted_label"]),
-                     'score': evids_item["score"], 'prob': evids_item["prob"]}
+                     'score': evids_item["score"], 'prob': evids_item["prob"], 'sids': evids_item['sids']}
             if not org_id in augmented_dict:
                 augmented_dict.update({org_id: [aug_i]})
             else:

@@ -450,7 +450,9 @@ def remove_duplicate_triples(triples):
         else:
             for m in merged:
                 if m['subject'] == r['subject'] \
-                        and m['keywords'] == r['keywords']:
+                        and [i.lower() for i in m['keywords']] == [j.lower() for j in r['keywords']]:
+                    if isURI(r['object']) and not isURI(m['object']):
+                        m['object'] = r['object']
                     if m['score'] < r['score']:
                         mr = list(set(m['relatives']) | set(r['relatives']))
                         r['relatives'] = merge_phs(mr)
@@ -582,45 +584,56 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
             to_match_phrase_idx.append(idx)
     if len(to_match_phrases) == 0:
         return []
-    candidate_keywords = [' '.join(tri['keywords']) for tri in candidates]
 
-    def partial_match(ph1, ph2):
-        if ph1.lower() == ph2.lower():
-            return True
-        elif ' ' + ph1.lower() in ph2.lower() or ph1.lower() + ' ' in ph2.lower():
-            return True
-        elif ' ' + ph2.lower() in ph1.lower() or ph2.lower() + ' ' in ph1.lower():
-            return True
+    def partial_match(ph1, keyword1, keyword2):
+        ph1_lower = ph1.lower()
+        keyword1_lower = keyword1.lower()
+        keyword2_lower = keyword2.lower()
+        if ph1_lower == keyword1_lower or ph1_lower == keyword2_lower:
+            return True, float(1)
+        elif ' ' + ph1_lower in keyword1_lower or ph1_lower + ' ' in keyword1_lower:
+            return True, difflib.SequenceMatcher(None, ph1_lower, keyword1_lower).ratio()
+        elif ' ' + keyword1_lower in ph1_lower or keyword1_lower + ' ' in ph1_lower:
+            return True, difflib.SequenceMatcher(None, ph1_lower, keyword1_lower).ratio()
+        elif ' ' + ph1_lower in keyword2_lower or ph1_lower + ' ' in keyword2_lower:
+            return True, difflib.SequenceMatcher(None, ph1_lower, keyword2_lower).ratio()
+        elif ' ' + keyword2_lower in ph1_lower or keyword2_lower + ' ' in ph1_lower:
+            return True, difflib.SequenceMatcher(None, ph1_lower, keyword2_lower).ratio()
         else:
-            return False
+            return False, float(0)
 
-    def keyword_matching_check():
+    def keyword_matching_check(to_match_ph):
         tmp_result = []
-        for idx1, p1 in enumerate(to_match_phrases):
-            for idx2, p2 in enumerate(candidate_keywords):
-                if partial_match(p1, p2):
-                    tri1 = copy.deepcopy(candidates[idx2])
-                    tri1['relatives'] = [p1, linked_resource['text']]
-                    tri1['text'] = linked_resource['text']
-                    tri1['URI'] = linked_resource['URI']
-                    tri1['score'] = SCORE_CONFIDENCE_3
-                    tri1['exact_match'] = linked_resource['exact_match']
-                    tmp_result.append(tri1)
+        for idx2, p2 in enumerate(candidates):
+            has_partial_match, score = partial_match(to_match_ph, p2['keyword1'], p2['keyword2'])
+            if has_partial_match:
+                tri1 = copy.deepcopy(candidates[idx2])
+                tri1['relatives'] = [to_match_ph, linked_resource['text']]
+                tri1['text'] = linked_resource['text']
+                tri1['URI'] = linked_resource['URI']
+                tri1['score'] = score
+                tri1['exact_match'] = linked_resource['exact_match']
+                tmp_result.append(tri1)
         return tmp_result
 
-    result = []
-    tmp_tris = keyword_matching_check()
-    result.extend(tmp_tris)
-    result = remove_duplicate_triples(result)
+    def keyword_matching_all_phs():
+        tmp_all_res = []
+        for p in to_match_phrases:
+            tmp_res = keyword_matching_check(p)
+            tmp_all_res.extend(tmp_res)
+        tmp_all_res = remove_duplicate_triples(result)
+        return tmp_all_res
 
+    result = []
     phrase_list_embedding = lookup_or_update_all_phrases_embedding_hash(all_phrases, embeddings_hash)
     if len(phrase_list_embedding) == 0:
-        return result
+        return keyword_matching_all_phs()
     keywords_embedding_rel_and_obj = lookup_or_update_onehop_embedding_hash(linked_resource, embeddings_hash)
-    if len(keywords_embedding_rel_and_obj) == 0:
-        return result
     keyword_embedding_rel, keyword_embedding_obj = lookup_or_update_keyword_embedding_hash(linked_resource,
                                                                                            embeddings_hash)
+    if len(keywords_embedding_rel_and_obj) == 0 and len(keyword_embedding_rel) == 0 and len(keyword_embedding_obj) == 0:
+        return keyword_matching_all_phs()
+
     to_match_phrase_embeddings = []
     for idx in to_match_phrase_idx:
         to_match_phrase_embeddings.append(phrase_list_embedding[idx])
@@ -648,6 +661,8 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                     tri2['score'] = score
                     tri2['exact_match'] = linked_resource['exact_match']
                     tmp_result.append(tri2)
+            if len(tmp_result) == 0:
+                tmp_result = keyword_matching_check(p1)
         return tmp_result
 
     if len(keywords_embedding_rel_and_obj) > 0:
@@ -665,7 +680,8 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
 
 def does_tri_exit_in_list(tri, tri_l):
     for item in tri_l:
-        if tri['subject'] == item['subject'] and tri['keywords'] == item['keywords']:
+        if tri['subject'] == item['subject'] \
+                and [i.lower() for i in tri['keywords']] == [j.lower() for j in item['keywords']]:
             return True
     return False
 

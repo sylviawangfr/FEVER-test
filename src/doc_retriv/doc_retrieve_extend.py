@@ -15,6 +15,7 @@ from doc_retriv.SentenceEvidence import *
 from utils.check_sentences import Evidences
 import copy
 from typing import List
+from tqdm import tqdm
 from utils.tokenizer_simple import is_capitalized
 import itertools
 

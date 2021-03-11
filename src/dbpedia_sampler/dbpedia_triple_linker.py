@@ -572,7 +572,9 @@ def similarity_between_phrase_and_linked_one_hop(all_phrases, phrase_list_embedd
 
 def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                                                  embeddings_hash, threshold=SCORE_CONFIDENCE_3):
-
+    candidates = get_one_hop(linked_resource)
+    if len(candidates) == 0:
+        return []
     resouce_text = linked_resource['text']
     to_match_phrases = []
     to_match_phrase_idx = []
@@ -612,7 +614,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                 tri1['score'] = score
                 tri1['exact_match'] = linked_resource['exact_match']
                 tmp_result.append(tri1)
-        return tmp_result
+            return tmp_result
 
     def keyword_matching_all_phs():
         tmp_all_res = []
@@ -622,9 +624,12 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
         tmp_all_res = remove_duplicate_triples(tmp_all_res)
         return tmp_all_res
 
-    candidates = get_one_hop(linked_resource)
     if len(candidates) > CANDIDATE_UP_TO:
-        return keyword_matching_all_phs()
+        tmp_res = keyword_matching_all_phs()
+        merged = remove_duplicate_triples(tmp_res)
+        filtered = filter_triples(merged, 2)
+        return filtered
+
     result = []
     phrase_list_embedding = lookup_or_update_all_phrases_embedding_hash(all_phrases, embeddings_hash)
     if len(phrase_list_embedding) == 0:
@@ -676,7 +681,8 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
         tmp_tris = similarity_check(keyword_embedding_obj)
         result.extend(tmp_tris)
     merged = remove_duplicate_triples(result)
-    return merged
+    filtered = filter_triples(merged, 2)
+    return filtered
 
 
 def does_tri_exit_in_list(tri, tri_l):
@@ -716,7 +722,8 @@ def filter_phrase_vs_two_hop(phrases, triples: List[Triple], threshold=SCORE_CON
         if len(tmp_result) > 0:
             result.extend(tmp_result)
     merged = remove_duplicate_triples(result)
-    return merged
+    filtered = filter_triples(merged, 2)
+    return filtered
 
 
 def filter_node_vs_two_hop(linked_phrases_l, isolated_nodes, keyword_embeddings, threshold=0.65):

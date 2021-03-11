@@ -87,6 +87,22 @@ def get_docid_to_sids_hlinks(all_sids):
     return docid2sids, sid2hlinksids
 
 
+def add_linked_doc_ss(evi_set, sid2sids):
+    add_linked_sid = []
+    for evi in evi_set:
+        if len(evi) < 3:
+            e_sids = evi.to_sids()
+            for ss in e_sids:
+                if ss in sid2sids and len(sid2sids[ss]) > 0:
+                    linked_sids = sid2sids[ss]
+                    for l_s in linked_sids:
+                        tmp_e_s = copy.deepcopy(evi)
+                        tmp_e_s.add_sent_sid(l_s)
+                        add_linked_sid.append(tmp_e_s)
+    add_linked_sid = list(set(add_linked_sid))
+    return add_linked_sid
+
+
 def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                                       data_with_tri_s, data_with_context_graph, output_file):
     def get_bert_sids(scored_sentids, threshold=0.5):
@@ -140,24 +156,10 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                 no_relatives_found.append(i)
         return no_relatives_found
 
-    def add_linked_doc_ss(evi_set):
-        add_linked_sid = []
-        for evi in evi_set:
-            if len(evi) < 3:
-                e_sids = evi.to_sids()
-                for ss in e_sids:
-                    if ss in sid2linkedsids and len(sid2linkedsids[ss]) > 0:
-                        linked_sids = sid2linkedsids[ss]
-                        for l_s in linked_sids:
-                            tmp_e_s = copy.deepcopy(evi)
-                            tmp_e_s.add_sent_sid(l_s)
-                            add_linked_sid.append(tmp_e_s)
-        return add_linked_sid
-
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
-            # if idx < 62:
-            #     continue
+            if idx < 234:
+                continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -176,10 +178,10 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                         sid_combination = generate_sentence_combination(tmp_sids)
                         candidate_sid_sets.extend(sid_combination)
 
-            candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets))
+            candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets, sid2linkedsids))
 
             if len(triples) > 0:
-                subgraphs, _ = generate_triple_subgraphs(triples, claim_dict)
+                subgraphs, _ = generate_triple_subgraphs(triples)
                 claim_relative_hash = init_relative_hash()
                 well_linked_sg_idx = []
                 partial_linked_idx = []
@@ -201,7 +203,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                 if len(well_linked_sg_idx) > 0:
                     for j in well_linked_sg_idx:
                         good_subgraph = subgraphs[j]
-                        tmp_sid_sets = generate_triple_sentence_combination(good_subgraph, [])
+                        tmp_sid_sets = generate_triple_evidence_set(good_subgraph, [])
                         candidate_sid_sets.extend(tmp_sid_sets)
                 elif len(partial_linked_idx) > 0:
                     for k, item in enumerate(partial_linked_idx):
@@ -210,19 +212,16 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                             continue
                         else:
                             subgraph = subgraphs[item]
-                            tmp_sid_sets = generate_triple_sentence_combination(subgraph, [])
-                            extend_sid_set = []
-                            extend_evi = add_linked_doc_ss(tmp_sid_sets)
+                            tmp_sid_sets = generate_triple_evidence_set(subgraph, [])
+                            extend_evi = add_linked_doc_ss(tmp_sid_sets, sid2linkedsids)
                             if len(extend_evi) > 0:
-                                extend_sid_set.extend(extend_evi)
-                                tmp_sid_sets.extend(extend_sid_set)
+                                tmp_sid_sets.extend(extend_evi)
                             else:
                                 # 1. candidate tri two hop
                                 # get not linked phrase, match two hop nodes
                                 not_linked_phrases = partial_linked_no_relatives_phrases[k]
-                                extend_evi = extend_evidence_two_hop_nodes(not_linked_phrases, subgraph)
-                                if len(extend_evi) > 0:
-                                    tmp_sid_sets = extend_evi
+                                extend_evi = extend_evidence_two_hop_nodes(not_linked_phrases, subgraph, tmp_sid_sets)
+                                tmp_sid_sets.extend(extend_evi)
                             candidate_sid_sets.extend(tmp_sid_sets)
             else:
                 if len(bert_and_tri_s) > 0 and len(linked_phrases) > 1:
@@ -237,7 +236,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
     print("Done with nli_sids")
 
 
-def extend_evidence_two_hop_nodes(phrases, subgraph):
+def extend_evidence_two_hop_nodes(phrases, subgraph, subgraph_evi_set):
     extend_triples_jsonl = filter_phrase_vs_two_hop(phrases, subgraph)
     if len(extend_triples_jsonl) == 0:
         return []
@@ -246,15 +245,28 @@ def extend_evidence_two_hop_nodes(phrases, subgraph):
         tri['tri_id'] = f"{idx_tri}_extend"
         extend_triples.append(Triple(tri))
     search_triples_in_docs(extend_triples)  # {tri_id: sids}
-    tmp_extend_subgraph = copy.deepcopy(subgraph)
-    tmp_extend_subgraph.extend(extend_triples)
-    extend_evi_set = generate_triple_sentence_combination(tmp_extend_subgraph, [])
+    tri2extri = {t.tri_id: [] for t in subgraph}
+    for tri in subgraph:
+        for ex_tri in extend_triples:
+            if tri.object == ex_tri.subject:
+                tri2extri[tri.tri_id].append(ex_tri)
+    sid2extendsids = dict()
+    triid2tri = {t.tri_id: t for t in subgraph}
+    for tri_id in tri2extri:
+        if len(tri2extri[tri_id]) > 0:
+            tri_sids = triid2tri[tri_id].sentences
+            ex_tris = tri2extri[tri_id]
+            ex_sids = list(set([ss for tt in ex_tris for ss in tt.sentences]))
+            for ts in tri_sids:
+                if ts in sid2extendsids:
+                    sid2extendsids[ts].extend(ex_sids)
+                else:
+                    sid2extendsids.update({ts:ex_sids})
+    extend_evi_set = add_linked_doc_ss(subgraph_evi_set, sid2extendsids)
     return extend_evi_set
 
 
 def extend_evidence_two_hop_sentences(claim_dict, candidate_sentences):
-    sid_to_extend_sids = dict()
-    sid2graph_l = dict()
     claim_linked_resources = claim_dict["linked_phrases_l"]
     claim_linked_phs = [i['text'] for i in claim_linked_resources]
     embedding_hash = dict()
@@ -371,11 +383,11 @@ def strategy_over_all(data_origin, data_with_bert_s, data_with_tri_s, data_with_
 
 def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences: List[Triple],
                                               candidate_sentences: List[str],
-                                              claim_dict, sid2sids):
-    subgraphs, subgraph_sentences_l = generate_triple_subgraphs(linked_triples_with_sentences, claim_dict)
+                                              sid2sids):
+    subgraphs, subgraph_sentences_l = generate_triple_subgraphs(linked_triples_with_sentences)
     evidence_set_from_triple = []
     for sub_g in subgraphs:
-        tmp_evi_from_tri_subgraph = generate_triple_sentence_combination(sub_g, [])
+        tmp_evi_from_tri_subgraph = generate_triple_evidence_set(sub_g, [])
         evidence_set_from_triple.extend(tmp_evi_from_tri_subgraph)
     evidence_set_from_triple = list(set(evidence_set_from_triple))
     evidence_set_from_sentences = generate_sentence_combination(candidate_sentences)
@@ -404,7 +416,7 @@ def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences: Lis
 
 def merge_sentences_and_generate_evidence_set2(subgraph: List[Triple],
                                               candidate_sentences: List[str]):
-    evidence_set_from_triple = generate_triple_sentence_combination(subgraph, [])
+    evidence_set_from_triple = generate_triple_evidence_set(subgraph, [])
     evidence_set_from_triple = list(set(evidence_set_from_triple))
     evidence_set_from_sentences = generate_sentence_combination(candidate_sentences)
     new_evidence_set = copy.deepcopy(evidence_set_from_triple)
@@ -437,7 +449,7 @@ def generate_expand_evidence_from_hlinks(possible_evidence, hlink_docs):
 
 
 # each sentence may have different subgraphs, as one entity may linked to different resources
-def generate_triple_subgraphs(list_of_triples: List[Triple], claim_dict):
+def generate_triple_subgraphs(list_of_triples: List[Triple]):
     def has_overlap_resource(tri_l1_tomerge, tri_l2_desc, tri_dict):
         for tri1_id in tri_l1_tomerge:
             tri1_res_obj = tri_dict[tri1_id].object
@@ -499,15 +511,15 @@ def generate_triple_subgraphs(list_of_triples: List[Triple], claim_dict):
             return generate_subgraphs(tri_l, tri_dict, linked_l)
 
     tri_id_to_tri_dict = {t.tri_id: t for t in list_of_triples}
-    resource_to_phrase_dict = dict()
-    linked_phrases = claim_dict['linked_phrases_l']
-    for lp in linked_phrases:
-        text = lp['text']
-        links = lp['links']
-        for l in links:
-            res = l['URI']
-            if res not in resource_to_phrase_dict:
-                resource_to_phrase_dict.update({res: text})
+    # resource_to_phrase_dict = dict()
+    # linked_phrases = claim_dict['linked_phrases_l']
+    # for lp in linked_phrases:
+    #     text = lp['text']
+    #     links = lp['links']
+    #     for l in links:
+    #         res = l['URI']
+    #         if res not in resource_to_phrase_dict:
+    #             resource_to_phrase_dict.update({res: text})
 
     resource_to_tris_dict = dict()
     for tri in list_of_triples:
@@ -553,31 +565,32 @@ def graph_to_sentences(tri_sets):
     return sentences_l
 
 
-def generate_triple_sentence_combination(list_of_triples: List[Triple], list_of_evidence: List[Evidences]):
+def generate_triple_evidence_set(list_of_triples: List[Triple], list_of_evidence: List[Evidences]):
     if len(list_of_triples) == 0:
         return list_of_evidence
     else:
         tmp_triples = copy.deepcopy(list_of_triples)
         triple = tmp_triples.pop()
-        # new_evidence_l = list_of_evidence
-        new_evidence_l = []
+        new_evidence_l = list_of_evidence
+        # new_evidence_l = []
         if len(list_of_evidence) == 0:
             raw_doc_ln = sids_to_tuples(triple.sentences)
             new_evidence_l = [Evidences([doc_ln]) for doc_ln in raw_doc_ln]
         else:
+            for tri_sid in triple.sentences:
+                tmp_evidence_l = copy.deepcopy(list_of_evidence)
+                for e in tmp_evidence_l:
+                    if len(e) < 3:
+                        e.add_sent_sid(tri_sid)
+                new_evidence_l.extend(tmp_evidence_l)
+            new_evidence_l = list(set(new_evidence_l))
             # for tri_sid in triple.sentences:
             #     tmp_evidence_l = copy.deepcopy(list_of_evidence)
             #     for e in tmp_evidence_l:
             #         e.add_sent_sid(tri_sid)
-            #     new_evidence_l.extend(tmp_evidence_l)
-            #     new_evidence_l = list(set(new_evidence_l))
-            for tri_sid in triple.sentences:
-                tmp_evidence_l = copy.deepcopy(list_of_evidence)
-                for e in tmp_evidence_l:
-                    e.add_sent_sid(tri_sid)
-                    new_evidence_l.append(e)
-        new_evidence_l = list(set(new_evidence_l))
-        return generate_triple_sentence_combination(tmp_triples, new_evidence_l)
+            #         new_evidence_l.append(e)
+            # new_evidence_l = list(set(new_evidence_l))
+        return generate_triple_evidence_set(tmp_triples, new_evidence_l)
 
 
 def update_relative_hash(relative_hash:dict, connected_phrases):

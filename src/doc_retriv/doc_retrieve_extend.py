@@ -538,7 +538,7 @@ if __name__ == '__main__':
     # candidate_docs_1 = search_and_merge4(entities, nouns)
 
 
-    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[63:]
+    data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[173:]
     # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.jsonl")[1:3]
     # eval_doc_preds(data, 10, config.RESULT_PATH / 'none1')
     # from ES.es_search import truncate_result
@@ -547,13 +547,13 @@ if __name__ == '__main__':
     #     candidate_docs_trunc = truncate_result(doc_and_line)
     #     item['predicted_docids'] = [j.get('id') for j in candidate_docs_trunc][:10]
     # eval_doc_preds(data, 10, config.RESULT_PATH / 'none2')
-    # redo_example_docs(data, config.RESULT_PATH / "tmp.log")
+    redo_example_docs(data, config.RESULT_PATH / "tmp.log")
 
     # folder = config.RESULT_PATH / "test_2021"
     # do_testset_es(folder)
 
-    folder = config.RESULT_PATH / "hardset2021"
-    do_dev_hardset_with_es_entity(folder)
+    # folder = config.RESULT_PATH / "hardset2021"
+    # do_dev_hardset_with_es_entity(folder)
 
     # folder = config.RESULT_PATH / "dev_2021"
     # do_devset_all(folder)

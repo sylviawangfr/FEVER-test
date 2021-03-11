@@ -155,7 +155,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
 
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
-            if idx < 63:
+            if idx < 173:
                 continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
@@ -189,21 +189,21 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                     for tt in subgraph:
                         tmp_sids.append(tt.sentences)
                     all_subgraph_sids.append(tmp_sids)
-                for idx, subgraph in enumerate(subgraphs):
-                    subgraph_sids = all_subgraph_sids[idx]
+                for i, subgraph in enumerate(subgraphs):
+                    subgraph_sids = all_subgraph_sids[i]
                     no_relative = get_not_linked_phrases(subgraph, claim_relative_hash)
                     if len(no_relative) == 0 and all([len(s) > 0 for s in subgraph_sids]):
-                        well_linked_sg_idx.append(idx)
+                        well_linked_sg_idx.append(i)
                     else:
-                        partial_linked_idx.append(idx)
+                        partial_linked_idx.append(i)
                         partial_linked_no_relatives_phrases.append(no_relative)
                 if len(well_linked_sg_idx) > 0:
-                    for idx in well_linked_sg_idx:
-                        good_subgraph = subgraphs[idx]
+                    for j in well_linked_sg_idx:
+                        good_subgraph = subgraphs[j]
                         tmp_sid_sets = generate_triple_sentence_combination(good_subgraph, [])
                         candidate_sid_sets.extend(tmp_sid_sets)
                 elif len(partial_linked_idx) > 0:
-                    for idx, item in enumerate(partial_linked_idx):
+                    for k, item in enumerate(partial_linked_idx):
                         subgraph_sids = all_subgraph_sids[item]
                         if all([len(s) == 0 for s in subgraph_sids]):
                             continue
@@ -218,7 +218,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                             else:
                                 # 1. candidate tri two hop
                                 # get not linked phrase, match two hop nodes
-                                not_linked_phrases = partial_linked_no_relatives_phrases[idx]
+                                not_linked_phrases = partial_linked_no_relatives_phrases[k]
                                 extend_evi = extend_evidence_two_hop_nodes(not_linked_phrases, subgraph)
                                 if len(extend_evi) > 0:
                                     tmp_sid_sets = extend_evi
@@ -447,12 +447,16 @@ def generate_triple_subgraphs(list_of_triples: List[Triple], claim_dict):
                 tri2_text = tri_dict[tri2_id].text
                 if tri1_text == tri2_text \
                         and (tri1_res_obj == tri2_res_subj
-                             or tri1_res_subj == tri2_res_obj):
+                             or (tri1_res_subj == tri2_res_obj
+                                 and ('http://dbpedia.org/resource/' in tri2_res_obj
+                                      or 'http://dbpedia.org/ontology/' in tri2_res_obj))):
                     return True
                 if tri1_text != tri2_text \
                         and (tri1_res_obj == tri2_res_subj
                              or tri1_res_subj == tri2_res_obj
-                             or tri2_res_obj == tri1_res_obj):
+                             or (tri2_res_obj == tri1_res_obj
+                                 and ('http://dbpedia.org/resource/' in tri2_res_obj
+                                      or 'http://dbpedia.org/ontology/' in tri2_res_obj))):
                     return True
         return False
 
@@ -514,6 +518,12 @@ def generate_triple_subgraphs(list_of_triples: List[Triple], claim_dict):
     all_resource_tri_sets = list(resource_to_tris_dict.values())
     subgraphs = generate_subgraphs(all_resource_tri_sets, tri_id_to_tri_dict, [])
     subgraphs = [list(set(s)) for s in subgraphs]
+    remove_dup = []
+    for sg in subgraphs:
+        sg.sort()
+        if sg not in remove_dup:
+            remove_dup.append(sg)
+    subgraphs = remove_dup
     tri_sets_with_triples = []
     for s in subgraphs:
         tmp_set = [tri_id_to_tri_dict[id] for id in s]
@@ -674,7 +684,7 @@ if __name__ == '__main__':
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
     resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
     tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
     bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")

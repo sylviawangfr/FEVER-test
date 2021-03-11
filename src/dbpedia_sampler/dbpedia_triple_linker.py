@@ -572,9 +572,7 @@ def similarity_between_phrase_and_linked_one_hop(all_phrases, phrase_list_embedd
 
 def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                                                  embeddings_hash, threshold=SCORE_CONFIDENCE_3):
-    candidates = get_one_hop(linked_resource)
-    if len(candidates) > CANDIDATE_UP_TO:
-        return []
+
     resouce_text = linked_resource['text']
     to_match_phrases = []
     to_match_phrase_idx = []
@@ -621,9 +619,12 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
         for p in to_match_phrases:
             tmp_res = keyword_matching_check(p)
             tmp_all_res.extend(tmp_res)
-        tmp_all_res = remove_duplicate_triples(result)
+        tmp_all_res = remove_duplicate_triples(tmp_all_res)
         return tmp_all_res
 
+    candidates = get_one_hop(linked_resource)
+    if len(candidates) > CANDIDATE_UP_TO:
+        return keyword_matching_all_phs()
     result = []
     phrase_list_embedding = lookup_or_update_all_phrases_embedding_hash(all_phrases, embeddings_hash)
     if len(phrase_list_embedding) == 0:

@@ -233,6 +233,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
             example.update({'nli_sids': [e.to_sids() for e in candidate_sid_sets]})
             pbar.update(1)
     save_intermidiate_results(data_origin, output_file)
+    print("Done with nli_sids")
 
 
 def extend_evidence_two_hop_nodes(phrases, subgraph):

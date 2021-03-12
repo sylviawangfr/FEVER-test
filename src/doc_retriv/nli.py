@@ -72,7 +72,7 @@ if __name__ == '__main__':
     # print(sorted(list(count.most_common()), key=lambda x: x[0]))
     folder = config.RESULT_PATH / "hardset2021"
     data_bert = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
-    # nli_eval1(data_bert, folder)
+    nli_eval1(data_bert, folder)
     nli_eval2(data_bert, folder)
 
     # data_nli = read_json_rows(folder / "sids_nli.jsonl")

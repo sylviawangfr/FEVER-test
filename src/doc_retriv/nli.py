@@ -6,6 +6,7 @@ from collections import Counter
 from utils.file_loader import read_json_rows
 from utils.check_sentences import Evidences, sids_to_doclnlist
 from functools import reduce
+import numpy as np
 
 id2label = {
     0: "SUPPORTS",
@@ -122,6 +123,16 @@ def nli_eval2(upstream_data, output_folder):
     eval_nli_examples(paras)
 
 
+def eval_samples(upstream_data):
+    count = Counter()
+    sid_count = [len(i['sids']) for i in upstream_data]
+    count.update(sid_count)
+    print(f"most_common: {sorted(list(count.most_common()), key=lambda x: -x[0])}")
+    print(f"max_length: {np.max(sid_count)}")
+    print(f"mean: {np.mean(sid_count)}")
+    print(f"std: {np.std(sid_count)}")
+
+
 if __name__ == '__main__':
     # t = [1,1,1,1,2,1,0,1,2,0,0,0]
     # count = Counter()
@@ -133,6 +144,7 @@ if __name__ == '__main__':
     # nli_eval1(data_bert, folder)
     # nli_eval2(data_bert, folder)
     data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
-    nli_pred_evi_set(data_nli_sids, folder)
+    eval_samples(data_nli_sids)
+    # nli_pred_evi_set(data_nli_sids, folder)
     # data_nli = read_json_rows(folder / "sids_nli.jsonl")
     # nli_vote(data_nli)

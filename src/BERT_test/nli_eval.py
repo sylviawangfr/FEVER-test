@@ -77,10 +77,10 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
                                                               sampler=paras.sampler)
     else:
         eval_examples, eval_list = processor.get_test_examples(paras.upstream_data, paras.sampler)
-
+    print("Converting example to features...")
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), sequence_length, tokenizer)
-
+    print("Done with sampling.")
     logger.info("***** Running evaluation *****")
     logger.info("  Num examples = %d", len(eval_examples))
     logger.info("  Batch size = %d", eval_batch_size)

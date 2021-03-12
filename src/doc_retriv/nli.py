@@ -1,6 +1,6 @@
 from tqdm import tqdm
 import config
-from BERT_test.nli_eval import nli_pred_evi_score_only, nli_eval_single_evi_and_save
+from BERT_test.nli_eval import nli_pred_evi_score_only, eval_nli_examples
 import utils.common_types as bert_para
 from collections import Counter
 from utils.file_loader import read_json_rows
@@ -61,7 +61,7 @@ def nli_eval2(upstream_data, output_folder):
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
     paras.output_folder = output_folder
     paras.sampler = 'nli_nn'
-    nli_eval_single_evi_and_save(paras)
+    eval_nli_examples(paras)
 
 
 if __name__ == '__main__':

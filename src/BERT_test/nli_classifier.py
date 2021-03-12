@@ -280,7 +280,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
                     raise e
         loss_for_chart.append(epoch_loss)
     draw_loss_epoch_detailed(loss_for_chart, f"loss_{output_folder}_{learning_rate}")
-    print(f"get rank: {torch.distributed.get_rank()}")
+    # print(f"get rank: {torch.distributed.get_rank()}")
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -316,7 +316,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
 
 
 if __name__ == "__main__":
-    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")
+    train_data = read_json_rows(config.RESULT_PATH / "tfidf/train_2019_06_15_15:48:58.jsonl")[0:50]
     # train_data = read_json_rows(config.RESULT_PATH / 'train_s_tfidf_retrieve.jsonl')
     # nli_finetuning(train_data, output_folder="nli_train_extended" + get_current_time_str(), sampler='nli_nn')
     # train_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")[0:1000]

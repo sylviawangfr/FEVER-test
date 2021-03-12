@@ -141,6 +141,15 @@ def sids_to_tuples(sids):
     return raw_evidences_list
 
 
+def sids_to_doclnlist(sids):
+    raw_evidences_list = []
+    for sampled_e in sids:
+        doc_ids = sampled_e.split(SENT_LINE2)[0]
+        ln = int(sampled_e.split(SENT_LINE2)[1])
+        raw_evidences_list.append([doc_ids, ln])
+    return raw_evidences_list
+
+
 def get_predicted_evidence(item):
     whole_annotators_evidences = item['predicted_evidence']
     # print(evidences)

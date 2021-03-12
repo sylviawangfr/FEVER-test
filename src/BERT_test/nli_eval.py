@@ -216,7 +216,7 @@ def nli_evi_set_post_step(eval_list, paras: bert_para.PipelineParas):
             print("not found this example:\n", item)
         else:
             item["evi_nli"] = augmented_dict[int(item['id'])]
-    save_intermidiate_results(paras.upstream_data, paras.output_folder / "sids_nli.jsonl")
+    save_intermidiate_results(paras.upstream_data, paras.output_folder / "sids_nli_pred.jsonl")
     print("Done with nli evaluation")
 
 

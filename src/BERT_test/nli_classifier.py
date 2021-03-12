@@ -309,7 +309,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
         paras.mode = 'eval'
         paras.BERT_model = output_dir
         paras.BERT_tokenizer = output_dir
-        paras.output_folder = output_folder
+        paras.output_folder = config.LOG_PATH
         paras.sample_n = 3
         paras.sampler = "nli_nn"
         nli_eval_single_evi_and_save(paras)

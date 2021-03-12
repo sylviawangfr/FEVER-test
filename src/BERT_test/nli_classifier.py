@@ -34,7 +34,7 @@ from tqdm import tqdm
 
 import utils.common_types as bert_para
 from BERT_test.bert_data_processor import *
-from BERT_test.nli_eval import eval_nli_and_save
+from BERT_test.nli_eval import nli_eval_single_evi_and_save
 from data_util.toChart import *
 from utils.file_loader import get_current_time_str
 from utils.file_loader import read_json_rows
@@ -312,7 +312,7 @@ def nli_finetuning(upstream_train_data, output_folder='fine_tunning', sampler=No
         paras.output_folder = output_folder
         paras.sample_n = 3
         paras.sampler = "nli_nn"
-        eval_nli_and_save(paras)
+        nli_eval_single_evi_and_save(paras)
 
 
 if __name__ == "__main__":

@@ -157,7 +157,7 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
     return eval_list
 
 
-def eval_nli_and_save(paras : bert_para.PipelineParas):
+def nli_eval_single_evi_and_save(paras : bert_para.PipelineParas):
     eval_list = eval_nli_examples(paras)
     post_step_nli_eval(eval_list, paras)
 
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.output_folder = 'dev_before_refactor'
-    eval_nli_and_save(paras)
+    nli_eval_single_evi_and_save(paras)
 
 
     # paras = bert_para.PipelineParas()

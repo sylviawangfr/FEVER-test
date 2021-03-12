@@ -80,7 +80,7 @@ def nli(input_data_path, origin_data_path, output_file):
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.output_folder = output_file
-    eval_nli_and_save(paras)
+    nli_eval_single_evi_and_save(paras)
 
 
 def eval_three_classes(nli_result):

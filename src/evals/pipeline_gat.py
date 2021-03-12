@@ -6,7 +6,7 @@ import config
 from utils import c_scorer
 from ss_combined.ss_bert_gat import eval_and_save, score_for_ss_evidence_list
 from BERT_test.bert_data_processor import *
-from BERT_test.nli_eval import eval_nli_and_save
+from BERT_test.nli_eval import nli_eval_single_evi_and_save
 from evals.submmit import create_submmission
 from evals.pipeline_hardset import eval_three_classes
 
@@ -57,7 +57,7 @@ def test_eval():
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_train2019_07_15_16:51:03"
     paras.output_folder = 'nli_test_bert_gat'
-    eval_nli_and_save(paras)
+    nli_eval_single_evi_and_save(paras)
     input_data = read_json_rows(config.RESULT_PATH / 'nli_test_bert_gat/eval_data_nli_test_0.5_top[5].jsonl')
     create_submmission(input_data)
 

@@ -203,7 +203,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                 if len(well_linked_sg_idx) > 0:
                     for j in well_linked_sg_idx:
                         good_subgraph = subgraphs[j]
-                        tmp_sid_sets = generate_triple_evidence_set(good_subgraph, [])
+                        # tmp_sid_sets = generate_triple_evidence_set(good_subgraph, [])
+                        tmp_sid_sets = generate_triple_evidence_set(good_subgraph)
                         candidate_sid_sets.extend(tmp_sid_sets)
                 elif len(partial_linked_idx) > 0:
                     for k, item in enumerate(partial_linked_idx):
@@ -212,7 +213,10 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                             continue
                         else:
                             subgraph = subgraphs[item]
-                            tmp_sid_sets = generate_triple_evidence_set(subgraph, [])
+                            # tmp_sid_sets = generate_triple_evidence_set(subgraph, [])
+                            tmp_sid_sets = generate_triple_evidence_set(subgraph)
+                            if len(tmp_sid_sets) == 0:
+                                continue
                             extend_evi = add_linked_doc_ss(tmp_sid_sets, sid2linkedsids)
                             if len(extend_evi) > 0:
                                 tmp_sid_sets.extend(extend_evi)
@@ -387,7 +391,7 @@ def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences: Lis
     subgraphs, subgraph_sentences_l = generate_triple_subgraphs(linked_triples_with_sentences)
     evidence_set_from_triple = []
     for sub_g in subgraphs:
-        tmp_evi_from_tri_subgraph = generate_triple_evidence_set(sub_g, [])
+        tmp_evi_from_tri_subgraph = generate_triple_evidence_set(sub_g)
         evidence_set_from_triple.extend(tmp_evi_from_tri_subgraph)
     evidence_set_from_triple = list(set(evidence_set_from_triple))
     evidence_set_from_sentences = generate_sentence_combination(candidate_sentences)
@@ -416,7 +420,7 @@ def merge_sentences_and_generate_evidence_set(linked_triples_with_sentences: Lis
 
 def merge_sentences_and_generate_evidence_set2(subgraph: List[Triple],
                                               candidate_sentences: List[str]):
-    evidence_set_from_triple = generate_triple_evidence_set(subgraph, [])
+    evidence_set_from_triple = generate_triple_evidence_set(subgraph)
     evidence_set_from_triple = list(set(evidence_set_from_triple))
     evidence_set_from_sentences = generate_sentence_combination(candidate_sentences)
     new_evidence_set = copy.deepcopy(evidence_set_from_triple)
@@ -565,32 +569,51 @@ def graph_to_sentences(tri_sets):
     return sentences_l
 
 
-def generate_triple_evidence_set(list_of_triples: List[Triple], list_of_evidence: List[Evidences]):
-    if len(list_of_triples) == 0:
-        return list_of_evidence
-    else:
-        tmp_triples = copy.deepcopy(list_of_triples)
-        triple = tmp_triples.pop()
-        new_evidence_l = list_of_evidence
-        # new_evidence_l = []
-        if len(list_of_evidence) == 0:
-            raw_doc_ln = sids_to_tuples(triple.sentences)
-            new_evidence_l = [Evidences([doc_ln]) for doc_ln in raw_doc_ln]
+def generate_triple_evidence_set(list_of_triples: List[Triple]):
+    triple_set = []
+    for tri in list_of_triples:
+        exist = False
+        for ts in triple_set:
+            if any([tt.relatives == tri.relatives for tt in ts]):
+                ts.append(tri)
+                exist = True
+        if not exist:
+            triple_set.append([tri])
+
+    def generate_evi_set(tris_sorted_by_rels_l, list_of_evidence: List[Evidences]):
+        if len(tris_sorted_by_rels_l) == 0:
+            return list_of_evidence
         else:
-            for tri_sid in triple.sentences:
-                tmp_evidence_l = copy.deepcopy(list_of_evidence)
-                for e in tmp_evidence_l:
-                    if len(e) < 3:
-                        e.add_sent_sid(tri_sid)
-                new_evidence_l.extend(tmp_evidence_l)
-            new_evidence_l = list(set(new_evidence_l))
-            # for tri_sid in triple.sentences:
-            #     tmp_evidence_l = copy.deepcopy(list_of_evidence)
-            #     for e in tmp_evidence_l:
-            #         e.add_sent_sid(tri_sid)
-            #         new_evidence_l.append(e)
-            # new_evidence_l = list(set(new_evidence_l))
-        return generate_triple_evidence_set(tmp_triples, new_evidence_l)
+            tmp_triples_l = copy.deepcopy(tris_sorted_by_rels_l)
+            triple_l = tmp_triples_l.pop()
+            # new_evidence_l = list_of_evidence
+            new_evidence_l = []
+            if len(list_of_evidence) == 0:
+                for triple in triple_l:
+                    raw_doc_ln = sids_to_tuples(triple.sentences)
+                    tmp_evidence_l = [Evidences([doc_ln]) for doc_ln in raw_doc_ln]
+                    new_evidence_l.extend(tmp_evidence_l)
+            else:
+                # for tri_sid in triple.sentences:
+                #     tmp_evidence_l = copy.deepcopy(list_of_evidence)
+                #     for e in tmp_evidence_l:
+                #         if len(e) < 3:
+                #             e.add_sent_sid(tri_sid)
+                #     new_evidence_l.extend(tmp_evidence_l)
+                # new_evidence_l = list(set(new_evidence_l))
+                for triple in triple_l:
+                    for tri_sid in triple.sentences:
+                        tmp_evidence_l = copy.deepcopy(list_of_evidence)
+                        for e in tmp_evidence_l:
+                            e.add_sent_sid(tri_sid)
+                            new_evidence_l.append(e)
+                if len(new_evidence_l) > 0:
+                    new_evidence_l = list(set(new_evidence_l))
+                else:
+                    new_evidence_l = list_of_evidence
+            return generate_evi_set(tmp_triples_l, new_evidence_l)
+    return generate_evi_set(triple_set, [])
+
 
 
 def update_relative_hash(relative_hash:dict, connected_phrases):
@@ -699,7 +722,7 @@ if __name__ == '__main__':
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
     resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
     tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
     bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")

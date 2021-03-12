@@ -125,7 +125,7 @@ def nli_eval2(upstream_data, output_folder):
 
 def eval_samples(upstream_data):
     count = Counter()
-    sid_count = [len(i['sids']) for i in upstream_data]
+    sid_count = [len(i['nli_sids']) for i in upstream_data]
     count.update(sid_count)
     print(f"most_common: {sorted(list(count.most_common()), key=lambda x: -x[0])}")
     print(f"max_length: {np.max(sid_count)}")

@@ -614,7 +614,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                 tri1['score'] = score
                 tri1['exact_match'] = linked_resource['exact_match']
                 tmp_result.append(tri1)
-            return tmp_result
+        return tmp_result
 
     def keyword_matching_all_phs():
         tmp_all_res = []

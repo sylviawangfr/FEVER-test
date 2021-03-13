@@ -9,7 +9,7 @@ import copy
 from typing import List
 import itertools
 from BERT_test.ss_eval import *
-from doc_retriv.doc_retrieve_extend import search_entity_docs_for_triples
+from doc_retriv.doc_retrieve_extend import search_entity_docs_for_triples, is_media
 from dbpedia_sampler.uri_util import uri_short_extract2, isURI
 from utils.resource_manager import *
 import itertools
@@ -158,8 +158,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
 
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
-            # if idx < 399:
-            #     continue
+            if idx < 402:
+                continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -169,16 +169,23 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
             candidate_sid_sets = []
             tri_s = list(set([s for tt in triples for s in tt.sentences]))
             bert_and_tri_s = list(set(bert_s) | set(tri_s))
-            docid2sids, sid2linkedsids = get_docid_to_sids_hlinks(bert_and_tri_s)
+            all_docid2sids, all_sid2linkedsids = get_docid_to_sids_hlinks(bert_and_tri_s)
+            if len(bert_and_tri_s) > 20:
+                bert_docid2sids, bert_sid2linkedsids = get_docid_to_sids_hlinks(bert_s)
+                docid_dict_to_calc = bert_docid2sids
+                sid2linkedsids_to_calc = bert_sid2linkedsids
+            else:
+                docid_dict_to_calc = all_docid2sids
+                sid2linkedsids_to_calc = all_sid2linkedsids
 
             for linked_ent in linked_entities:
-                for docid in docid2sids:
+                for docid in docid_dict_to_calc:
                     if linked_ent.lower() in convert_brc(docid).replace("_", " ").lower():
-                        tmp_sids = docid2sids[docid]
+                        tmp_sids = docid_dict_to_calc[docid]
                         sid_combination = generate_sentence_combination(tmp_sids)
                         candidate_sid_sets.extend(sid_combination)
 
-            candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets, sid2linkedsids))
+            candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets, sid2linkedsids_to_calc))
 
             if len(triples) > 0:
                 subgraphs, _ = generate_triple_subgraphs(triples)
@@ -217,7 +224,10 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                             tmp_sid_sets = generate_triple_evidence_set(subgraph)
                             if len(tmp_sid_sets) == 0:
                                 continue
-                            extend_evi = add_linked_doc_ss(tmp_sid_sets, sid2linkedsids)
+                            not_linked_phrases = partial_linked_no_relatives_phrases[k]
+                            if len(not_linked_phrases) > 3:
+                                continue
+                            extend_evi = add_linked_doc_ss(tmp_sid_sets, all_sid2linkedsids)
                             if len(extend_evi) > 0:
                                 tmp_sid_sets.extend(extend_evi)
                             else:

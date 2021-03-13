@@ -539,7 +539,7 @@ if __name__ == '__main__':
     # candidate_docs_1 = search_and_merge4(entities, nouns)
 
 
-    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[173:]
+    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[402:]
     # data = read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.jsonl")[1:3]
     # eval_doc_preds(data, 10, config.RESULT_PATH / 'none1')
     # from ES.es_search import truncate_result

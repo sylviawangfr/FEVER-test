@@ -15,16 +15,16 @@ import json
 log = log_util.get_logger("subgraph")
 
 
-def fill_relative_hash(relative_hash, graph):
-    for i in graph:
-        if 'relatives' in i and len(i['relatives']) > 1:
-            relatives = i['relatives']
-            if relatives[0] in relative_hash:
-                relative_hash[relatives[0]].append(relatives[1])
-                relative_hash[relatives[0]] = list(set(relative_hash[relatives[0]]))
-            if relatives[1] in relative_hash:
-                relative_hash[relatives[1]].append(relatives[0])
-                relative_hash[relatives[1]] = list(set(relative_hash[relatives[1]]))
+# def fill_relative_hash(relative_hash, graph):
+#     for i in graph:
+#         if 'relatives' in i and len(i['relatives']) > 1:
+#             relatives = i['relatives']
+#             if relatives[0] in relative_hash:
+#                 relative_hash[relatives[0]].append(relatives[1])
+#                 relative_hash[relatives[0]] = list(set(relative_hash[relatives[0]]))
+#             if relatives[1] in relative_hash:
+#                 relative_hash[relatives[1]].append(relatives[0])
+#                 relative_hash[relatives[1]] = list(set(relative_hash[relatives[1]]))
 
 
 # @profile
@@ -74,7 +74,7 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
     tmp_result = dbpedia_triple_linker.remove_duplicate_triples(tmp_result)
     sent_graph = dbpedia_triple_linker.filter_triples(tmp_result)
     # only keyword-match on those no exact match triples
-    fill_relative_hash(relative_hash, sent_graph)
+    # fill_relative_hash(relative_hash, sent_graph)
     # isolated_node = []
     # for i in relative_hash:
     #     if len(relative_hash[i]) == 0 and i in lookup_hash:
@@ -124,7 +124,7 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
     claim_d['graph'] = sent_graph
     claim_d['embedding'] = embeddings_hash
     # claim_d['lookup_hash'] = lookup_hash
-    claim_d['no_relatives'] = no_relatives_found
+    # claim_d['no_relatives'] = no_relatives_found
     # claim_d['isolated_nodes'] = isolated_nodes
     # claim_d['relative_hash'] = relative_hash
     return claim_d

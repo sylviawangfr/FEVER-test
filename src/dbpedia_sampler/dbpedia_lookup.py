@@ -138,7 +138,7 @@ def combine_lookup(text_phrase):
             i['exact_match'] = True
         result = exact_match
     for i in media_match:
-        if len(list(filter(lambda x: (i['URI'] == x), exact_match))) < 1:
+        if len(list(filter(lambda x: (i['URI'] == x['URI']), exact_match))) < 1:
             i['exact_match'] = False
             result.append(i)
     if text_phrase.count(' ') < 2:  # short phrase may have disambiguation
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     # lookup_resource_no_filter('Tool')
     # lookup_resource('Western Conference Southwest Division')
     # lookup_resource("the league 's Western Conference Southwest Division")
-    lookup_resource('Univision')
+    lookup_resource('Australia (2008 film)')
     # lookup_resource('a member club')
     # lookup_resource('The Pelicans')
     # lookup_resource('the National Basketball Association')

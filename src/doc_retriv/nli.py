@@ -131,6 +131,8 @@ def eval_samples(upstream_data):
     print(f"max_length: {np.max(sid_count)}")
     print(f"mean: {np.mean(sid_count)}")
     print(f"std: {np.std(sid_count)}")
+    too_many = [idx for idx, i in enumerate(sid_count) if i > 10000]
+    print(too_many)
 
 
 if __name__ == '__main__':

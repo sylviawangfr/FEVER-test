@@ -2,6 +2,8 @@ import copy
 from BERT_test.ss_eval import *
 from utils.resource_manager import *
 from collections import Counter
+from doc_retriv.doc_retrieve_extend import *
+from doc_retriv.ss import *
 
 
 def eval_tri_ss(data_origin, data_tri):
@@ -160,7 +162,23 @@ def eval_tris_berts(tris, berts, max_evidence):
     # print(sorted(list(count.most_common()), key=lambda x: -x[0]))
 
 
+
+def redo_example_docs(data, log_filename):
+    for example in tqdm(data):
+        es_doc_and_lines, entities, nouns = prepare_candidate_es_for_example(example)
+        entity_docs = get_es_entity_links(es_doc_and_lines)
+        graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs, entities=entities, nouns=nouns)
+        ent_resource_docs = prepare_candidate2_example(graph_data_example)
+        merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
+        example['candidate_docs'] = merged
+        example['predicted_docids'] = [j.get('id') for j in merged][:10]
+    eval_doc_preds(data, 10, log_filename)
+
+
 if __name__ == '__main__':
+    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[402:]
+    # redo_example_docs(data, config.RESULT_PATH / "tmp.log")
+
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")

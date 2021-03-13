@@ -158,8 +158,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
 
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
-            if idx < 402:
-                continue
+            # if idx < 402:
+            #     continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -732,7 +732,7 @@ if __name__ == '__main__':
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
     resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
     tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
     bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")

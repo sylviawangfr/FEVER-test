@@ -413,18 +413,6 @@ def rerun_failed_graph(folder):
     save_intermidiate_results(data_entity, folder / "rerun_graph_resource_docs.jsonl")
 
 
-def redo_example_docs(data, log_filename):
-    for example in tqdm(data):
-        es_doc_and_lines, entities, nouns = prepare_candidate_es_for_example(example)
-        entity_docs = get_es_entity_links(es_doc_and_lines)
-        graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs, entities=entities, nouns=nouns)
-        ent_resource_docs = prepare_candidate2_example(graph_data_example)
-        merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
-        example['candidate_docs'] = merged
-        example['predicted_docids'] = [j.get('id') for j in merged][:10]
-    eval_doc_preds(data, 10, log_filename)
-
-
 def do_testset_all(folder):
     original_data1 = read_json_rows(config.FEVER_TEST_JSONL)
     prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
@@ -519,19 +507,6 @@ def do_dev_hardset_with_es_entity(folder):
                            folder / "candidate_docs.log")
 
 
-def run_dev_failed_docs():
-    folder = config.RESULT_PATH / "extend_20210107"
-
-    # rerun_failed_graph(folder)
-    error_data = read_json_rows(folder / 'candidate_docs.log')
-    redo_example_docs(error_data, folder / "redo09.log")
-
-    # data = read_json_rows(config.FEVER_DEV_JSONL)[2:3]
-    # prepare_claim_graph(data, folder / "claim_graph_2.jsonl", folder / "claim_graph_2.log")
-    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    # eval_doc_preds(es_data, 5, config.LOG_PATH / 'doc_eval_1231')
-
-
 if __name__ == '__main__':
     # claim = "Henry VIII (TV serial) stars a stage actor who has yet to act in film or television."
     # claim = "Turin's Juventus Stadium is the home arena for Juventus F.C."
@@ -548,7 +523,7 @@ if __name__ == '__main__':
     #     candidate_docs_trunc = truncate_result(doc_and_line)
     #     item['predicted_docids'] = [j.get('id') for j in candidate_docs_trunc][:10]
     # eval_doc_preds(data, 10, config.RESULT_PATH / 'none2')
-    # redo_example_docs(data, config.RESULT_PATH / "tmp.log")
+
 
     # folder = config.RESULT_PATH / "test_2021"
     # do_testset_es(folder)

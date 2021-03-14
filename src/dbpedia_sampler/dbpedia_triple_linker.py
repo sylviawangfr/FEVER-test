@@ -558,8 +558,6 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                 tri1['score'] = score
                 tri1['exact_match'] = linked_resource['exact_match']
                 tmp_result.append(tri1)
-        merged = remove_duplicate_triples(tmp_result)
-        filtered = filter_triples(merged, 2)
         return filtered
 
     def keyword_matching_all_phs():
@@ -567,7 +565,9 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
         for p in to_match_phrases:
             tmp_res = keyword_matching_check(p)
             tmp_all_res.extend(tmp_res)
-        return tmp_all_res
+        merged = remove_duplicate_triples(tmp_all_res)
+        filtered = filter_triples(merged, 2)
+        return filtered
 
     if len(candidates) > CANDIDATE_UP_TO:
         return keyword_matching_all_phs()

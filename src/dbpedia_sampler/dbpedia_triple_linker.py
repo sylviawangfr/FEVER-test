@@ -621,14 +621,13 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
         for p in to_match_phrases:
             tmp_res = keyword_matching_check(p)
             tmp_all_res.extend(tmp_res)
-        tmp_all_res = remove_duplicate_triples(tmp_all_res)
-        return tmp_all_res
-
-    if len(candidates) > CANDIDATE_UP_TO:
-        tmp_res = keyword_matching_all_phs()
-        merged = remove_duplicate_triples(tmp_res)
+        merged = remove_duplicate_triples(tmp_all_res)
         filtered = filter_triples(merged, 2)
         return filtered
+
+    if len(candidates) > CANDIDATE_UP_TO:
+        return keyword_matching_all_phs()
+
 
     result = []
     phrase_list_embedding = lookup_or_update_all_phrases_embedding_hash(all_phrases, embeddings_hash)

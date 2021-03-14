@@ -176,20 +176,20 @@ def redo_example_docs(data, log_filename):
 
 
 if __name__ == '__main__':
-    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[402:]
-    # redo_example_docs(data, config.RESULT_PATH / "tmp.log")
+    data = read_json_rows(config.RESULT_PATH /"hardset2021/candidate_docs.log")
+    redo_example_docs(data, config.RESULT_PATH / "tmp.log")
 
-    folder = config.RESULT_PATH / "hardset2021"
-    hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    # folder = config.RESULT_PATH / "hardset2021"
+    # hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
     # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
-    graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
+    # graph_data = read_json_rows(folder / "claim_graph.jsonl")
+    # resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
     # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
-    tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
-    bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
+    # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
+    # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
 
     # hit_eval(bert_ss_data, 10)
     # eval_tri_ss(hardset_original, tri_ss_data)

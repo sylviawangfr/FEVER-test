@@ -199,5 +199,5 @@ if __name__ == '__main__':
     #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",
     #                           folder / "sids.log", folder / "sid2graph.log")
     #
-    sid2sids_data = read_json_rows(folder / "sids.jsonl")
-    docs_data = read_json_rows(folder/ "es_doc_10.jsonl")
+    # sid2sids_data = read_json_rows(folder / "sids.jsonl")
+    # docs_data = read_json_rows(folder/ "es_doc_10.jsonl")

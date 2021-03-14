@@ -514,62 +514,6 @@ def filter_triples(triples, top_k=2):
     return all_triples
 
 
-def similarity_between_phrase_and_linked_one_hop(all_phrases, phrase_list_embedding, linked_resource,
-                                                 keyword_embeddings_hash, threshold=SCORE_CONFIDENCE_3):
-    candidates = get_one_hop(linked_resource)
-    if len(candidates) > CANDIDATE_UP_TO:
-        return []
-    keywords_embedding_rel_and_obj = lookup_or_update_onehop_embedding_hash(linked_resource, keyword_embeddings_hash)
-    keyword_embedding_rel, keyword_embedding_obj = lookup_or_update_keyword_embedding_hash(linked_resource,
-                                                                                           keyword_embeddings_hash)
-    if len(keywords_embedding_rel_and_obj) == 0:
-        return []
-
-    resouce_text = linked_resource['text']
-    to_match_phrases = []
-    to_match_phrase_embeddings = []
-    for idx, p in enumerate(all_phrases):
-        if p not in resouce_text and resouce_text not in p:
-            to_match_phrases.append(p)
-            to_match_phrase_embeddings.append(phrase_list_embedding[idx])
-
-    if len(to_match_phrases) == 0:
-        return []
-
-    def similarity_check(candidate_keyword_embeddings):
-        out = pw.cosine_similarity(to_match_phrase_embeddings, candidate_keyword_embeddings).flatten()
-        topk_idx = np.argsort(out)[::-1][:2]
-        len2 = len(candidate_keyword_embeddings)
-        tmp_result = []
-        for item in topk_idx:
-            score = float(out[item])
-            if score < float(threshold):
-                break
-            else:
-                p1 = to_match_phrases[item // len2]
-                tri2 = copy.deepcopy(candidates[item % len2])
-                tri2['relatives'] = [p1, linked_resource['text']]
-                tri2['text'] = linked_resource['text']
-                tri2['URI'] = linked_resource['URI']
-                tri2['score'] = score
-                tri2['exact_match'] = linked_resource['exact_match']
-                tmp_result.append(tri2)
-        return tmp_result
-
-    result = []
-    if len(keywords_embedding_rel_and_obj) > 0:
-        tmp_tris = similarity_check(keywords_embedding_rel_and_obj)
-        result.extend(tmp_tris)
-    if len(keyword_embedding_rel) > 0:
-        tmp_tris = similarity_check(keyword_embedding_rel)
-        result.extend(tmp_tris)
-    if len(keyword_embedding_obj) > 0:
-        tmp_tris = similarity_check(keyword_embedding_obj)
-        result.extend(tmp_tris)
-    merged = remove_duplicate_triples(result)
-    return merged
-
-
 def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                                                  embeddings_hash, threshold=SCORE_CONFIDENCE_3):
     candidates = get_one_hop(linked_resource)
@@ -650,6 +594,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                 this_threshold = SCORE_CONFIDENCE_4
             else:
                 this_threshold = threshold
+            p_tmp_result = []
             phrase_embedding = to_match_phrase_embeddings[idx]
             out = pw.cosine_similarity([phrase_embedding], candidate_keyword_embeddings).flatten()
             topk_idx = np.argsort(out)[::-1][:2]
@@ -665,9 +610,12 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                     tri2['URI'] = linked_resource['URI']
                     tri2['score'] = score
                     tri2['exact_match'] = linked_resource['exact_match']
-                    tmp_result.append(tri2)
-            if len(tmp_result) == 0:
-                tmp_result.extend(keyword_matching_check(p1))
+                    p_tmp_result.append(tri2)
+            if len(p_tmp_result) == 0:
+                if not (is_person(p1) or is_date(p1)):
+                    tmp_result.extend(keyword_matching_check(p1))
+            else:
+                tmp_result.extend(p_tmp_result)
         return tmp_result
 
     if len(keywords_embedding_rel_and_obj) > 0:

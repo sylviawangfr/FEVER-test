@@ -668,7 +668,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                     tri2['exact_match'] = linked_resource['exact_match']
                     tmp_result.append(tri2)
             if len(tmp_result) == 0:
-                tmp_result = keyword_matching_check(p1)
+                tmp_result.extend(keyword_matching_check(p1))
         return tmp_result
 
     if len(keywords_embedding_rel_and_obj) > 0:

@@ -611,8 +611,9 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                     tri2['exact_match'] = linked_resource['exact_match']
                     p_tmp_result.append(tri2)
             if len(p_tmp_result) == 0:
-                if not (is_person(p1) or is_date(p1)):
-                    tmp_result.extend(keyword_matching_check(p1))
+                # if not (is_person(p1) or is_date(p1)):
+                #     tmp_result.extend(keyword_matching_check(p1))
+                tmp_result.extend(keyword_matching_check(p1))
             else:
                 tmp_result.extend(p_tmp_result)
         return tmp_result

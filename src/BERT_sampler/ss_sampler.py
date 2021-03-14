@@ -91,8 +91,7 @@ def get_full_list_sample(paras: bert_para.PipelineParas):
         # sorted(evidences_set, key=lambda x: (x[0], x[1]))
         zipped_s_id_list = sorted(zipped_s_id_list, key=lambda x: (x[1][0], x[1][1]))
 
-        all_sent_list = convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True,
-                                                  id_tokenized=True)
+        all_sent_list = convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True)
         cur_id = item['id']
         for i, sent_item in enumerate(all_sent_list):
             sent_item['selection_id'] = str(cur_id) + "<##>" + str(sent_item['sid'])

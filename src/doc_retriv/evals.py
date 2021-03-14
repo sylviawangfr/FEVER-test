@@ -176,7 +176,8 @@ def redo_example_docs(data, log_filename):
 
 
 if __name__ == '__main__':
-    data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[3:]
+    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[3:]
+    data = read_json_rows(config.RESULT_PATH / "candidate_docs.log")
     redo_example_docs(data, config.RESULT_PATH / "tmp.log")
 
     # folder = config.RESULT_PATH / "hardset2021"

@@ -565,8 +565,8 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
         for p in to_match_phrases:
             tmp_res = keyword_matching_check(p)
             tmp_all_res.extend(tmp_res)
-        merged = remove_duplicate_triples(tmp_all_res)
-        filtered = filter_triples(merged, 2)
+        # merged = remove_duplicate_triples(tmp_all_res)
+        # filtered = filter_triples(merged, 2)
         return filtered
 
     if len(candidates) > CANDIDATE_UP_TO:

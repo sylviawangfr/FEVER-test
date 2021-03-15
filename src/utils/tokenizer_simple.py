@@ -49,7 +49,7 @@ def split_claim_regex(text):
     to_delete = []
     tmp_tokens = []
     for t in tokens:
-        if t.count(' ') > 10 and (t.count(',') > 0 or t.count(' and ') > 0):
+        if t.count(' ') > 7 and (t.count(',') > 0 or t.count(' and ') > 0):
             regexp = regex.compile(REGEX3)
             matches = [m for m in regexp.finditer(text)]
             new_tokens = [matches[i].group() for i in range(len(matches))]

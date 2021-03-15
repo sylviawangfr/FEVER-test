@@ -206,7 +206,7 @@ if __name__ == '__main__':
     # print(get_ents_and_phrases('Soyuz was part of a space program.'))
     # print(get_ents_and_phrases('The New Orleans Pelicans play in the Eastern Conference of the NBA.'))
 
-    data = file_loader.read_json_rows(config.RESULT_PATH / "hardset2021/candidate_docs.jsonl")
+    data = file_loader.read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.log")
     for i in data:
         claim = i['claim']
         a, b = get_ents_and_phrases(claim)

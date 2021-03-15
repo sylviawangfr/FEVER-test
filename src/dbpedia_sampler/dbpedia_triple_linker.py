@@ -14,7 +14,7 @@ from dbpedia_sampler.sentence_util import *
 from bert_serving.client import BertClient
 from utils import c_scorer, text_clean
 from memory_profiler import profile
-from dbpedia_sampler.uri_util import isURI, uri_short_extract
+from dbpedia_sampler.uri_util import isURI, uri_short_extract3
 import time
 import gc
 from utils import resource_manager
@@ -27,6 +27,8 @@ SCORE_CONFIDENCE_1 = 0.6
 SCORE_CONFIDENCE_2 = 0.75
 SCORE_CONFIDENCE_3 = 0.8
 SCORE_CONFIDENCE_4 = 0.9
+SCORE_CONFIDENCE_5 = 0.95
+
 
 log = log_util.get_logger('dbpedia_triple_linker')
 
@@ -160,6 +162,27 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
                 links1.append(i)
         return linked_p
 
+    def get_diff_score(t1, t2):
+        c = difflib.SequenceMatcher(None, t1.lower(), t2.lower()).ratio()
+        return c
+
+    def remove_duplicate(linked_phs):
+        for i in itertools.permutations(linked_phs, 2):
+            linked_p1 = i[0]  # key
+            linked_p2 = i[1]
+            if linked_p1['text'] in linked_p2['text']:
+                p1_links = linked_p1['links']
+                p2_links = linked_p2['links']
+                for l1 in p1_links:
+                    for l2 in p2_links:
+                        if l1['URI'] == l2['URI']:
+                            l1_score = get_diff_score(l1['text'], uri_short_extract3(l1['URI']))
+                            l2_score = get_diff_score(l2['text'], uri_short_extract3(l2['URI']))
+                            if l1_score > l2_score:
+                                p2_links.remove(l2)
+                            else:
+                                p1_links.remove(l1)
+
     sentence = text_clean.convert_brc(sentence)
     if len(entities) == 0 and len(nouns) == 0:
         entities, nouns = get_phrases(sentence, '')
@@ -189,7 +212,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
             not_linked_phrases_l.append(p)
         else:
             linked_phrases_l.append(linked_phrase)
-
+    remove_duplicate(linked_phrases_l)
     # to_delete = []
     # for i in not_linked_phrases_l:
     #     if any([(i in x['text'] or x['text'] in i) for x in linked_phrases_l]):
@@ -589,8 +612,10 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
     def similarity_check(candidate_keyword_embeddings):
         tmp_result = []
         for idx, p1 in enumerate(to_match_phrases):
-            if is_person(p1) or is_date(p1):
+            if is_person(p1):
                 this_threshold = SCORE_CONFIDENCE_4
+            elif is_date(p1):
+                this_threshold = SCORE_CONFIDENCE_5
             else:
                 this_threshold = threshold
             p_tmp_result = []
@@ -659,7 +684,7 @@ def filter_phrase_vs_two_hop(phrases, triples: List[Triple], threshold=SCORE_CON
     two_hop_hash = dict()
     for res in one_hop_nodes:
         if res not in two_hop_hash:
-            res_dict = {'URI': res, 'text': uri_short_extract(res), 'exact_match': True}
+            res_dict = {'URI': res, 'text': uri_short_extract3(res), 'exact_match': True}
             res_dict.update(query_resource(res))    # get_outbounds
             two_hop_hash.update({res: res_dict})
     result = []
@@ -1067,8 +1092,8 @@ if __name__ == '__main__':
 
     # test()
     # test()
-    embedding1 = bert_similarity.get_phrase_embedding(['type'])
-    embedding2 = bert_similarity.get_phrase_embedding(['owned'])
+    embedding1 = bert_similarity.get_phrase_embedding(['2016'])
+    embedding2 = bert_similarity.get_phrase_embedding(['2008'])
     out1 = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
     print(out1)
 

@@ -84,17 +84,17 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
     #     if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
     #         merged_result.append(i)
     # fill_relative_hash(relative_hash, r3)
-    tmp_no_relatives_found = []
-    has_relatives = []
-    no_relatives_found = []
-    for i in relative_hash:
-        if len(relative_hash[i]) == 0:
-            tmp_no_relatives_found.append(i)
-        else:
-            has_relatives.append(i)
-    for i in tmp_no_relatives_found:
-        if len(list(filter(lambda x: i in x or x in i, has_relatives))) == 0:
-            no_relatives_found.append(i)
+    # tmp_no_relatives_found = []
+    #     # has_relatives = []
+    #     # no_relatives_found = []
+    #     # for i in relative_hash:
+    #     #     if len(relative_hash[i]) == 0:
+    #     #         tmp_no_relatives_found.append(i)
+    #     #     else:
+    #     #         has_relatives.append(i)
+    #     # for i in tmp_no_relatives_found:
+    #     #     if len(list(filter(lambda x: i in x or x in i, has_relatives))) == 0:
+    #     #         no_relatives_found.append(i)
 
     # isolated_nodes = []
     # for i in no_relatives_found:

@@ -35,13 +35,30 @@ REGEX2 = r'([a-z0-9]*[A-Z]+[\w]*(\')?(\s)*' \
          r'(-?)(&?)(\.?)(:?)(\d*\s)*)*(?<!-\s)(:?([A-Z]+[\w]*(\s\d+[a-zA-Z]*)*))'
 
 
+REGEX3 = r'([a-z0-9]*[A-Z]+[\w-]*(\')?(\s)*(\'s)?(of\s)*(to\s)*' \
+         r'(for\s)*(at\s)*(in\s)*(on\s)*(from\s)*(by\s)*(with\s)*' \
+         r'(the\s)*(a\s)*(an\s)*(-?)(&?)(\.?)(:?)(\d*\s)*)+(?<!-\s)(:?([A-Z0-9]+[\w]*(\s\d+[a-zA-Z]*)*))'
+
+
 def split_claim_regex(text):
     # get capital phrases
     # REGEX = r'(?<![.])([A-Z]+[\w]*\s)*([A-Z][\w]+)'
     regexp = regex.compile(REGEX)
     matches = [m for m in regexp.finditer(text)]
     tokens = [matches[i].group() for i in range(len(matches))]
-    return tokens
+    to_delete = []
+    tmp_tokens = []
+    for t in tokens:
+        if t.count(' ') > 10 and (t.count(',') > 0 or t.count(' and ') > 0):
+            regexp = regex.compile(REGEX3)
+            matches = [m for m in regexp.finditer(text)]
+            new_tokens = [matches[i].group() for i in range(len(matches))]
+            to_delete.append(t)
+            tmp_tokens.extend(new_tokens)
+    tokens.extend(tmp_tokens)
+    for i in to_delete:
+        tokens.remove(i)
+    return list(set(tokens))
 
 
 def split_combinations(text):
@@ -148,7 +165,7 @@ def get_lemma(text):
 
 
 if __name__ == '__main__':
-    print(get_lemma('starring'))
+    # print(get_lemma('starring'))
     # ss1 = "Michelle Obama's husband was born in Kenya"
     # verbs = get_dependent_verb(ss1, ['Michelle Obama', 'husband', 'Kenya'])
 
@@ -157,11 +174,9 @@ if __name__ == '__main__':
     # get_phrase_token_indice(d_l, p_l)
 
     # text = "Bessie Smith's Tale was married on April 15, 1894."
-    text = "L.A. Reid has served as the president of a record label."
+    text = 'South African Communist Party is a partner of an alliance between the African National Congress (ANC), the Congress of South African Trade Unions (COSATU) and the South African Communist Party (SACP).'
     # ph = ['Bessie Smith', 'April 15, 1894']
-
     print(split_claim_regex(text))
-    split_claim_spacy(text)
     # split_claim_nltk(text)
     # print(n)
     # print(e)

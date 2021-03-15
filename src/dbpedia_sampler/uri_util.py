@@ -20,8 +20,16 @@ def uri_short_extract2(uri):
     return lastword
 
 
+
+def uri_short_extract3(uri):
+    lastword = uri.split('/')[-1]
+    lastword = lastword.split('#')[-1]
+    lastword = lastword.replace('_', ' ')
+    return lastword
+
+
 def wildcase_split(text):
-    p_l = re.findall(r'(?:\d+\.\d+)|(?:\d+)|(?:[a-zA-Z]+)', text)
+    p_l = re.findall(r'(?:\d+\.\d+)|(?:\d+)|(?:[a-zA-Z]+)|(?:[()])', text)
     return list(filter(None, p_l))
 
 

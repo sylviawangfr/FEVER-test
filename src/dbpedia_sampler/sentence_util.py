@@ -45,8 +45,8 @@ def get_ents_and_phrases(sentence):
         if token.pos_.lower() in ['propn', 'noun'] or token.dep_ == 'dobj':
             noun_tokens.append(token.text)
     nouns_chunks = [remove_the_a(chunk.text) for chunk in doc_noun.noun_chunks if chunk.text.lower() not in STOP_WORDS]
-    for tt in doc_noun.ents:
-        print(tt)
+    # for tt in doc_noun.ents:
+    #     print(tt)
     ents = [remove_the_a(ent.text) for ent in doc_noun.ents if ent.text.lower() not in STOP_WORDS]
     capitalized_phrased = list(set(split_claim_regex(sentence)))
 
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     # print(get_ents_and_phrases('Soyuz was part of a space program.'))
     # print(get_ents_and_phrases('The New Orleans Pelicans play in the Eastern Conference of the NBA.'))
 
-    data = file_loader.read_json_rows(config.RESULT_PATH / "hardset2021/es_doc_10.log")
+    data = file_loader.read_json_rows(config.RESULT_PATH / "hardset2021/candidate_docs.jsonl")
     for i in data:
         claim = i['claim']
         a, b = get_ents_and_phrases(claim)

@@ -162,7 +162,6 @@ def eval_tris_berts(tris, berts, max_evidence):
     # print(sorted(list(count.most_common()), key=lambda x: -x[0]))
 
 
-
 def redo_example_docs(data, log_filename):
     for example in tqdm(data):
         es_doc_and_lines, entities, nouns = prepare_candidate_es_for_example(example)
@@ -176,29 +175,15 @@ def redo_example_docs(data, log_filename):
 
 
 if __name__ == '__main__':
-    # data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[3:]
-    data = read_json_rows(config.RESULT_PATH / "hardset2021/candidate_docs.log")
+    data = read_json_rows(config.RESULT_PATH /"hardset2021/dev_has_multi_doc_evidence.jsonl")[496:]
+    # data = read_json_rows(config.RESULT_PATH / "hardset2021/candidate_docs.log")
     redo_example_docs(data, config.RESULT_PATH / "tmp.log")
-
-    # folder = config.RESULT_PATH / "hardset2021"
-    # hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
-
-    # graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    # resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
-
-    # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
-    # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
 
     # hit_eval(bert_ss_data, 10)
     # eval_tri_ss(hardset_original, tri_ss_data)
     # eval_tris_berts(tri_ss_data, bert_ss_data, 10)
     # c_scorer.fever_score(bert_ss_data, hardset_original, max_evidence=5, mode={'check_sent_id_correct': True, 'standard': False}, error_analysis_file=folder / "test.log")
-    # generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
-    #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",
-    #                           folder / "sids.log", folder / "sid2graph.log")
-    #
+
     # sid2sids_data = read_json_rows(folder / "sids.jsonl")
     # docs_data = read_json_rows(folder/ "es_doc_10.jsonl")
+    pass

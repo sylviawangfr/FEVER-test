@@ -126,7 +126,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
         for i in relative_hash:
             if len(relative_hash[i]) == 0:
                 for tri in graph:
-                    if len(list(filter(lambda x: i in x or x in i, tri.keywords))) > 0:
+                    if len(list(filter(lambda x: i in x, tri.keywords))) > 0:
                         relative_hash[i].append(tri.text)
 
     def init_relative_hash(relative_hash=None):
@@ -158,8 +158,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
 
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
-            # if idx < 402:
-            #     continue
+            if idx < 496:
+                continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -232,8 +232,6 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                                 tmp_sid_sets.extend(extend_evi)
                             else:
                                 # 1. candidate tri two hop
-                                # get not linked phrase, match two hop nodes
-                                not_linked_phrases = partial_linked_no_relatives_phrases[k]
                                 extend_evi = extend_evidence_two_hop_nodes(not_linked_phrases, subgraph, tmp_sid_sets)
                                 tmp_sid_sets.extend(extend_evi)
                             candidate_sid_sets.extend(tmp_sid_sets)
@@ -728,11 +726,11 @@ if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
+    # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
     resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
     tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
     bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")

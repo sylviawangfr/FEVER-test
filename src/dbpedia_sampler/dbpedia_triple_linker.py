@@ -14,7 +14,7 @@ from dbpedia_sampler.sentence_util import *
 from bert_serving.client import BertClient
 from utils import c_scorer, text_clean
 from memory_profiler import profile
-from dbpedia_sampler.uri_util import isURI, uri_short_extract3
+from dbpedia_sampler.uri_util import isURI, uri_short_extract3, uri_short_extract
 import time
 import gc
 from utils import resource_manager
@@ -473,7 +473,8 @@ def remove_duplicate_triples(triples):
         else:
             for m in merged:
                 if m['subject'] == r['subject'] \
-                        and [i.lower() for i in m['keywords']] == [j.lower() for j in r['keywords']]:
+                        and (([i.lower() for i in m['keywords']] == [j.lower() for j in r['keywords']])
+                             or (m['object'] == r['object'] and m['relation'] == r['relation'])):
                     if isURI(r['object']) and not isURI(m['object']):
                         m['object'] = r['object']
                     if m['score'] < r['score']:
@@ -520,7 +521,7 @@ def filter_triples(triples, top_k=2):
         tri_r = []
         for t in triples:
             t['relatives'].sort()
-            if t['relatives'] == r:
+            if t['relatives'] == r or all([rx in t['relatives'] for rx in r]):
                 tri_r.append(t)
         tri_r.sort(key=lambda k: k['score'], reverse=True)
         tmp_filtered_tris = []
@@ -537,16 +538,24 @@ def filter_triples(triples, top_k=2):
     return all_triples
 
 
+
 def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                                                  embeddings_hash, threshold=SCORE_CONFIDENCE_3):
     candidates = get_one_hop(linked_resource)
     if len(candidates) == 0:
         return []
-    resouce_text = linked_resource['text']
+    resouce_text = linked_resource['text'].lower()
+    subject_uri = candidates[0]['subject']
+    resource_uri_text = uri_short_extract(subject_uri)
+    resource_uri_text = resource_uri_text.lower()
     to_match_phrases = []
     to_match_phrase_idx = []
     for idx, p in enumerate(all_phrases):
-        if p not in resouce_text and resouce_text not in p:
+        p_lower = p.lower()
+        if p_lower not in resouce_text \
+                and resouce_text not in p_lower \
+                and resource_uri_text not in p_lower \
+                and p_lower not in resource_uri_text:
             to_match_phrases.append(p)
             to_match_phrase_idx.append(idx)
     if len(to_match_phrases) == 0:
@@ -869,8 +878,11 @@ def filter_resource_vs_keyword(linked_phrases_l):
     for i in itertools.permutations(linked_phrases_l, 2):
         resource1 = i[0]  # key
         resource2 = i[1]
-        if resource1['text'] in resource2['text'] \
-                or resource2['text'] in resource1['text']:
+
+        r1_text = resource1['text'].lower()
+        r2_text = resource2['text'].lower()
+        if r1_text in r2_text \
+                or r2_text in r1_text:
             continue
 
         # uri_matched = False
@@ -884,8 +896,12 @@ def filter_resource_vs_keyword(linked_phrases_l):
                 if re1_uri == re2_uri:
                     continue
                 candidates = get_one_hop(re2)
+                if len(candidates) == 0:
+                    continue
                 for item in candidates:
-                    if re1_uri in [item['subject'], item['relation'], item['object']]:
+                    if re1_uri == item['subject']:
+                        break
+                    if re1_uri in [item['relation'], item['object']]:
                         # uri_matched = True
                         if not does_tri_exit_in_list(item, result):  # perfectly linked uri
                             new_item = copy.deepcopy(item)

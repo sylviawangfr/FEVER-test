@@ -233,7 +233,7 @@ def search_and_merge4(entities, nouns):
     # merged = merge_result(result)
     # truncated = truncate_result(result)
     # merged = merge_result2(truncated)
-    merged = merge_result2(result)
+    merged = merge_result3(result)
     return merged
 
 
@@ -301,24 +301,38 @@ def merge_result3(result):
         i_id = i['id']
         i_idx = ids_l.index(i_id)
         if i_idx in docs2phrases:
+            has_overlap = False
             for record in docs2phrases[i_idx]:
-                if record['phrases'] == i['phrases'] and record['score'] <= i['score']:
-                    docs2phrases[i_idx].remove(record)
-                    break
-            docs2phrases[i_idx].append(i)
+                if record['phrases'] == i['phrases']:
+                    has_overlap = True
+                    if record['score'] < i['score']:
+                        docs2phrases[i_idx].remove(record)
+                        docs2phrases[i_idx].append(i)
+                        break
+            if not has_overlap:
+                docs2phrases[i_idx].append(i)
+
         else:
             docs2phrases.update({i_idx: [i]})
+    # merged = []
+    # for d in docs2phrases:
+    #     new_score = 0
+    #     new_phrases = set()
+    #     for i in docs2phrases[d]:
+    #         if len(set(i['phrases']) | new_phrases) > len(new_phrases) or len(i['phrases']) == 1:
+    #             new_score += i['score']
+    #             new_phrases = set(i['phrases']) | new_phrases
+    #     new_r = {'score': new_score, 'id': ids_l[d], 'phrases': list(new_phrases), 'lines': ""}
+    #     merged.append(new_r)
+    # merged.sort(key=lambda x: x.get('score'), reverse=True)
     merged = []
     for d in docs2phrases:
-        new_score = 0
-        new_phrases = set()
-        for i in docs2phrases[d]:
-            if len(set(i['phrases']) | new_phrases) > len(new_phrases) or len(i['phrases']) == 1:
-                new_score += i['score']
-                new_phrases = set(i['phrases']) | new_phrases
-        new_r = {'score': new_score, 'id': ids_l[d], 'phrases': list(new_phrases), 'lines': ""}
+        new_score = reduce(lambda x, y: x + y, [i['score'] for i in docs2phrases[d]])
+        new_phrases = reduce(lambda x, y: list(set(x) | set(y)), [i['phrases'] for i in docs2phrases[d]])
+        new_r = {'score': new_score, 'id': ids_l[d], 'phrases': new_phrases, 'lines': ""}
         merged.append(new_r)
     merged.sort(key=lambda x: x.get('score'), reverse=True)
+
     return merged
 
 
@@ -400,7 +414,7 @@ def test_search_claim(claim):
 
 
 if __name__ == '__main__':
-    search_entity_combinations(['Ireland', 'Saxony'])
+    # search_entity_combinations(['Ireland', 'Saxony'])
     search_doc_id("Pablo_Andrés_González")
     # t = normalize("""["Mariano Gonza\u0301lez", "Mariano Gonza\u0301lez"]""")
 

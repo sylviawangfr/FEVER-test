@@ -44,7 +44,6 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
 
     linked_phrases = [i['text'] for i in linked_phrases_l]
     all_phrases = not_linked_phrases_l + linked_phrases
-    relative_hash = {key: [] for key in all_phrases}
     all_uris = dict()
     for i in linked_phrases_l:
         uris = i['links']
@@ -73,6 +72,7 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
     tmp_result = r0 + r1 + r2 + r3
     tmp_result = dbpedia_triple_linker.remove_duplicate_triples(tmp_result)
     sent_graph = dbpedia_triple_linker.filter_triples(tmp_result)
+    sent_graph = dbpedia_triple_linker.remove_duplicate_triples(sent_graph)
     # only keyword-match on those no exact match triples
     # fill_relative_hash(relative_hash, sent_graph)
     # isolated_node = []

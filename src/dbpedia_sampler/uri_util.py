@@ -11,7 +11,7 @@ def uri_short_extract(uri):
         ph = camel_case_split(w)
         phrases.append(' '.join([ww for ww in ph]))
     one_phrase = ' '.join(p for p in phrases)
-    return one_phrase.split()
+    return one_phrase.strip()
 
 
 def uri_short_extract2(uri):

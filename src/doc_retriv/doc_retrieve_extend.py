@@ -246,6 +246,54 @@ def merge_es_and_entity_docs(r_es, r_ents):
     return merged
 
 
+def merge_es_and_entity_docs2(r_es, r_ents):
+    def merge_doc_l(doc_l):
+        merge_docs = []
+        for d in doc_l:
+            if len(list(filter(lambda x: x['id'] == d['id'], merge_docs))) == 0:
+                merge_docs.append(d)
+            else:
+                for m in merge_docs:
+                    if m['id'] == d['id'] and m['score'] < d['score']:
+                        merge_docs.remove(m)
+                        merge_docs.append(d)
+                        break
+        return merge_docs
+
+    all_ents_doc_items_with_dup = [d for docs in r_ents.values() for d in docs]
+    all_ents_docs = merge_doc_l(all_ents_doc_items_with_dup)
+    all_ents_docs.sort(key=lambda x: x.get('score'), reverse=True)
+    all_es_docs = merge_doc_l(r_es)
+    all_es_docs.sort(key=lambda x: x.get('score'), reverse=True)
+    r_ents_ids = [i['id'] for i in all_ents_docs]
+    r_es_ids = [i['id'] for i in all_es_docs]
+
+    merged = []
+    others = []
+    for idx_j, j in enumerate(r_ents_ids):
+        if j in r_es_ids:
+            es_idx = r_es_ids.index(j)
+            merged.append(all_es_docs[es_idx])
+        else:
+            phrases = all_ents_docs[idx_j]['phrases']
+            if len(phrases) == 1:
+                p = all_ents_docs[idx_j]['phrases'][0].lower()
+                doc_id = convert_brc(j).replace('_', ' ').lower()
+                ratio = difflib.SequenceMatcher(None, p, doc_id).ratio()
+                if ratio >= 0.8 or is_media(doc_id):
+                    all_ents_docs[idx_j]['score'] *= 1.5
+            else:  # from triple
+                all_ents_docs[idx_j]['score'] *= 2
+            others.append(all_ents_docs[idx_j])
+
+    for idx_i, i in enumerate(r_es_ids):
+        if len(list(filter(lambda x: i == x['id'], merged))) == 0:
+            others.append(all_es_docs[idx_i])
+    others.sort(key=lambda x: x.get('score'), reverse=True)
+    merged.extend(others)
+    return merged
+
+
 def merge_entity_and_triple_docs(entity_docs, triple_docs):
     merged_dict = entity_docs
     if len(triple_docs) == 0:

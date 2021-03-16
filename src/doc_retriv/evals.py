@@ -168,7 +168,7 @@ def redo_example_docs(data, log_filename):
         entity_docs = get_es_entity_links(es_doc_and_lines)
         graph_data_example = prepare_claim_graph_for_example(example, extend_entity_docs=entity_docs, entities=entities, nouns=nouns)
         ent_resource_docs = prepare_candidate2_example(graph_data_example)
-        merged = merge_es_and_entity_docs(es_doc_and_lines, ent_resource_docs)
+        merged = merge_es_and_entity_docs2(es_doc_and_lines, ent_resource_docs)
         example['candidate_docs'] = merged
         example['predicted_docids'] = [j.get('id') for j in merged][:10]
     eval_doc_preds(data, 10, log_filename)

@@ -233,7 +233,7 @@ def search_and_merge4(entities, nouns):
     # merged = merge_result(result)
     # truncated = truncate_result(result)
     # merged = merge_result2(truncated)
-    merged = merge_result3(result)
+    merged = merge_result2(result)
     return merged
 
 
@@ -332,9 +332,7 @@ def merge_result3(result):
         new_r = {'score': new_score, 'id': ids_l[d], 'phrases': new_phrases, 'lines': ""}
         merged.append(new_r)
     merged.sort(key=lambda x: x.get('score'), reverse=True)
-
     return merged
-
 
 
 def truncate_result(merged):

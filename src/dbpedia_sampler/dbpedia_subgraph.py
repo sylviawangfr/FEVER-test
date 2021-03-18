@@ -51,8 +51,8 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
             if u['URI'] not in all_uris:
                 all_uris.update({u['URI']: u})
     if embedding_hash is None:
-        embeddings_hash = {key: {'one_hop': [], 'keyword1': [], 'keyword2': []} for key in all_uris}
-        embeddings_hash.update({p: [] for p in all_phrases})
+        embedding_hash = {key: {'one_hop': [], 'keyword1': [], 'keyword2': []} for key in all_uris}
+        embedding_hash.update({p: [] for p in all_phrases})
     else:
         for key in all_uris:
             if key not in embedding_hash:
@@ -65,11 +65,12 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
         lookup_hash[i['text']] = i
 
     verb_d = get_dependent_verb(sentence_text, all_phrases)
-    r0 = dbpedia_triple_linker.filter_text_vs_one_hop(all_phrases, linked_phrases_l, embeddings_hash)
+    r0 = dbpedia_triple_linker.filter_text_vs_one_hop(all_phrases, linked_phrases_l, embedding_hash)
     r1 = dbpedia_triple_linker.filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d)
     r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l)
-    r3 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embeddings_hash)
-    tmp_result = r0 + r1 + r2 + r3
+    r3 = dbpedia_triple_linker.filter_verb_vs_one_hop2(verb_d, linked_phrases_l)
+    r4 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embedding_hash)
+    tmp_result = r0 + r1 + r2 + r3 + r4
     tmp_result = dbpedia_triple_linker.remove_duplicate_triples(tmp_result)
     sent_graph = dbpedia_triple_linker.filter_triples(tmp_result)
     sent_graph = dbpedia_triple_linker.remove_duplicate_triples(sent_graph)
@@ -122,7 +123,7 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
     claim_d['linked_phrases_l'] = linked_phrases_l
     claim_d['not_linked_phrases_l'] = not_linked_phrases_l
     claim_d['graph'] = sent_graph
-    claim_d['embedding'] = embeddings_hash
+    claim_d['embedding'] = embedding_hash
     # claim_d['lookup_hash'] = lookup_hash
     # claim_d['no_relatives'] = no_relatives_found
     # claim_d['isolated_nodes'] = isolated_nodes
@@ -275,11 +276,13 @@ if __name__ == '__main__':
     # s8 = "T - Pain, His debut album , Rappa Ternt Sanga , was released in 2005 ."
     # s9 = "Chanhassen High School - Chanhassen had an enrollment of 1,576 students during the 2014-15 school year , with an 18:1 student teacher ratio ."
     # ss1 = "Giada at Home was only available on DVD ."
-    ss1= 'Sheryl Lee has yet to appear in a film as of 2016.'
+    # ss1= 'Sheryl Lee has yet to appear in a film as of 2016.'
     # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
-    # ss1 = "Cheese in the Trap (TV series) only stars animals."
+    ss1 = "The Thin Red Line (1998 film) portrays only frogs."
+    # ss1 = "The film only stars animals."
     # ss1 = "Michelle Obama's husband was born in Kenya"
     # text = "Home for the Holidays stars the fourth stepchild of Charlie Chaplin"
+    # ss1 = "Australia (2008 film) production took place in a town and locality in the Whitsunday Region on the eastern coast of Queensland, Australia called Bowen."
     claim_dict = construct_subgraph_for_sentence(ss1)
     print(json.dumps(claim_dict['graph'], indent=4))
     # print(construct_subgraph_for_candidate(claim_dict, ss2, doc_title=''))

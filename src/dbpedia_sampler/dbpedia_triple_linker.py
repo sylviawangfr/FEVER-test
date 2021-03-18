@@ -68,6 +68,23 @@ def lookup_phrase_exact_match(phrase):
     return linked_phrase
 
 
+def lookup_phrase_almost_exact_match(phrase):
+    linked_phrase = dict()
+    resource_dict = dbpedia_lookup.lookup_label_almost_exact_match(phrase)
+    if len(resource_dict) > 0:
+        linked_phrase['text'] = phrase
+        linked_phrase['links'] = []
+    for i in resource_dict:
+        record_dict = dict()
+        if isinstance(i, dict):
+            # record_dict['categories'] = dbpedia_lookup.to_triples(i)
+            record_dict['URI'] = i['URI']
+            record_dict['text'] = phrase
+            record_dict['exact_match'] = True
+            linked_phrase['links'].append(record_dict)
+    return linked_phrase
+
+
 def lookup_doc_id(phrase, doc_ids):
     linked_phrase = dict()
     links = []
@@ -200,7 +217,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
             if is_capitalized(p):
                 linked_phrase = lookup_phrase(p)
             else:
-                linked_phrase = lookup_phrase_exact_match(p)
+                linked_phrase = lookup_phrase_almost_exact_match(p)
             if extend_entity_docs is not None and p in extend_entity_docs:
                 es_doc_links = extend_entity_docs[p]
                 if len(es_doc_links) > 0:
@@ -229,6 +246,11 @@ def add_outbounds(linked_ps):
                 j.update(query_resource(j['URI']))
             # if 'categories' not in j:
             #     j['categories'] = dbpedia_virtuoso.get_categories2(j['URI'])
+
+def add_outbound_single(linked_p):
+    for j in linked_p['links']:
+        if 'outbounds' not in j:
+            j.update(query_resource(j['URI']))
 
 
 def keyword_matching(text, str_l):
@@ -440,6 +462,72 @@ def filter_verb_vs_one_hop(verb_dict, linked_phrases_l, keyword_embeddings_hash)
     return merged
 
 
+def filter_verb_vs_one_hop2(verb_dict, linked_phrases_l):
+    phrase_and_verb_dict = dict()
+    tmp_embedding_hash = dict()
+    for i in verb_dict:
+        if verb_dict[i]['dep'] == 'subj' or verb_dict[i]['dep'] == 'obj' and verb_dict[i]['verb'] != '':
+            phrase_and_verb_dict.update({i: f"{i} {verb_dict[i]['verb']}"})
+    if len(phrase_and_verb_dict) == 0:
+        return []
+    uri2links_dict = dict()
+    for i in linked_phrases_l:
+        for u in i['links']:
+            if u['URI'] not in uri2links_dict:
+                uri2links_dict.update({u['URI']: u})
+    bc_obj = resource_manager.BERTClientResource()
+    all_ph_and_verb = list(phrase_and_verb_dict.values())
+    all_ph_and_verb_embeddings = bert_similarity.get_phrase_embedding(all_ph_and_verb, bc=bc_obj.get_client())
+    if len(all_ph_and_verb_embeddings) == 0:
+        return []
+    for idx, i in enumerate(all_ph_and_verb):
+        tmp_embedding_hash.update({i: all_ph_and_verb_embeddings[idx]})
+    result = []
+    for ph in phrase_and_verb_dict:
+        for resource in uri2links_dict.values():
+            if ph in resource['text'] or resource['text'] in ph:
+                candidates = get_one_hop(resource)
+                candidates = [c for c in candidates if c['keyword1'] not in ['type', 'category', 'name', 'subject', 'see also']]
+                subj_short = uri_short_extract3(resource['URI'])
+                res_and_keyword1_l = [f"{subj_short} {c['keyword1']}" for c in candidates]
+                # bert similarity
+                keyword_embedding_rel = bert_similarity.get_phrase_embedding(res_and_keyword1_l, bc=bc_obj.get_client())
+                if len(keyword_embedding_rel) == 0:
+                    continue
+                ph_verb_embedding = tmp_embedding_hash[phrase_and_verb_dict[ph]]
+                score = np.sum(ph_verb_embedding * keyword_embedding_rel, axis=1) / \
+                        (np.linalg.norm(ph_verb_embedding) * np.linalg.norm(keyword_embedding_rel, axis=1))
+                topk_idx = np.argsort(score)[::-1]
+                to_add_idx = []
+                last_score = 0
+                for idx in topk_idx:
+                    idx_score = float(score[idx])
+                    if idx_score < float(SCORE_CONFIDENCE_4):
+                        break
+                    else:
+                        if score[idx] > 0.99 or len(to_add_idx) < 2:
+                            to_add_idx.append(idx)
+                            last_score = round(float(score[idx]), 3)
+                        elif len(to_add_idx) >= 2:
+                            if round(float(score[idx]), 3) == last_score:
+                                to_add_idx.append(idx)
+                                last_score = round(float(score[idx]), 3)
+                            else:
+                                break
+                for idx in to_add_idx:
+                    record = copy.deepcopy(candidates[idx])
+                    record['score'] = idx_score
+                    record['relatives'] = [resource['text'], verb_dict[ph]['verb']]
+                    record['text'] = resource['text']
+                    record['URI'] = resource['URI']
+                    record['exact_match'] = False
+                    result.append(record)
+    result.sort(key=lambda k: k['score'], reverse=True)
+    merged = remove_duplicate_triples(result)
+    merged = filter_triples(merged)
+    return merged
+
+
 def filter_text_vs_one_hop(all_phrases, linked_phrases_l, embeddings_hash, threshold=SCORE_CONFIDENCE_3):
     if len(all_phrases) > CANDIDATE_UP_TO or len(all_phrases) < 1:
         return []
@@ -535,6 +623,7 @@ def filter_triples(triples, top_k=2):
                 else:
                     break
         all_triples.extend(tmp_filtered_tris)
+    all_triples.sort(key=lambda k: k['score'], reverse=True)
     return all_triples
 
 
@@ -546,7 +635,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
         return []
     resouce_text = linked_resource['text'].lower()
     subject_uri = candidates[0]['subject']
-    resource_uri_text = uri_short_extract(subject_uri)
+    resource_uri_text = uri_short_extract3(subject_uri)
     resource_uri_text = resource_uri_text.lower()
     to_match_phrases = []
     to_match_phrase_idx = []
@@ -644,7 +733,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                     tri2['score'] = score
                     tri2['exact_match'] = linked_resource['exact_match']
                     p_tmp_result.append(tri2)
-            if len(p_tmp_result) == 0:
+            if len(p_tmp_result) == 0 and not is_date(p1) and not is_person(p1):
                 # if not (is_person(p1) or is_date(p1)):
                 #     tmp_result.extend(keyword_matching_check(p1))
                 tmp_result.extend(keyword_matching_check(p1))
@@ -1108,9 +1197,11 @@ if __name__ == '__main__':
 
     # test()
     # test()
-    embedding1 = bert_similarity.get_phrase_embedding(['2016'])
-    embedding2 = bert_similarity.get_phrase_embedding(['2008'])
+    embedding1 = bert_similarity.get_phrase_embedding(['The Thin Red Line (1998 film) portrays'])
+    embedding2 = bert_similarity.get_phrase_embedding(['The Thin Red Line (1998 film) starring'])
+    embedding3 = bert_similarity.get_phrase_embedding(['The Thin Red Line (1998 film) release'])
     out1 = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
+    out2 = pw.cosine_similarity(embedding1, embedding3)
     print(out1)
 
     # import spacy

@@ -48,7 +48,6 @@ def eval_ss_and_save(paras : bert_para.PipelineParas):
     processor = FeverSSProcessor()
     eval_batch_size = 8
     eval_examples, eval_list = processor.get_dev_examples(paras)
-
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)
 
@@ -147,7 +146,7 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     all_input_ids = torch.tensor([f.input_ids for f in eval_features], dtype=torch.long)
     all_input_mask = torch.tensor([f.input_mask for f in eval_features], dtype=torch.long)
     all_segment_ids = torch.tensor([f.segment_ids for f in eval_features], dtype=torch.long)
-    if paras.mode == 'eval':
+    if not paras.data_from_pred:
         all_label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
     else:
         all_label_ids = torch.tensor([-1] * len(eval_features), dtype=torch.long)
@@ -190,16 +189,16 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     probs = probs[:, 0].tolist()
     scores = preds[:, 0].tolist()
     preds = np.argmax(preds, axis=1)
-    if paras.mode == 'eval':
-        logger.info("***** Eval results *****")
-        result = compute_metrics(preds, all_label_ids.numpy())
-        result['eval_loss'] = eval_loss
-        pred_log = ''
-        for key in sorted(result.keys()):
-            pred_log = pred_log + key + ":" + str(result[key]) + "\n"
-            logger.info("  %s = %s", key, str(result[key]))
-            print(f"{key}:{result[key]}")
-        save_file(pred_log, paras.get_eval_log_file('pred_ss'))
+    # if paras.mode == 'eval':
+    #     logger.info("***** Eval results *****")
+    #     result = compute_metrics(preds, all_label_ids.numpy())
+    #     result['eval_loss'] = eval_loss
+    #     pred_log = ''
+    #     for key in sorted(result.keys()):
+    #         pred_log = pred_log + key + ":" + str(result[key]) + "\n"
+    #         logger.info("  %s = %s", key, str(result[key]))
+    #         print(f"{key}:{result[key]}")
+    #     save_file(pred_log, paras.get_eval_log_file('pred_ss'))
 
     for i in range(len(eval_list)):
         assert str(eval_examples[i].guid) == str(eval_list[i]['selection_id'])

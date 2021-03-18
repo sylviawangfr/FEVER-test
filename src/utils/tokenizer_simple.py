@@ -111,28 +111,26 @@ def get_dependent_verb(sent, phrase_l):
     # output_path = config.LOG_PATH / 'sentence.svg'
     # output_path.open("w", encoding="utf-8").write(svg)
     phs = dict()
-    for ph in phrase_l:
-        for possible_phrase in doc_merged:
-            if possible_phrase.text == ph:
-                one_p = {'dep': '', 'verb': ''}
-                if possible_phrase.dep in [nsubj, nsubjpass] :
-                    one_p['dep'] = 'subj'
-                if possible_phrase.dep == dobj or possible_phrase.dep == pobj:
-                    one_p['dep'] = 'obj'
-                if possible_phrase.head.pos == VERB:
-                    one_p['verb'] = possible_phrase.head.text
+    for possible_phrase in doc_merged:
+        if possible_phrase.text in phrase_l:
+            one_p = {'dep': '', 'verb': ''}
+            if possible_phrase.dep in [nsubj, nsubjpass] :
+                one_p['dep'] = 'subj'
+            if possible_phrase.dep == dobj or possible_phrase.dep == pobj:
+                one_p['dep'] = 'obj'
+            if possible_phrase.head.pos == VERB or possible_phrase.head.dep_ == 'ROOT':
+                one_p['verb'] = possible_phrase.head.text
+            else:
+                if possible_phrase.head.head.pos == VERB or possible_phrase.head.head.dep_ == 'ROOT':
+                    one_p['verb'] = possible_phrase.head.head.text
                 else:
-                    if possible_phrase.head.head.pos == VERB:
-                        one_p['verb'] = possible_phrase.head.head.text
-                    else:
-                        try:
-                            next_w = next(possible_phrase.head.rights)
-                            if next_w.pos == VERB:
-                                one_p['verb'] = next_w.text
-                        except StopIteration:
-                            pass
-                phs[ph] = one_p
-                break
+                    try:
+                        next_w = next(possible_phrase.head.rights)
+                        if next_w.pos == VERB or next_w.dep_ == 'ROOT':
+                            one_p['verb'] = next_w.text
+                    except StopIteration:
+                        pass
+            phs[possible_phrase.text] = one_p
     return phs
 
 

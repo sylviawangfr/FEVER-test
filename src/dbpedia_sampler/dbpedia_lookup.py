@@ -9,7 +9,7 @@ import config
 import log_util
 from dbpedia_sampler.uri_util import uri_short_extract
 from utils.file_loader import read_json_rows
-from utils.tokenizer_simple import split_claim_regex, get_lemma
+from utils.tokenizer_simple import split_claim_regex, get_lemma, is_person
 from utils.resource_manager import CountryNationality
 from memory_profiler import profile
 import time
@@ -88,6 +88,37 @@ def get_keyword_matching_ratio_top(text_phrase, lookup_records, threshold=0.6):
     return result
 
 
+def lookup_label_almost_exact_match(text):
+    lookup_app_matches_label = lookup_resource_app_label(text)
+    lookup_app_matches_query = lookup_resource_app_query(text)
+    lookup_matches_ref = lookup_resource_ref_count(text)
+    lookup_app_matches = []
+    merge_resources(lookup_app_matches, lookup_app_matches_label)
+    merge_resources(lookup_app_matches, lookup_app_matches_query)
+    merge_resources(lookup_app_matches, lookup_matches_ref)
+
+    def almost_match(ph1, ph2):
+        ph1_clean_lemma = sorted(get_lemma(ph1.replace("_", ' ').lower()))
+        ph2_clean_lemma = sorted(get_lemma(ph2.replace("_", ' ').lower()))
+        ph1_clean_lemma_rejoin = ' '.join(ph1_clean_lemma)
+        ph2_clean_lemma_rejoin = ' '.join(ph2_clean_lemma)
+        score = score_bewteen_phrases(ph1_clean_lemma_rejoin, ph2_clean_lemma_rejoin)
+        if score > 0.88:
+            return True
+    result = []
+    for i in lookup_app_matches:
+        if i['Label'] is not None \
+                and "/Category:" not in i['URI'] \
+                and almost_match(i['Label'], text):
+            i['exact_match'] = True
+            result.append(i)
+    if len(result) < 1:
+        return []
+    else:
+        unwrapped_rec = [unwrap_record(i) for i in result]
+        return unwrapped_rec
+
+
 def lookup_label_exact_match(text_phrase):
     def lookup_exact(text):
         lookup_app_matches_label = lookup_resource_app_label(text)
@@ -105,6 +136,7 @@ def lookup_label_exact_match(text_phrase):
     else:
         unwrapped_rec = [unwrap_record(i) for i in result]
         return unwrapped_rec
+
 
 # @profile
 def combine_lookup(text_phrase):
@@ -127,7 +159,8 @@ def combine_lookup(text_phrase):
     lookup_app_matches.sort(key=lambda k: int(k['Refcount']), reverse=True)
     exact_match = get_exact_match(text_phrase, lookup_app_matches)
     country_nationality = CountryNationality()
-    if country_nationality.is_country(text_phrase) or country_nationality.is_nationality(text_phrase):
+    if country_nationality.is_country(text_phrase) \
+            or country_nationality.is_nationality(text_phrase):
         return exact_match
 
     media_match = get_media_subset_match(text_phrase, lookup_app_matches)
@@ -147,6 +180,7 @@ def combine_lookup(text_phrase):
                 and score_bewteen_phrases(text_phrase, top_ref['Label']) > 0.5:
             top_ref['exact_match'] = False
             result.append(top_ref)
+
     # print(f"link_phrase: {text_phrase}, count links: {len(result)}")
     if len(result) > 0:
         return result
@@ -190,10 +224,15 @@ def combine_lookup(text_phrase):
     for i in media_match:
         if len(list(filter(lambda x: (x['URI'] == i['URI']), result))) < 1:
             result.append(i)
+    filter_person_names = []
     for t in result:
+        label = t['Label']
+        if is_person(label) and text_phrase.count(' ') < 1 and text_phrase.lower() != label.lower():
+            continue
         t['exact_match'] = False
+        filter_person_names.append(t)
     # print(f"link_phrase: {text_phrase}, count links: {len(result)}")
-    return result
+    return filter_person_names
 
 
 def get_exact_match(text_phrase, lookup_records):
@@ -362,7 +401,7 @@ if __name__ == "__main__":
     # lookup_resource_no_filter('Tool')
     # lookup_resource('Western Conference Southwest Division')
     # lookup_resource("the league 's Western Conference Southwest Division")
-    lookup_resource('Australia (2008 film)')
+    lookup_resource('disputed territory')
     # lookup_resource('a member club')
     # lookup_resource('The Pelicans')
     # lookup_resource('the National Basketball Association')

@@ -7,6 +7,7 @@ from dbpedia_sampler.dbpedia_triple_linker import lookup_doc_id
 from dbpedia_sampler.dbpedia_virtuoso import get_resource_wiki_page
 from dbpedia_sampler.sentence_util import get_ents_and_phrases, get_phrases_and_nouns_merged
 import difflib
+from dbpedia_sampler.uri_util import uri_short_extract2, isURI, uri_short_extract
 from utils.text_clean import convert_brc
 from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_sentence
 from dbpedia_sampler.dbpedia_virtuoso import get_categories2
@@ -59,6 +60,38 @@ def get_es_entity_links(doc_and_line):
                     phrase_to_doc_dict[p].append(doc)
                 else:
                     phrase_to_doc_dict.update({p: [doc]})
+
+    def find_exact_and_media(ph, docs):
+        filtered = []
+        for d in docs:
+            d_clean = convert_brc(doc).replace("_", " ")
+            if ph.lower() == d_clean.lower() or is_media(d_clean):
+                filtered.append(d)
+        return filtered
+
+    #   'http://dbpedia.org/resource/Bowen,_Queensland'
+    to_update = dict()
+    for i in itertools.combinations(phrase_to_doc_dict.keys(), 2):
+        p1 = i[0]
+        p2 = i[1]
+        l1 = phrase_to_doc_dict[p1]
+        l2 = phrase_to_doc_dict[p2]
+        to_keep = []
+        for j1 in l1:
+            for j2 in l2:
+                if j1 == j2:
+                    to_keep.append(j1)
+        if len(to_keep) > 0:
+            p1_values = find_exact_and_media(p1, l1)
+            p2_values = find_exact_and_media(p2, l2)
+            p1_values.extend(to_keep)
+            p2_values.extend(to_keep)
+            to_update.update({p1: p1_values})
+            to_update.update({p2: p2_values})
+    for i in phrase_to_doc_dict:
+        if i in to_update:
+            phrase_to_doc_dict[i] = to_update[i]
+
     phrase_to_doc_links = dict()
     hit_phrases = []
     for p in phrase_to_doc_dict:
@@ -66,7 +99,8 @@ def get_es_entity_links(doc_and_line):
         filtered_doc_ids = []
         for doc in doc_ids:
             doc_id_clean = convert_brc(doc).replace("_", " ")
-            if doc_id_clean.lower() == p.lower() or is_media(doc_id_clean) \
+            if doc_id_clean.lower() == p.lower() \
+                    or is_media(doc_id_clean) \
                     or (len(docid_to_phrases[doc]) > 1 and docid_to_phrases[doc] not in hit_phrases):
                 filtered_doc_ids.append(doc)
                 hit_phrases.append(docid_to_phrases[doc])
@@ -528,19 +562,19 @@ def do_dev_hardset_with_es_entity(folder):
     # prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
     # del original_data1
     #
-    # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
+    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
     # prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
-    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
-    # original_data2 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # assert (len(original_data2) == len(data_with_es))
-    # assert (len(data_with_es_entities) == len(original_data2))
-    # prepare_claim_graph(original_data2,
-    #                     folder / "claim_graph.jsonl",
-    #                     folder / "claim_graph.log",
-    #                     data_with_entity_docs=data_with_es_entities,
-    #                     data_with_es=data_with_es)
-    # del original_data2
+    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    original_data2 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    assert (len(original_data2) == len(data_with_es))
+    assert (len(data_with_es_entities) == len(original_data2))
+    prepare_claim_graph(original_data2,
+                        folder / "claim_graph.jsonl",
+                        folder / "claim_graph.log",
+                        data_with_entity_docs=data_with_es_entities,
+                        data_with_es=data_with_es)
+    del original_data2
     #
     original_data3 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     data_context = read_json_rows(folder / "claim_graph.jsonl")

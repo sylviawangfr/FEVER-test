@@ -321,10 +321,10 @@ if __name__ == '__main__':
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
     paras.sample_n = 4
     paras.data_from_pred = False
-    sample_tfidf = get_tfidf_sample(paras)
-    # sample_full = get_full_list_sample(paras)
-    eval_sample_length(sample_tfidf)
-    count_truth_examples(sample_tfidf)
+    # sample_tfidf = get_tfidf_sample(paras)
+    sample_full = get_full_list_sample(paras)
+    # eval_sample_length(sample_tfidf)
+    # count_truth_examples(sample_tfidf)
 
     # paras2 = bert_para.PipelineParas()
     # dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:50]

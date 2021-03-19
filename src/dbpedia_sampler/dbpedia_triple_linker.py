@@ -30,6 +30,7 @@ SCORE_CONFIDENCE_4 = 0.9
 SCORE_CONFIDENCE_5 = 0.95
 
 
+
 log = log_util.get_logger('dbpedia_triple_linker')
 
 
@@ -109,7 +110,7 @@ def lookup_doc_id(phrase, doc_ids):
 def query_resource(uri):
     context = dict()
     outbounds = dbpedia_virtuoso.get_outbounds2(uri)
-    if len(outbounds) < 1:
+    if len(outbounds) < 2:
         outbounds = dbpedia_virtuoso.get_disambiguates_outbounds2(uri)
     context['outbounds'] = outbounds
     return context
@@ -502,7 +503,7 @@ def filter_verb_vs_one_hop2(verb_dict, linked_phrases_l):
                 last_score = 0
                 for idx in topk_idx:
                     idx_score = float(score[idx])
-                    if idx_score < float(SCORE_CONFIDENCE_4):
+                    if idx_score < float(SCORE_CONFIDENCE_3):
                         break
                     else:
                         if score[idx] > 0.99 or len(to_add_idx) < 2:
@@ -516,7 +517,7 @@ def filter_verb_vs_one_hop2(verb_dict, linked_phrases_l):
                                 break
                 for idx in to_add_idx:
                     record = copy.deepcopy(candidates[idx])
-                    record['score'] = idx_score
+                    record['score'] = score[idx]
                     record['relatives'] = [resource['text'], verb_dict[ph]['verb']]
                     record['text'] = resource['text']
                     record['URI'] = resource['URI']
@@ -657,13 +658,17 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
         if ph1_lower == keyword1_lower or ph1_lower == keyword2_lower:
             return True, float(1)
         elif ' ' + ph1_lower in keyword1_lower or ph1_lower + ' ' in keyword1_lower:
-            return True, difflib.SequenceMatcher(None, ph1_lower, keyword1_lower).ratio()
+            score = difflib.SequenceMatcher(None, ph1_lower, keyword1_lower).ratio()
         elif ' ' + keyword1_lower in ph1_lower or keyword1_lower + ' ' in ph1_lower:
-            return True, difflib.SequenceMatcher(None, ph1_lower, keyword1_lower).ratio()
+            score = difflib.SequenceMatcher(None, ph1_lower, keyword1_lower).ratio()
         elif ' ' + ph1_lower in keyword2_lower or ph1_lower + ' ' in keyword2_lower:
-            return True, difflib.SequenceMatcher(None, ph1_lower, keyword2_lower).ratio()
+            score = difflib.SequenceMatcher(None, ph1_lower, keyword2_lower).ratio()
         elif ' ' + keyword2_lower in ph1_lower or keyword2_lower + ' ' in ph1_lower:
-            return True, difflib.SequenceMatcher(None, ph1_lower, keyword2_lower).ratio()
+            score = difflib.SequenceMatcher(None, ph1_lower, keyword2_lower).ratio()
+        else:
+            return False, float(0)
+        if score > 0.3:
+            return True, score
         else:
             return False, float(0)
 
@@ -1197,11 +1202,11 @@ if __name__ == '__main__':
 
     # test()
     # test()
-    embedding1 = bert_similarity.get_phrase_embedding(['The Thin Red Line (1998 film) portrays'])
-    embedding2 = bert_similarity.get_phrase_embedding(['The Thin Red Line (1998 film) starring'])
-    embedding3 = bert_similarity.get_phrase_embedding(['The Thin Red Line (1998 film) release'])
+    embedding1 = bert_similarity.get_phrase_embedding(['Person'])
+    embedding2 = bert_similarity.get_phrase_embedding(['Country'])
+    embedding3 = bert_similarity.get_phrase_embedding(['Settlement'])
     out1 = pw.cosine_similarity(embedding1, embedding2) # 0.883763313293457
-    out2 = pw.cosine_similarity(embedding1, embedding3)
+    out2 = pw.cosine_similarity(embedding2, embedding3)
     print(out1)
 
     # import spacy

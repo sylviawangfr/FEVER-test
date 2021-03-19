@@ -1,7 +1,7 @@
 from utils.c_scorer import *
 from utils.fever_db import *
 from utils.file_loader import read_json_rows, get_current_time_str, read_all_files, save_and_append_results
-
+from collections import Counter
 from utils.check_sentences import Evidences
 from utils.tokenizer_simple import *
 from dbpedia_sampler.sentence_util import get_ents_and_phrases
@@ -21,6 +21,37 @@ def generate_es_error_items():
         if not has_multi:
             result_has_combination_evidence.append(item)
     save_intermidiate_results(result_has_combination_evidence, config.RESULT_PATH / "errors/es_errors.jsonl")
+
+
+def linked_ln_count():
+    data = read_json_rows(config.FEVER_DEV_JSONL)
+    ln1 = []
+    ln2 = []
+    example_number = 0
+    for item in data:
+        has_multi = False
+        e_list = utils.check_sentences.check_and_clean_evidence(item)
+        for e in e_list:
+            if len(set(i[0] for i in e.evidences_list)) > 1:
+                has_multi = True
+                for idx, ss in enumerate(e.evidences_list):
+                    if idx == 0:
+                        ln1.append(ss[1])
+                    else:
+                        ln2.append(ss[1])
+        if has_multi:
+            example_number += 1
+    count = Counter()
+    count.update(ln1)
+    print(f"total_example: {example_number}")
+    print(f"total_evi: {len(ln2)}")
+    print(f"most_common: {sorted(list(count.most_common()), key=lambda x: x[0])}")
+    print(f"max_number: {np.max(ln1)}")
+    count.update(ln2)
+    print(f"most_common: {sorted(list(count.most_common()), key=lambda x: x[0])}")
+    print(f"max_number: {np.max(ln2)}")
+
+
 
 
 def generate_subset_multi_evidence_articals():
@@ -67,7 +98,8 @@ def generate_subset_no_capital():
 
 
 if __name__ == '__main__':
-    generate_subset_multi_evidence_articals()
+    # generate_subset_multi_evidence_articals()
+    linked_ln_count()
     # generate_subset_no_capital()
     # t = read_json_rows(config.DATA_ROOT / "dev_has_multi_evidence.jsonl")
     # generate_es_error_items()

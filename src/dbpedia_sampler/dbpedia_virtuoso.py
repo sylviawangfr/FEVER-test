@@ -279,6 +279,23 @@ def get_outbounds2(resource_uri):
 #     return tris
 
 
+def get_resource_redirect(resource_uri):
+    query_str_outbound = "PREFIX disambiguates: <http://dbpedia.org/ontology/wikiPageDisambiguates> " \
+                         "PREFIX redirects: <http://dbpedia.org/ontology/wikiPageRedirects> " \
+        f"SELECT distinct (<{resource_uri}> AS ?subject) ?relation ?object " \
+                         "where { " \
+        f"<{resource_uri}> ?relation ?object. " \
+                         "filter (?relation in (disambiguates:, redirects:)) " \
+                         "} LIMIT 5"
+    tris = get_triples(query_str_outbound)
+    objs = []
+    for tri in tris:
+        obj_split = uri_short_extract2(tri['object'])
+        objs.append(obj_split)
+    objs = list(set(objs))
+    return objs
+
+
 def get_disambiguates_outbounds2(resource_uri):
     query_str_outbound = f"PREFIX dbo: <http://dbpedia.org/ontology/> " \
         "PREFIX disambiguates: <http://dbpedia.org/ontology/wikiPageDisambiguates> " \
@@ -422,8 +439,9 @@ def does_reach_max_length(text):
 
 if __name__ == "__main__":
     # res = "http://dbpedia.org/resource/Magic_Johnson"
-    res = "http://dbpedia.org/resource/Film"
+    res = "http://dbpedia.org/resource/Bombay"
     # res = get_outbounds('http://dbpedia.org/resource/Charlie_Chaplin')
+    get_resource_redirect(res)
     get_outbounds2(res)
     # get_categories2(res)
     # print(get_disambiguates_outbounds2(res))

@@ -40,13 +40,15 @@ def get_all_sent_by_doc_id(cursor, doc_id, with_h_links=False):
     for id, text, h_links, doc_id in fetched_data:
         # print(id, text, h_li
         # nks, doc_id)
-        r_list.append(text)
-        id_list.append(id)
-        h_links_list.append(json.loads(h_links))
-
+        if len(text) > 0:
+            r_list.append(text)
+            id_list.append(id)
+            h_links_list.append(json.loads(h_links))
     if with_h_links:
         return r_list, id_list, h_links_list
     else:
+        # tmp = sorted(zip(r_list, id_list), key=lambda x: x[1].split())
+        # r_list, id_list = map(list, zip(*tmp))
         return r_list, id_list
 
 
@@ -249,7 +251,9 @@ def hlink_sanity_check():
 
 
 if __name__ == '__main__':
-    hlink_sanity_check()
+    c, _ = get_cursor()
+    get_all_sent_by_doc_id(c, 'Justin_Timberlake')
+    # hlink_sanity_check()
     # create_db('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')
     # save_wiki_pages('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')
     # iter_over_db('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')

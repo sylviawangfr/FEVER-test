@@ -238,8 +238,10 @@ def combine_lookup(text_phrase):
 def get_exact_match(text_phrase, lookup_records):
     result = []
     for i in lookup_records:
+        tp_clean = text_phrase.replace("_", ' ').lower()
+        lb_clean = i['Label'].lower()
         if i['Label'] is not None \
-                and text_phrase.replace("_", ' ').lower() == i['Label'].lower() \
+                and ((tp_clean in lb_clean or lb_clean in tp_clean) and score_bewteen_phrases(tp_clean, lb_clean) > 0.95) \
                 and "/Category:" not in i['URI']:
             i['exact_match'] = True
             result.append(i)
@@ -390,6 +392,7 @@ def test():
 
 
 if __name__ == "__main__":
+    # c = score_bewteen_phrases('product', 'product company xxx')
     # for i in range(1):
     #     test()
     #     gc.collect()
@@ -401,7 +404,7 @@ if __name__ == "__main__":
     # lookup_resource_no_filter('Tool')
     # lookup_resource('Western Conference Southwest Division')
     # lookup_resource("the league 's Western Conference Southwest Division")
-    lookup_resource('disputed territory')
+    lookup_resource('Bombay')
     # lookup_resource('a member club')
     # lookup_resource('The Pelicans')
     # lookup_resource('the National Basketball Association')

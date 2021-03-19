@@ -177,7 +177,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
             bert_and_tri_s = list(set(bert_s) | set(tri_s))
             all_docid2sids, all_sid2linkedsids, sid2allhlinks = get_docid_to_sids_hlinks(bert_and_tri_s)
             if len(bert_and_tri_s) > 20:
-                bert_docid2sids, bert_sid2linkedsids = get_docid_to_sids_hlinks(bert_s)
+                bert_docid2sids, bert_sid2linkedsids, _ = get_docid_to_sids_hlinks(bert_s)
                 docid_dict_to_calc = bert_docid2sids
                 sid2linkedsids_to_calc = bert_sid2linkedsids
             else:

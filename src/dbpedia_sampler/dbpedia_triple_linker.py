@@ -382,7 +382,7 @@ def filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d):
                     break
 
                 for j in sorted_matching_index:
-                    score = keyword_matching_score[j]
+                    score = float(keyword_matching_score[j])
                     if score >= 0.5:
                         tmp_tri = copy.deepcopy(all_date_properties[j])
                         tmp_tri['relatives'] = [tmp_tri['text'], i]
@@ -517,7 +517,7 @@ def filter_verb_vs_one_hop2(verb_dict, linked_phrases_l):
                                 break
                 for idx in to_add_idx:
                     record = copy.deepcopy(candidates[idx])
-                    record['score'] = score[idx]
+                    record['score'] = float(score[idx])
                     record['relatives'] = [resource['text'], verb_dict[ph]['verb']]
                     record['text'] = resource['text']
                     record['URI'] = resource['URI']

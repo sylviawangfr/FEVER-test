@@ -274,7 +274,7 @@ def ss_finetuning(paras: bert_para.PipelineParas, mode_saved_folder_name, sample
                     raise e
         print(f"Loss: {mean_loss:.5f}")
         loss_for_chart.append(epoch_loss)
-    draw_loss_epoch_detailed(loss_for_chart, paras.output_folder / f"ss_train_loss__{learning_rate}")
+    draw_loss_epoch_detailed(loss_for_chart, mode_saved_folder_name)
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self

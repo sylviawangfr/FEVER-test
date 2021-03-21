@@ -9,7 +9,7 @@ import itertools
 from collections import Counter
 
 import numpy as np
-
+import random
 import log_util
 import utils.check_sentences
 import utils.common_types as bert_para
@@ -199,11 +199,120 @@ def post_filter(d_list, keep_prob=0.75, seed=12):
         r_list.append(item)
     return r_list
 
-# def get_formatted_sent(cursor, doc_id):
-#     fever_db.get_all_sent_by_doc_id(cursor, doc_id)
-
 
 def get_tfidf_sample(paras: bert_para.PipelineParas):
+    """
+    This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
+    :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
+
+    :return:
+    """
+
+    def get_false_from_same_doc(docid, ground_truth_evi_tuple_set, candidate_sids_tuple_l, num):
+        tmp_n = 0
+        tmp_tuples = []
+        for pred in candidate_sids_tuple_l:
+            if pred[0] == docid and pred not in ground_truth_evi_tuple_set and tmp_n < num:
+                tmp_tuples.append(pred)
+                tmp_n += 1
+        return tmp_tuples
+
+    def get_false_from_diff_doc(ground_truth_docids, candidate_sids_tuple_l, num):
+        tmp_n = 0
+        tmp_tuples = []
+        for pred in candidate_sids_tuple_l:
+            if pred[0] not in  ground_truth_docids and tmp_n < num:
+                tmp_tuples.append(pred)
+                tmp_n += 1
+        return tmp_tuples
+
+    if not isinstance(paras.upstream_data, list):
+        d_list = read_json_rows(paras.upstream_data)
+    else:
+        d_list = paras.upstream_data
+
+    full_sample_list = []
+
+    cursor, conn = fever_db.get_cursor()
+    err_log_f = config.LOG_PATH / f"{get_current_time_str()}_analyze_sample.log"
+    count_truth = []
+    for item in tqdm(d_list):
+        if item['verifiable'] == "NOT VERIFIABLE":
+            continue
+        predicted_sents = item["predicted_sentids"]
+        # to tuple list
+        predicted_sents_tuples = [(pred_item.split(c_scorer.SENT_LINE)[0], int(pred_item.split(c_scorer.SENT_LINE)[1])) for pred_item in predicted_sents]
+        ground_truth = item['evidence']
+        if ground_truth is not None and len(ground_truth) > 0:
+            e_list = utils.check_sentences.check_and_clean_evidence(item)
+            all_evidence_set = list(set(itertools.chain.from_iterable([evids.evidences_list for evids in e_list])))
+        else:
+            all_evidence_set = None
+
+        r_list = []
+        id_list = []
+        if all_evidence_set is not None:
+            for doc_id, ln in all_evidence_set:
+                _, text, _ = fever_db.get_evidence(cursor, doc_id, ln)
+                r_list.append(text)
+                id_list.append(doc_id + '(-.-)' + str(ln))
+
+        num_envs = len(all_evidence_set)
+        count_truth.append(num_envs)
+        ground_truth_docids = list(set([e[0] for e in all_evidence_set]))
+        random.seeds = 12
+        false_sample_total = random.randint(num_envs, num_envs + paras.sample_n)
+        false_same_doc_total = random.randint(len(ground_truth_docids), num_envs)
+        false_different_doc_total = false_sample_total - false_same_doc_total if false_sample_total - false_same_doc_total > 0 else 1
+        false_same_doc_count = 0
+        false_diff_doc_count = 0
+        false_samples = []
+        for doc_id in ground_truth_docids:
+            tmp_sample = get_false_from_same_doc(doc_id, all_evidence_set, predicted_sents_tuples, 1)
+            false_samples.extend(tmp_sample)
+            false_same_doc_count += 1
+        if false_same_doc_count < false_same_doc_total:
+            tmp_sample = get_false_from_same_doc(ground_truth_docids[0],
+                                               all_evidence_set,
+                                               predicted_sents,
+                                               false_same_doc_total - false_same_doc_count)
+            false_samples.extend(tmp_sample)
+            false_same_doc_count += 1
+
+        tmp_sample = get_false_from_diff_doc(ground_truth_docids, predicted_sents_tuples, false_different_doc_total)
+        false_samples.extend(tmp_sample)
+        false_diff_doc_count += len(tmp_sample)
+
+        for doc_id, ln in false_samples:
+            tmp_id = doc_id + '(-.-)' + str(ln)
+            _, text, _ = fever_db.get_evidence(cursor, doc_id, ln)
+            r_list.append(text)
+            id_list.append(tmp_id)
+
+        if not (len(id_list) == len(set(id_list)) or len(r_list) == len(id_list)):
+            utils.get_adv_print_func(err_log_f)
+
+        zipped_s_id_list = list(zip(r_list, id_list))
+        # Sort using id
+        # sorted(evidences_set, key=lambda x: (x[0], x[1]))
+        zipped_s_id_list = sorted(zipped_s_id_list, key=lambda x: (x[1][0], x[1][1]))
+
+        all_sent_list = convert_to_formatted_sent(zipped_s_id_list, all_evidence_set, contain_head=True)
+        cur_id = item['id']
+        for i, sent_item in enumerate(all_sent_list):
+            sent_item['selection_id'] = str(cur_id) + "<##>" + str(sent_item['sid'])
+            sent_item['query'] = item['claim']
+            if 'label' in item.keys():
+                sent_item['claim_label'] = item['label']
+            full_sample_list.append(sent_item)
+    cursor.close()
+    conn.close()
+    count_truth_examples(full_sample_list)
+    logger.info(np.sum(count_truth))
+    return full_sample_list
+
+
+def get_tfidf_sample2(paras: bert_para.PipelineParas):
     """
     This method will select all the sentence from upstream tfidf ss retrieval and label the correct evident as true for nn model
     :param tfidf_ss_data_file: Remember this is result of tfidf ss data with original format containing 'evidence' and 'predicted_evidence'
@@ -290,6 +399,7 @@ def get_tfidf_sample(paras: bert_para.PipelineParas):
     return full_sample_list
 
 
+
 def count_truth_examples(sample_list):
     count_hit = 0
     for item in sample_list:
@@ -318,13 +428,13 @@ def eval_sample_length(samples):
 if __name__ == '__main__':
     logger.info("test")
     paras = bert_para.PipelineParas()
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
-    paras.sample_n = 4
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:5000]
+    paras.sample_n = 2
     paras.data_from_pred = False
-    # sample_tfidf = get_tfidf_sample(paras)
-    sample_full = get_full_list_sample(paras)
-    # eval_sample_length(sample_tfidf)
-    # count_truth_examples(sample_tfidf)
+    sample_tfidf = get_tfidf_sample(paras)
+    # sample_full = get_full_list_sample(paras)
+    eval_sample_length(sample_tfidf)
+    count_truth_examples(sample_tfidf)
 
     # paras2 = bert_para.PipelineParas()
     # dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:50]

@@ -431,6 +431,7 @@ if __name__ == '__main__':
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:5000]
     paras.sample_n = 2
     paras.data_from_pred = False
+    paras.output_folder = config.LOG_PATH
     sample_tfidf = get_tfidf_sample(paras)
     # sample_full = get_full_list_sample(paras)
     eval_sample_length(sample_tfidf)

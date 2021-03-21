@@ -311,7 +311,7 @@ if __name__ == "__main__":
     # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202101_92.9"
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
-    paras.output_folder = "bert_ss_" + get_current_time_str()
+    paras.output_folder = config.LOG_PATH / "bert_ss_" + get_current_time_str()
     paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
     paras.mode = 'eval'

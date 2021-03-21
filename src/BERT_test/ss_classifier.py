@@ -66,11 +66,11 @@ def compute_metrics(task_name, preds, labels):
         raise KeyError(task_name)
 
 
-def ss_finetuning(paras: bert_para.PipelineParas, sampler=None):
+def ss_finetuning(paras: bert_para.PipelineParas, mode_saved_folder_name, sampler=None):
     bert_model = "bert-large-uncased"
     pretrained_model_name_or_path = config.PRO_ROOT / "saved_models/bert/bert-large-uncased.tar.gz"
     cache_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning"
-    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / f"ss_{paras.output_folder}"
+    output_dir = config.PRO_ROOT / "saved_models" / "bert_finetuning" / mode_saved_folder_name
     max_seq_length = 128
     do_lower_case = True
     train_batch_size = 32
@@ -274,7 +274,7 @@ def ss_finetuning(paras: bert_para.PipelineParas, sampler=None):
                     raise e
         print(f"Loss: {mean_loss:.5f}")
         loss_for_chart.append(epoch_loss)
-    draw_loss_epoch_detailed(loss_for_chart, f"ss_train_{paras.output_folder}_{learning_rate}_{get_current_time_str()}")
+    draw_loss_epoch_detailed(loss_for_chart, paras.output_folder / f"ss_train_loss__{learning_rate}")
     if local_rank == -1 or torch.distributed.get_rank() == 0:
         # Save a trained model, configuration and tokenizer
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
@@ -308,9 +308,10 @@ if __name__ == "__main__":
     paras.upstream_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:50]
     paras.data_from_pred = False
     paras.mode = 'train'
-    paras.output_folder = "ss_train_2021_3"
+    timestamp = get_current_time_str()
+    paras.output_folder = config.LOG_PATH / "ss_train_" + timestamp
     paras.sample_n = 2
-    ss_finetuning(paras, sampler='ss_tfidf')
+    ss_finetuning(paras, "ss_train_" + timestamp, sampler='ss_tfidf')
 
 
 

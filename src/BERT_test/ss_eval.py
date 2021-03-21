@@ -92,7 +92,7 @@ def eval_ss_and_save(paras : bert_para.PipelineParas):
             preds[0] = np.append(
                 preds[0], logits.detach().cpu().numpy(), axis=0)
 
-    draw_loss_epoch_detailed(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), f"ss_eval_{paras.output_folder}")
+    draw_loss_epoch_detailed(np.array(loss_for_chart).reshape(1, len(loss_for_chart)), 'ss_eval_loss' + get_current_time_str())
     eval_loss = eval_loss / nb_eval_steps
     preds = preds[0]
 

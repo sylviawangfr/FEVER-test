@@ -289,6 +289,7 @@ def ss_finetuning(paras: bert_para.PipelineParas, mode_saved_folder_name, sample
         tokenizer.save_vocabulary(output_dir)
 
     if do_eval and (local_rank == -1 or torch.distributed.get_rank() == 0):
+        log_folder = paras.output_folder
         paras = bert_para.PipelineParas()
         paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
         paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:50]
@@ -298,6 +299,7 @@ def ss_finetuning(paras: bert_para.PipelineParas, mode_saved_folder_name, sample
         paras.BERT_tokenizer = output_dir
         paras.prob_thresholds = 0.5
         paras.top_n = 10
+        paras.output_folder = log_folder
         # paras.sample_n = 3
         eval_ss_and_save(paras)
 

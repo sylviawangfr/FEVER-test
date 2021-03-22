@@ -68,9 +68,10 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
     r0 = dbpedia_triple_linker.filter_text_vs_one_hop(all_phrases, linked_phrases_l, embedding_hash)
     r1 = dbpedia_triple_linker.filter_date_vs_property(not_linked_phrases_l, linked_phrases_l, verb_d)
     r2 = dbpedia_triple_linker.filter_resource_vs_keyword(linked_phrases_l)
-    r3 = dbpedia_triple_linker.filter_verb_vs_one_hop2(verb_d, linked_phrases_l)
-    r4 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embedding_hash)
-    tmp_result = r0 + r1 + r2 + r3 + r4
+    r3 = dbpedia_triple_linker.filter_verb_vs_one_hop(verb_d, linked_phrases_l, embedding_hash)
+    if len(r3) == 0:
+        r3 = dbpedia_triple_linker.filter_verb_vs_one_hop2(verb_d, linked_phrases_l)
+    tmp_result = r0 + r1 + r2 + r3
     tmp_result = dbpedia_triple_linker.remove_duplicate_triples(tmp_result)
     sent_graph = dbpedia_triple_linker.filter_triples(tmp_result)
     sent_graph = dbpedia_triple_linker.remove_duplicate_triples(sent_graph)

@@ -312,7 +312,7 @@ if __name__ == "__main__":
     paras.mode = 'train'
     timestamp = get_current_time_str()
     paras.output_folder = config.LOG_PATH / f"ss_train_{timestamp}"
-    paras.sample_n = 2
+    paras.sample_n = 3
     ss_finetuning(paras, "ss_train_" + timestamp, sampler='ss_tfidf')
 
 

@@ -684,15 +684,15 @@ def extend_candidate_one_hop(claim_dict, candidate_sentences: List[str]):
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
+    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
+    prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
-    graph_data = read_json_rows(folder / "claim_graph.jsonl")
+    # graph_data = read_json_rows(folder / "claim_graph.jsonl")
     # resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
     # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
     #
-    tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
-    bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
+    # tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
+    # bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
 
     # generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
     #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",
@@ -700,6 +700,6 @@ if __name__ == '__main__':
     #
     # sid2sids_data = read_json_rows(folder / "sids.jsonl")
     # docs_data = read_json_rows(folder/ "es_doc_10.jsonl")
-    prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, graph_data, folder / "nli_sids.jsonl")
+    # prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, graph_data, folder / "nli_sids.jsonl")
 
 

@@ -529,9 +529,9 @@ def do_train_doc_es(folder):
 
 
 def do_devset_all(folder):
-    # original_data1 = read_json_rows(config.FEVER_DEV_JSONL)
-    # prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
-    # del original_data1
+    original_data1 = read_json_rows(config.FEVER_DEV_JSONL)
+    prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    del original_data1
 
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
     prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
@@ -610,9 +610,9 @@ if __name__ == '__main__':
     # folder = config.RESULT_PATH / "test_2021"
     # do_testset_es(folder)
 
-    folder = config.RESULT_PATH / "hardset2021"
-    do_dev_hardset_with_es_entity(folder)
+    # folder = config.RESULT_PATH / "hardset2021"
+    # do_dev_hardset_with_es_entity(folder)
 
-    # folder = config.RESULT_PATH / "dev_2021"
-    # do_devset_all(folder)
+    folder = config.RESULT_PATH / "dev_2021"
+    do_devset_all(folder)
 

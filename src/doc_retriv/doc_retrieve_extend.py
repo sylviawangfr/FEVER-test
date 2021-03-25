@@ -64,7 +64,7 @@ def get_es_entity_links(doc_and_line):
     def find_exact_and_media(ph, docs):
         filtered = []
         for d in docs:
-            d_clean = convert_brc(doc).replace("_", " ")
+            d_clean = convert_brc(d).replace("_", " ")
             if ph.lower() == d_clean.lower() or is_media(d_clean):
                 filtered.append(d)
         return filtered
@@ -90,7 +90,9 @@ def get_es_entity_links(doc_and_line):
             to_update.update({p2: p2_values})
     for i in phrase_to_doc_dict:
         if i in to_update:
-            phrase_to_doc_dict[i] = to_update[i]
+            phrase_to_doc_dict[i] = list(set(to_update[i]))
+        else:
+            phrase_to_doc_dict[i] = list(set(phrase_to_doc_dict[i]))
 
     phrase_to_doc_links = dict()
     hit_phrases = []

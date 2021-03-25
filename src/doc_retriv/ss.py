@@ -4,6 +4,7 @@ from dbpedia_sampler.dbpedia_triple_linker import filter_phrase_vs_two_hop, look
 from dbpedia_sampler import dbpedia_lookup, dbpedia_virtuoso
 from BERT_test.ss_eval import *
 from doc_retriv.doc_retrieve_extend import search_entity_docs_for_triples, is_media
+from ES.es_queries import search_doc_id_and_keywords_in_sentences, search_docid_subject_object_in_sentences
 from dbpedia_sampler.uri_util import uri_short_extract2, isURI, uri_short_extract, uri_short_extract3
 from utils.resource_manager import *
 from utils.tokenizer_simple import get_lemma, is_capitalized
@@ -164,7 +165,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
             #   379, 402, 646, 910, 976, 993, 1043, 1058, 1219, 1446, 1554, 1591, 1616, 1723
-            if idx < 522:
+            if idx < 672:
                 continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
@@ -220,12 +221,12 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                         partial_linked_idx.append(i)
                         partial_linked_no_relatives_phrases.append(no_relative)
                 if len(well_linked_sg_idx) > 0:
-                    for j in well_linked_sg_idx:
-                        good_subgraph = subgraphs[j]
-                        # tmp_sid_sets = generate_triple_evidence_set(good_subgraph, [])
-                        tmp_sid_sets = generate_triple_evidence_set(good_subgraph)
-                        candidate_sid_sets.extend(tmp_sid_sets)
-                    linked_level = 2
+                        for j_idx, j in enumerate(well_linked_sg_idx):
+                            if j_idx < 5:
+                                good_subgraph = subgraphs[j]
+                                tmp_sid_sets = generate_triple_evidence_set(good_subgraph)
+                                candidate_sid_sets.extend(tmp_sid_sets)
+                                linked_level = 2
                 elif len(partial_linked_idx) > 0:
                     for k, item in enumerate(partial_linked_idx):
                         subgraph_sids = all_subgraph_sids[item]
@@ -572,7 +573,13 @@ def search_triples_in_docs(triples: List[Triple], docs:dict=None):  #  list[Trip
             for doc in resource_docs:
                 doc_id = doc['id']
                 subject_text = uri_short_extract2(tri.subject)
-                tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, subject_text, tri.keywords)
+                obj_uri = tri.object
+                if "http://dbpedia.org/resource/" in obj_uri:
+                    obj_text = uri_short_extract2(obj_uri)
+                    rel_text = uri_short_extract(tri.relation)
+                    tmp_sentences = search_docid_subject_object_in_sentences(doc_id, subject_text, rel_text, obj_text)
+                else:
+                    tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, subject_text, tri.keywords)
                 if len(tmp_sentences) > 0:
                     for i in tmp_sentences:
                         # i['tri_id'] = tri.tri_id

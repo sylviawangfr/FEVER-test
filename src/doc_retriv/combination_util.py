@@ -157,7 +157,7 @@ def generate_triple_evidence_set(list_of_triples: List[Triple]):
             return list_of_evidence
         else:
             tmp_triples_l = copy.deepcopy(tris_sorted_by_rels_l)
-            triple_l = tmp_triples_l.pop()
+            triple_l = tmp_triples_l.pop(0)
             # new_evidence_l = list_of_evidence
             new_evidence_l = []
             if len(list_of_evidence) == 0:
@@ -177,8 +177,9 @@ def generate_triple_evidence_set(list_of_triples: List[Triple]):
                     for tri_sid in triple.sentences:
                         tmp_evidence_l = copy.deepcopy(list_of_evidence)
                         for e in tmp_evidence_l:
-                            e.add_sent_sid(tri_sid)
-                            new_evidence_l.append(e)
+                            if len(e) < 3:
+                                e.add_sent_sid(tri_sid)
+                                new_evidence_l.append(e)
                 if len(new_evidence_l) > 0:
                     new_evidence_l = list(set(new_evidence_l))
                 else:

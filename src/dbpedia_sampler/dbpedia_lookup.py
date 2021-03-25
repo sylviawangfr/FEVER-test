@@ -123,9 +123,11 @@ def lookup_label_exact_match(text_phrase):
     def lookup_exact(text):
         lookup_app_matches_label = lookup_resource_app_label(text)
         lookup_app_matches_query = lookup_resource_app_query(text)
+        lookup_matches_ref = lookup_resource_ref_count(text)
         lookup_app_matches = []
         merge_resources(lookup_app_matches, lookup_app_matches_label)
         merge_resources(lookup_app_matches, lookup_app_matches_query)
+        merge_resources(lookup_app_matches, lookup_matches_ref)
         lookup_rec = get_exact_match(text, lookup_app_matches)
         return lookup_rec
     result = lookup_exact(text_phrase)
@@ -392,6 +394,7 @@ def test():
 
 
 if __name__ == "__main__":
+    lookup_label_exact_match('In the End')
     # c = score_bewteen_phrases('product', 'product company xxx')
     # for i in range(1):
     #     test()

@@ -188,6 +188,41 @@ def search_doc_id_and_keywords_in_sentences(possible_id, subject, keywords):
     return r_list
 
 
+def search_docid_subject_object_in_sentences(possible_id, subj, rel, obj):
+    search = Search(using=client, index=config.FEVER_SEN_INDEX)
+    must = []
+    should = []
+    must.append(
+        {'term': {'doc_id_keyword': possible_id}})
+    must.append({'multi_match': {'query': subj, 'type': 'phrase', 'slop': 3,
+                                 'fields': ['doc_id', 'text'], 'analyzer': 'underscore_analyzer'}})
+    must.append({'multi_match': {'query': obj, 'type': 'phrase', 'slop': 3,
+                                 'fields': ['doc_id', 'text'], 'analyzer': 'underscore_analyzer'}})
+    should.append({'match': {'text': {'query': rel, 'analyzer': 'wikipage_analyzer'}}})
+
+    search = search.query(Q('bool', must=must, should=should)). \
+                 highlight('text', number_of_fragments=0, fragment_size=150). \
+                 sort({'_score': {"order": "desc"}}). \
+                 source(include=['doc_id', 'sid', 'text', 'h_links'])[0:5]
+
+    response = search.execute()
+    r_list = []
+    phrases = [possible_id, subj, rel, obj]
+    top_n = 3
+    for hit in response['hits']['hits']:
+        if top_n < 1:
+            break
+        score = hit['_score']
+        doc_id = hit['_source']['doc_id']
+        sid = hit['_source']['sid']
+        text = hit['_source']['text']
+        h_links = list(set(json.loads(normalize(hit['_source']['h_links']))))
+        doc_dic = {'doc_id': doc_id, 'score': score, 'phrases': phrases, 'sid': sid, 'text': text, 'h_links': h_links}
+        r_list.append(doc_dic)
+        top_n -= 1
+    return r_list
+
+
 def search_doc_id(possible_id):
     try:
         body = {

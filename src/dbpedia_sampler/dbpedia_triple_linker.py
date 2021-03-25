@@ -518,7 +518,7 @@ def filter_verb_vs_one_hop2(verb_dict, linked_phrases_l):
                 last_score = 0
                 for idx in topk_idx:
                     idx_score = float(score[idx])
-                    if idx_score < float(SCORE_CONFIDENCE_3):
+                    if idx_score < float(SCORE_CONFIDENCE_5):
                         break
                     else:
                         if score[idx] > 0.99 or len(to_add_idx) < 2:

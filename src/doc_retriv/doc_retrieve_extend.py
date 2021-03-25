@@ -562,31 +562,31 @@ def do_dev_hardset_with_es_entity(folder):
     # prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
     # del original_data1
     #
-    # data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
+    data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
     # prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
-    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
-    # original_data2 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # assert (len(original_data2) == len(data_with_es))
-    # assert (len(data_with_es_entities) == len(original_data2))
-    # prepare_claim_graph(original_data2,
-    #                     folder / "claim_graph.jsonl",
-    #                     folder / "claim_graph.log",
-    #                     data_with_entity_docs=data_with_es_entities,
-    #                     data_with_es=data_with_es)
-    # del original_data2
+    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    original_data2 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    assert (len(original_data2) == len(data_with_es))
+    assert (len(data_with_es_entities) == len(original_data2))
+    prepare_claim_graph(original_data2,
+                        folder / "claim_graph.jsonl",
+                        folder / "claim_graph.log",
+                        data_with_entity_docs=data_with_es_entities,
+                        data_with_es=data_with_es)
+    del original_data2
     #
     original_data3 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
     data_context = read_json_rows(folder / "claim_graph.jsonl")
     prepare_candidate_doc2(original_data3, data_context, folder / "graph_resource_docs.jsonl", folder / "graph_resource_docs.log")
     del original_data3
     #
-    # original_data4 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    # ent_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    # assert (len(es_data) == len(original_data4) and (len(ent_data) == len(original_data4)))
-    # prepare_candidate_docs(original_data4, es_data, ent_data, folder / "candidate_docs.jsonl",
-    #                        folder / "candidate_docs.log")
+    original_data4 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    ent_data = read_json_rows(folder / "graph_resource_docs.jsonl")
+    assert (len(es_data) == len(original_data4) and (len(ent_data) == len(original_data4)))
+    prepare_candidate_docs(original_data4, es_data, ent_data, folder / "candidate_docs.jsonl",
+                           folder / "candidate_docs.log")
 
 
 if __name__ == '__main__':
@@ -610,9 +610,9 @@ if __name__ == '__main__':
     # folder = config.RESULT_PATH / "test_2021"
     # do_testset_es(folder)
 
-    # folder = config.RESULT_PATH / "hardset2021"
-    # do_dev_hardset_with_es_entity(folder)
+    folder = config.RESULT_PATH / "hardset2021"
+    do_dev_hardset_with_es_entity(folder)
 
-    folder = config.RESULT_PATH / "dev_2021"
-    do_devset_all(folder)
+    # folder = config.RESULT_PATH / "dev_2021"
+    # do_devset_all(folder)
 

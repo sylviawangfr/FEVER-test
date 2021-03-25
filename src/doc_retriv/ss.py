@@ -4,7 +4,7 @@ from dbpedia_sampler.dbpedia_triple_linker import filter_phrase_vs_two_hop, look
 from dbpedia_sampler import dbpedia_lookup, dbpedia_virtuoso
 from BERT_test.ss_eval import *
 from doc_retriv.doc_retrieve_extend import search_entity_docs_for_triples, is_media
-from dbpedia_sampler.uri_util import uri_short_extract2, isURI, uri_short_extract
+from dbpedia_sampler.uri_util import uri_short_extract2, isURI, uri_short_extract, uri_short_extract3
 from utils.resource_manager import *
 from utils.tokenizer_simple import get_lemma, is_capitalized
 from tqdm import tqdm
@@ -122,7 +122,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                 for tri in graph:
                     if len(list(filter(lambda x: i in x, tri.keywords))) > 0:
                         relative_hash[i].append(tri.text)
-
+                    elif i in uri_short_extract3(tri.subject) or i in uri_short_extract3(tri.object):
+                        relative_hash[i].append(tri.text)
     def init_relative_hash(relative_hash=None):
         if relative_hash is not None and len(relative_hash) != 0:
             relative_hash = {i : [] for i in relative_hash}
@@ -163,8 +164,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
             #   379, 402, 646, 910, 976, 993, 1043, 1058, 1219, 1446, 1554, 1591, 1616, 1723
-            # if idx < 109:
-            #     continue
+            if idx < 116:
+                continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -176,10 +177,10 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
             tri_s = list(set([s for tt in triples for s in tt.sentences]))
             bert_and_tri_s = list(set(bert_s) | set(tri_s))
             all_docid2sids, all_sid2linkedsids, sid2allhlinks = get_docid_to_sids_hlinks(bert_and_tri_s)
-            if len(bert_and_tri_s) > 20:
+            if len(bert_and_tri_s) > 15:
                 bert_docid2sids, bert_sid2linkedsids, _ = get_docid_to_sids_hlinks(bert_s)
                 docid_dict_to_calc = bert_docid2sids
-                sid2linkedsids_to_calc = bert_sid2linkedsids
+                sid2linkedsids_to_calc = all_sid2linkedsids
             else:
                 docid_dict_to_calc = all_docid2sids
                 sid2linkedsids_to_calc = all_sid2linkedsids

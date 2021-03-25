@@ -188,18 +188,20 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
         for i in itertools.permutations(linked_phs, 2):
             linked_p1 = i[0]  # key
             linked_p2 = i[1]
-            if linked_p1['text'] in linked_p2['text']:
-                p1_links = linked_p1['links']
-                p2_links = linked_p2['links']
-                for l1 in p1_links:
-                    for l2 in p2_links:
-                        if l1['URI'] == l2['URI']:
-                            l1_score = get_diff_score(l1['text'], uri_short_extract3(l1['URI']))
-                            l2_score = get_diff_score(l2['text'], uri_short_extract3(l2['URI']))
-                            if l1_score > l2_score:
-                                p2_links.remove(l2)
-                            else:
-                                p1_links.remove(l1)
+            p1_links = linked_p1['links']
+            p2_links = linked_p2['links']
+            for l1 in p1_links:
+                for l2 in p2_links:
+                    if l1['URI'] == l2['URI']:
+                        l1_score = get_diff_score(l1['text'], uri_short_extract3(l1['URI']))
+                        l2_score = get_diff_score(l2['text'], uri_short_extract3(l2['URI']))
+                        if l1_score > l2_score:
+                            p2_links.remove(l2)
+                        else:
+                            p1_links.remove(l1)
+        for i in linked_phs:
+            if len(i['links']) == 0:
+                linked_phs.remove(i)
 
     sentence = text_clean.convert_brc(sentence)
     if len(entities) == 0 and len(nouns) == 0:
@@ -231,12 +233,24 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
         else:
             linked_phrases_l.append(linked_phrase)
     remove_duplicate(linked_phrases_l)
-    # to_delete = []
-    # for i in not_linked_phrases_l:
-    #     if any([(i in x['text'] or x['text'] in i) for x in linked_phrases_l]):
-    #         to_delete.append(i)
-    # for t in to_delete:
-    #     not_linked_phrases_l.remove(t)
+    to_delete = []
+    for i in not_linked_phrases_l:
+        if any([(i in x['text'] or x['text'] in i) and is_capitalized(i) for x in linked_phrases_l]):
+            to_delete.append(i)
+        else:
+            for x in linked_phrases_l:
+                links = x['links']
+                has_partial_match = False
+                for l in links:
+                    if i in uri_short_extract3(l['URI']):
+                        to_delete.append(i)
+                        has_partial_match = True
+                        break
+                if has_partial_match:
+                    break
+    to_delete = list(set(to_delete))
+    for t in to_delete:
+        not_linked_phrases_l.remove(t)
     return not_linked_phrases_l, linked_phrases_l
 
 
@@ -418,7 +432,7 @@ def filter_verb_vs_one_hop(verb_dict, linked_phrases_l, keyword_embeddings_hash)
     for ph in verb_dict:
         verb = verb_dict[ph]['verb']
         verb_lemma = get_lemma(verb)
-        if len(verb) == 0:
+        if len(verb) == 0 or verb_lemma in ['be']:
             continue
         for resource in uri2links_dict.values():
             if ph in resource['text'] or resource['text'] in ph:
@@ -467,7 +481,8 @@ def filter_verb_vs_one_hop2(verb_dict, linked_phrases_l):
     phrase_and_verb_dict = dict()
     tmp_embedding_hash = dict()
     for i in verb_dict:
-        if verb_dict[i]['dep'] == 'subj' or verb_dict[i]['dep'] == 'obj' and verb_dict[i]['verb'] != '':
+        if (verb_dict[i]['dep'] == 'subj' or verb_dict[i]['dep'] == 'obj') \
+                and (verb_dict[i]['verb'] != '' and any([x != 'be' for x in get_lemma(verb_dict[i]['verb'])])):
             phrase_and_verb_dict.update({i: f"{i} {verb_dict[i]['verb']}"})
     if len(phrase_and_verb_dict) == 0:
         return []
@@ -615,7 +630,7 @@ def filter_triples(triples, top_k=2):
         tri_r.sort(key=lambda k: k['score'], reverse=True)
         tmp_filtered_tris = []
         while len(tri_r) > 0:
-            tmp_tri = tri_r.pop()
+            tmp_tri = tri_r.pop(0)
             if tmp_tri['score'] > 0.9 or len(tmp_filtered_tris) < top_k:
                 tmp_filtered_tris.append(tmp_tri)
             elif len(tmp_filtered_tris) >= top_k:
@@ -667,7 +682,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
             score = difflib.SequenceMatcher(None, ph1_lower, keyword2_lower).ratio()
         else:
             return False, float(0)
-        if score > 0.3:
+        if (ph1.count(' ') == 0 and score > 0.3) or (ph1.count(' ') > 0 and score > 0.65):
             return True, score
         else:
             return False, float(0)

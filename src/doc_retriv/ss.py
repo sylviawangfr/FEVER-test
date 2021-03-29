@@ -165,8 +165,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
             #   379, 402, 646, 910, 976, 993, 1043, 1058, 1219, 1446, 1554, 1591, 1616, 1723
-            # if idx < 672:
-            #     continue
+            if idx < 720:
+                continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -271,7 +271,11 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                         if len(tmp_sids) > 0:
                             tmp_docid2sids.update({d: tmp_sids})
                     # 1. candidate sent two hop
-                    extend_sid_set = extend_evidence_two_hop_sentences(claim_dict, tmp_docid2sids, all_sid2linkedsids)
+                    try:
+                        extend_sid_set = extend_evidence_two_hop_sentences(claim_dict, tmp_docid2sids, all_sid2linkedsids)
+                    except Exception as e:
+                        print(f"error idx: {idx}")
+                        raise e
                     if len(extend_sid_set) > 0:
                         candidate_sid_sets.extend(extend_sid_set)
                         linked_level = 1
@@ -692,12 +696,12 @@ def extend_candidate_one_hop(claim_dict, candidate_sentences: List[str]):
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
+    # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
+    # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
-    resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
+    # resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
+    # prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
 
     tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
     bert_ss_data = read_json_rows(folder / "bert_ss_0.4_10.jsonl")

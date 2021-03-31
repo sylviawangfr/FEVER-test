@@ -8,7 +8,7 @@ from utils import fever_db, check_sentences
 from utils.file_loader import read_json_rows
 import utils.common_types as bert_para
 from utils.resource_manager import FeverDBResource
-
+import itertools
 
 # def sample_data_for_item(item, pred=False):
 #     res_sentids_list = []
@@ -99,22 +99,18 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                 pick_flag = False
         return pick_flag
 
-    def get_false_from_same_doc(docid, ground_truth_evi_tuple_set, candidate_sids_tuple_l, num):
-        tmp_n = 0
+    def get_false_from_same_doc(docid, ground_truth_evi_tuple_set, candidate_sids_tuple_l):
         tmp_tuples = []
         for pred in candidate_sids_tuple_l:
-            if pred[0] == docid and pred not in ground_truth_evi_tuple_set and tmp_n < num:
+            if pred[0] == docid and pred not in ground_truth_evi_tuple_set:
                 tmp_tuples.append(pred)
-                tmp_n += 1
         return tmp_tuples
 
-    def get_false_from_diff_doc(ground_truth_docids, candidate_sids_tuple_l, num):
-        tmp_n = 0
+    def get_false_from_diff_doc(ground_truth_docids, candidate_sids_tuple_l):
         tmp_tuples = []
         for pred in candidate_sids_tuple_l:
-            if pred[0] not in  ground_truth_docids and tmp_n < num:
+            if pred[0] not in ground_truth_docids:
                 tmp_tuples.append(pred)
-                tmp_n += 1
         return tmp_tuples
 
     if item['verifiable'] == "VERIFIABLE":
@@ -129,46 +125,86 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                 predicted_sents_tuples = [
                     (pred_item.split(c_scorer.SENT_LINE)[0], int(pred_item.split(c_scorer.SENT_LINE)[1])) for pred_item
                     in additional_data]
-                all_evidence_set = list(set(itertools.chain.from_iterable([evids.evidences_list for evids in e_list])))
+                all_evidence_set = list(set(itertools.chain.from_iterable([evids.evidences_list for evids in e_set])))
                 n_e = len(evidence)
-                selected_additional_samples = []
-                # extend_number >= 2
-                extend_number = 2  # >= 2
+                extend_number = 4  # >= 2
                 # extend S and R
-                same_doc_false_num = 0
-                diff_doc_false_num = 0
                 same_doc_false_sents = []
-                ground_truth_docids = list(set([e[0] for e in e_set]))
+                ground_truth_docids = list(set([e[0] for e in all_evidence_set]))
                 for doc_id in ground_truth_docids:
-                    tmp_addi_same_doc_samples = get_false_from_same_doc(doc_id, all_evidence_set, predicted_sents_tuples, extend_number)
-                    same_doc_false_sents.append(tmp_addi_same_doc_samples)
-                diff_doc_false_sents = get_false_from_diff_doc(ground_truth_docids, predicted_sents_tuples, extend_number)
-                for i in same_doc_false_sents:
-                    extended_SR_evidences = copy.deepcopy(evidence)
-                    extended_SR_evidences.add_sents_tuples(i)
-                    extended_RS_list.append(extended_SR_evidences)
-                for i in diff_doc_false_sents:
-                    extended_SR_evidences = copy.deepcopy(evidence)
-                    extended_SR_evidences.add_sents_tuples(i)
-                    extended_RS_list.append(extended_SR_evidences)
+                    additional_extend_num = random.randint(1, extend_number)
+                    tmp_same_doc_samples = get_false_from_same_doc(doc_id, all_evidence_set, predicted_sents_tuples)
+                    len_tmp_same_doc_samples = len(tmp_same_doc_samples)
+                    if len_tmp_same_doc_samples == 0:
+                        continue
+                    while additional_extend_num > 0:
+                        extend_s_num = 1 if len_tmp_same_doc_samples < 2 else random.randint(1, len_tmp_same_doc_samples)
+                        add_sample = tmp_same_doc_samples[:extend_s_num]
+                        if add_sample not in same_doc_false_sents:
+                            same_doc_false_sents.append(add_sample)
+                            extended_SR_evidences = copy.deepcopy(evidence)
+                            extended_SR_evidences.add_sents_tuples(add_sample)
+                            extended_RS_list.append(extended_SR_evidences)
+                        additional_extend_num -= 1
+                        random.shuffle(tmp_same_doc_samples)
+
+                additional_sample_num = random.randint(1, extend_number)
+                diff_doc_false_sents = get_false_from_diff_doc(ground_truth_docids, predicted_sents_tuples)
+                if len(diff_doc_false_sents) > 0:
+                    for i in range(1, additional_sample_num):
+                        random.shuffle(diff_doc_false_sents)
+                        if len(evidence) < 5:
+                            extended_SR_evidences = copy.deepcopy(evidence)
+                            extended_SR_evidences.add_sents_tuples(diff_doc_false_sents[:random.randint(1, 3)])
+                            extended_RS_list.append(extended_SR_evidences)
                 # extend NEI
                 for i in range(n_e):
+                    #  false from same doc
                     extended_NEI_evidence = copy.deepcopy(evidence)
                     docid, ln = extended_NEI_evidence.pop_sent(i)
-                    tmp_false_samples = get_false_from_same_doc(docid, all_evidence_set,
-                                                                        predicted_sents_tuples, extend_number)
+                    additional_sample_num = random.randint(0, 5 - n_e) if n_e <= 5 else 2
+                    tmp_false_samples = get_false_from_same_doc(docid, all_evidence_set, predicted_sents_tuples)
+                    extended_NEI_evidence.add_sents_tuples(tmp_false_samples[:additional_sample_num])
+                    extended_NEI_list.append(extended_NEI_evidence)
+                    #  false from different doc
+                    extended_NEI_evidence = copy.deepcopy(evidence)
+                    additional_sample_num = random.randint(0, 5 - n_e) if n_e <= 5 else 2
+                    extended_NEI_evidence.pop_sent(i)
+                    extended_NEI_evidence.add_sents_tuples(diff_doc_false_sents[:additional_sample_num])
+                    extended_NEI_list.append(extended_NEI_evidence)
 
+                # extend more random S and R
+                for i in range(extend_number):
+                    extended_SR_evidences = copy.deepcopy(evidence)
+                    if n_e < 5:
+                        additional_sample_num = random.randint(1, 5 - n_e)
+                        random.shuffle(additional_data)
+                        for sampled_e in additional_data:
+                            if additional_sample_num <= 0:
+                                extended_RS_list.append(extended_SR_evidences)
+                                break
+                            if sample_not_in_evidence_set(sampled_e, e_set):
+                                doc_ids = sampled_e.split(c_scorer.SENT_LINE)[0]
+                                ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
+                                extended_SR_evidences.add_sent(doc_ids, ln)
+                                additional_sample_num -= 1
 
-                    # additional_sample_num = random.randint(2-n_e, 5 - n_e)
-                    # for sampled_e in selected_additional_samples:
-                    #     if additional_sample_num <= 0 and extended_NEI_evidence not in extended_NEI_list:
-                    #         extended_NEI_list.append(extended_NEI_evidence)
-                    #         break
-                    #     if sample_not_in_evidence_set(sampled_e, e_set):
-                    #         doc_id = sampled_e.split(c_scorer.SENT_LINE)[0]
-                    #         ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
-                    #         extended_NEI_evidence.add_sent(doc_id, ln)
-                    #         additional_sample_num -= 1
+                # extend more random NEI
+                for i in range(n_e):
+                    extended_NEI_evidence = copy.deepcopy(evidence)
+                    extended_NEI_evidence.pop_sent(i)
+                    additional_sample_num = random.randint(2 - n_e, 4 - n_e)
+                    for sampled_e in additional_data:
+                        if additional_sample_num <= 0 and extended_NEI_evidence not in extended_NEI_list:
+                            extended_NEI_list.append(extended_NEI_evidence)
+                            break
+                        if sample_not_in_evidence_set(sampled_e, e_set):
+                            doc_id = sampled_e.split(c_scorer.SENT_LINE)[0]
+                            ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
+                            extended_NEI_evidence.add_sent(doc_id, ln)
+                            additional_sample_num -= 1
+        extended_RS_list = list(set(extended_RS_list))
+        extended_NEI_list = list(set(extended_NEI_list))
         assert len(res_sentids_list) == len(e_set)
 
     elif item['verifiable'] == "NOT VERIFIABLE":
@@ -283,8 +319,8 @@ if __name__ == '__main__':
     t = get_sample_data(additional_file, data_from_pred=False, mode='train')
     eval_samples(t)
 
-    t = get_sample_data(additional_file, data_from_pred=False, mode='eval')
-    eval_samples(t)
+    # t = get_sample_data(additional_file, data_from_pred=False, mode='eval')
+    # eval_samples(t)
 
     # complete_upstream_dev_data = additional_file
     # count = Counter()

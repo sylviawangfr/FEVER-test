@@ -134,8 +134,10 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     eval_batch_size = 8
     if paras.mode == 'test':
         eval_examples, eval_list = processor.get_test_examples(paras, sampler='ss_full')
-    else:
+    elif paras.mode == 'eval':
         eval_examples, eval_list = processor.get_dev_examples(paras, sampler='ss_full')
+    else:
+        eval_examples, eval_list = processor.get_train_examples(paras, sampler='ss_full')
 
     eval_features = convert_examples_to_features(
         eval_examples, processor.get_labels(), 128, tokenizer)
@@ -300,7 +302,7 @@ def softmax_test(z):
 
 
 if __name__ == "__main__":
-    paras = bert_para.PipelineParas()
+    # paras = bert_para.PipelineParas()
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)[2:5]
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[2:5]
     # paras.pred = False
@@ -309,19 +311,19 @@ if __name__ == "__main__":
     # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_3s_full2019_07_17_04:00:55"
     # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202101_92.9"
     # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202101_92.9"
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
-    paras.output_folder = config.LOG_PATH / "bert_ss_" + get_current_time_str()
-    paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
-    paras.mode = 'eval'
-    paras.data_from_pred = True
-    paras.sample_n = 10
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_train_2021_4"
+    # paras.output_folder = config.LOG_PATH / "bert_ss_" + get_current_time_str()
+    # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+    # paras.mode = 'eval'
+    # paras.data_from_pred = True
+    # paras.sample_n = 10
     # paras.post_filter_prob = 0.5
-    paras.top_n = [10, 5]
-    paras.prob_thresholds = [0.4, 0.5]
+    # paras.top_n = [10, 5]
+    # paras.prob_thresholds = [0.4, 0.5]
     # pred_ss_and_save(paras)
-    eval_ss_and_save(paras)
+    # eval_ss_and_save(paras)
 
     # paras.original_data = read_json_rows(config.FEVER_TEST_JSONL)
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / 'doc_test_2020_09_21_10:05:13.jsonl')
@@ -334,11 +336,23 @@ if __name__ == "__main__":
 
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
     # paras.upstream_data = read_json_rows(config.RESULT_PATH / 'doc_dev.jsonl')
-    # paras.mode = 'dev'
+    # paras.mode = 'eval'
     # paras.pred = True
     # paras.top_n = [10]
     # paras.mode = 'dev'
     # paras.sample_n = 10
     # paras.prob_thresholds = 0.1
     # pred_ss_and_save(paras)
+    paras = bert_para.PipelineParas()
+    paras.data_from_pred = False
+    paras.mode = 'train'
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202103_94.9"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202103_94.9"
+    paras.output_folder = config.RESULT_PATH / 'train_2021'
+    paras.original_data = config.FEVER_TRAIN_JSONL
+    paras.upstream_data = config.RESULT_PATH / 'train_2021/es_doc_10.jsonl'
+    paras.sample_n = 10
+    paras.top_n = [10]
+    paras.prob_thresholds = [0.01]
+    pred_ss_and_save(paras)
 

@@ -48,7 +48,6 @@ def get_full_list_sample(paras: bert_para.PipelineParas):
     err_log_f = config.LOG_PATH / f"{utils.get_current_time_str()}_analyze_sample.log"
     for item in tqdm(d_list, desc="Sampling:"):
         doc_ids = item["predicted_docids"]
-
         if not paras.data_from_pred:
             if item['evidence'] is not None:
                 # ground truth
@@ -426,26 +425,26 @@ def eval_sample_length(samples):
 
 
 if __name__ == '__main__':
-    logger.info("test")
-    paras = bert_para.PipelineParas()
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:5000]
-    paras.sample_n = 2
-    paras.data_from_pred = False
-    paras.output_folder = config.LOG_PATH
-    sample_tfidf = get_tfidf_sample(paras)
-    # sample_full = get_full_list_sample(paras)
-    eval_sample_length(sample_tfidf)
-    count_truth_examples(sample_tfidf)
+    # logger.info("test")
+    # paras = bert_para.PipelineParas()
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:5000]
+    # paras.sample_n = 2
+    # paras.data_from_pred = False
+    # paras.output_folder = config.LOG_PATH
+    # sample_tfidf = get_tfidf_sample(paras)
+    # # sample_full = get_full_list_sample(paras)
+    # eval_sample_length(sample_tfidf)
+    # count_truth_examples(sample_tfidf)
 
-    # paras2 = bert_para.PipelineParas()
-    # dev_upstream_data = read_json_rows(config.DOC_RETRV_DEV)[0:50]
-    # paras2.upstream_data = dev_upstream_data
-    # paras2.pred = False
-    # paras2.post_filter_prob = 0.5
-    # complete_upstream_train_data = get_full_list_sample(paras2)
-    # filtered_train_data = complete_upstream_train_data
-    # full_list = complete_upstream_train_data
-    # eval_sample_length(full_list)
-    # count_truth_examples(full_list)
+    paras2 = bert_para.PipelineParas()
+    dev_upstream_data = read_json_rows(config.DOC_RETRV_TRAIN)[0:50]
+    paras2.upstream_data = dev_upstream_data
+    paras2.pred = False
+    paras2.post_filter_prob = 0.5
+    complete_upstream_train_data = get_full_list_sample(paras2)
+    filtered_train_data = complete_upstream_train_data
+    full_list = complete_upstream_train_data
+    eval_sample_length(full_list)
+    count_truth_examples(full_list)
 
 

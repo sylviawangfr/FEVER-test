@@ -239,8 +239,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                             if len(tmp_sid_sets) == 0:
                                 continue
                             not_linked_phrases = partial_linked_no_relatives_phrases[k]
-                            if any(['film' in tri.subject for tri in subgraph]):
-                                print("debug")
+                            # if any(['film' in tri.subject for tri in subgraph]):
+                            #     print("debug")
                             if len(not_linked_phrases) > 3 \
                                     or (len(media_entity) > 0 and not has_media_linked(subgraph))\
                                     or len(not_linked_phrases) / len(linked_phrases) > 0.5:

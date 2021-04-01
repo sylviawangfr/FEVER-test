@@ -315,7 +315,7 @@ def eval_samples(sampled_data):
 
 
 if __name__ == '__main__':
-    additional_file = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")
+    additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/es_doc_10.jsonl')
     t = get_sample_data(additional_file, data_from_pred=False, mode='train')
     eval_samples(t)
 

@@ -64,7 +64,7 @@ class FeverSSProcessor(DataProcessor):
     def get_train_examples(self, paras: bert_para.PipelineParas, sampler='ss_tfidf'):
         sampler = get_sampler(sampler)
         train_list = sampler(paras)
-        return self._create_examples(train_list)
+        return self._create_examples(train_list), train_list
 
     def get_dev_examples(self, paras: bert_para.PipelineParas, sampler='ss_tfidf'):
         """See base class."""

@@ -439,7 +439,7 @@ if __name__ == '__main__':
     paras2 = bert_para.PipelineParas()
     dev_upstream_data = read_json_rows(config.DOC_RETRV_TRAIN)[0:50]
     paras2.upstream_data = dev_upstream_data
-    paras2.pred = False
+    paras2.data_from_pred = True
     # paras2.post_filter_prob = 0.5
     complete_upstream_train_data = get_full_list_sample(paras2)
     filtered_train_data = complete_upstream_train_data

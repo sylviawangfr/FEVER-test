@@ -344,7 +344,7 @@ if __name__ == "__main__":
     # paras.prob_thresholds = 0.1
     # pred_ss_and_save(paras)
     paras = bert_para.PipelineParas()
-    paras.data_from_pred = False
+    paras.data_from_pred = True
     paras.mode = 'train'
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202103_94.9"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202103_94.9"

@@ -199,28 +199,65 @@ def search_and_merge4(entities, nouns):
                 filtered.append(s)
         return filtered
 
+    def get_subsets_long(phrase_l):
+        all_subsets = []
+        if len(phrase_l) == 0:
+            return all_subsets
+        sub_sets = [list(c) for c in itertools.combinations(phrase_l, 3)]
+        all_subsets.extend(sub_sets)
+        filtered = []
+        for s in all_subsets:
+            has_dup = False
+            for item in s:
+                if len(list(filter(lambda x: item in x and x != item, s))) > 0:
+                    has_dup = True
+                    break
+            if not has_dup:
+                filtered.append(s)
+        return filtered
+
     if len(entities) > 0 and len(nouns) > 0:
         result_media = search_media(entities)
-        entity_subsets = get_subsets(entities)
-        result = search_entity_combinations(entity_subsets)
-        result.extend(result_media)
-        # for i in entities:
-        #     if i in nouns:
-        #         nouns.remove(i)
-        nouns_subsets = get_subsets(nouns)
-        covered_set = set()
-        if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
-            product = itertools.product(entity_subsets, nouns_subsets)
-            for i in product:
-                new_subset = []
-                new_subset.extend(i[0])
-                new_subset.extend(i[1])
-                if has_overlap(new_subset):
-                    continue
-                r = search_doc(new_subset)
-                if len(r) > 0:
-                    covered_set = covered_set | set(new_subset)
-                    result.extend(r)
+        extra_long = False
+        if len(entities) < 5:
+            entity_subsets = get_subsets(entities)
+        elif 10 > len(entities) > 4:
+            entity_subsets = get_subsets_long(entities)
+        else:
+            extra_long = True
+            entity_subsets = entities
+        if not extra_long:
+            result = search_entity_combinations(entity_subsets)
+            result.extend(result_media)
+            if len(nouns) < 5:
+                nouns_subsets = get_subsets(nouns)
+            elif 10 > len(nouns) > 4:
+                nouns_subsets = get_subsets_long(nouns)
+            else:
+                nouns_subsets = nouns
+                extra_long = True
+            # covered_set = set()
+            if len(entity_subsets) > 0 and len(nouns_subsets) > 0:
+                product = itertools.product(entity_subsets, nouns_subsets)
+                if not extra_long:
+                    for i in product:
+                        new_subset = []
+                        new_subset.extend(i[0])
+                        new_subset.extend(i[1])
+                        if has_overlap(new_subset):
+                            continue
+                        r = search_doc(new_subset)
+                        if len(r) > 0:
+                            # covered_set = covered_set | set(new_subset)
+                            result.extend(r)
+                else:
+                    for i in product:
+                        r = search_doc_comb(i[0], i[1])
+                        if len(r) > 0:
+                            # covered_set = covered_set | set(i[0]) | set(i[1])
+                            result.extend(r)
+        else:
+            result = search_doc_fuzzy(entity_subsets)
     elif len(entities) == 0 and len(nouns) > 0:
         result = search_and_merge2(nouns)
     elif len(nouns) == 0 and len(entities) > 0:

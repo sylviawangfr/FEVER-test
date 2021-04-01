@@ -19,6 +19,40 @@ def remove_the_a(ph):
 
 
 # ES match_phrase on entities
+def search_doc_fuzzy(phrases):
+    try:
+        search = Search(using=client, index=config.WIKIPAGE_INDEX)
+        should = []
+        for ph in phrases:
+            ph = remove_the_a(ph)
+            should.append({'multi_match': {'query': ph, "type": "phrase",
+                                         'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
+
+        search = search.query(Q('bool', should=should)). \
+                 highlight('lines', number_of_fragments=0). \
+                 sort({'_score': {"order": "desc"}}). \
+                 source(include=['id'])[0:10]
+
+        response = search.execute()
+        r_list = []
+
+        for hit in response['hits']['hits']:
+            score = hit['_score']
+            id = hit['_source']['id']
+            if 'highlight' in hit:
+                lines = hit['highlight']['lines'][0]
+                lines = lines.replace("</em> <em>", " ")
+            else:
+                lines = ""
+            doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
+            r_list.append(doc_dic)
+
+        return r_list
+    except:
+        return []
+
+
+# ES match_phrase on entities
 def search_doc(phrases):
     try:
         search = Search(using=client, index=config.WIKIPAGE_INDEX)
@@ -26,11 +60,45 @@ def search_doc(phrases):
         should = []
         for ph in phrases:
             ph = remove_the_a(ph)
-            # should.append({'multi_match': {'query': ph, "type": "most_fields",
-            #                                'fields': ['id^2', 'lines'], 'analyzer': 'underscore_analyzer'}})
             must.append({'multi_match': {'query': ph, "type": "phrase",
                                          'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
 
+        search = search.query(Q('bool', must=must, should=should)). \
+                 highlight('lines', number_of_fragments=0). \
+                 sort({'_score': {"order": "desc"}}). \
+                 source(include=['id'])[0:10]
+
+        response = search.execute()
+        r_list = []
+
+        for hit in response['hits']['hits']:
+            score = hit['_score']
+            id = hit['_source']['id']
+            if 'highlight' in hit:
+                lines = hit['highlight']['lines'][0]
+                lines = lines.replace("</em> <em>", " ")
+            else:
+                lines = ""
+            doc_dic = {'score': score, 'phrases': phrases, 'id': id, 'lines': lines}
+            r_list.append(doc_dic)
+
+        return r_list
+    except:
+        return []
+
+
+def search_doc_comb(phrases_strict, phrases_fuzzy):
+    try:
+        search = Search(using=client, index=config.WIKIPAGE_INDEX)
+        must = []
+        should = []
+        for ph in phrases_strict:
+            ph = remove_the_a(ph)
+            must.append({'multi_match': {'query': ph, "type": "phrase",
+                                         'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
+        for ph in phrases_fuzzy:
+            should.append({'multi_match': {'query': ph, "type": "phrase",
+                                         'fields': ['id^2', 'lines'], 'slop': 3, 'analyzer': 'underscore_analyzer'}})
         search = search.query(Q('bool', must=must, should=should)). \
                  highlight('lines', number_of_fragments=0). \
                  sort({'_score': {"order": "desc"}}). \

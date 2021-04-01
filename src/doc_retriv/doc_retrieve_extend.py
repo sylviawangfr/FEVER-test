@@ -22,18 +22,28 @@ import itertools
 
 
 def prepare_candidate_doc1(data_l, out_filename: Path, log_filename: Path):
-    for example in tqdm(data_l):
-        candidate_docs_1, entities, nouns = prepare_candidate_es_for_example(example)
-        if len(candidate_docs_1) < 1:
-            print("failed claim:", example.get('id'))
-            example['predicted_docids'] = []
-            example['doc_and_line'] = []
-        else:
-            example['predicted_docids'] = [j.get('id') for j in candidate_docs_1][:10]
-            example['doc_and_line'] = candidate_docs_1
-        example['entities'] = entities
-        example['nouns'] = nouns
-    save_intermidiate_results(data_l, out_filename)
+    flush_save = []
+    batch = 10000
+    flush_num = batch
+    with tqdm(total=len(data_l), desc=f"search ES docs...") as pbar:
+        for idx, example in enumerate(data_l):
+            candidate_docs_1, entities, nouns = prepare_candidate_es_for_example(example)
+            if len(candidate_docs_1) < 1:
+                print("failed claim:", example.get('id'))
+                example['predicted_docids'] = []
+                example['doc_and_line'] = []
+            else:
+                example['predicted_docids'] = [j.get('id') for j in candidate_docs_1][:10]
+                example['doc_and_line'] = candidate_docs_1
+            example['entities'] = entities
+            example['nouns'] = nouns
+            flush_save.append(example)
+            flush_num -= 1
+            pbar.update(1)
+            if flush_num == 0 or idx == (len(data_l) - 1):
+                save_and_append_results(flush_save, idx + 1, out_filename, log_filename)
+                flush_num = batch
+                flush_save = []
     eval_doc_preds(data_l, 10, log_filename)
     return data_l
 
@@ -526,7 +536,7 @@ def do_testset_all(folder):
 
 
 def do_train_doc_es(folder):
-    original_data1 = read_json_rows(config.FEVER_TRAIN_JSONL)
+    original_data1 = read_json_rows(config.FEVER_TRAIN_JSONL)[859:]
     prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
 

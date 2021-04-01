@@ -165,8 +165,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
             #   379, 402, 646, 910, 976, 993, 1043, 1058, 1219, 1446, 1554, 1591, 1616, 1723
-            if idx < 729:
-                continue
+            # if idx < 729:
+            #     continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -426,6 +426,8 @@ def extend_evidence_two_hop_sentences(claim_dict, docid2sids, sid2linkedsids):
         all_e_sids = list(set(all_e_sids))
         if len(all_e_sids) > 0:
             for candidate_sent_sid in candidate_sentences:
+                if candidate_sent_sid not in sid2hlinks:
+                    continue
                 css_hlinks = sid2hlinks[candidate_sent_sid]
                 if len(css_hlinks) == 0:
                     continue
@@ -532,8 +534,11 @@ def extend_evidence_two_hop_sentences2(claim_dict, docid2sids, sid2linkedsids):
         all_e_sids = []
         for ex_sids in tri_sentence_dict.values():
             all_e_sids.extend(ex_sids)
+        all_e_sids = list(set(all_e_sids))
         if len(all_e_sids) > 0:
             for candidate_sent_sid in candidate_sentences:
+                if candidate_sent_sid not in sid2hlinks:
+                    continue
                 css_hlinks = sid2hlinks[candidate_sent_sid]
                 if len(css_hlinks) == 0:
                     continue

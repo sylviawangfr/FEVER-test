@@ -80,9 +80,12 @@ def get_ents_and_phrases(sentence):
                 #     if i in splits and i not in entity_and_capitalized:
                 #         entity_and_capitalized.append(i)
                 #         break
-                if (x.startswith('In ') or x.startswith('At ') or x.startswith('From ') or x.startswith('After ')) \
+                if ((x.startswith('In ') or x.startswith('At ') or x.startswith('From ') or x.startswith('After ')) \
                         and i in x \
-                        and i not in entity_and_capitalized:
+                        and i not in entity_and_capitalized) \
+                        or (i in x
+                            and i in split_combinations(x)
+                            and i not in entity_and_capitalized):
                     entity_and_capitalized.append(i)
                     break
             nouns.remove(i)

@@ -3,7 +3,7 @@ from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_candidate2
 from dbpedia_sampler.dbpedia_triple_linker import filter_phrase_vs_two_hop, lookup_doc_id, filter_text_vs_one_hop, filter_triples, remove_duplicate_triples, add_outbound_single
 from dbpedia_sampler import dbpedia_lookup, dbpedia_virtuoso
 from BERT_test.ss_eval import *
-from doc_retriv.doc_retrieve_extend import search_entity_docs_for_triples, is_media
+from doc_retriv.doc_retrieve_extend import search_entity_docs_for_triples, is_media, search_entity_docs
 from ES.es_queries import search_doc_id_and_keywords_in_sentences, search_docid_subject_object_in_sentences
 from dbpedia_sampler.uri_util import uri_short_extract2, isURI, uri_short_extract, uri_short_extract3
 from utils.resource_manager import *
@@ -33,6 +33,8 @@ def prepare_candidate_sents3_from_triples(data_with_graph, data_with_res_doc, ou
     result = []
     with tqdm(total=len(data_with_graph), desc=f"searching triple sentences") as pbar:
         for idx, example in enumerate(data_with_graph):
+            if idx != 604:
+                continue
             claim_dict = example['claim_dict']
             triple_l = claim_dict['graph']
             resouce_doc_dict = data_with_res_doc[idx]['resource_docs']
@@ -165,8 +167,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
             #   379, 402, 646, 910, 976, 993, 1043, 1058, 1219, 1446, 1554, 1591, 1616, 1723
-            # if idx < 729:
-            #     continue
+            if idx not in [1012]:
+                continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -287,12 +289,40 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                         candidate_sid_sets.extend(extend_sid_set)
                         linked_level = 0
                 else:
-                    linked_level = 0
+                    if len(linked_phrases) == 0:
+                        linked_level = 0
+                    else:   #  no bert_s nor tri_s, get sentences from entity page
+                        phrase2sids = get_sids_from_linked_resources(linked_phrases)
+                        candidate_sid_sets = generate_doc_sentence_combination(phrase2sids)
+
             candidate_sid_sets = list(set(candidate_sid_sets))
             example.update({'nli_sids': [e.to_sids() for e in candidate_sid_sets], 'linked_level': linked_level})
             pbar.update(1)
     save_intermidiate_results(data_origin, output_file)
     print("Done with nli_sids")
+
+
+def get_sids_from_linked_resources(linked_phrases):
+    db = FeverDBResource()
+    cursor = db.get_cursor()
+    phrase2sids = dict()
+    for lp in linked_phrases:
+        res2docs = dict()
+        tmp_sids = []
+        match_res = [l for l in lp['links'] if 'exact_match' in l
+                     and l['exact_match'] is True
+                     and 'http://dbpedia.org/resource/Category' not in l['URI']]
+        if len(match_res) == 0:
+            match_res = [l for l in lp['links'] if is_media(l['URI'])
+                         and 'http://dbpedia.org/resource/Category' not in l['URI']]
+
+        res2docs.update(search_entity_docs(match_res))
+        docs = [rec['id'] for records in res2docs.values() for rec in records]
+        for d in docs:
+            _, sids = get_all_sent_by_doc_id(cursor, d)
+            tmp_sids.extend(sids)
+        phrase2sids.update({lp['text']: tmp_sids[0:5]})
+    return phrase2sids
 
 
 def extend_hlink_sids(sid, hlinks, max_number=5):
@@ -583,12 +613,15 @@ def search_triples_in_docs(triples: List[Triple], docs:dict=None):  #  list[Trip
                 doc_id = doc['id']
                 subject_text = uri_short_extract2(tri.subject)
                 obj_uri = tri.object
-                if "http://dbpedia.org/resource/" in obj_uri:
+                if "http://dbpedia.org/resource/" in obj_uri and '/Category:' not in obj_uri:
                     obj_text = uri_short_extract2(obj_uri)
                     rel_text = uri_short_extract(tri.relation)
                     tmp_sentences = search_docid_subject_object_in_sentences(doc_id, subject_text, rel_text, obj_text)
+                    if len(tmp_sentences) == 0:
+                        tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, subject_text, tri.keywords)
                 else:
                     tmp_sentences = search_doc_id_and_keywords_in_sentences(doc_id, subject_text, tri.keywords)
+
                 if len(tmp_sentences) > 0:
                     for i in tmp_sentences:
                         # i['tri_id'] = tri.tri_id

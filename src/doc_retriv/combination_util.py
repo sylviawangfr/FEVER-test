@@ -24,6 +24,25 @@ def generate_sentence_combination(list_of_sentences: List):
     return list(new_evidence_set)
 
 
+def generate_doc_sentence_combination(phrase2sids):
+    evidence_set = []
+    for ph in phrase2sids:
+        if len(evidence_set) == 0:
+            sid_tuples_l = [s for s in sids_to_tuples(phrase2sids[ph])]
+            evidence_set.extend([Evidences([st]) for st in sid_tuples_l])
+        else:
+            tmp_evi_s = []
+            for s in phrase2sids[ph]:
+                sid_tuples_l = [s for s in sids_to_tuples(phrase2sids[ph])]
+                tmp_evi_s.extend([Evidences([st]) for st in sid_tuples_l])
+                for e in evidence_set:
+                    new_e = copy.deepcopy(e)
+                    new_e.add_sent_sid(s)
+                    tmp_evi_s.append(new_e)
+            evidence_set.extend(tmp_evi_s)
+    return evidence_set
+
+
 # each sentence may have different subgraphs, as one entity may linked to different resources
 def generate_triple_subgraphs(list_of_triples: List[Triple]):
     def has_overlap_resource(tri_l1_tomerge, tri_l2_desc, tri_dict):

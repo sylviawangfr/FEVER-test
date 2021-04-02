@@ -131,7 +131,7 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     processor = FeverSSProcessor()
-    eval_batch_size = 8
+    eval_batch_size = 32
     if paras.mode == 'test':
         eval_examples, eval_list = processor.get_test_examples(paras, sampler='ss_full')
     elif paras.mode == 'eval':

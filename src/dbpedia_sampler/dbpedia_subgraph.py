@@ -279,7 +279,7 @@ if __name__ == '__main__':
     # ss1 = "Giada at Home was only available on DVD ."
     # ss1= 'Sheryl Lee has yet to appear in a film as of 2016.'
     # ss2 = "Giada at Home - It first aired on October 18 , 2008 on the Food Network ."
-    ss1 = "The Thin Red Line (1998 film) portrays only frogs."
+    ss1 = "Terry Crews played on the Los Angeles Rams in 1996."
     # ss1 = "The film only stars animals."
     # ss1 = "Michelle Obama's husband was born in Kenya"
     # text = "Home for the Holidays stars the fourth stepchild of Charlie Chaplin"

@@ -187,6 +187,7 @@ def combine_lookup(text_phrase):
     if len(result) > 0:
         return result
 
+    # fuzzy match
     top_match = []
     token_count = text_phrase.count(' ') + 1
     if token_count < 2 and len(lookup_matches_ref) > 0:         # use lookup refCount
@@ -210,10 +211,11 @@ def combine_lookup(text_phrase):
 
     if len(lookup_app_matches) > 0 and (token_count > 1 or len(top_match) < 1):        # use lookup-app Label+comments
         top_match = get_keyword_matching_ratio_top(text_phrase, lookup_app_matches, 0.6)
-        top_ref = lookup_app_matches[0]
-        if len(list(filter(lambda x: (x['URI'] == top_ref['URI']), top_match))) < 1 \
-                and score_bewteen_phrases(text_phrase, top_ref['Label']) > 0.3:
-            top_match.append(top_ref)
+        if len(top_match) == 0:
+            top_ref = lookup_app_matches[0]
+            if len(list(filter(lambda x: (x['URI'] == top_ref['URI']), top_match))) < 1 \
+                    and score_bewteen_phrases(text_phrase, top_ref['Label']) > 0.3:
+                top_match.append(top_ref)
 
         log.debug(f"DBpedia lookup phrase: {text_phrase}, matching: {top_match}")
 
@@ -394,7 +396,7 @@ def test():
 
 
 if __name__ == "__main__":
-    lookup_label_exact_match('In the End')
+    # lookup_label_exact_match('c')
     # c = score_bewteen_phrases('product', 'product company xxx')
     # for i in range(1):
     #     test()
@@ -407,7 +409,7 @@ if __name__ == "__main__":
     # lookup_resource_no_filter('Tool')
     # lookup_resource('Western Conference Southwest Division')
     # lookup_resource("the league 's Western Conference Southwest Division")
-    lookup_resource('Bombay')
+    lookup_resource('Los Angeles Rams in 1996')
     # lookup_resource('a member club')
     # lookup_resource('The Pelicans')
     # lookup_resource('the National Basketball Association')

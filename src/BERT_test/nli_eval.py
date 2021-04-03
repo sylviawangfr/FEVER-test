@@ -128,9 +128,10 @@ def eval_nli_examples(paras : bert_para.PipelineParas):
 
     preds = preds[0]
     probs = softmax(preds)
-    probs = probs[:, 0].tolist()
-    scores = preds[:, 0].tolist()
+    probs = np.max(probs, axis=1)
+    scores = np.max(preds, axis=1)
     preds = np.argmax(preds, axis=1)
+
 
     for i in range(len(eval_list)):
         # Matching id

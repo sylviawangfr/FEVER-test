@@ -8,13 +8,7 @@ from utils import c_scorer
 
 def generate_sentence_combination(list_of_sentences: List):
     new_evidence_set = set()
-    if len(list_of_sentences) > 8:
-        max_s = 2
-    elif len(list_of_sentences) < 3:
-        max_s = len(list_of_sentences)
-    else:
-        max_s = 3
-    for i in reversed(range(1, max_s + 1)):
+    for i in reversed(range(1, 2)):
         combination_set = itertools.combinations(list_of_sentences, i)
         for c in combination_set:
             sids = [s for s in c]

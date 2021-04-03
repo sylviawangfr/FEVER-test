@@ -159,15 +159,14 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
             subj = uri_short_extract(st.subject).lower()
             obj = uri_short_extract(st.object).lower()
             tri_text = st.text.lower()
-            for i in media_entity:
-                if i.lower() in [subj, obj, tri_text]:
-                    return True
+            if is_media(subj) or is_media(obj) or is_media(tri_text):
+                return True
         return False
 
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
             #   379, 402, 646, 910, 976, 993, 1043, 1058, 1219, 1446, 1554, 1591, 1616, 1723
-            if idx not in [1012]:
+            if idx < 10:
                 continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
@@ -202,6 +201,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
             candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets, sid2linkedsids_to_calc))
             candidate_sid_sets = list(set(candidate_sid_sets))
             linked_level = 0    # [0: not linked, 1: partial linked, 2: well linked]
+            has_evi_from_tris = False
             if len(triples) > 0:
                 subgraphs, _ = generate_triple_subgraphs(triples)
                 claim_relative_hash = init_relative_hash()
@@ -229,6 +229,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                                 tmp_sid_sets = generate_triple_evidence_set(good_subgraph)
                                 candidate_sid_sets.extend(tmp_sid_sets)
                                 linked_level = 2
+                                has_evi_from_tris = True
                 elif len(partial_linked_idx) > 0:
                     for k, item in enumerate(partial_linked_idx):
                         subgraph_sids = all_subgraph_sids[item]
@@ -254,15 +255,17 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                                 # 1. candidate tri two hop
                                 extend_evi = extend_evidence_two_hop_nodes(not_linked_phrases, subgraph, tmp_sid_sets)
                                 tmp_sid_sets.extend(extend_evi)
-                            candidate_sid_sets.extend(tmp_sid_sets)
-                            linked_level = 1
-            else:
+                            if len(tmp_sid_sets) > 0:
+                                has_evi_from_tris = True
+                                candidate_sid_sets.extend(tmp_sid_sets)
+                                linked_level = 1
+            if not has_evi_from_tris:
                 # count_capitalized_entities = []
                 # for i in linked_entities:
                 #     if i not in count_capitalized_entities\
                 #             and len(list(filter(lambda x: i in x or x in i, count_capitalized_entities))) == 0:
                 #         count_capitalized_entities.append(i)
-                most_similar_sent = [s for s in bert_s if bert_sid2score[s] > 0.95
+                most_similar_sent = [s for s in bert_s if bert_sid2score[s] > 0.9
                                      and s.split(c_scorer.SENT_LINE2)[0].replace('_', ' ') in linked_entities][0:2]
                 if len(most_similar_sent) > 0: # and len(count_capitalized_entities) > 1:
                     #   only check the most similar sentences
@@ -292,8 +295,11 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                     if len(linked_phrases) == 0:
                         linked_level = 0
                     else:   #  no bert_s nor tri_s, get sentences from entity page
-                        phrase2sids = get_sids_from_linked_resources(linked_phrases)
-                        candidate_sid_sets = generate_doc_sentence_combination(phrase2sids)
+                        to_find_res = [l for l in linked_phrases if is_capitalized(l['text'])]
+                        if len(to_find_res) == 0:
+                            to_find_res = linked_phrases
+                        phrase2sids = get_sids_from_linked_resources(to_find_res)
+                        candidate_sid_sets.extend(generate_doc_sentence_combination(phrase2sids))
 
             candidate_sid_sets = list(set(candidate_sid_sets))
             example.update({'nli_sids': [e.to_sids() for e in candidate_sid_sets], 'linked_level': linked_level})
@@ -434,6 +440,8 @@ def extend_evidence_two_hop_sentences(claim_dict, docid2sids, sid2linkedsids):
                 single_ph = phc[0]
                 ph_hlinks = phc[1]
                 to_match_hlink_res = [hlink_resources[h] for h in ph_hlinks if h in hlink_resources]
+                #   to_match_phrase in hlink resource name
+                #   to_match_phrase not in hlink resource name check one-hop out-bound
                 extend_triples_jsonl = filter_text_vs_one_hop([single_ph], to_match_hlink_res, embedding_hash)
                 tmp_extend_triples_jsonl.extend(extend_triples_jsonl)
             if len(tmp_extend_triples_jsonl) == 0:
@@ -734,8 +742,8 @@ def extend_candidate_one_hop(claim_dict, candidate_sentences: List[str]):
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
-    # prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
+    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
+    prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
     # resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")

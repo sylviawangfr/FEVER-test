@@ -1,6 +1,6 @@
 import re
 import unicodedata
-
+import string
 import regex
 from dateutil.parser import parse
 
@@ -33,6 +33,30 @@ STOPWORDS = {
 def normalize(text):
     """Resolve different type of unicode encodings."""
     return unicodedata.normalize('NFD', text)
+
+
+def normalize_shaved(text):
+    norm_txt = unicodedata.normalize('NFD', text)
+    unicodedata.combining('a')
+    shaved = ''.join(c for c in norm_txt if not unicodedata.combining(c))
+    return unicodedata.normalize('NFC', shaved)
+
+def shave_marks_latin(text):
+    norm_txt = unicodedata.normalize('NFD', text)
+    latin_base = False
+    keepers = []
+    for c in norm_txt:
+        if unicodedata.combining(c) and latin_base:
+            continue
+        keepers.append(c)
+        if not unicodedata.combining(c):
+            latin_base = c in string.ascii_letters
+    shaved = ''.join(keepers)
+    return unicodedata.normalize('NFC', shaved)
+
+
+def nfc_equal(str1,str2):
+    return (unicodedata.normalize('NFC',str1) == unicodedata.normalize('NFC',str2))
 
 
 def filter_word(text):

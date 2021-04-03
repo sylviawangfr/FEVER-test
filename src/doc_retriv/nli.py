@@ -6,6 +6,7 @@ from collections import Counter
 from utils.file_loader import read_json_rows
 from utils.check_sentences import Evidences, sids_to_doclnlist
 from functools import reduce
+from utils.c_scorer import get_macro_ss_recall_precision
 import numpy as np
 
 id2label = {
@@ -44,20 +45,32 @@ def nli_vote(data_nli_with_score):
     print(hits / len(data_nli_with_score))
 
 
-def vote_label_and_filter_sentences(example):
-    preds = example['evi_nli']
-    pred_labels = [p['predicted_label'] for p in preds]
-    count = Counter()
-    count.update(pred_labels)
-    label_count = sorted(list(count.most_common()), key=lambda x: x[0])
-    label_dict = {int(i[0]): i[1] for i in label_count}
-    sc = label_dict[0] if 0 in label_dict else 0
-    rc = label_dict[1] if 1 in label_dict else 0
-    nei = label_dict[2] if 2 in label_dict else 0
-    if sc > 0 or rc > 0:
-        label = 0 if sc > rc else 1
-    else:
+def vote_and_filter(data_nli_with_score, eval=True):
+    filtered = []
+    for i in tqdm(data_nli_with_score):
+        filtered_example = vote_label_and_filter_example(i)
+        filtered.append(filtered_example)
+    if eval:
+        get_macro_ss_recall_precision(filtered)
+
+
+def vote_label_and_filter_example(example):
+    if 'evi_nli' not in example:
         label = 2
+    else:
+        preds = example['evi_nli']
+        pred_labels = [p['predicted_label'] for p in preds]
+        count = Counter()
+        count.update(pred_labels)
+        label_count = sorted(list(count.most_common()), key=lambda x: x[0])
+        label_dict = {int(i[0]): i[1] for i in label_count}
+        sc = label_dict[0] if 0 in label_dict else 0
+        rc = label_dict[1] if 1 in label_dict else 0
+        # nei = label_dict[2] if 2 in label_dict else 0
+        if sc > 0 or rc > 0:
+            label = 0 if sc > rc else 1
+        else:
+            label = 2
     if label == 2:
         clean_item = {'id': example['id'],
                       'claim': example['claim'],
@@ -68,14 +81,14 @@ def vote_label_and_filter_sentences(example):
         #  'score': evids_item["score"], 'prob': evids_item["prob"], 'sids': evids_item['sids']}
         all_evi = [p for p in preds if p['predicted_label'] == str(label)]
         all_sids = list(set([s for evi in all_evi for s in evi['sids']]))
-        sid2weightedscore = {s : float(0) for s in all_sids}
+        sid2weightedprob = {s : float(0) for s in all_sids}
         for evi in all_evi:
             sids = evi['sids']
-            score = evi['score']
-            weighted_score = score / len(sids)
+            prob = evi['prob']
+            weighted = prob / len(sids)
             for s in sids:
-                sid2weightedscore[s] += weighted_score
-        sids_scores = list(zip(sid2weightedscore.keys(), sid2weightedscore.values()))
+                sid2weightedprob[s] += weighted
+        sids_scores = list(zip(sid2weightedprob.keys(), sid2weightedprob.values()))
         sids_scores.sort(key=lambda k: k[1], reverse=True)
         predicted_sids = sids_scores[:5]
         predicted_sids = [s[0] for s in predicted_sids]
@@ -84,6 +97,8 @@ def vote_label_and_filter_sentences(example):
                       'claim': example['claim'],
                       'predicted_evidence': predicted_sids,
                       'predicted_label': id2label[label]}
+    if 'label' in example:
+        clean_item.update({'label': example['label'], 'evidence': example['evidence']})
     return clean_item
 
 
@@ -92,8 +107,10 @@ def nli_pred_evi_set(upstream_data, output_folder):
     paras.mode = 'eval'
     paras.data_from_pred = True
     paras.upstream_data = upstream_data
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
+    # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
+    # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_first_train2019"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_first_train2019"
     paras.output_folder = output_folder
     paras.sampler = 'nli_evis'
     nli_pred_evi_score_only(paras)
@@ -149,8 +166,8 @@ if __name__ == '__main__':
     # data_bert = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
     # nli_eval1(data_bert, folder)
     # nli_eval2(data_bert, folder)
-    # data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
+    data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")[0:1]
     # eval_samples(data_nli_sids)
-    # nli_pred_evi_set(data_nli_sids, folder)
-    data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
-    nli_vote(data_nli)
+    nli_pred_evi_set(data_nli_sids, folder)
+    # data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
+    # vote_and_filter(data_nli)

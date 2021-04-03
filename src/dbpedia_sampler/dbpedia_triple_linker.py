@@ -20,6 +20,7 @@ import gc
 from utils import resource_manager
 from doc_retriv.SentenceEvidence import Triple
 from typing import List
+from ES.es_search import MEDIA
 
 
 CANDIDATE_UP_TO = 200
@@ -657,10 +658,10 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
     to_match_phrase_idx = []
     for idx, p in enumerate(all_phrases):
         p_lower = p.lower()
-        if p_lower not in resouce_text \
+        if (p_lower not in resouce_text \
                 and resouce_text not in p_lower \
                 and resource_uri_text not in p_lower \
-                and p_lower not in resource_uri_text:
+                and p_lower not in resource_uri_text) or p_lower in MEDIA:
             to_match_phrases.append(p)
             to_match_phrase_idx.append(idx)
     if len(to_match_phrases) == 0:

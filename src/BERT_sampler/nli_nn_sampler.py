@@ -316,7 +316,8 @@ def eval_samples(sampled_data):
 
 if __name__ == '__main__':
     additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10.jsonl')
-    additional_file = additional_file.extend((read_json_rows(config.RESULT_PATH / 'train_2021/72285/bert_ss_0.01_10.jsonl')))
+    tmp = read_json_rows(config.RESULT_PATH / 'train_2021/72285/bert_ss_0.01_10.jsonl')
+    additional_file.extend(tmp)
     t = get_sample_data(additional_file, data_from_pred=False, mode='train')
     eval_samples(t)
 

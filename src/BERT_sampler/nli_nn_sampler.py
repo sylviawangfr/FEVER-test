@@ -340,13 +340,13 @@ def create_train_pred(p1,p2, origin_d):
 
 
 if __name__ == '__main__':
-    tmp1 = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_10.jsonl')
-    tmp2 = read_json_rows(config.RESULT_PATH / 'tfidf/train_2019_06_15_15:48:58.jsonl')
-    ori = read_json_rows(config.FEVER_TRAIN_JSONL)
-    create_train_pred(tmp1, tmp2, ori)
-    # additional_file.extend(tmp)
-    # t = get_sample_data(additional_file, data_from_pred=False, mode='train')
-    # eval_samples(t)
+    # tmp1 = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_10.jsonl')
+    # tmp2 = read_json_rows(config.RESULT_PATH / 'tfidf/train_2019_06_15_15:48:58.jsonl')
+    # ori = read_json_rows(config.FEVER_TRAIN_JSONL)
+    # create_train_pred(tmp1, tmp2, ori)
+    additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')
+    t = get_sample_data(additional_file, data_from_pred=False, mode='train')
+    eval_samples(t)
 
     # t = get_sample_data(additional_file, data_from_pred=False, mode='eval')
     # eval_samples(t)

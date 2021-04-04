@@ -314,43 +314,36 @@ def eval_samples(sampled_data):
     print(f"REFUTES:{len(refused)}, nei:{len(nei)}, SUPPORTS:{len(support)}")
 
 
-def create_bert_pred(p1,p2, origin_d):
+def create_train_pred(p1,p2, origin_d):
     new_items = []
     len_ori = len(origin_d)
     print(len(p1))
     print(len(p2))
     print(len(origin_d))
+    assert (len(p1) == len(p2))
     while len(origin_d) > 0:
         item = origin_d.pop(0)
-        has_found = False
-        while len(p1) > 0:
-            item1 = p1.pop(0)
-            if item['id'] == item1['id']:
-                new_items.append(item1)
-                has_found = True
-                break
-        if not has_found:
-            while len(p2) > 0:
-                item2 = p2.pop(0)
-                if item['id'] == item2['id']:
-                    new_items.append(item2)
-                    break
+        item1 = p1.pop(0)
+        item2 = p2.pop(0)
+        assert (item['id'] == item1['id'])
+        assert(item1['id'] == item2['id'])
+        tmp_pred = item1['predicted_sentids']
+        tmp_pred.extend(item2['predicted_sentids'])
+        tmp_pred = list(set(tmp_pred))
+        item['predicted_sentids'] = tmp_pred
+        new_items.append(item)
     print(len(new_items))
     print(len(origin_d))
     assert(len(new_items) == len_ori)
-    save_intermidiate_results(new_items, config.RESULT_PATH / 'train_2021/bert_ss_10.jsonl')
-
-
-# def create_train_data(pred1, pred2, origin_d):
-#     for i in origin_d:
+    save_intermidiate_results(new_items, config.RESULT_PATH / 'train_2021/train_ss.jsonl')
 
 
 
 if __name__ == '__main__':
-    tmp2 = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10.jsonl')
-    tmp1 = read_json_rows(config.RESULT_PATH / 'train_2021/72285/bert_ss_0.01_10.jsonl')
+    tmp1 = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_10.jsonl')
+    tmp2 = read_json_rows(config.RESULT_PATH / 'tfidf/train_2019_06_15_15:48:58.jsonl')
     ori = read_json_rows(config.FEVER_TRAIN_JSONL)
-    create_bert_pred(tmp1, tmp2, ori)
+    create_train_pred(tmp1, tmp2, ori)
     # additional_file.extend(tmp)
     # t = get_sample_data(additional_file, data_from_pred=False, mode='train')
     # eval_samples(t)

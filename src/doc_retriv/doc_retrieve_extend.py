@@ -606,27 +606,27 @@ def do_dev_hardset_with_es_entity(folder):
                            folder / "candidate_docs.log")
 
 
-def clean():
-    ori = read_json_rows(config.DOC_RETRV_TRAIN)
-    es1 = read_json_rows(config.RESULT_PATH / "train_2021/es_doc_10.jsonl")
-    es2 = read_json_rows(config.RESULT_PATH/ "train_2021/859_/es_doc_10.jsonl")
-    all_es = []
-    for i in ori:
-        found = False
-        while len(es1) > 0:
-            item1 = es1.pop(0)
-            if i['id'] == item1['id']:
-                all_es.append(item1)
-                found = True
-                break
-        if not found:
-            while len(es2) > 0:
-                item2 = es2.pop(0)
-                if i['id'] == item2['id']:
-                    all_es.append(item2)
-                    break
-    assert(len(ori) == len(all_es))
-    save_intermidiate_results(all_es, config.RESULT_PATH / "train_2021/all_es_10.jsonl")
+# def clean():
+#     ori = read_json_rows(config.DOC_RETRV_TRAIN)
+#     es1 = read_json_rows(config.RESULT_PATH / "train_2021/es_doc_10.jsonl")
+#     es2 = read_json_rows(config.RESULT_PATH/ "train_2021/859_/es_doc_10.jsonl")
+#     all_es = []
+#     for i in ori:
+#         found = False
+#         while len(es1) > 0:
+#             item1 = es1.pop(0)
+#             if i['id'] == item1['id']:
+#                 all_es.append(item1)
+#                 found = True
+#                 break
+#         if not found:
+#             while len(es2) > 0:
+#                 item2 = es2.pop(0)
+#                 if i['id'] == item2['id']:
+#                     all_es.append(item2)
+#                     break
+#     assert(len(ori) == len(all_es))
+#     save_intermidiate_results(all_es, config.RESULT_PATH / "train_2021/all_es_10.jsonl")
 
 
 
@@ -659,5 +659,5 @@ if __name__ == '__main__':
 
     # folder = config.RESULT_PATH / 'train_2021'
     # do_train_doc_es(folder)
-    clean()
+
 

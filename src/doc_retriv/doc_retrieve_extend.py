@@ -536,7 +536,7 @@ def do_testset_all(folder):
 
 
 def do_train_doc_es(folder):
-    original_data1 = read_json_rows(config.FEVER_TRAIN_JSONL)[859:]
+    original_data1 = read_json_rows(config.FEVER_TRAIN_JSONL)[:859] # 859
     prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
 
 
@@ -630,9 +630,9 @@ if __name__ == '__main__':
     # folder = config.RESULT_PATH / "hardset2021"
     # do_dev_hardset_with_es_entity(folder)
 
-    folder = config.RESULT_PATH / "dev_2021"
-    do_devset_all(folder)
+    # folder = config.RESULT_PATH / "dev_2021"
+    # do_devset_all(folder)
 
-    # folder = config.RESULT_PATH / 'train_2021'
-    # do_train_doc_es(folder)
+    folder = config.RESULT_PATH / 'train_2021'
+    do_train_doc_es(folder)
 

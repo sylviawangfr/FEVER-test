@@ -318,7 +318,6 @@ def create_bert_pred(p1,p2, origin_d):
     new_items = []
     while len(origin_d) > 0:
         item = origin_d.pop(0)
-        id = item['id']
         while len(p1) > 0:
             item1 = p1.pop(0)
             if item['id'] == item1['id']:
@@ -329,6 +328,8 @@ def create_bert_pred(p1,p2, origin_d):
             if item['id'] == item2['id']:
                 new_items.append(item2)
                 break
+    print(len(new_items))
+    print(len(origin_d))
     assert(len(new_items) == len(origin_d))
     save_intermidiate_results(new_items, config.RESULT_PATH / 'train_2021/bert_ss_10.jsonl')
 

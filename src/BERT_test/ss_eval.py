@@ -349,8 +349,8 @@ if __name__ == "__main__":
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202103_94.9"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202103_94.9"
     paras.output_folder = config.RESULT_PATH / 'train_2021'
-    paras.original_data = read_json_rows(config.FEVER_TRAIN_JSONL)[0:4]
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / 'train_2021/es_doc_10.jsonl')[0:4]
+    paras.original_data = read_json_rows(config.FEVER_TRAIN_JSONL)[:80000]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / 'train_2021/es_doc_10.jsonl')[:80000]
     paras.sample_n = 10
     paras.top_n = [10]
     paras.prob_thresholds = [0.01]

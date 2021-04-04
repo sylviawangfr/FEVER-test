@@ -188,9 +188,9 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     # eval_loss = eval_loss / nb_eval_steps
     preds = preds[0]
     probs = softmax(preds)
-    probs = np.max(probs, axis=1)
-    scores = np.max(preds, axis=1)
-    preds = np.argmax(preds, axis=1)
+    probs = probs[:, 0].tolist()
+    scores = preds[:, 0].tolist()
+    # preds = np.argmax(preds, axis=1)
     # if paras.mode == 'eval':
     #     logger.info("***** Eval results *****")
     #     result = compute_metrics(preds, all_label_ids.numpy())

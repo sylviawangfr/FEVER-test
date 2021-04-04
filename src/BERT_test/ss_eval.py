@@ -205,8 +205,8 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     for i in range(len(eval_list)):
         assert str(eval_examples[i].guid) == str(eval_list[i]['selection_id'])
         # Matching id
-        eval_list[i]['score'] = scores[i]
-        eval_list[i]['prob'] = probs[i]
+        eval_list[i]['score'] = float(scores[i])
+        eval_list[i]['prob'] = float(probs[i])
 
     # results_list = ss_score_converter(paras.original_data, eval_list, paras.prob_thresholds, paras.top_n)
     return ss_f1_score_and_save(paras, eval_list)

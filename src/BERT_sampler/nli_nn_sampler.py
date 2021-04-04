@@ -317,6 +317,9 @@ def eval_samples(sampled_data):
 def create_bert_pred(p1,p2, origin_d):
     new_items = []
     len_ori = len(origin_d)
+    print(len(p1))
+    print(len(p2))
+    print(len(origin_d))
     while len(origin_d) > 0:
         item = origin_d.pop(0)
         while len(p1) > 0:

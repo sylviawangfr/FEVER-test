@@ -322,18 +322,19 @@ def create_bert_pred(p1,p2, origin_d):
     print(len(origin_d))
     while len(origin_d) > 0:
         item = origin_d.pop(0)
+        has_found = False
         while len(p1) > 0:
             item1 = p1.pop(0)
             if item['id'] == item1['id']:
                 new_items.append(item1)
+                has_found = True
                 break
-        while len(p2) > 0:
-            item2 = p2.pop(0)
-            if item['id'] == item2['id']:
-                new_items.append(item2)
-                break
-            else:
-                continue
+        if not has_found:
+            while len(p2) > 0:
+                item2 = p2.pop(0)
+                if item['id'] == item2['id']:
+                    new_items.append(item2)
+                    break
     print(len(new_items))
     print(len(origin_d))
     assert(len(new_items) == len_ori)

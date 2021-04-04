@@ -166,7 +166,7 @@ if __name__ == '__main__':
     # data_bert = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
     # nli_eval1(data_bert, folder)
     # nli_eval2(data_bert, folder)
-    data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")[0:1]
+    data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")[0:10]
     # eval_samples(data_nli_sids)
     nli_pred_evi_set(data_nli_sids, folder)
     # data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")

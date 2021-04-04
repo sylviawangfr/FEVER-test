@@ -346,8 +346,8 @@ def create_bert_pred(p1,p2, origin_d):
 
 
 if __name__ == '__main__':
-    tmp1 = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10.jsonl')
-    tmp2 = read_json_rows(config.RESULT_PATH / 'train_2021/72285/bert_ss_0.01_10.jsonl')
+    tmp2 = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10.jsonl')
+    tmp1 = read_json_rows(config.RESULT_PATH / 'train_2021/72285/bert_ss_0.01_10.jsonl')
     ori = read_json_rows(config.FEVER_TRAIN_JSONL)
     create_bert_pred(tmp1, tmp2, ori)
     # additional_file.extend(tmp)

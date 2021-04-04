@@ -5,7 +5,7 @@ import config
 from data_util.data_preperation.tokenize_fever import easy_tokenize
 from utils import c_scorer, common, text_clean
 from utils import fever_db, check_sentences
-from utils.file_loader import read_json_rows
+from utils.file_loader import read_json_rows, save_intermidiate_results
 import utils.common_types as bert_para
 from utils.resource_manager import FeverDBResource
 import itertools
@@ -314,12 +314,38 @@ def eval_samples(sampled_data):
     print(f"REFUTES:{len(refused)}, nei:{len(nei)}, SUPPORTS:{len(support)}")
 
 
+def create_bert_pred(p1,p2, origin_d):
+    new_items = []
+    while len(origin_d) > 0:
+        item = origin_d.pop(0)
+        id = item['id']
+        while len(p1) > 0:
+            item1 = p1.pop(0)
+            if item['id'] == item1['id']:
+                new_items.append(item1)
+                break
+        while len(p2) > 0:
+            item2 = p2.pop(0)
+            if item['id'] == item2['id']:
+                new_items.append(item2)
+                break
+    assert(len(new_items) == len(origin_d))
+    save_intermidiate_results(new_items, config.RESULT_PATH / 'train_2021/bert_ss_10.jsonl')
+
+
+# def create_train_data(pred1, pred2, origin_d):
+#     for i in origin_d:
+
+
+
 if __name__ == '__main__':
-    additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10.jsonl')
-    tmp = read_json_rows(config.RESULT_PATH / 'train_2021/72285/bert_ss_0.01_10.jsonl')
-    additional_file.extend(tmp)
-    t = get_sample_data(additional_file, data_from_pred=False, mode='train')
-    eval_samples(t)
+    tmp1 = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10.jsonl')
+    tmp2 = read_json_rows(config.RESULT_PATH / 'train_2021/72285/bert_ss_0.01_10.jsonl')
+    ori = read_json_rows(config.FEVER_TRAIN_JSONL)
+    create_bert_pred(tmp1, tmp2, ori)
+    # additional_file.extend(tmp)
+    # t = get_sample_data(additional_file, data_from_pred=False, mode='train')
+    # eval_samples(t)
 
     # t = get_sample_data(additional_file, data_from_pred=False, mode='eval')
     # eval_samples(t)

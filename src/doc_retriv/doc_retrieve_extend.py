@@ -580,7 +580,7 @@ def do_dev_hardset_with_es_entity(folder):
     # del original_data1
     #
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    # prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
     data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     original_data2 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")

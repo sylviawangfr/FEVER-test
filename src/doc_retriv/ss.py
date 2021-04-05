@@ -166,7 +166,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
             #   379, 402, 646, 910, 976, 993, 1043, 1058, 1219, 1446, 1554, 1591, 1616, 1723
-            if idx not in [116, 1021, 1069, 1439]:
+            if idx not in [1021, 1069, 1439]:
                 continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
@@ -174,7 +174,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
             claim_dict = data_with_context_graph[idx]['claim_dict']
             linked_phrases = claim_dict['linked_phrases_l']
             linked_entities = [ent['text'] for ent in linked_phrases]
-            media_entity = [ent for ent in linked_entities if is_media(ent)]
+            media_entity = [ent for ent in linked_entities if is_media(ent) and is_capitalized(ent)]
             candidate_sid_sets = []
             tri_s = list(set([s for tt in triples for s in tt.sentences]))
             bert_and_tri_s = list(set(bert_s) | set(tri_s))
@@ -245,6 +245,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                             # if any(['film' in tri.subject for tri in subgraph]):
                             #     print("debug")
                             if len(not_linked_phrases) > 3 \
+                                    or len([np for np in not_linked_phrases if is_capitalized(np)]) > 1 \
                                     or (len(media_entity) > 0 and not has_media_linked(subgraph))\
                                     or len(not_linked_phrases) / len(linked_phrases) > 0.5:
                                 continue

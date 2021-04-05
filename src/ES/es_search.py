@@ -219,9 +219,9 @@ def search_and_merge4(entities, nouns):
     if len(entities) > 0 and len(nouns) > 0:
         result_media = search_media(entities)
         extra_long = False
-        if len(entities) < 5:
+        if len(entities) <= 5:
             entity_subsets = get_subsets(entities)
-        elif 10 > len(entities) > 4:
+        elif 10 > len(entities) > 5:
             entity_subsets = get_subsets_long(entities)
         else:
             extra_long = True

@@ -112,7 +112,9 @@ def query_resource(uri):
     context = dict()
     outbounds = dbpedia_virtuoso.get_outbounds2(uri)
     if len(outbounds) < 2:
-        outbounds = dbpedia_virtuoso.get_disambiguates_outbounds2(uri)
+        tmp_outbounds = dbpedia_virtuoso.get_disambiguates_outbounds2(uri)
+        if len(tmp_outbounds) < CANDIDATE_UP_TO:
+            outbounds.extend(tmp_outbounds)
     context['outbounds'] = outbounds
     return context
 
@@ -204,6 +206,33 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
             if len(i['links']) == 0:
                 linked_phs.remove(i)
 
+    def filter_multi_match_for_res(linked_phs, all_phs):
+        for lp in linked_phs:
+            links = lp['links']
+            multi_match = []
+            exact_match = []
+            new_links = []
+            has_multi_match = False
+            for l in links:
+                if l['exact_match'] is True:
+                    exact_match.append(l)
+                else:
+                    l_uri = uri_short_extract(l['URI']).lower()
+                    for to_match_p in all_phs:
+                        if to_match_p.lower() != lp['text'].lower() and to_match_p.lower() in l_uri and l not in multi_match:
+                            multi_match.append(l)
+                            has_multi_match = True
+                        if to_match_p in linked_phs:
+                            pl_exact_match = []
+                            for to_match_l in linked_phs[to_match_p]['links']:
+                                if to_match_l['exact_match'] is True:
+                                    pl_exact_match.append(to_match_l)
+                            linked_phs[to_match_p]['links'] = pl_exact_match
+                if has_multi_match:
+                    new_links.extend(multi_match)
+                    new_links.extend(exact_match)
+                    lp['links'] = new_links
+
     sentence = text_clean.convert_brc(sentence)
     if len(entities) == 0 and len(nouns) == 0:
         entities, nouns = get_phrases(sentence, '')
@@ -233,6 +262,7 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
             not_linked_phrases_l.append(p)
         else:
             linked_phrases_l.append(linked_phrase)
+    filter_multi_match_for_res(linked_phrases_l, phrases)
     remove_duplicate(linked_phrases_l)
     to_delete = []
     for i in not_linked_phrases_l:
@@ -564,6 +594,7 @@ def filter_text_vs_one_hop(all_phrases, linked_phrases_l, embeddings_hash, thres
                                                                   embeddings_hash, threshold=threshold)
         if len(tmp_result) > 0:
             result.extend(tmp_result)
+
     merged = remove_duplicate_triples(result)
     # only top 2 triples
     merged = filter_triples(merged)
@@ -656,14 +687,22 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
     resource_uri_text = resource_uri_text.lower()
     to_match_phrases = []
     to_match_phrase_idx = []
+    is_highlight_resource = False
     for idx, p in enumerate(all_phrases):
         p_lower = p.lower()
         if (p_lower not in resouce_text \
                 and resouce_text not in p_lower \
                 and resource_uri_text not in p_lower \
-                and p_lower not in resource_uri_text) or p_lower in MEDIA:
+                and p_lower not in resource_uri_text):
             to_match_phrases.append(p)
             to_match_phrase_idx.append(idx)
+        elif p_lower in MEDIA:
+            to_match_phrases.append(p)
+            to_match_phrase_idx.append(idx)
+            is_highlight_resource = True
+        else:
+            is_highlight_resource = True
+
     if len(to_match_phrases) == 0:
         return []
 
@@ -1215,7 +1254,7 @@ def test_similarity(ph1, ph2):
 
 if __name__ == '__main__':
     # si = test_similarity('United States', 'Germany')
-
+    query_resource('http://dbpedia.org/resource/Washington')
     # test()
     # test()
     embedding1 = bert_similarity.get_phrase_embedding(['Person'])

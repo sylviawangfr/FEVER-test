@@ -7,7 +7,7 @@ from memory_profiler import profile
 STOP_WORDS = ['the', 'they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
                'we', 'who', 'where', 'what', 'days', 'him', 'her', 'here', 'there', 'a', 'for', 'anything', 'everything',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
-              'third', 'life', 'all', 'part', 'center', 'area']
+              'third', 'life', 'all', 'part', 'center', 'area', 'in']
 
 DO_NOT_LINK = ['American', 'German', 'Spanish']
 
@@ -59,7 +59,7 @@ def get_ents_and_phrases(sentence):
         else:
             if i.lower() not in STOP_WORDS:
                 entity_and_capitalized.append(i)
-            if sentence.startswith(i) and (i.startswith('The ') or i.startswith('A ')):
+            if sentence.startswith(i) and (i.startswith('The ') or i.startswith('A ') or i.startswith('An ')):
                 if i.startswith('The '):
                     remove_the = i.replace('The ', '', 1)
                 if i.startswith('A '):

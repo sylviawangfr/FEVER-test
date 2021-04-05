@@ -7,7 +7,7 @@ from memory_profiler import profile
 STOP_WORDS = ['the', 'they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
                'we', 'who', 'where', 'what', 'days', 'him', 'her', 'here', 'there', 'a', 'for', 'anything', 'everything',
               'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
-              'third', 'life', 'all', 'part']
+              'third', 'life', 'all', 'part', 'center', 'area']
 
 DO_NOT_LINK = ['American', 'German', 'Spanish']
 

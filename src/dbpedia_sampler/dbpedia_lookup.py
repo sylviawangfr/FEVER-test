@@ -397,13 +397,13 @@ def test():
 
 
 if __name__ == "__main__":
-    lookup_label_exact_match('Café Society (film)')
+    # lookup_label_exact_match('Café Society (film)')
     # c = score_bewteen_phrases('product', 'product company xxx')
     # for i in range(1):
     #     test()
     #     gc.collect()
     # test()
-    # lookup_resource("Home for the Holidays")
+    lookup_resource("Baja California")
     # lookup_resource("Savages_(2012_film)")
     # lookup_resource("Winter's Tale")
 

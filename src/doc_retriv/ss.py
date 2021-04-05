@@ -743,7 +743,7 @@ def extend_candidate_one_hop(claim_dict, candidate_sentences: List[str]):
 if __name__ == '__main__':
     folder = config.RESULT_PATH / "hardset2021"
     hardset_original = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")[0:3]
-    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")
+    candidate_docs = read_json_rows(folder / "candidate_docs.jsonl")[0:3]
     prepare_candidate_sents2_bert_dev(hardset_original, candidate_docs, folder)
 
     # graph_data = read_json_rows(folder / "claim_graph.jsonl")

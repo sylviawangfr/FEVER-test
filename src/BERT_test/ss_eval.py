@@ -245,7 +245,7 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
             cur_predicted_sentids = sorted(cur_predicted_sentids, key=lambda x: -x[1])
 
         item['scored_sentids'] = cur_predicted_sentids[:top_n]  # Important sentences for scaling training. Jul 21.
-        item['predicted_sentids'] = [sid for sid, _, _ in item['scored_sentids']][:top_n]
+        item['predicted_sentids'] = [sid for sid, _ in item['scored_sentids']][:top_n]
         item['predicted_evidence'] = convert_evidence2scoring_format(item['predicted_sentids'])
         # item['predicted_label'] = item['label']  # give ground truth label
     return d_list

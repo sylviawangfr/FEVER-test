@@ -7,6 +7,7 @@ from dbpedia_sampler import dbpedia_triple_linker
 from utils.tokenizer_simple import get_dependent_verb, is_capitalized
 from memory_profiler import profile
 from bert_serving.client import BertClient
+from dbpedia_sampler.uri_util import isURI, uri_short_extract3
 import gc
 import json
 # CANDIDATE_UP_TO = 150
@@ -75,60 +76,17 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
     tmp_result = dbpedia_triple_linker.remove_duplicate_triples(tmp_result)
     sent_graph = dbpedia_triple_linker.filter_triples(tmp_result)
     sent_graph = dbpedia_triple_linker.remove_duplicate_triples(sent_graph)
-    # only keyword-match on those no exact match triples
-    # fill_relative_hash(relative_hash, sent_graph)
-    # isolated_node = []
-    # for i in relative_hash:
-    #     if len(relative_hash[i]) == 0 and i in lookup_hash:
-    #         isolated_node.append(lookup_hash[i])
-    # r4 = dbpedia_triple_linker.filter_keyword_vs_keyword(isolated_node, linked_phrases_l, embeddings_hash, fuzzy_match=False, bc=bc)
-    # for i in r4:
-    #     if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
-    #         merged_result.append(i)
-    # fill_relative_hash(relative_hash, r3)
-    # tmp_no_relatives_found = []
-    #     # has_relatives = []
-    #     # no_relatives_found = []
-    #     # for i in relative_hash:
-    #     #     if len(relative_hash[i]) == 0:
-    #     #         tmp_no_relatives_found.append(i)
-    #     #     else:
-    #     #         has_relatives.append(i)
-    #     # for i in tmp_no_relatives_found:
-    #     #     if len(list(filter(lambda x: i in x or x in i, has_relatives))) == 0:
-    #     #         no_relatives_found.append(i)
-
-    # isolated_nodes = []
-    # for i in no_relatives_found:
-    #     if i in lookup_hash:
-    #         isolated_nodes.append(lookup_hash[i])
-            # possible_links = lookup_hash[i]['links']
-            # for t in possible_links:
-            #     if not dbpedia_triple_linker.does_node_exit_in_list(t['URI'], merged_result):
-            #         single_node = dict()
-            #         single_node['subject'] = t['URI']
-            #         single_node['object'] = ''
-            #         single_node['relation'] = ''
-            #         single_node['keywords'] = t['text']
-            #         single_node['relatives'] = []
-            #         single_node['text'] = t['text']
-            #         single_node['exact_match'] = t['exact_match']
-            # continue
-
-        # for i in t['categories']:
-        #     if not dbpedia_triple_linker.does_tri_exit_in_list(i, merged_result):
-        #         merged_result.append(i)
-
+    for tri in sent_graph:
+        subj = uri_short_extract3(tri['subject']).lower()
+        for ph in all_phrases:
+            if ph != tri['text'] and ph.lower() in subj and ph not in tri['relatives']:
+                tri['relatives'].append(ph)
     # print(json.dumps(merged_result, indent=4))
     claim_d = dict()
     claim_d['linked_phrases_l'] = linked_phrases_l
     claim_d['not_linked_phrases_l'] = not_linked_phrases_l
     claim_d['graph'] = sent_graph
     claim_d['embedding'] = embedding_hash
-    # claim_d['lookup_hash'] = lookup_hash
-    # claim_d['no_relatives'] = no_relatives_found
-    # claim_d['isolated_nodes'] = isolated_nodes
-    # claim_d['relative_hash'] = relative_hash
     return claim_d
 
 

@@ -99,13 +99,13 @@ def eval_ss_and_save(paras : bert_para.PipelineParas):
     # probs_test = softmax_test(preds)
     probs = softmax(preds)
     probs = probs[:, 0].tolist()
-    scores = preds[:, 0].tolist()
+    # scores = preds[:, 0].tolist()
     preds = np.argmax(preds, axis=1)
 
     for i in range(len(eval_list)):
         assert str(eval_examples[i].guid) == str(eval_list[i]['selection_id'])
         # Matching id
-        eval_list[i]['score'] = scores[i]
+        # eval_list[i]['score'] = scores[i]
         eval_list[i]['prob'] = probs[i]
 
     # fever score and saving
@@ -189,7 +189,7 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     preds = preds[0]
     probs = softmax(preds)
     probs = probs[:, 0].tolist()
-    scores = preds[:, 0].tolist()
+    # scores = preds[:, 0].tolist()
     # preds = np.argmax(preds, axis=1)
     # if paras.mode == 'eval':
     #     logger.info("***** Eval results *****")
@@ -205,7 +205,7 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     for i in range(len(eval_list)):
         assert str(eval_examples[i].guid) == str(eval_list[i]['selection_id'])
         # Matching id
-        eval_list[i]['score'] = float(scores[i])
+        # eval_list[i]['score'] = float(scores[i])
         eval_list[i]['prob'] = float(probs[i])
 
     # results_list = ss_score_converter(paras.original_data, eval_list, paras.prob_thresholds, paras.top_n)
@@ -238,7 +238,7 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
             # Modify some mechaism here to selection sentence whether by some score or label
             for sent_i in sents:
                 if 'prob' in sent_i and sent_i['prob'] >= prob_threshold:
-                    cur_predicted_sentids.append((sent_i['sid'], sent_i['score'],
+                    cur_predicted_sentids.append((sent_i['sid'],  # sent_i['score'],
                                                   sent_i['prob']))  # Important sentences for scaling training. Jul 21.
                 # del sent_i['prob']
 

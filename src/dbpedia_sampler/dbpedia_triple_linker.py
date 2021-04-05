@@ -229,8 +229,12 @@ def link_sent_to_resources2(sentence, extend_entity_docs=None, lookup_hash=None,
                                     pl_exact_match.append(to_match_l)
                             linked_phs[to_match_p]['links'] = pl_exact_match
                 if has_multi_match:
-                    new_links.extend(multi_match)
-                    new_links.extend(exact_match)
+                    for mm in multi_match:
+                        if mm not in new_links:
+                            new_links.append(mm)
+                    for em in exact_match:
+                        if em not in new_links:
+                            new_links.append(em)
                     lp['links'] = new_links
 
     sentence = text_clean.convert_brc(sentence)
@@ -687,7 +691,7 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
     resource_uri_text = resource_uri_text.lower()
     to_match_phrases = []
     to_match_phrase_idx = []
-    is_highlight_resource = False
+
     for idx, p in enumerate(all_phrases):
         p_lower = p.lower()
         if (p_lower not in resouce_text \
@@ -699,10 +703,6 @@ def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
         elif p_lower in MEDIA:
             to_match_phrases.append(p)
             to_match_phrase_idx.append(idx)
-            is_highlight_resource = True
-        else:
-            is_highlight_resource = True
-
     if len(to_match_phrases) == 0:
         return []
 

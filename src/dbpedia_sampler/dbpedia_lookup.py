@@ -9,7 +9,7 @@ import config
 import log_util
 from dbpedia_sampler.uri_util import uri_short_extract
 from utils.file_loader import read_json_rows
-from utils.tokenizer_simple import split_claim_regex, get_lemma, is_person
+from utils.tokenizer_simple import split_claim_regex, get_lemma, is_person, is_capitalized
 from utils.resource_manager import CountryNationality
 from utils.text_clean import shave_marks_latin
 from memory_profiler import profile
@@ -166,7 +166,9 @@ def combine_lookup(text_phrase):
             or country_nationality.is_nationality(text_phrase):
         return exact_match
 
-    media_match = get_media_subset_match(text_phrase, lookup_app_matches)
+    media_match = []
+    if is_capitalized(text_phrase):
+        media_match = get_media_subset_match(text_phrase, lookup_app_matches)
     result = []
     if len(exact_match) > 0:
         log.debug(f"DBpedia lookup-app phrase: {text_phrase}, matching: {[i['URI'] for i in exact_match]}")
@@ -255,13 +257,32 @@ def get_exact_match(text_phrase, lookup_records):
 
 def get_media_subset_match(text_phrase, lookup_records):
     media_match = []
+    result = []
     media = ['tv', 'film', 'book', 'novel', 'band', 'album', 'music', 'series', 'poem', 'song', 'advertisement', 'company',
              'episode', 'season', 'animator', 'actor', 'singer', 'writer', 'drama', 'character']
+    text_clean = text_phrase.replace('_', ' ').lower()
     for i in lookup_records:
         label = i['Label']
-        if label is not None and text_phrase.replace('_', ' ').lower() in label.lower() and any([j in label.lower() for j in media]):
+
+        if label is not None \
+                and text_phrase.replace('_', ' ').lower() in label.lower() \
+                and any([j in label.lower() for j in media]) \
+                and 'http://dbpedia.org/resource/Category:' not in i['URI']:
             media_match.append(i)
-    return media_match
+
+    if len(media_match) > 4:
+        for r in media_match:
+            label = r['Label']
+            label_lower = label.lower()
+            for m in media:
+                if m in label_lower:
+                    tmp_label = label_lower.replace(m, '')
+                    score = score_bewteen_phrases(text_clean, tmp_label)
+                    if score > 0.7:
+                        result.append(r)
+    else:
+        result = media_match
+    return result
 
 def lookup_resource_app_query(text_phrase):
     url = config.DBPEDIA_LOOKUP_APP_URL_QUERY + quote(text_phrase)
@@ -358,24 +379,6 @@ def lookup_resource_ref_count(text_phrase):
     return close_matches
 
 
-# def to_triples(record_json):
-#     subject = record_json['URI']
-#     relation = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
-#     triples = []
-#     for i in record_json['Classes']:
-#         tri = dict()
-#         obj_split = uri_short_extract(i)
-#         tri['subject'] = subject
-#         tri['relation'] = relation
-#         tri['object'] = i
-#         tri['keywords'] = [obj_split]
-#         tri['keyword1'] = 'type'
-#         tri['keyword2'] = obj_split
-#         triples.append(tri)
-#     # print(json.dumps(triples, indent=4))
-#     return triples
-
-
 # @profile
 STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
                'we', 'who', 'where', 'what', 'days', 'him', 'her', 'here', 'there', 'a', 'for',
@@ -403,7 +406,7 @@ if __name__ == "__main__":
     #     test()
     #     gc.collect()
     # test()
-    lookup_resource("Baja California")
+    lookup_resource("Lynyrd Skynyrd")
     # lookup_resource("Savages_(2012_film)")
     # lookup_resource("Winter's Tale")
 

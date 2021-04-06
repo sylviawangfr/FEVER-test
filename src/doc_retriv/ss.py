@@ -721,7 +721,7 @@ def extend_candidate_one_hop(claim_dict, candidate_sentences: List[str]):
         doc_title, ln = candidate_sent_sid.split(c_scorer.SENT_LINE2)[0], int(candidate_sent_sid.split(c_scorer.SENT_LINE2)[1])
         candidate_sent_text, hlinks = get_text_and_hlinks(doc_title, ln)
         candidate_context_graph, extend_triples_json = construct_subgraph_for_candidate2(candidate_sent_text,
-                                                                                    sid=candidate_sent_sid,
+                                                                                    doc_title=candidate_sent_sid,
                                                                                     additional_phrase=claim_linked_phs,
                                                                                     additional_resources=claim_linked_resources)
 

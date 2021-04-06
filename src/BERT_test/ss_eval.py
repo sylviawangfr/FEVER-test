@@ -189,7 +189,7 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     preds = preds[0]
     probs = softmax(preds)
     probs = probs[:, 0].tolist()
-    # scores = preds[:, 0].tolist()
+    scores = preds[:, 0].tolist()
     # preds = np.argmax(preds, axis=1)
     # if paras.mode == 'eval':
     #     logger.info("***** Eval results *****")
@@ -205,7 +205,7 @@ def pred_ss_and_save(paras : bert_para.PipelineParas):
     for i in range(len(eval_list)):
         assert str(eval_examples[i].guid) == str(eval_list[i]['selection_id'])
         # Matching id
-        # eval_list[i]['score'] = float(scores[i])
+        eval_list[i]['score'] = float(scores[i])
         eval_list[i]['prob'] = float(probs[i])
 
     # results_list = ss_score_converter(paras.original_data, eval_list, paras.prob_thresholds, paras.top_n)
@@ -242,7 +242,7 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
                                                   sent_i['prob']))  # Important sentences for scaling training. Jul 21.
                 # del sent_i['prob']
 
-            cur_predicted_sentids = sorted(cur_predicted_sentids, key=lambda x: -x[1])
+            cur_predicted_sentids = sorted(cur_predicted_sentids, key=lambda x: -x[2])
 
         item['scored_sentids'] = cur_predicted_sentids[:top_n]  # Important sentences for scaling training. Jul 21.
         item['predicted_sentids'] = [sid for sid, _ in item['scored_sentids']][:top_n]
@@ -348,9 +348,9 @@ if __name__ == "__main__":
     paras.mode = 'train'
     paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202103_94.9"
     paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/ss_ss_202103_94.9"
-    paras.output_folder = config.RESULT_PATH / 'train_2021'
-    paras.original_data = read_json_rows(config.FEVER_TRAIN_JSONL)[:80000]
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / 'train_2021/es_doc_10.jsonl')[:80000]
+    paras.output_folder = config.RESULT_PATH / 'train_2021_t'
+    paras.original_data = read_json_rows(config.FEVER_TRAIN_JSONL)[80000:80002]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / 'train_2021/es_doc_10.jsonl')[80000:80002]
     paras.sample_n = 10
     paras.top_n = [10]
     paras.prob_thresholds = [0.01]

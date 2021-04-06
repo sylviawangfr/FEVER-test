@@ -108,7 +108,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
             # score = i[-1]
             sid = raw_sid.replace(c_scorer.SENT_LINE, c_scorer.SENT_LINE2)
             sids.append(sid)
-            scores.update({sid: i[2]})
+            scores.update({sid: i[1]})
         return sids, scores
 
     def fill_relative_hash(relative_hash, graph: List[Triple]):

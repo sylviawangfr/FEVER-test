@@ -198,7 +198,7 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                     extended_NEI_evidence.pop_sent(i)
                     additional_sample_num = random.randint(2 - n_e, 4 - n_e)
                     for sampled_e in additional_data:
-                        if additional_sample_num <= 0 and extended_NEI_evidence not in extended_NEI_list:
+                        if additional_sample_num <= 0 and len(extended_NEI_evidence) > 0 and extended_NEI_evidence not in extended_NEI_list:
                             extended_NEI_list.append(extended_NEI_evidence)
                             break
                         if sample_not_in_evidence_set(sampled_e, e_set):

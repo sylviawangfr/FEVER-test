@@ -193,19 +193,19 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                                 additional_sample_num -= 1
 
                 # extend more random NEI
-                for i in range(n_e):
-                    extended_NEI_evidence = copy.deepcopy(evidence)
-                    extended_NEI_evidence.pop_sent(i)
-                    additional_sample_num = random.randint(2 - n_e, 3 - n_e)
-                    for sampled_e in additional_data:
-                        if additional_sample_num <= 0 and len(extended_NEI_evidence) > 0 and extended_NEI_evidence not in extended_NEI_list:
-                            extended_NEI_list.append(extended_NEI_evidence)
-                            break
-                        if sample_not_in_evidence_set(sampled_e, e_set):
-                            doc_id = sampled_e.split(c_scorer.SENT_LINE)[0]
-                            ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
-                            extended_NEI_evidence.add_sent(doc_id, ln)
-                            additional_sample_num -= 1
+                # for i in range(n_e):
+                #     extended_NEI_evidence = copy.deepcopy(evidence)
+                #     extended_NEI_evidence.pop_sent(i)
+                #     additional_sample_num = random.randint(2 - n_e, 3 - n_e)
+                #     for sampled_e in additional_data:
+                #         if additional_sample_num <= 0 and len(extended_NEI_evidence) > 0 and extended_NEI_evidence not in extended_NEI_list:
+                #             extended_NEI_list.append(extended_NEI_evidence)
+                #             break
+                #         if sample_not_in_evidence_set(sampled_e, e_set):
+                #             doc_id = sampled_e.split(c_scorer.SENT_LINE)[0]
+                #             ln = int(sampled_e.split(c_scorer.SENT_LINE)[1])
+                #             extended_NEI_evidence.add_sent(doc_id, ln)
+                #             additional_sample_num -= 1
         extended_RS_list = list(set(extended_RS_list))
         extended_NEI_list = list(set(extended_NEI_list))
         assert len(res_sentids_list) == len(e_set)

@@ -127,7 +127,10 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                     in additional_data]
                 all_evidence_set = list(set(itertools.chain.from_iterable([evids.evidences_list for evids in e_set])))
                 n_e = len(evidence)
-                extend_number = 4  # >= 2
+                if item['label'] == 'SUPPORTS':
+                    extend_number = 2  # >= 2
+                elif item['label'] == 'REFUTES':
+                    extend_number = 4
                 # extend S and R
                 same_doc_false_sents = []
                 ground_truth_docids = list(set([e[0] for e in all_evidence_set]))
@@ -345,8 +348,8 @@ if __name__ == '__main__':
     # tmp2 = read_json_rows(config.RESULT_PATH / 'tfidf/train_2019_06_15_15:48:58.jsonl')
     # ori = read_json_rows(config.FEVER_TRAIN_JSONL)
     # create_train_pred(tmp1, tmp2, ori)
-    # additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')
     additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10_80000.jsonl')
+    # additional_file = read_json_rows(config.RESULT_PATH / 'bert_ss_dev_10/eval_data_ss_10_dev.jsonl')
     t = get_sample_data(additional_file, data_from_pred=False, mode='train')
     eval_samples(t)
 

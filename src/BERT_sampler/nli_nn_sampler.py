@@ -165,13 +165,13 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                     #  false from same doc
                     extended_NEI_evidence = copy.deepcopy(evidence)
                     docid, ln = extended_NEI_evidence.pop_sent(i)
-                    additional_sample_num = random.randint(0, 5 - n_e) if n_e <= 5 else 2
+                    additional_sample_num = random.randint(1, 5 - n_e) if n_e <= 4 else 2
                     tmp_false_samples = get_false_from_same_doc(docid, all_evidence_set, predicted_sents_tuples)
                     extended_NEI_evidence.add_sents_tuples(tmp_false_samples[:additional_sample_num])
                     extended_NEI_list.append(extended_NEI_evidence)
                     #  false from different doc
                     extended_NEI_evidence = copy.deepcopy(evidence)
-                    additional_sample_num = random.randint(0, 5 - n_e) if n_e <= 5 else 2
+                    additional_sample_num = random.randint(1, 5 - n_e) if n_e <= 4 else 2
                     extended_NEI_evidence.pop_sent(i)
                     extended_NEI_evidence.add_sents_tuples(diff_doc_false_sents[:additional_sample_num])
                     extended_NEI_list.append(extended_NEI_evidence)

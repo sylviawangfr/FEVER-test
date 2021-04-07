@@ -346,7 +346,7 @@ if __name__ == '__main__':
     # ori = read_json_rows(config.FEVER_TRAIN_JSONL)
     # create_train_pred(tmp1, tmp2, ori)
     # additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')
-    additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10_80000.jsonl')[0:100]
+    additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10_80000.jsonl')
     t = get_sample_data(additional_file, data_from_pred=False, mode='train')
     eval_samples(t)
 

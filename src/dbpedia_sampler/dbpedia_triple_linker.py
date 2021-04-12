@@ -692,7 +692,10 @@ def prune_triples(res_linked_triples, all_triples, linked_phrases):
     well_linked_resources = list(set(well_linked_resources))
     to_delete = []
     for res in well_linked_resources:
-        res_text = res2link[res]['text']
+        if res in res2text:
+            res_text = res2link[res]['text']
+        else:
+            continue
         if is_capitalized(res_text):
             for tri in all_triples:
                 tri_subj = tri['subject']

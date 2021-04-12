@@ -116,7 +116,7 @@ def evidence_list_to_text(cursor, evidences, contain_head=True):
     return ' '.join(current_evidence_text)
 
 
-def get_sample_data(upstream_data, data_from_pred=False):
+def get_sample_data(upstream_data, data_from_pred=False, mode='train'):
     cursor, conn = fever_db.get_cursor()
     if not isinstance(upstream_data, list):
         d_list = read_json_rows(upstream_data)

@@ -708,7 +708,7 @@ def prune_triples(res_linked_triples, all_triples, linked_phrases):
                 if tri_text == res_text \
                         and tri_uri not in well_linked_resources \
                         and tri_subj not in well_linked_resources \
-                        and tri_obj not in well_linked_resources:
+                        and tri_obj not in well_linked_resources and tri not in to_delete:
                     to_delete.append(tri)
     for tri in to_delete:
         all_triples.remove(tri)

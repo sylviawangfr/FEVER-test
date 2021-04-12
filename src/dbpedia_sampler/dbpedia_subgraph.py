@@ -74,6 +74,7 @@ def construct_subgraph_for_sentence(sentence_text, extend_entity_docs=None,
         r3 = dbpedia_triple_linker.filter_verb_vs_one_hop2(verb_d, linked_phrases_l)
     tmp_result = r0 + r1 + r2 + r3
     tmp_result = dbpedia_triple_linker.remove_duplicate_triples(tmp_result)
+    tmp_result = dbpedia_triple_linker.prune_triples(r2, tmp_result, linked_phrases_l)
     sent_graph = dbpedia_triple_linker.filter_triples(tmp_result)
     sent_graph = dbpedia_triple_linker.remove_duplicate_triples(sent_graph)
     for tri in sent_graph:

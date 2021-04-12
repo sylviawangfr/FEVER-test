@@ -108,7 +108,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
             # score = i[-1]
             sid = raw_sid.replace(c_scorer.SENT_LINE, c_scorer.SENT_LINE2)
             sids.append(sid)
-            scores.update({sid: i[1]})
+            scores.update({sid: i[-1]})
         return sids, scores
 
     def fill_relative_hash(relative_hash, graph: List[Triple]):
@@ -165,9 +165,9 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
 
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
-            #   379, 402, 646, 910, 976, 993, 1043, 1058, 1219, 1446, 1554, 1591, 1616, 1723
-            # if idx not in [402, 1069, 1439]:
-            #     continue
+
+            if idx not in [1439]:
+                continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -245,7 +245,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                             # if any(['film' in tri.subject for tri in subgraph]):
                             #     print("debug")
                             if len(not_linked_phrases) > 3 \
-                                    or len([np for np in not_linked_phrases if is_capitalized(np)]) > 1 \
+                                    or len([cnp for cnp in not_linked_phrases if is_capitalized(cnp)]) > 1 \
                                     or (len(media_entity) > 0 and not has_media_linked(subgraph))\
                                     or len(not_linked_phrases) / len(linked_phrases) > 0.5:
                                 continue
@@ -296,11 +296,12 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                     if len(linked_phrases) == 0:
                         linked_level = 0
                     else:   #  no bert_s nor tri_s, get sentences from entity page
-                        to_find_res = [l for l in linked_phrases if is_capitalized(l['text'])]
-                        if len(to_find_res) == 0:
-                            to_find_res = linked_phrases
-                        phrase2sids = get_sids_from_linked_resources(to_find_res)
-                        candidate_sid_sets.extend(generate_doc_sentence_combination(phrase2sids))
+                        if len(bert_s) == 0 and len(tri_s) == 0:
+                            to_find_res = [l for l in linked_phrases if is_capitalized(l['text'])]
+                            if len(to_find_res) == 0:
+                                to_find_res = linked_phrases
+                            phrase2sids = get_sids_from_linked_resources(to_find_res)
+                            candidate_sid_sets.extend(generate_doc_sentence_combination(phrase2sids))
 
             candidate_sid_sets = list(set(candidate_sid_sets))
             example.update({'nli_sids': [e.to_sids() for e in candidate_sid_sets], 'linked_level': linked_level})

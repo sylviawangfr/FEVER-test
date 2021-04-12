@@ -1,16 +1,14 @@
-import copy
 import functools
 import operator
-import random
 from collections import Counter
-
+import copy
+import random
 import numpy as np
-import utils.common_types as bert_para
 from BERT_test.eval_util import convert_evidence2scoring_format
-from data_util.tokenizers import SpacyTokenizer
 from utils import c_scorer, common
 from utils import check_sentences
 from utils.file_loader import *
+from tqdm import tqdm
 
 tok = SpacyTokenizer()
 
@@ -23,7 +21,7 @@ def easy_tokenize(text):
     return tok.tokenize(text_clean.normalize(text)).words()
 
 
-def sample_data_for_item(item, data_from_pred=False, mode='train'):
+def sample_data_for_item(item, data_from_pred=False):
     res_sentids_list = []
     flags = []
     if data_from_pred:
@@ -118,7 +116,7 @@ def evidence_list_to_text(cursor, evidences, contain_head=True):
     return ' '.join(current_evidence_text)
 
 
-def get_sample_data(upstream_data, data_from_pred=False, mode='train'):
+def get_sample_data(upstream_data, data_from_pred=False):
     cursor, conn = fever_db.get_cursor()
     if not isinstance(upstream_data, list):
         d_list = read_json_rows(upstream_data)
@@ -129,12 +127,12 @@ def get_sample_data(upstream_data, data_from_pred=False, mode='train'):
 
     for item in tqdm(d_list):
         # e_list = check_sentences.check_and_clean_evidence(item)
-        sampled_e_list, flags = sample_data_for_item(item, data_from_pred=data_from_pred, mode=mode)
+        sampled_e_list, flags = sample_data_for_item(item, data_from_pred=data_from_pred)
         # print(flags)
         for i, (sampled_evidence, flag) in enumerate(zip(sampled_e_list, flags)):
             new_item = dict()
             evidence_text = evidence_list_to_text(cursor, sampled_evidence,
-                                                  contain_head=True, id_tokenized=False)
+                                                  contain_head=True)
 
             new_item['id'] = str(item['id']) + '#' + str(i)
             new_item['claim'] = item['claim']

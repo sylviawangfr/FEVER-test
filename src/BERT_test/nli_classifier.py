@@ -321,7 +321,7 @@ if __name__ == "__main__":
     train_data = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')
     # nli_finetuning(train_data, output_folder="nli_train_extended" + get_current_time_str(), sampler='nli_nn')
     # train_data = read_json_rows(config.RESULT_PATH / "bert_ss_dev_10/eval_data_ss_10_dev_0.1_top[10].jsonl")[0:1000]
-    nli_finetuning(train_data, output_folder="nli_train_extended" + get_current_time_str(), sampler='nli_nn')
+    nli_finetuning(train_data, output_folder="nli_train_extended" + get_current_time_str(), sampler='nli_tfidf')
 
 
 

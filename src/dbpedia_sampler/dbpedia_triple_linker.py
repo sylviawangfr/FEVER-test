@@ -679,6 +679,38 @@ def filter_triples(triples, top_k=2):
     return all_triples
 
 
+def prune_triples(res_linked_triples, all_triples, linked_phrases):
+    well_linked_resources = []
+    res2text = {i['URI']: i['text'] for pl in linked_phrases for i in pl['links']}
+    # text2res = {pl['text']: pl['links'] for pl in linked_phrases}
+    res2link = {i['URI']: i for pl in linked_phrases for i in pl['links']}
+    for res_tri in res_linked_triples:
+        well_linked_resources.append(res_tri['subject'])
+        well_linked_resources.append(res_tri['object'])
+        well_linked_resources.append(res_tri['URI'])
+
+    well_linked_resources = list(set(well_linked_resources))
+    to_delete = []
+    for res in well_linked_resources:
+        res_text = res2link[res]['text']
+        if is_capitalized(res_text):
+            for tri in all_triples:
+                tri_subj = tri['subject']
+                tri_obj = tri['object']
+                tri_uri = tri['URI']
+                if tri_subj in res2text:
+                    tri_text = res2text[tri_subj]
+                else:
+                    tri_text = res2text[tri_uri]
+                if tri_text == res_text \
+                        and tri_uri not in well_linked_resources \
+                        and tri_subj not in well_linked_resources \
+                        and tri_obj not in well_linked_resources:
+                    to_delete.append(tri)
+    for tri in to_delete:
+        all_triples.remove(tri)
+    return all_triples
+
 
 def similarity_between_phrase_and_linked_one_hop2(all_phrases, linked_resource,
                                                  embeddings_hash, threshold=SCORE_CONFIDENCE_3):

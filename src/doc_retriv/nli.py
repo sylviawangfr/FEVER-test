@@ -123,8 +123,8 @@ def nli_eval_vote(upstream_data, output_folder):
     paras.mode = 'eval'
     paras.data_from_pred = False
     paras.upstream_data = upstream_data
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
     paras.output_folder = output_folder
     paras.sampler = 'nli_evis'
     nli_pred_evi_score_only(paras)

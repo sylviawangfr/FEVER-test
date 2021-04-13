@@ -115,7 +115,7 @@ def nli_pred_evi_set(upstream_data, output_folder):
     paras.sampler = 'nli_evis'
     nli_pred_evi_score_only(paras)
     data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
-    nli_vote(data_nli)
+    vote_and_filter(data_nli)
 
 
 def nli_eval_vote(upstream_data, output_folder):
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     # nli_eval1(data_bert, folder)
     # nli_eval2(data_bert, folder)
     data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
-    eval_samples(data_nli_sids)
-    # nli_pred_evi_set(data_nli_sids, folder)
+    # eval_samples(data_nli_sids)
+    nli_pred_evi_set(data_nli_sids, folder)
     # data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
     # vote_and_filter(data_nli)

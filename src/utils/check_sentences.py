@@ -151,7 +151,7 @@ def sids_to_doclnlist(sids):
 
 
 def get_predicted_evidence(item):
-    whole_annotators_evidences = item['predicted_evidence']
+    whole_annotators_evidences = item['predicted_evidence'][:5]
     # print(evidences)
     evidences_list_set = set()
     cleaned_one_annotator_evidences_list = []

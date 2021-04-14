@@ -107,8 +107,8 @@ def nli_pred_evi_set(upstream_data, output_folder):
     paras.mode = 'eval'
     paras.data_from_pred = True
     paras.upstream_data = upstream_data
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_89.4"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_89.4"
     # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_first_train2019"
     # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_first_train2019"
     paras.output_folder = output_folder

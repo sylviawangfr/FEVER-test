@@ -137,8 +137,8 @@ def nli_eval_top_rank(upstream_data, output_folder):
     paras.mode = 'eval'
     paras.data_from_pred = False
     paras.upstream_data = upstream_data
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_86.7"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_89.4"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_89.4"
     paras.output_folder = output_folder
     paras.sampler = 'nli_nn'
     eval_nli_examples(paras)
@@ -167,7 +167,8 @@ if __name__ == '__main__':
     # nli_eval1(data_bert, folder)
     # nli_eval2(data_bert, folder)
     data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
+    nli_eval_top_rank(data_nli_sids, folder)
     # eval_samples(data_nli_sids)
-    nli_pred_evi_set(data_nli_sids, folder)
+    # nli_pred_evi_set(data_nli_sids, folder)
     # data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
     # vote_and_filter(data_nli)

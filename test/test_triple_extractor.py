@@ -38,12 +38,6 @@ class TestDB(unittest.TestCase):
         print(svos)
         assert set(svos) == {('i', '!have', 'assistance'), ('he', '!provide', 'support')}
 
-        print("--------------------------------------------------")
-        tok = nlp("I have no other financial assistance available, and he certainly won't provide support.")
-        svos = findSVOs(tok)
-        printDeps(tok)
-        print(svos)
-        assert set(svos) == {('i', '!have', 'assistance'), ('he', '!provide', 'support')}
 
         print("--------------------------------------------------")
         tok = nlp("he did not kill me")

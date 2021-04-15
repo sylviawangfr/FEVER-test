@@ -84,8 +84,8 @@ def vote_label_and_filter_example(example):
         sid2weightedprob = {s : float(0) for s in all_sids}
         for evi in all_evi:
             sids = evi['sids']
-            prob = evi['prob']
-            weighted = prob / len(sids)
+            score = evi['score']
+            weighted = score / len(sids)
             for s in sids:
                 sid2weightedprob[s] += weighted
         sids_scores = list(zip(sid2weightedprob.keys(), sid2weightedprob.values()))
@@ -166,9 +166,9 @@ if __name__ == '__main__':
     # data_bert = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
     # nli_eval1(data_bert, folder)
     # nli_eval2(data_bert, folder)
-    data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
-    nli_eval_top_rank(data_nli_sids, folder)
+    # data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
+    # nli_eval_top_rank(data_nli_sids, folder)
     # eval_samples(data_nli_sids)
     # nli_pred_evi_set(data_nli_sids, folder)
-    # data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
-    # vote_and_filter(data_nli)
+    data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
+    vote_and_filter(data_nli)

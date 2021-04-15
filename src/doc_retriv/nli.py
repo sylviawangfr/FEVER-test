@@ -15,7 +15,7 @@ id2label = {
     2: "NOT ENOUGH INFO"
 }
 
-def nli_vote(data_nli_with_score):
+def vote(data_nli_with_score):
     hits = 0
     with tqdm(total=len(data_nli_with_score), desc=f"searching triple sentences") as pbar:
         for idx, example in enumerate(data_nli_with_score):
@@ -129,7 +129,7 @@ def nli_eval_vote(upstream_data, output_folder):
     paras.sampler = 'nli_evis'
     nli_pred_evi_score_only(paras)
     data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
-    nli_vote(data_nli)
+    vote(data_nli)
 
 
 def nli_eval_top_rank(upstream_data, output_folder):
@@ -166,9 +166,9 @@ if __name__ == '__main__':
     # data_bert = read_json_rows(folder / "bert_ss_0.4_10.jsonl")
     # nli_eval1(data_bert, folder)
     # nli_eval2(data_bert, folder)
-    # data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
+    data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
     # nli_eval_top_rank(data_nli_sids, folder)
     # eval_samples(data_nli_sids)
-    # nli_pred_evi_set(data_nli_sids, folder)
-    data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
-    vote_and_filter(data_nli)
+    nli_pred_evi_set(data_nli_sids, folder)
+    # data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
+    # vote_and_filter(data_nli)

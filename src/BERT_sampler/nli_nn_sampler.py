@@ -148,6 +148,7 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                             extended_SR_evidences = copy.deepcopy(evidence)
                             extended_SR_evidences.add_sents_tuples(add_sample)
                             extended_RS_list.append(extended_SR_evidences)
+                            extended_NEI_list.append(check_sentences.Evidences(add_sample))
                         additional_extend_num -= 1
                         random.shuffle(tmp_same_doc_samples)
 
@@ -158,20 +159,22 @@ def sample_data_for_item_extend(item, data_from_pred=False, mode='train'):
                         random.shuffle(diff_doc_false_sents)
                         if len(evidence) < 5:
                             extended_SR_evidences = copy.deepcopy(evidence)
-                            extended_SR_evidences.add_sents_tuples(diff_doc_false_sents[:random.randint(1, 3)])
+                            add_sample = diff_doc_false_sents[:random.randint(1, 3)]
+                            extended_SR_evidences.add_sents_tuples(add_sample)
                             extended_RS_list.append(extended_SR_evidences)
+                            extended_NEI_list.append(check_sentences.Evidences(add_sample))
                 # extend NEI
                 for i in range(n_e):
                     #  false from same doc
                     extended_NEI_evidence = copy.deepcopy(evidence)
                     docid, ln = extended_NEI_evidence.pop_sent(i)
-                    additional_sample_num = random.randint(1, 5 - n_e) if n_e <= 4 else 2
+                    additional_sample_num = random.randint(1, 4 - n_e) if n_e <= 3 else 2
                     tmp_false_samples = get_false_from_same_doc(docid, all_evidence_set, predicted_sents_tuples)
                     extended_NEI_evidence.add_sents_tuples(tmp_false_samples[:additional_sample_num])
                     extended_NEI_list.append(extended_NEI_evidence)
                     #  false from different doc
                     extended_NEI_evidence = copy.deepcopy(evidence)
-                    additional_sample_num = random.randint(1, 5 - n_e) if n_e <= 4 else 2
+                    additional_sample_num = random.randint(1, 4 - n_e) if n_e <= 3 else 2
                     extended_NEI_evidence.pop_sent(i)
                     extended_NEI_evidence.add_sents_tuples(diff_doc_false_sents[:additional_sample_num])
                     extended_NEI_list.append(extended_NEI_evidence)
@@ -343,13 +346,14 @@ def create_train_pred(p1,p2, origin_d):
 
 
 if __name__ == '__main__':
-    tmp1 = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10_80000.jsonl')
-    tmp1.extend(read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10.jsonl'))
-    tmp2 = read_json_rows(config.RESULT_PATH / 'tfidf/train_2019_06_15_15:48:58.jsonl')
-    ori = read_json_rows(config.FEVER_TRAIN_JSONL)
-    create_train_pred(tmp1, tmp2, ori)
+    # tmp1 = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10_80000.jsonl')
+    # tmp1.extend(read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10.jsonl'))
+    # tmp2 = read_json_rows(config.RESULT_PATH / 'tfidf/train_2019_06_15_15:48:58.jsonl')
+    # ori = read_json_rows(config.FEVER_TRAIN_JSONL)
+    # create_train_pred(tmp1, tmp2, ori)
     # additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/bert_ss_0.01_10_80000.jsonl')
-    additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')
+    # additional_file = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')[0:100]
+    additional_file = read_json_rows(config.RESULT_PATH / 'tfidf/train_2019_06_15_15:48:58.jsonl')[0:10000]
     t = get_sample_data(additional_file, data_from_pred=False, mode='train')
     eval_samples(t)
 

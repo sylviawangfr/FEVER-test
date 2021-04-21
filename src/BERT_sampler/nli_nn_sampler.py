@@ -296,7 +296,7 @@ def evidence_list_to_text(evidences, contain_head=True):
             t_doc_id_natural_format = text_clean.convert_brc(text_clean.normalize(doc_id)).replace('_', ' ')
             if line_num != 0:
                 current_evidence_text.append(f"{t_doc_id_natural_format}{c_scorer.SENT_DOC_TITLE}")
-        current_evidence_text.append(e_text)
+        current_evidence_text.append(text_clean.convert_brc(e_text))
     return ' '.join(current_evidence_text)
 
 

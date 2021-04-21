@@ -7,15 +7,11 @@ import xmltodict
 
 import config
 import log_util
-from dbpedia_sampler.uri_util import uri_short_extract
 from utils.file_loader import read_json_rows
 from utils.tokenizer_simple import split_claim_regex, get_lemma, is_person, is_capitalized
 from utils.resource_manager import CountryNationality
 from utils.text_clean import shave_marks_latin
-from memory_profiler import profile
-import time
-import gc
-
+from dbpedia_sampler.sentence_util import STOP_WORDS
 
 log = log_util.get_logger('lookup_resource')
 
@@ -380,10 +376,7 @@ def lookup_resource_ref_count(text_phrase):
 
 
 # @profile
-STOP_WORDS = ['they', 'i', 'me', 'you', 'she', 'he', 'it', 'individual', 'individuals', 'year', 'years', 'day', 'night',
-               'we', 'who', 'where', 'what', 'days', 'him', 'her', 'here', 'there', 'a', 'for',
-              'which', 'when', 'whom', 'the', 'history', 'morning', 'afternoon', 'evening', 'night', 'first', 'second',
-              'third']
+
 def test():
     j = read_json_rows(config.FEVER_DEV_JSONL)[300:400]
     for i in j:

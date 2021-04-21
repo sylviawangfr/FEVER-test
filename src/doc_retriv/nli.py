@@ -152,7 +152,7 @@ def eval_samples(upstream_data):
     print(f"max_length: {np.max(sid_count)}")
     print(f"mean: {np.mean(sid_count)}")
     print(f"std: {np.std(sid_count)}")
-    too_many = [idx for idx, i in enumerate(sid_count) if i > 500]
+    too_many = [idx for idx, i in enumerate(sid_count) if i > 200]
     print(too_many)
 
 
@@ -168,7 +168,7 @@ if __name__ == '__main__':
     # nli_eval2(data_bert, folder)
     data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
     # nli_eval_top_rank(data_nli_sids, folder)
-    # eval_samples(data_nli_sids)
-    nli_pred_evi_set(data_nli_sids, folder)
+    eval_samples(data_nli_sids)
+    # nli_pred_evi_set(data_nli_sids, folder)
     # data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
     # vote_and_filter(data_nli)

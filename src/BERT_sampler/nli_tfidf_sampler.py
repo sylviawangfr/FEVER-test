@@ -109,7 +109,7 @@ def evidence_list_to_text(cursor, evidences, contain_head=True):
                 current_evidence_text.append(f"{t_doc_id_natural_format} <t>")
 
         # Important change move one line below: July 16
-        current_evidence_text.append(e_text)
+        current_evidence_text.append(text_clean.convert_brc(e_text))
 
     # print(current_evidence_text)
 

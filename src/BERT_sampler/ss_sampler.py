@@ -154,7 +154,7 @@ def convert_to_formatted_sent(zipped_s_id_list, evidence_set, contain_head=True)
     for sent, sid in zipped_s_id_list:
         sent_item = dict()
 
-        cur_sent = sent
+        cur_sent = text_clean.convert_brc(sent)
         doc_id, ln = sid.split('(-.-)')[0], int(sid.split('(-.-)')[1])
         doc_id = normalize(doc_id)
         # print(sent, doc_id, ln)
@@ -220,7 +220,7 @@ def get_tfidf_sample(paras: bert_para.PipelineParas):
         tmp_n = 0
         tmp_tuples = []
         for pred in candidate_sids_tuple_l:
-            if pred[0] not in  ground_truth_docids and tmp_n < num:
+            if pred[0] not in ground_truth_docids and tmp_n < num:
                 tmp_tuples.append(pred)
                 tmp_n += 1
         return tmp_tuples
@@ -270,17 +270,19 @@ def get_tfidf_sample(paras: bert_para.PipelineParas):
             tmp_sample = get_false_from_same_doc(doc_id, all_evidence_set, predicted_sents_tuples, 1)
             false_samples.extend(tmp_sample)
             false_same_doc_count += 1
+            random.shuffle(predicted_sents_tuples)
         if false_same_doc_count < false_same_doc_total:
             tmp_sample = get_false_from_same_doc(ground_truth_docids[0],
                                                all_evidence_set,
                                                predicted_sents,
                                                false_same_doc_total - false_same_doc_count)
             false_samples.extend(tmp_sample)
-            false_same_doc_count += 1
+            false_same_doc_count += false_same_doc_total - false_same_doc_count
 
         tmp_sample = get_false_from_diff_doc(ground_truth_docids, predicted_sents_tuples, false_different_doc_total)
         false_samples.extend(tmp_sample)
         false_diff_doc_count += len(tmp_sample)
+        false_samples = list(set(false_samples))
 
         for doc_id, ln in false_samples:
             tmp_id = doc_id + '(-.-)' + str(ln)
@@ -437,11 +439,13 @@ if __name__ == '__main__':
     # count_truth_examples(sample_tfidf)
 
     paras2 = bert_para.PipelineParas()
-    dev_upstream_data = read_json_rows(config.DOC_RETRV_TRAIN)[0:50]
-    paras2.upstream_data = dev_upstream_data
-    paras2.data_from_pred = True
+    # dev_upstream_data = read_json_rows(config.DOC_RETRV_TRAIN)[0:50]
+    paras2.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
+    # paras2.upstream_data = dev_upstream_data
+    # paras2.data_from_pred = True
     # paras2.post_filter_prob = 0.5
-    complete_upstream_train_data = get_full_list_sample(paras2)
+    paras2.sample_n = 3
+    complete_upstream_train_data = get_tfidf_sample(paras2)
     filtered_train_data = complete_upstream_train_data
     full_list = complete_upstream_train_data
     eval_sample_length(full_list)

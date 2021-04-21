@@ -9,7 +9,7 @@ from data_util.tokenizers import SpacyTokenizer
 tok = SpacyTokenizer()
 
 
-STOPWORDS = {
+TEXT_CLEAN_STOPWORDS = {
     'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your',
     'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she',
     'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their',
@@ -64,7 +64,7 @@ def filter_word(text):
     text = normalize(text)
     if regex.match(r'^\p{P}+$', text):
         return True
-    if text.lower() in STOPWORDS:
+    if text.lower() in TEXT_CLEAN_STOPWORDS:
         return True
     return False
 

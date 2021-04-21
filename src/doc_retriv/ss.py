@@ -1,7 +1,7 @@
 from ES.es_search import  search_doc_id_and_keywords_in_sentences
 from dbpedia_sampler.dbpedia_subgraph import construct_subgraph_for_candidate2
 from dbpedia_sampler.dbpedia_triple_linker import filter_phrase_vs_two_hop, lookup_doc_id, filter_text_vs_one_hop, filter_triples, remove_duplicate_triples, add_outbound_single
-from dbpedia_sampler import dbpedia_lookup, dbpedia_virtuoso
+from dbpedia_sampler import dbpedia_lookup, dbpedia_virtuoso, sentence_util
 from BERT_test.ss_eval import *
 from doc_retriv.doc_retrieve_extend import search_entity_docs_for_triples, is_media, search_entity_docs
 from ES.es_queries import search_doc_id_and_keywords_in_sentences, search_docid_subject_object_in_sentences
@@ -34,8 +34,8 @@ def prepare_candidate_sents3_from_triples(data_with_graph, data_with_res_doc, ou
     result = []
     with tqdm(total=len(data_with_graph), desc=f"searching triple sentences") as pbar:
         for idx, example in enumerate(data_with_graph):
-            # if idx != 604:
-            #     continue
+            if idx not in [116, 555, 812, 869, 908, 926, 1361, 1368, 1445, 1485]:
+                continue
             claim_dict = example['claim_dict']
             triple_l = claim_dict['graph']
             resouce_doc_dict = data_with_res_doc[idx]['resource_docs']
@@ -167,8 +167,8 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
     with tqdm(total=len(data_origin), desc=f"generating nli candidate") as pbar:
         for idx, example in enumerate(data_origin):
 
-            # if idx not in [2]:
-            #     continue
+            if idx not in [555, 812, 869, 908, 926, 1361, 1368, 1445, 1485]:
+                continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
             triples = [Triple(t_dict) for t_dict in data_with_tri_s[idx]['triples']]
@@ -250,13 +250,14 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                                     or (len(media_entity) > 0 and not has_media_linked(subgraph))\
                                     or len(not_linked_phrases) / len(linked_phrases) > 0.5:
                                 continue
-                            extend_evi = add_linked_doc_ss(tmp_sid_sets, all_sid2linkedsids)
-                            if len(extend_evi) > 0:
-                                tmp_sid_sets.extend(extend_evi)
-                            else:
-                                # 1. candidate tri two hop
-                                extend_evi = extend_evidence_two_hop_nodes(not_linked_phrases, subgraph, tmp_sid_sets)
-                                tmp_sid_sets.extend(extend_evi)
+                            if len(not_linked_phrases) > 0 or not all([x in sentence_util.STOPWORDS for x in not_linked_phrases]):
+                                extend_evi = add_linked_doc_ss(tmp_sid_sets, all_sid2linkedsids)
+                                if len(extend_evi) > 0:
+                                    tmp_sid_sets.extend(extend_evi)
+                                else:
+                                    # 1. candidate tri two hop
+                                    extend_evi = extend_evidence_two_hop_nodes(not_linked_phrases, subgraph, tmp_sid_sets)
+                                    tmp_sid_sets.extend(extend_evi)
                             if len(tmp_sid_sets) > 0:
                                 has_evi_from_tris = True
                                 candidate_sid_sets.extend(tmp_sid_sets)

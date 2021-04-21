@@ -229,8 +229,10 @@ def search_doc_id_and_keywords_in_sentences(possible_id, subject, keywords):
         should.append({'match': {'text': {'query': relation, 'analyzer': 'wikipage_analyzer'}}})
     if len(keywords) > 0:
         obj = keywords[-1]
-        must.append({'multi_match': {'query': obj,
-                                     'fields': ['text'], 'analyzer': 'underscore_analyzer'}})
+        # must.append({'multi_match': {'query': obj,
+        #                              'fields': ['text'], 'analyzer': 'underscore_analyzer'}})
+        must.append({'multi_match': {'query': obj, 'type': 'phrase', 'slop': 3,
+                                 'fields': ['doc_id', 'text'], 'analyzer': 'underscore_analyzer'}})
 
     search = search.query(Q('bool', must=must, should=should)). \
                  highlight('text', number_of_fragments=0, fragment_size=150). \

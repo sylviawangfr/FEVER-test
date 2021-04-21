@@ -252,7 +252,7 @@ def hlink_sanity_check():
 
 if __name__ == '__main__':
     c, _ = get_cursor()
-    get_all_sent_by_doc_id(c, 'Justin_Timberlake')
+    get_all_sent_by_doc_id(c, 'Tijuana')
     # hlink_sanity_check()
     # create_db('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')
     # save_wiki_pages('/Users/Eason/projects/downloaded_repos/fever-baselines/yixin_proj/data/fever.db')

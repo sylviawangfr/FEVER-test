@@ -439,8 +439,8 @@ if __name__ == '__main__':
     # count_truth_examples(sample_tfidf)
 
     paras2 = bert_para.PipelineParas()
-    # dev_upstream_data = read_json_rows(config.DOC_RETRV_TRAIN)[0:50]
-    paras2.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
+    dev_upstream_data = read_json_rows(config.DOC_RETRV_TRAIN)[0:50]
+    # paras2.upstream_data = read_json_rows(config.RESULT_PATH / "dev_s_tfidf_retrieve.jsonl")[0:500]
     # paras2.upstream_data = dev_upstream_data
     # paras2.data_from_pred = True
     # paras2.post_filter_prob = 0.5

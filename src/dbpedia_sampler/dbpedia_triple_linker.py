@@ -99,6 +99,7 @@ def lookup_doc_id(phrase, doc_ids):
                 # r_dict['categories'] = []
                 r_dict['URI'] = i['URI']
                 r_dict['text'] = phrase
+                r_dict['doc_id'] = d
                 r_dict['exact_match'] = (phrase.lower() == tmp_d)
                 links.append(r_dict)
     if len(links) > 0:

@@ -138,11 +138,17 @@ def filter_es_entity_links(es_entity_data_l, ss_data_l, output_file):
     with tqdm(total=len(ss_data_l), desc=f"preparing ss entity docs") as pbar:
         for idx, example in enumerate(es_entity_data_l):
             ss_example = ss_data_l[idx]
-            pred_tuples = ss_example['predicted_sents']
+            pred_tuples = ss_example['predicted_evidence']
             es_entity_docs = example['es_entity_docs']
             all_ss_docids = list(set([p[0] for p in pred_tuples]))
             for phrase in es_entity_docs:
-                pass
+                links = es_entity_docs[phrase]
+                to_delete = []
+                for l in links:
+                    if l['doc_id'] not in all_ss_docids:
+                        to_delete.append(l)
+                for x in to_delete:
+                    links.remove(x)
             pbar.update(1)
     save_intermidiate_results(es_entity_data_l, output_file)
     return es_entity_data_l
@@ -589,38 +595,39 @@ def do_train_docs(folder):
 
 
 def do_dev_hardset_with_es_entity(folder):
-    # original_data1 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
-    # del original_data1
-    #
+    original_data1 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    del original_data1
+
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
     data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
-    data_ss = read_json_rows(folder / 'bert_ss_0.4_10.jsonl')
-    filter_es_entity_links(data_with_es_entities, data_ss, folder / 'filtered_es_entity_docs.jsonl')
 
     # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
-    # original_data2 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # assert (len(original_data2) == len(data_with_es))
-    # assert (len(data_with_es_entities) == len(original_data2))
-    # prepare_claim_graph(original_data2,
-    #                     folder / "claim_graph.jsonl",
-    #                     folder / "claim_graph.log",
-    #                     data_with_entity_docs=data_with_es_entities,
-    #                     data_with_es=data_with_es)
-    # del original_data2
-    # #
-    # original_data3 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # data_context = read_json_rows(folder / "claim_graph.jsonl")
-    # prepare_candidate_doc2(original_data3, data_context, folder / "graph_resource_docs.jsonl", folder / "graph_resource_docs.log")
-    # del original_data3
-    # #
-    # original_data4 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # es_data = read_json_rows(folder / "es_doc_10.jsonl")
-    # ent_data = read_json_rows(folder / "graph_resource_docs.jsonl")
-    # assert (len(es_data) == len(original_data4) and (len(ent_data) == len(original_data4)))
-    # prepare_candidate_docs(original_data4, es_data, ent_data, folder / "candidate_docs.jsonl",
-    #                        folder / "candidate_docs.log")
+    data_ss = read_json_rows(folder / 'bert_ss_0.4_10.jsonl')
+    data_with_es_entities = filter_es_entity_links(data_with_es_entities, data_ss, folder / 'filtered_es_entity_docs.jsonl')
 
+    original_data2 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    assert (len(original_data2) == len(data_with_es))
+    assert (len(data_with_es_entities) == len(original_data2))
+    prepare_claim_graph(original_data2,
+                        folder / "claim_graph.jsonl",
+                        folder / "claim_graph.log",
+                        data_with_entity_docs=data_with_es_entities,
+                        data_with_es=data_with_es)
+    del original_data2
+    #
+    original_data3 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    data_context = read_json_rows(folder / "claim_graph.jsonl")
+    prepare_candidate_doc2(original_data3, data_context, folder / "graph_resource_docs.jsonl", folder / "graph_resource_docs.log")
+    del original_data3
+    #
+    original_data4 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    es_data = read_json_rows(folder / "es_doc_10.jsonl")
+    ent_data = read_json_rows(folder / "graph_resource_docs.jsonl")
+    assert (len(es_data) == len(original_data4) and (len(ent_data) == len(original_data4)))
+    prepare_candidate_docs(original_data4, es_data, ent_data, folder / "candidate_docs.jsonl",
+                           folder / "candidate_docs.log")
+#
 
 # def clean():
 #     ori = read_json_rows(config.DOC_RETRV_TRAIN)

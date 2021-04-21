@@ -157,7 +157,7 @@ def ss_finetuning(paras: bert_para.PipelineParas, mode_saved_folder_name, sample
         model = torch.nn.DataParallel(model)
 
     # get train data
-    train_examples = processor.get_train_examples(paras, sampler)
+    train_examples, _ = processor.get_train_examples(paras, sampler)
     num_train_optimization_steps = int(
         len(train_examples) / train_batch_size / gradient_accumulation_steps) * num_train_epochs
     if local_rank != -1:
@@ -307,8 +307,8 @@ def ss_finetuning(paras: bert_para.PipelineParas, mode_saved_folder_name, sample
 if __name__ == "__main__":
     paras = bert_para.PipelineParas()
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')[0:100]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:100]
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')[0:100]
     paras.data_from_pred = False
     paras.mode = 'train'
     timestamp = get_current_time_str()

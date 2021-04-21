@@ -307,8 +307,8 @@ def ss_finetuning(paras: bert_para.PipelineParas, mode_saved_folder_name, sample
 if __name__ == "__main__":
     paras = bert_para.PipelineParas()
     # paras.original_data = read_json_rows(config.FEVER_DEV_JSONL)
-    paras.upstream_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:100]
-    # paras.upstream_data = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')[0:100]
+    # paras.upstream_data = read_json_rows(config.RESULT_PATH / "train_s_tfidf_retrieve.jsonl")[0:100]
+    paras.upstream_data = read_json_rows(config.RESULT_PATH / 'train_2021/train_ss.jsonl')[0:100]
     paras.data_from_pred = False
     paras.mode = 'train'
     timestamp = get_current_time_str()

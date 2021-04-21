@@ -102,13 +102,13 @@ def vote_label_and_filter_example(example):
     return clean_item
 
 
-def nli_pred_evi_set(upstream_data, output_folder):
+def nli_pred_evi_set(upstream_data, output_folder, model_path):
     paras = bert_para.PipelineParas()
     paras.mode = 'eval'
     paras.data_from_pred = True
     paras.upstream_data = upstream_data
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
+    paras.BERT_model = model_path
+    paras.BERT_tokenizer = model_path
     # paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_first_train2019"
     # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_first_train2019"
     paras.output_folder = output_folder
@@ -123,8 +123,8 @@ def nli_eval_vote(upstream_data, output_folder):
     paras.mode = 'eval'
     paras.data_from_pred = False
     paras.upstream_data = upstream_data
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_78.2"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_78.2"
     paras.output_folder = output_folder
     paras.sampler = 'nli_evis'
     nli_pred_evi_score_only(paras)
@@ -137,8 +137,8 @@ def nli_eval_top_rank(upstream_data, output_folder):
     paras.mode = 'eval'
     paras.data_from_pred = True
     paras.upstream_data = upstream_data
-    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
-    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
+    paras.BERT_model = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_78.2"
+    paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_78.2"
     paras.output_folder = output_folder
     paras.sampler = 'nli_nn'
     eval_nli_examples(paras)
@@ -168,7 +168,14 @@ if __name__ == '__main__':
     # nli_eval2(data_bert, folder)
     data_nli_sids = read_json_rows(folder / "nli_sids.jsonl")
     # nli_eval_top_rank(data_nli_sids, folder)
-    eval_samples(data_nli_sids)
-    # nli_pred_evi_set(data_nli_sids, folder)
+    # eval_samples(data_nli_sids)
+    model1 = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_78.2"
+    model2 = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_81.4"
+    model3 = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_89.4"
+    model4 = config.PRO_ROOT / "saved_models/bert_finetuning/nli_train_78.2"
+    nli_pred_evi_set(data_nli_sids, folder, model1)
+    nli_pred_evi_set(data_nli_sids, folder, model2)
+    nli_pred_evi_set(data_nli_sids, folder, model3)
+    nli_pred_evi_set(data_nli_sids, folder, model4)
     # data_nli = read_json_rows(folder / "sids_nli_pred.jsonl")
     # vote_and_filter(data_nli)

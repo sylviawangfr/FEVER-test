@@ -142,7 +142,7 @@ def filter_es_entity_links(es_entity_data_l, ss_data_l, output_file):
             es_entity_docs = example['es_entity_docs']
             all_ss_docids = list(set([p[0] for p in pred_tuples]))
             for phrase in es_entity_docs:
-                links = es_entity_docs[phrase]
+                links = es_entity_docs[phrase]['links']
                 to_delete = []
                 for l in links:
                     if l['doc_id'] not in all_ss_docids:
@@ -595,14 +595,14 @@ def do_train_docs(folder):
 
 
 def do_dev_hardset_with_es_entity(folder):
-    original_data1 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
-    del original_data1
+    # original_data1 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    # prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    # del original_data1
 
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    # data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
-    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     data_ss = read_json_rows(folder / 'bert_ss_0.4_10.jsonl')
     data_with_es_entities = filter_es_entity_links(data_with_es_entities, data_ss, folder / 'filtered_es_entity_docs.jsonl')
 

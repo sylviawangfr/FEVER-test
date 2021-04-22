@@ -600,9 +600,9 @@ def do_dev_hardset_with_es_entity(folder):
     del original_data1
 
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
-    # data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
+    data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")
 
-    data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
+    # data_with_es_entities = read_json_rows(folder / "es_entity_docs.jsonl")
     data_ss = read_json_rows(folder / 'bert_ss_0.4_10.jsonl')
     data_with_es_entities = filter_es_entity_links(data_with_es_entities, data_ss, folder / 'filtered_es_entity_docs.jsonl')
 

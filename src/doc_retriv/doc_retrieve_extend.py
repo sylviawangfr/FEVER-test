@@ -595,9 +595,9 @@ def do_train_docs(folder):
 
 
 def do_dev_hardset_with_es_entity(folder):
-    # original_data1 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
-    # prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
-    # del original_data1
+    original_data1 = read_json_rows(folder / "dev_has_multi_doc_evidence.jsonl")
+    prepare_candidate_doc1(original_data1, folder / "es_doc_10.jsonl", folder / "es_doc_10.log")
+    del original_data1
 
     data_with_es = read_json_rows(folder / "es_doc_10.jsonl")
     # data_with_es_entities = prepare_es_entity_links(data_with_es, folder / "es_entity_docs.jsonl")

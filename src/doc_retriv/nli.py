@@ -113,7 +113,7 @@ def nli_pred_evi_set(upstream_data, output_folder, model_path, save_path):
     # paras.BERT_tokenizer = config.PRO_ROOT / "saved_models/bert_finetuning/nli_nli_first_train2019"
     paras.output_folder = output_folder
     paras.sampler = 'nli_evis'
-    nli_pred_evi_score_only(paras)
+    nli_pred_evi_score_only(paras, save_path)
     data_nli = read_json_rows(save_path)
     vote_and_filter(data_nli)
 

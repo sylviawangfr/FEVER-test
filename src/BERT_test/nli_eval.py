@@ -191,12 +191,12 @@ def post_step_nli_eval(eval_list, paras: bert_para.PipelineParas):
     print("Done with nli evaluation")
 
 
-def nli_pred_evi_score_only(paras : bert_para.PipelineParas):
+def nli_pred_evi_score_only(paras : bert_para.PipelineParas, output_path):
     eval_list = eval_nli_examples(paras)
-    nli_evi_set_post_step(eval_list, paras)
+    nli_evi_set_post_step(eval_list, paras, output_path)
 
 
-def nli_evi_set_post_step(eval_list, paras: bert_para.PipelineParas):
+def nli_evi_set_post_step(eval_list, paras: bert_para.PipelineParas, output_path):
     augmented_dict: Dict[int, List[Dict]] = dict()
     with tqdm(total=len(eval_list), desc=f"nli evi post step...") as pbar:
         for idx, evids_item in enumerate(eval_list):
@@ -217,7 +217,7 @@ def nli_evi_set_post_step(eval_list, paras: bert_para.PipelineParas):
             print("not found this example:\n", item)
         else:
             item["evi_nli"] = augmented_dict[int(item['id'])]
-    save_intermidiate_results(paras.upstream_data, paras.output_folder / "sids_nli_pred.jsonl")
+    save_intermidiate_results(paras.upstream_data, output_path)
     print("Done with nli evaluation")
 
 

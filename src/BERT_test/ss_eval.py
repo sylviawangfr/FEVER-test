@@ -245,7 +245,8 @@ def ss_score_converter(original_list, upsteam_eval_list, prob_threshold, top_n=5
             cur_predicted_sentids = sorted(cur_predicted_sentids, key=lambda x: -x[-1])
 
         item['scored_sentids'] = cur_predicted_sentids[:top_n]  # Important sentences for scaling training. Jul 21.
-        for i in range(top_n, 20):
+        top_n2 = 20 if len(cur_predicted_sentids) > 20 else len(cur_predicted_sentids)
+        for i in range(top_n, top_n2):
             if cur_predicted_sentids[i][-1] > float(0.98):
                 item['scored_sentids'].append(cur_predicted_sentids[i])
         item['predicted_sentids'] = [sid for sid, _, _ in item['scored_sentids']][:top_n]

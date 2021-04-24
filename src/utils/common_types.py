@@ -18,9 +18,13 @@ class PipelineParas(object):
     sampler = None
 
     def get_f1_log_file(self, task):
+        if not self.output_folder.exists():
+            self.output_folder.mkdir(exist_ok=False)
         return self.output_folder / f"bert_log/f1_analyze_{task}_{self.mode}.log"
 
     def get_eval_log_file(self, task):
+        if not self.output_folder.exists():
+            self.output_folder.mkdir(exist_ok=False)
         return self.output_folder / f"bert_log/eval_{task}_{self.mode}.log"
 
     def get_model_folder(self, task):
@@ -30,4 +34,6 @@ class PipelineParas(object):
         return self.output_folder / f"{task}.jsonl"
 
     def get_eval_item_file(self, task):
+        if not self.output_folder.exists():
+            self.output_folder.mkdir(exist_ok=False)
         return self.output_folder / f"bert_log/item_{task}.jsonl"

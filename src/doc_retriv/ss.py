@@ -34,8 +34,6 @@ def prepare_candidate_sents3_from_triples(data_with_graph, data_with_res_doc, ou
     result = []
     with tqdm(total=len(data_with_graph), desc=f"searching triple sentences") as pbar:
         for idx, example in enumerate(data_with_graph):
-            if idx not in [116, 555, 812, 869, 908, 926, 1361, 1368, 1445, 1485]:
-                continue
             claim_dict = example['claim_dict']
             triple_l = claim_dict['graph']
             resouce_doc_dict = data_with_res_doc[idx]['resource_docs']
@@ -758,6 +756,7 @@ if __name__ == '__main__':
     #
     graph_data = read_json_rows(folder / "claim_graph.jsonl")
     resource2docs_data = read_json_rows(folder / "graph_resource_docs.jsonl")
+    assert (len(hardset_original) == len(graph_data))
     prepare_candidate_sents3_from_triples(graph_data, resource2docs_data, folder / "tri_ss.jsonl", folder / "tri_ss.log")
     #
     tri_ss_data = read_json_rows(folder / "tri_ss.jsonl")
@@ -768,7 +767,6 @@ if __name__ == '__main__':
     #                           folder / "sids.log", folder / "sid2graph.log")
     assert(len(hardset_original) == len(tri_ss_data))
     assert (len(hardset_original) == len(bert_ss_data))
-    assert (len(hardset_original) == len(graph_data))
     prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, graph_data, folder / "nli_sids.jsonl")
 
 

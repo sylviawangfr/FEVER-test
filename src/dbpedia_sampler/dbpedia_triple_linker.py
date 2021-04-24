@@ -873,6 +873,8 @@ def filter_phrase_vs_two_hop(phrases, triples: List[Triple], threshold=SCORE_CON
         obj = tri.object
         if isURI(obj) and "http://dbpedia.org/resource/" in obj and "Categories:" not in obj:
             one_hop_nodes.append(obj)
+        if "http://dbpedia.org/resource/Category:" in obj:
+            one_hop_nodes.append(obj.replace('Category:', ''))
     if len(one_hop_nodes) == 0:
         return []
     two_hop_hash = dict()

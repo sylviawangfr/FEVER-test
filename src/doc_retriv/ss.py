@@ -168,6 +168,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
         for idx, example in enumerate(data_origin):
 
             # if idx not in [812, 869, 908, 926, 1361, 1368, 1445, 1485]:
+            # if idx < 6:
             #     continue
             # ["Soul_Food_-LRB-film-RRB-<SENT_LINE>0", 1.4724552631378174, 0.9771634340286255]
             bert_s, bert_sid2score = get_bert_sids(data_with_bert_s[idx]['scored_sentids'])
@@ -199,7 +200,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                 sid_combination = generate_sentence_combination(tmp_sids)
                 candidate_sid_sets.extend(sid_combination)
 
-            candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets, sid2linkedsids_to_calc))
+            # candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets, sid2linkedsids_to_calc))
             candidate_sid_sets = list(set(candidate_sid_sets))
             linked_level = 0    # [0: not linked, 1: partial linked, 2: well linked]
             has_evi_from_tris = False
@@ -263,6 +264,7 @@ def prepare_evidence_set_for_bert_nli(data_origin, data_with_bert_s,
                                 candidate_sid_sets.extend(tmp_sid_sets)
                                 linked_level = 1
             if not has_evi_from_tris:
+                candidate_sid_sets.extend(add_linked_doc_ss(candidate_sid_sets, sid2linkedsids_to_calc))
                 # count_capitalized_entities = []
                 # for i in linked_entities:
                 #     if i not in count_capitalized_entities\
@@ -368,7 +370,7 @@ def extend_evidence_two_hop_nodes(phrases, subgraph, subgraph_evi_set):
     tri2extri = {t.tri_id: [] for t in subgraph}
     for tri in subgraph:
         for ex_tri in extend_triples:
-            if tri.object == ex_tri.subject:
+            if tri.object == ex_tri.subject or tri.object.replace('Category:', '') == ex_tri.subject:
                 tri2extri[tri.tri_id].append(ex_tri)
     sid2extendsids = dict()
     triid2tri = {t.tri_id: t for t in subgraph}
@@ -382,6 +384,8 @@ def extend_evidence_two_hop_nodes(phrases, subgraph, subgraph_evi_set):
                     sid2extendsids[ts].extend(ex_sids)
                 else:
                     sid2extendsids.update({ts:ex_sids})
+    for i in sid2extendsids:
+        sid2extendsids[i] = list(set(sid2extendsids[i]))
     extend_evi_set = add_linked_doc_ss(subgraph_evi_set, sid2extendsids)
     return extend_evi_set
 
@@ -625,8 +629,11 @@ def search_triples_in_docs(triples: List[Triple], docs:dict=None):  #  list[Trip
                 doc_id = doc['id']
                 subject_text = uri_short_extract2(tri.subject)
                 obj_uri = tri.object
-                if "http://dbpedia.org/resource/" in obj_uri and '/Category:' not in obj_uri:
-                    obj_text = uri_short_extract2(obj_uri)
+                if "http://dbpedia.org/resource/" in obj_uri:
+                    if '/Category:' not in obj_uri:
+                        obj_text = uri_short_extract2(obj_uri)
+                    else:
+                        obj_text = uri_short_extract2(obj_uri.replace('/Category:', ''))
                     rel_text = uri_short_extract(tri.relation)
                     tmp_sentences = search_docid_subject_object_in_sentences(doc_id, subject_text, rel_text, obj_text)
                     if len(tmp_sentences) == 0:
@@ -759,7 +766,9 @@ if __name__ == '__main__':
     # generate_candidate_graphs(graph_data, tri_ss_data, bert_ss_data,
     #                           folder / "sids.jsonl", folder / "sid2graph.jsonl",
     #                           folder / "sids.log", folder / "sid2graph.log")
-
+    assert(len(hardset_original) == len(tri_ss_data))
+    assert (len(hardset_original) == len(bert_ss_data))
+    assert (len(hardset_original) == len(graph_data))
     prepare_evidence_set_for_bert_nli(hardset_original, bert_ss_data, tri_ss_data, graph_data, folder / "nli_sids.jsonl")
 
 
